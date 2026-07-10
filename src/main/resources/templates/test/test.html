@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test</title>
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .page-link.active { background-color: #f97316 !important; color: white !important; border-color: #f97316 !important; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+<table class="w-full text-left text-sm border-collapse">
+    <thead>
+    <tr class="bg-gray-50/50 text-gray-400 font-bold border-b border-gray-100">
+        <th class="px-6 py-4">도서 정보</th>
+        <th class="px-6 py-4">판매가</th>
+        <th class="px-6 py-4">재고</th>
+        <th class="px-6 py-4">상태</th>
+        <th class="px-6 py-4 text-center">액션</th>
+    </tr>
+    </thead>
+    <!-- Fragment Target: MUST BE TBODY ONLY -->
+    <tbody class="divide-y divide-gray-50" id="bookTableBody">
+    <tr th:each="book : ${books}" class="hover:bg-gray-50/50 transition-colors">
+        <td class="px-6 py-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 border border-gray-100">
+                    <img th:src="${(book.imageList != null and #lists.size(book.imageList) > 0) ? '/proxy/image?url=' + book.imageList[0].path : 'https://dummyimage.com/100x150/e2e8f0/94a3b8?text=No+Image'}"
+                         th:alt="${book.title}" id="main-image"
+                         class="w-full h-full object-cover">
+                </div>
+                <div class="max-w-xs md:max-w-sm">
+                    <p class="font-bold text-gray-800 line-clamp-1" th:text="${book.title}">도서 제목</p>
+                    <p class="text-[10px] text-gray-400 font-mono mt-0.5" th:text="${book.isbn}">9781234567890</p>
+                    <p class="text-[10px] text-orange-500 mt-0.5" th:text="${book.publisher}">출판사</p>
+                </div>
+            </div>
+        </td>
+        <td class="px-6 py-4">
+            <p class="font-bold text-gray-800" th:text="${#numbers.formatInteger(book.discountPrice ?: book.price, 0, 'COMMA') + '원'}">15,000원</p>
+            <p th:if="${book.discountPrice != null}" class="text-[10px] text-gray-400 line-through" th:text="${#numbers.formatInteger(book.price, 0, 'COMMA') + '원'}">18,000원</p>
+        </td>
+        <td class="px-6 py-4">
+            <span class="font-bold" th:classappend="${book.stock < 10 ? 'text-red-500' : 'text-gray-700'}" th:text="${book.stock + '권'}">10권</span>
+        </td>
+        <td class="px-6 py-4">
+                            <span class="px-2 py-1 rounded-full text-[10px] font-black"
+                                  th:classappend="${book.status.name() == 'ON_SALE' ? 'bg-blue-50 text-blue-600' : (book.status.name() == 'SOLD_OUT' ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500')}"
+                                  th:text="${book.status.name()}">ON_SALE</span>
+        </td>
+        <td class="px-6 py-4 text-center">
+            <div class="flex items-center justify-center gap-2">
+                <a th:href="@{/admin/books/{id}/modify(id=${book.bookId})}" class="p-2 text-gray-400 hover:text-orange-500 hover:bg-orange-50 rounded-lg transition-all" title="수정">
+                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                </a>
+                <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all" title="삭제" th:onclick="'confirmDelete(' + ${book.bookId} + ')'">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(books)}">
+        <td colspan="5" class="px-6 py-20 text-center text-gray-400 font-medium italic">
+            등록된 도서가 없거나 검색 결과가 없습니다.
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

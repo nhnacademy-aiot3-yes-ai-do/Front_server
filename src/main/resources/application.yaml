@@ -1,0 +1,16 @@
+server:
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+
+spring:
+  application:
+    name: front_server
+
+feign:
+  client:
+    gateway:
+      url: ${GATEWAY_URL:http://localhost:8080}
