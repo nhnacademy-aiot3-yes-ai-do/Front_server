@@ -70,7 +70,7 @@ jobs:
     if: always()
     uses: nhnacademy-aiot3-yes-ai-do/Webhook/.github/workflows/discord-notify.yml@main
     with:
-      service_name: gateway-service
+      service_name: front-service
       build_result: ${{ needs.build-and-push.result }}
       deploy_result: ${{ needs.deploy.result }}
       repository: ${{ github.repository }}
