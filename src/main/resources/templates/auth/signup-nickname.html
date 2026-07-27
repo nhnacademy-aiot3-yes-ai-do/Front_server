@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>프로필 설정 | MushMush</title>
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <img src="/images/logo1.png" alt="MushMush 로고" class="auth-logo" />
+
+        <div class="auth-body">
+            <form action="/signup" method="post">
+                <input type="hidden" name="email" th:value="${email}" />
+                <input type="hidden" name="password" th:value="${password}" />
+
+                <div class="profile-row">
+                    <div class="avatar-upload">
+                        <label for="avatar">
+                            <span>+</span>
+                            <input type="file" id="avatar" name="avatar" accept="image/*" />
+                        </label>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-inline">
+                            <input type="text" id="nickname" name="nickname" placeholder="닉네임" required />
+                            <button type="button" class="btn btn-outline btn-inline">중복확인</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- TODO: 중복확인 버튼에 JS를 연결해서 실제로 확인됐을 때만 이 문구를 보여주도록 해야 합니다. 지금은 항상 숨김. -->
+                <p class="help-text ok" style="display:none;">사용할 수 있는 닉네임입니다.</p>
+                <p class="help-text error" th:if="${signupError}" th:text="${signupError}"></p>
+
+                <button type="submit" class="btn btn-primary">가입 완료</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>
