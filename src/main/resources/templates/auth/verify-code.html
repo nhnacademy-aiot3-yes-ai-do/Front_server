@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>인증번호 입력 | MushMush</title>
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <img src="/images/logo1.png" alt="MushMush 로고" class="auth-logo" />
+
+        <div class="auth-body">
+            <p class="auth-subtitle">이메일로 인증번호를 발송했습니다.<br />인증번호를 입력해 주세요.</p>
+
+            <form action="/reset-password" method="get">
+                <input type="hidden" name="email" th:value="${email}" />
+
+                <div class="field">
+                    <input type="text" id="code" name="code" placeholder="인증번호 6자리" required />
+                </div>
+
+                <p class="help-text error" th:if="${verifyCodeError}" th:text="${verifyCodeError}"></p>
+
+                <div class="btn-row">
+                    <a href="/find-password" class="btn btn-secondary">이전</a>
+                    <button type="submit" class="btn btn-primary">다음</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

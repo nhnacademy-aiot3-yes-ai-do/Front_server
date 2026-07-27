@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원가입 | MushMush</title>
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <img src="/images/logo1.png" alt="MushMush 로고" class="auth-logo" />
+
+        <div class="auth-body">
+            <p class="auth-subtitle">사용하실 이메일과 비밀번호를 입력해 주세요.</p>
+
+            <form action="/signup-nickname" method="get">
+                <div class="field">
+                    <div class="field-inline">
+                        <input type="email" id="email" name="email" placeholder="you@example.com" required />
+                        <button type="button" class="btn btn-outline btn-inline">중복확인</button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <input type="password" id="password" name="password" placeholder="비밀번호" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary">다음</button>
+            </form>
+
+            <div class="auth-links">
+                <span>이미 계정이 있으신가요?</span>
+                <a href="/login">로그인</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
