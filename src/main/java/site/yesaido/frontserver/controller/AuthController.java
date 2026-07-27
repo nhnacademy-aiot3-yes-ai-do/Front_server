@@ -1,3 +1,4 @@
+// src/main/java/site/yesaido/frontserver/controller/AuthController.java
 package site.yesaido.frontserver.controller;
 
 import jakarta.servlet.http.Cookie;
@@ -27,8 +28,8 @@ public class AuthController {
 
     @GetMapping("/signup-nickname")
     public String signupNicknamePage(@RequestParam String email,
-                                      @RequestParam String password,
-                                      Model model) {
+                                     @RequestParam String password,
+                                     Model model) {
         model.addAttribute("email", email);
         model.addAttribute("password", password);
         return "auth/signup-nickname";
@@ -47,8 +48,8 @@ public class AuthController {
 
     @GetMapping("/reset-password")
     public String resetPasswordPage(@RequestParam String email,
-                                     @RequestParam String code,
-                                     Model model) {
+                                    @RequestParam String code,
+                                    Model model) {
         model.addAttribute("email", email);
         return "auth/reset-password";
     }
@@ -65,9 +66,9 @@ public class AuthController {
 
     @PostMapping("/reset-password")
     public String resetPassword(@RequestParam String email,
-                                 @RequestParam String newPassword,
-                                 @RequestParam String confirmPassword,
-                                 Model model) {
+                                @RequestParam String newPassword,
+                                @RequestParam String confirmPassword,
+                                Model model) {
         model.addAttribute("email", email);
 
         if (!newPassword.equals(confirmPassword)) {
@@ -80,7 +81,7 @@ public class AuthController {
 
     @PostMapping("/logout")
     public String logout(@CookieValue(value = "accessToken", required = false) String accessToken,
-                          HttpServletResponse response) {
+                         HttpServletResponse response) {
         clearAuthCookies(response);
         return "redirect:/login";
     }
