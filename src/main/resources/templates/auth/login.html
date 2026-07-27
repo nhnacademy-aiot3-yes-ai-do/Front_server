@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>로그인 | MushMush</title>
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <img src="/images/logo1.png" alt="MushMush 로고" class="auth-logo" />
+
+        <div class="auth-body">
+            <p class="help-text error" th:if="${loginError}" th:text="${loginError}"></p>
+
+            <form action="/login" method="post">
+                <div class="field">
+                    <input type="email" id="email" name="email" placeholder="이메일" required />
+                </div>
+
+                <div class="field">
+                    <input type="password" id="password" name="password" placeholder="비밀번호" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary">로그인</button>
+            </form>
+
+            <div class="divider">또는</div>
+
+            <button type="button" class="btn btn-secondary">OAuth 로그인</button>
+
+            <div class="auth-links">
+                <a href="/signup">회원가입</a>
+                <span>|</span>
+                <a href="/find-password">비밀번호 찾기</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
