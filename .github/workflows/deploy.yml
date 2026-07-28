@@ -132,7 +132,7 @@ jobs:
           GH_TOKEN: ${{ steps.config-app-token.outputs.token }}
           CONFIG_REPOSITORY: ${{ github.repository_owner }}/Config
 
-          SERVICE_NAME: front-service
+          SERVICE_NAME: front-server
           SOURCE_REPOSITORY: ${{ github.repository }}
           SOURCE_BRANCH: ${{ github.ref_name }}
           SOURCE_COMMIT_SHA: ${{ github.sha }}
