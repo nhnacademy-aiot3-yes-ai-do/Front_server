@@ -55,8 +55,13 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public String login() {
-        return "auth/login";
+    public String login(@RequestParam String email,
+                        @RequestParam String password,
+                        HttpServletResponse response) {
+        // TODO: 백엔드 연동 시 실제 인증 API 호출 결과(성공/실패, 진짜 토큰)로 교체해야 합니다.
+        //       지금은 화면 흐름만 확인하는 용도로 무조건 로그인 성공 처리하고 더미 토큰을 내려줍니다.
+        response.addCookie(buildCookie("accessToken", "demo-access-token", 60 * 60 * 24));
+        return "redirect:/";
     }
 
     @PostMapping("/signup")
@@ -94,7 +99,9 @@ public class AuthController {
     private Cookie buildCookie(String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
-        cookie.setSecure(true);
+        // TODO: 배포(HTTPS) 환경에서는 다시 true로 바꿔야 합니다.
+        //       로컬 http://localhost 개발 중에는 Secure 쿠키가 저장되지 않아 꺼둡니다.
+        cookie.setSecure(false);
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
         return cookie;
