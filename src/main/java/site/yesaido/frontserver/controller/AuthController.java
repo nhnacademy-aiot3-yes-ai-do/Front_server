@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class AuthController {
 
+    private static final String EMAIL_ATTRIBUTE = "email";
+    private static final String REDIRECT_LOGIN = "redirect:/login";
+
     @GetMapping("/login")
     public String loginPage() {
         return "auth/login";
@@ -27,7 +30,7 @@ public class AuthController {
     public String signupNicknamePage(@RequestParam String email,
                                      @RequestParam String password,
                                      Model model) {
-        model.addAttribute("email", email);
+        model.addAttribute(EMAIL_ATTRIBUTE, email);
         model.addAttribute("password", password);
         return "auth/signup-nickname";
     }
@@ -39,7 +42,7 @@ public class AuthController {
 
     @GetMapping("/verify-code")
     public String verifyCodePage(@RequestParam String email, Model model) {
-        model.addAttribute("email", email);
+        model.addAttribute(EMAIL_ATTRIBUTE, email);
         return "auth/verify-code";
     }
 
@@ -47,7 +50,7 @@ public class AuthController {
     public String resetPasswordPage(@RequestParam String email,
                                     @RequestParam String code,
                                     Model model) {
-        model.addAttribute("email", email);
+        model.addAttribute(EMAIL_ATTRIBUTE, email);
         return "auth/reset-password";
     }
 
@@ -61,7 +64,7 @@ public class AuthController {
 
     @PostMapping("/signup")
     public String signup() {
-        return "redirect:/login";
+        return REDIRECT_LOGIN;
     }
 
     @PostMapping("/reset-password")
@@ -69,21 +72,21 @@ public class AuthController {
                                 @RequestParam String newPassword,
                                 @RequestParam String confirmPassword,
                                 Model model) {
-        model.addAttribute("email", email);
+        model.addAttribute(EMAIL_ATTRIBUTE, email);
 
         if (!newPassword.equals(confirmPassword)) {
             model.addAttribute("resetPasswordError", "비밀번호가 일치하지 않습니다.");
             return "auth/reset-password";
         }
 
-        return "redirect:/login";
+        return REDIRECT_LOGIN;
     }
 
     @PostMapping("/logout")
     public String logout(@CookieValue(value = "accessToken", required = false) String accessToken,
                          HttpServletResponse response) {
         clearAuthCookies(response);
-        return "redirect:/login";
+        return REDIRECT_LOGIN;
     }
 
     private void clearAuthCookies(HttpServletResponse response) {
