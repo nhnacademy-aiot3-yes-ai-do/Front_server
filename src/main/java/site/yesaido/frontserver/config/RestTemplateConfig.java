@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.config;
 
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -18,15 +19,21 @@ public class RestTemplateConfig {
     public RestTemplate restTemplate() {
 
         // 커넥션 풀 설정 (선택적이지만 강력하게 추천)
+        // HttpClient5에서는 연결(connect) timeout이 RequestConfig가 아닌
+        // ConnectionConfig(커넥션 매니저 단) 설정으로 옮겨졌습니다.
         PoolingHttpClientConnectionManager connectionManager =
                 PoolingHttpClientConnectionManagerBuilder.create()
                         .setMaxConnTotal(200)
                         .setMaxConnPerRoute(20)
+                        .setDefaultConnectionConfig(
+                                ConnectionConfig.custom()
+                                        .setConnectTimeout(Timeout.ofSeconds(5))  // 연결 timeout
+                                        .build()
+                        )
                         .build();
 
         // 요청 기본 설정 (timeout 등)
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(Timeout.ofSeconds(5))   // 연결 timeout
                 .setResponseTimeout(Timeout.ofSeconds(5))  // 응답 timeout
                 .build();
 
