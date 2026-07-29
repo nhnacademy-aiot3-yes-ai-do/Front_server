@@ -3,6 +3,7 @@ package site.yesaido.frontserver.controller;
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -15,6 +16,11 @@ public class AuthController {
 
     private static final String EMAIL_ATTRIBUTE = "email";
     private static final String REDIRECT_LOGIN = "redirect:/login";
+
+    // 기본값은 안전하게 true(HTTPS 전제). 로컬 http://localhost 개발 중에만
+    // application-local.yaml 등에서 app.cookie.secure=false 로 재정의해서 사용합니다.
+    @Value("${app.cookie.secure:true}")
+    private boolean cookieSecure;
 
     @GetMapping("/login")
     public String loginPage() {
@@ -97,7 +103,7 @@ public class AuthController {
     private Cookie buildCookie(String name, String value, int maxAge) {
         Cookie cookie = new Cookie(name, value);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false);
+        cookie.setSecure(cookieSecure);
         cookie.setPath("/");
         cookie.setMaxAge(maxAge);
         return cookie;
