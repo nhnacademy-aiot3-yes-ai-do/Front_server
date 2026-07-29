@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>내 재배지 | MushMush</title>
+    <link rel="stylesheet" href="/css/cultivation-list.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="topbar-left">
+            <a href="/" class="topbar-logo-link">
+                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
+            </a>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-link" type="button">
+                <i data-lucide="user"></i>내 정보 보기
+            </button>
+            <button class="topbar-link" type="button">
+                <i data-lucide="history"></i>재배 이력
+            </button>
+            <button class="topbar-link topbar-link-danger" type="button">
+                <i data-lucide="log-out"></i>로그아웃
+            </button>
+            <span class="topbar-divider"></span>
+            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+            <span class="topbar-nickname">오인택</span>
+        </div>
+    </div>
+</header>
+
+<div class="page-container">
+
+    <nav class="tabs-nav">
+        <button class="tab-btn active" type="button" onclick="switchTab('cultivation')">
+            <i data-lucide="layout-grid"></i>내 재배지
+        </button>
+        <button class="tab-btn" type="button" onclick="switchTab('sensor')">
+            <i data-lucide="cpu"></i>내 센서
+        </button>
+    </nav>
+
+    <div class="list-panels">
+
+        <!-- 내 재배지 목록 -->
+        <section id="tab-cultivation" class="list-panel active">
+            <div class="list-table-wrap">
+                <table class="list-table">
+                    <thead>
+                    <tr>
+                        <th>Cultivation 이름</th>
+                        <th>버섯 종류</th>
+                        <th>인원</th>
+                        <th>관리자</th>
+                        <th>생성일</th>
+                    </tr>
+                    </thead>
+                    <tbody id="cultivation-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="list-footer">
+                <div class="pagination" id="cultivation-pagination">
+                    <button class="page-arrow" type="button" onclick="changePage('cultivation', -1)">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <div class="page-dots" id="cultivation-dots"></div>
+                    <button class="page-arrow" type="button" onclick="changePage('cultivation', 1)">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
+                </div>
+                <button class="btn btn-primary" type="button" onclick="location.href='/cultivations/new'">
+                    <i data-lucide="plus"></i>새 재배지 생성
+                </button>
+            </div>
+        </section>
+
+        <!-- 내 센서 목록 -->
+        <section id="tab-sensor" class="list-panel">
+            <div class="list-table-wrap">
+                <table class="list-table">
+                    <thead>
+                    <tr>
+                        <th>위치</th>
+                        <th>장소</th>
+                        <th>고유번호</th>
+                        <th>모델명</th>
+                        <th>타입</th>
+                    </tr>
+                    </thead>
+                    <tbody id="sensor-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="list-footer">
+                <div class="pagination" id="sensor-pagination">
+                    <button class="page-arrow" type="button" onclick="changePage('sensor', -1)">
+                        <i data-lucide="chevron-left"></i>
+                    </button>
+                    <div class="page-dots" id="sensor-dots"></div>
+                    <button class="page-arrow" type="button" onclick="changePage('sensor', 1)">
+                        <i data-lucide="chevron-right"></i>
+                    </button>
+                </div>
+                <button class="btn btn-primary" type="button" onclick="openModal('modal-sensor')">
+                    <i data-lucide="plus"></i>센서 등록
+                </button>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<!-- 센서 등록 다이얼로그 -->
+<div class="modal-overlay" id="modal-sensor">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeModal('modal-sensor')">
+            <i data-lucide="x"></i>
+        </button>
+        <h3 class="modal-title">센서 등록</h3>
+
+        <div class="modal-field">
+            <label>위치</label>
+            <input type="text" id="ms-location" placeholder="예: 광주광역시" />
+        </div>
+        <div class="modal-field">
+            <label>장소</label>
+            <input type="text" id="ms-place" placeholder="예: 우리 집" />
+        </div>
+        <div class="modal-field">
+            <label>고유번호</label>
+            <input type="text" id="ms-serial" placeholder="예: 1000090909090" />
+        </div>
+        <div class="modal-field">
+            <label>모델명</label>
+            <input type="text" id="ms-model" placeholder="모델명을 입력하세요" />
+        </div>
+        <div class="modal-field">
+            <label>타입</label>
+            <select id="ms-type">
+                <option value="온도센서">온도센서</option>
+                <option value="습도센서">습도센서</option>
+                <option value="CO2센서">CO2센서</option>
+                <option value="조도센서">조도센서</option>
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-sensor')">Cancel</button>
+            <button class="btn btn-primary" type="button" onclick="registerSensor()">등록</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var PAGE_SIZE = 6;
+
+    // 데모 데이터 (실제로는 서버에서 목록을 받아와야 함)
+    var cultivationData = [
+        { name: 'Cultivation1', type: '느타리버섯', members: 3, admin: 'nickname', createdAt: '2027.07.27' },
+        { name: 'Cultivation2', type: '양송이버섯', members: 5, admin: 'nickname', createdAt: '2027.07.29' },
+        { name: 'Cultivation3', type: '표고버섯', members: 2, admin: 'nickname', createdAt: '2027.08.02' },
+        { name: 'Cultivation4', type: '새송이버섯', members: 4, admin: 'nickname', createdAt: '2027.08.10' },
+        { name: 'Cultivation5', type: '팽이버섯', members: 1, admin: 'nickname', createdAt: '2027.08.15' },
+        { name: 'Cultivation6', type: '양송이버섯', members: 6, admin: 'nickname', createdAt: '2027.08.20' },
+        { name: 'Cultivation7', type: '느타리버섯', members: 3, admin: 'nickname', createdAt: '2027.08.25' },
+        { name: 'Cultivation8', type: '표고버섯', members: 2, admin: 'nickname', createdAt: '2027.09.01' }
+    ];
+
+    var sensorData = [
+        { location: '광주광역시', place: '우리 집', serial: '1000090909090', model: 'kljsdlkafjkl', type: '온도센서' },
+        { location: '광주광역시', place: '우리 집', serial: '1000090909091', model: 'kljsdlkafjkm', type: '습도센서' },
+        { location: '서울특별시', place: '옥상 재배실', serial: '2000012345678', model: 'ab-cd-1234', type: 'CO2센서' }
+    ];
+
+    var listState = {
+        cultivation: { page: 0, data: cultivationData },
+        sensor: { page: 0, data: sensorData }
+    };
+
+    function renderCultivationRow(c) {
+        var tr = document.createElement('tr');
+        tr.onclick = function () { location.href = '/dashboard'; };
+        tr.innerHTML =
+            '<td>' + c.name + '</td>' +
+            '<td>' + c.type + '</td>' +
+            '<td>' + c.members + '</td>' +
+            '<td>' + c.admin + '</td>' +
+            '<td>' + c.createdAt + '</td>';
+        return tr;
+    }
+
+    function renderSensorRow(s) {
+        var tr = document.createElement('tr');
+        tr.innerHTML =
+            '<td>' + s.location + '</td>' +
+            '<td>' + s.place + '</td>' +
+            '<td>' + s.serial + '</td>' +
+            '<td>' + s.model + '</td>' +
+            '<td>' + s.type + '</td>';
+        return tr;
+    }
+
+    var ROW_RENDERERS = { cultivation: renderCultivationRow, sensor: renderSensorRow };
+
+    function renderList(key) {
+        var state = listState[key];
+        var totalPages = Math.max(1, Math.ceil(state.data.length / PAGE_SIZE));
+        state.page = Math.min(state.page, totalPages - 1);
+
+        var tbody = document.getElementById(key + '-tbody');
+        tbody.innerHTML = '';
+        var start = state.page * PAGE_SIZE;
+        state.data.slice(start, start + PAGE_SIZE).forEach(function (item) {
+            tbody.appendChild(ROW_RENDERERS[key](item));
+        });
+
+        var dotsWrap = document.getElementById(key + '-dots');
+        dotsWrap.innerHTML = '';
+        for (var i = 0; i < totalPages; i++) {
+            var dot = document.createElement('span');
+            dot.className = 'page-dot' + (i === state.page ? ' active' : '');
+            dot.onclick = (function (pageIdx) {
+                return function () { state.page = pageIdx; renderList(key); };
+            })(i);
+            dotsWrap.appendChild(dot);
+        }
+
+        var pagination = document.getElementById(key + '-pagination');
+        pagination.style.display = totalPages <= 1 ? 'none' : 'flex';
+    }
+
+    function changePage(key, delta) {
+        var state = listState[key];
+        var totalPages = Math.max(1, Math.ceil(state.data.length / PAGE_SIZE));
+        state.page = Math.max(0, Math.min(totalPages - 1, state.page + delta));
+        renderList(key);
+    }
+
+    lucide.createIcons();
+    renderList('cultivation');
+    renderList('sensor');
+
+    function switchTab(name) {
+        document.querySelectorAll('.tab-btn').forEach(function (btn) { btn.classList.remove('active'); });
+        document.querySelectorAll('.list-panel').forEach(function (panel) { panel.classList.remove('active'); });
+        event.currentTarget.classList.add('active');
+        document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    function openModal(id) {
+        document.getElementById(id).classList.add('is-open');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('is-open');
+    }
+
+    function registerSensor() {
+        var location = document.getElementById('ms-location').value.trim();
+        var place = document.getElementById('ms-place').value.trim();
+        var serial = document.getElementById('ms-serial').value.trim();
+        var model = document.getElementById('ms-model').value.trim();
+        var type = document.getElementById('ms-type').value;
+
+        if (!location || !place || !serial || !model) return;
+
+        sensorData.push({ location: location, place: place, serial: serial, model: model, type: type });
+        listState.sensor.page = Math.max(0, Math.ceil(sensorData.length / PAGE_SIZE) - 1);
+        renderList('sensor');
+
+        ['ms-location', 'ms-place', 'ms-serial', 'ms-model'].forEach(function (id) {
+            document.getElementById(id).value = '';
+        });
+        closeModal('modal-sensor');
+    }
+</script>
+
+</body>
+</html>

@@ -25,7 +25,7 @@ body {
     color: var(--ink);
     background: #f3ead4 url("../images/mainback.jpg") center center / cover no-repeat fixed;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     padding: 40px 16px;
 }
@@ -137,7 +137,8 @@ body::before {
     display: flex;
     align-items: center;
     gap: 14px;
-    margin-bottom: 16px;
+    margin-bottom: 48px;
+    margin-top: -60px;
 }
 
 .profile-row .avatar-upload {

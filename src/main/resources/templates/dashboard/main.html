@@ -1,0 +1,503 @@
+<!-- templates/dashboard/main.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>재배 대시보드 | MushMush</title>
+    <link rel="stylesheet" href="/css/dashboard.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="topbar-left">
+            <a href="/" class="topbar-logo-link">
+                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
+            </a>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-link" type="button">
+                <i data-lucide="user"></i>내 정보 보기
+            </button>
+            <button class="topbar-link" type="button">
+                <i data-lucide="history"></i>재배 이력
+            </button>
+            <button class="topbar-link topbar-link-danger" type="button">
+                <i data-lucide="log-out"></i>로그아웃
+            </button>
+            <span class="topbar-divider"></span>
+            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+            <span class="topbar-nickname">오인택</span>
+        </div>
+    </div>
+</header>
+
+<div class="page-container">
+
+    <nav class="tabs-nav">
+        <button class="tab-btn active" type="button" onclick="switchTab('main')"><i data-lucide="layout-dashboard"></i>Main</button>
+        <button class="tab-btn" type="button" onclick="switchTab('report')"><i data-lucide="sparkles"></i>AI report</button>
+    </nav>
+
+    <div class="tab-panels">
+
+    <section id="tab-main" class="tab-panel active">
+
+        <div class="main-row">
+
+            <!-- 사진 카드 -->
+            <div class="card photo-card">
+                <div class="photo-placeholder" id="photo-placeholder">
+                    <i data-lucide="image" style="width:48px;height:48px;"></i>
+                    <span>등록된 사진이 없습니다</span>
+                </div>
+                <img id="photo-preview-img" src="" alt="재배 사진" style="display:none;" />
+
+                <button class="photo-settings-btn" type="button" onclick="openModal('modal-settings')">
+                    <i data-lucide="settings" style="width:20px;height:20px;"></i>
+                </button>
+            </div>
+
+            <!-- 센서 컬럼 -->
+            <div class="sensor-col">
+                <div class="sensor-rows">
+                    <div class="card sensor-row">
+                        <i data-lucide="thermometer" class="sensor-icon"></i>
+                        <div class="sensor-main">
+                            <select onchange="updateSensor(this, 'temp')">
+                                <option>온도센서1</option>
+                                <option>온도센서2</option>
+                                <option selected>온도센서3</option>
+                            </select>
+                            <div class="sensor-value">20°C</div>
+                        </div>
+                    </div>
+                    <div class="card sensor-row">
+                        <i data-lucide="droplet" class="sensor-icon"></i>
+                        <div class="sensor-main">
+                            <select onchange="updateSensor(this, 'humidity')">
+                                <option selected>습도센서1</option>
+                                <option>습도센서2</option>
+                            </select>
+                            <div class="sensor-value">61%</div>
+                        </div>
+                    </div>
+                    <div class="card sensor-row">
+                        <i data-lucide="cloudy" class="sensor-icon"></i>
+                        <div class="sensor-main">
+                            <select onchange="updateSensor(this, 'co2')">
+                                <option>CO2센서1</option>
+                                <option selected>CO2센서2</option>
+                            </select>
+                            <div class="sensor-value">530ppm</div>
+                        </div>
+                    </div>
+                    <div class="card sensor-row">
+                        <i data-lucide="sun" class="sensor-icon"></i>
+                        <div class="sensor-main">
+                            <select onchange="updateSensor(this, 'light')">
+                                <option selected>조도센서1</option>
+                                <option>조도센서2</option>
+                            </select>
+                            <div class="sensor-value">350lux</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sensor-extras">
+                    <div class="pest-badge">
+                        <i data-lucide="shield-check" style="width:14px;height:14px;"></i>
+                        병충해 여부 : 안전
+                    </div>
+                </div>
+            </div>
+
+            <!-- 환경통계 카드 + 그래프 카드 (분리) -->
+            <div class="stats-col">
+                <div class="card env-stats-card">
+                    <div>
+                        <div class="card-title">환경 통계<span class="env-stats-sub">최근 24시간 평균</span></div>
+                        <div class="env-stat-grid">
+                            <div class="env-stat-item">
+                                <i data-lucide="thermometer" class="env-stat-icon"></i>
+                                <span class="env-stat-label">평균 온도</span>
+                                <span class="env-stat-value">19°C</span>
+                            </div>
+                            <div class="env-stat-item">
+                                <i data-lucide="droplet" class="env-stat-icon"></i>
+                                <span class="env-stat-label">평균 습도</span>
+                                <span class="env-stat-value">60%</span>
+                            </div>
+                            <div class="env-stat-item">
+                                <i data-lucide="cloudy" class="env-stat-icon"></i>
+                                <span class="env-stat-label">평균 CO2</span>
+                                <span class="env-stat-value">505ppm</span>
+                            </div>
+                            <div class="env-stat-item">
+                                <i data-lucide="sun" class="env-stat-icon"></i>
+                                <span class="env-stat-label">평균 조도</span>
+                                <span class="env-stat-value">380lux</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card chart-card">
+                    <div class="chart-card-header">
+                        <select>
+                            <optgroup label="온도">
+                                <option>온도센서1</option>
+                                <option>온도센서2</option>
+                                <option selected>온도센서3</option>
+                            </optgroup>
+                            <optgroup label="습도">
+                                <option>습도센서1</option>
+                                <option>습도센서2</option>
+                            </optgroup>
+                            <optgroup label="CO2">
+                                <option>CO2센서1</option>
+                                <option>CO2센서2</option>
+                            </optgroup>
+                            <optgroup label="조도">
+                                <option>조도센서1</option>
+                                <option>조도센서2</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="chart-placeholder">
+                        <svg viewBox="0 0 260 110" class="chart-demo-svg" preserveAspectRatio="none">
+                            <defs>
+                                <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="var(--sage-500)" stop-opacity="0.35" />
+                                    <stop offset="100%" stop-color="var(--sage-500)" stop-opacity="0" />
+                                </linearGradient>
+                            </defs>
+                            <polyline class="chart-grid-line" points="0,20 260,20" />
+                            <polyline class="chart-grid-line" points="0,55 260,55" />
+                            <polyline class="chart-grid-line" points="0,90 260,90" />
+                            <polygon fill="url(#chartFill)" points="0,80 32,62 65,70 98,40 130,50 163,25 195,35 228,18 260,28 260,110 0,110" />
+                            <polyline class="chart-demo-line" fill="none" points="0,80 32,62 65,70 98,40 130,50 163,25 195,35 228,18 260,28" />
+                            <circle class="chart-demo-dot" cx="228" cy="18" r="4.5" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI 챗봇 카드 -->
+            <div class="card chatbot-card">
+                <div class="chatbot-wrap">
+                    <div class="chatbot-header">
+                        <img src="/images/chatbot.png" alt="MushMush 챗봇" class="chatbot-avatar" />
+                        <div>
+                            <div class="chatbot-title">MushMush 챗봇</div>
+                            <div class="chatbot-subtitle">재배 관련 궁금한 점을 물어보세요</div>
+                        </div>
+                    </div>
+
+                    <div class="chatbot-messages" id="chatbot-messages">
+                        <div class="chat-message bot">
+                            <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
+                            <div class="chat-bubble">안녕하세요! 양송이 1번 재배지에 대해 무엇이든 물어보세요 🍄</div>
+                        </div>
+                        <div class="chat-message user">
+                            <div class="chat-bubble">지금 온도는 적당한가요?</div>
+                        </div>
+                        <div class="chat-message bot">
+                            <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
+                            <div class="chat-bubble">네! 현재 20°C로 양송이 재배에 적합한 범위예요.</div>
+                        </div>
+                    </div>
+
+                    <form class="chatbot-input-row" onsubmit="sendChatMessage(event)">
+                        <input type="text" id="chatbot-input" placeholder="메시지를 입력하세요" autocomplete="off" />
+                        <button class="icon-btn" type="submit" title="전송">
+                            <i data-lucide="send"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bottom-row">
+            <div class="site-name-box"><i data-lucide="sprout" style="width:18px;height:18px;"></i>양송이 1번 재배지</div>
+
+            <div class="action-bar">
+
+            <div class="dropdown-panel" id="member-panel">
+                <div class="dropdown-panel-title">
+                    담당자 관리
+                    <button type="button" title="추가">
+                        <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
+                    </button>
+                </div>
+                <div class="member-row">
+                    <div class="member-avatar"><i data-lucide="circle-user-round" style="width:20px;height:20px;"></i></div>
+                    <div class="member-info">
+                        <span class="member-name">nickname</span>
+                        <span class="member-role">admin</span>
+                    </div>
+                </div>
+                <div class="member-row">
+                    <div class="member-avatar"><i data-lucide="circle-user-round" style="width:20px;height:20px;"></i></div>
+                    <div class="member-info">
+                        <span class="member-name">nickname2</span>
+                        <span class="member-role">member</span>
+                    </div>
+                    <button class="member-remove" type="button" title="제거">
+                        <i data-lucide="user-minus" style="width:18px;height:18px;"></i>
+                    </button>
+                </div>
+                <div class="member-row">
+                    <div class="member-avatar"><i data-lucide="circle-user-round" style="width:20px;height:20px;"></i></div>
+                    <div class="member-info">
+                        <span class="member-name">nickname3</span>
+                        <span class="member-role">member</span>
+                    </div>
+                    <button class="member-remove" type="button" title="제거">
+                        <i data-lucide="user-minus" style="width:18px;height:18px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="dropdown-panel" id="notif-panel">
+                <div class="dropdown-panel-title">알림</div>
+                <div class="notif-row">알림 1</div>
+                <div class="notif-row">알림 2</div>
+                <div class="notif-row">알림 3</div>
+                <div class="notif-row">알림 4</div>
+                <div class="notif-row">알림 5</div>
+            </div>
+
+            <button class="btn btn-primary" type="button" onclick="openModal('modal-harvest')">
+                중간 재배
+            </button>
+            <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
+                <i data-lucide="users"></i>
+            </button>
+            <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
+                <i data-lucide="bell"></i>
+            </button>
+            <button class="icon-btn danger" type="button" title="종료하기" onclick="openModal('modal-end')">
+                <i data-lucide="power"></i>
+            </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="tab-report" class="tab-panel">
+        <div class="tab-placeholder">AI report 화면은 다음 단계에서 만들 예정입니다.</div>
+    </section>
+
+    </div>
+
+</div>
+
+<!-- 사진 업로드 + 환경 설정 다이얼로그 -->
+<div class="modal-overlay" id="modal-settings">
+    <div class="modal-box modal-box-wide">
+        <button class="modal-close" type="button" onclick="closeModal('modal-settings')">
+            <i data-lucide="x"></i>
+        </button>
+        <h3 class="modal-title">환경 설정</h3>
+
+        <div class="settings-modal-grid">
+            <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
+                <i data-lucide="upload" style="width:28px;height:28px;"></i>
+            </div>
+            <input type="file" id="settings-photo-input" accept="image/*" onchange="previewPhoto(this)" style="display:none;" />
+
+            <div class="settings-sensor-list">
+                <div class="settings-sensor-row">
+                    <span id="settings-sensor-icon-wrap"><i data-lucide="thermometer" style="width:20px;height:20px;"></i></span>
+                    <select id="settings-sensor-select" onchange="updateSettingsSensorIcon(this)">
+                        <optgroup label="온도">
+                            <option data-icon="thermometer">온도센서1</option>
+                            <option data-icon="thermometer">온도센서2</option>
+                            <option data-icon="thermometer" selected>온도센서3</option>
+                        </optgroup>
+                        <optgroup label="습도">
+                            <option data-icon="droplet">습도센서1</option>
+                            <option data-icon="droplet">습도센서2</option>
+                        </optgroup>
+                        <optgroup label="CO2">
+                            <option data-icon="cloudy">CO2센서1</option>
+                            <option data-icon="cloudy">CO2센서2</option>
+                        </optgroup>
+                        <optgroup label="조도">
+                            <option data-icon="sun">조도센서1</option>
+                            <option data-icon="sun">조도센서2</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
+
+            <div class="settings-threshold">
+                <label>최고값</label>
+                <input type="number" value="365" />
+                <label>최저값</label>
+                <input type="number" value="365" />
+                <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
+                    <i data-lucide="circle-check"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 종료 확인 다이얼로그 -->
+<div class="modal-overlay" id="modal-end">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeModal('modal-end')">
+            <i data-lucide="x"></i>
+        </button>
+        <h3 class="modal-title">종료하기</h3>
+        <p class="modal-desc">정말 재배를 종료하시겠습니까?</p>
+        <div class="modal-actions">
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-end')">Cancel</button>
+            <button class="btn btn-primary" type="button" onclick="closeModal('modal-end')">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- 중간 재배(재배량/메모) 다이얼로그 -->
+<div class="modal-overlay" id="modal-harvest">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeModal('modal-harvest')">
+            <i data-lucide="x"></i>
+        </button>
+        <h3 class="modal-title">중간 재배 기록</h3>
+        <div class="modal-field">
+            <label>재배량 (g)</label>
+            <input type="number" placeholder="예: 120" />
+        </div>
+        <div class="modal-field">
+            <label>재배 메모</label>
+            <textarea rows="3" placeholder="메모를 입력하세요"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-harvest')">Cancel</button>
+            <button class="btn btn-primary" type="button" onclick="closeModal('modal-harvest'); openModal('modal-summary')">OK</button>
+        </div>
+    </div>
+</div>
+
+<!-- 총 재배 요약 다이얼로그 -->
+<div class="modal-overlay" id="modal-summary">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeModal('modal-summary')">
+            <i data-lucide="x"></i>
+        </button>
+        <p class="modal-desc" style="margin-bottom:20px;">
+            현재까지 총 재배량은 00g 이며,<br />재배횟수는 00번 입니다.
+        </p>
+        <div class="modal-actions">
+            <button class="btn btn-primary" type="button" onclick="closeModal('modal-summary')">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    var SENSOR_DATA = {
+        temp: { '온도센서1': '18°C', '온도센서2': '19°C', '온도센서3': '20°C' },
+        humidity: { '습도센서1': '61%', '습도센서2': '58%' },
+        co2: { 'CO2센서1': '480ppm', 'CO2센서2': '530ppm' },
+        light: { '조도센서1': '350lux', '조도센서2': '410lux' }
+    };
+
+    function updateSensor(selectEl, type) {
+        var valueEl = selectEl.closest('.sensor-main').querySelector('.sensor-value');
+        valueEl.textContent = SENSOR_DATA[type][selectEl.value];
+    }
+
+    var CHATBOT_REPLIES = [
+        '음... 조금 더 지켜봐야 할 것 같아요 🍄',
+        '좋은 질문이네요! 조만간 더 자세히 알려드릴게요.',
+        '현재 재배 환경은 전반적으로 안정적이에요.',
+        '알겠어요, 계속 모니터링해서 알려드릴게요!'
+    ];
+
+    function sendChatMessage(event) {
+        event.preventDefault();
+        var input = document.getElementById('chatbot-input');
+        var text = input.value.trim();
+        if (!text) return;
+
+        var list = document.getElementById('chatbot-messages');
+
+        var userMsg = document.createElement('div');
+        userMsg.className = 'chat-message user';
+        userMsg.innerHTML = '<div class="chat-bubble"></div>';
+        userMsg.querySelector('.chat-bubble').textContent = text;
+        list.appendChild(userMsg);
+
+        input.value = '';
+        list.scrollTop = list.scrollHeight;
+
+        window.setTimeout(function () {
+            var reply = CHATBOT_REPLIES[Math.floor(Math.random() * CHATBOT_REPLIES.length)];
+            var botMsg = document.createElement('div');
+            botMsg.className = 'chat-message bot';
+            botMsg.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble"></div>';
+            botMsg.querySelector('.chat-bubble').textContent = reply;
+            list.appendChild(botMsg);
+            list.scrollTop = list.scrollHeight;
+        }, 500);
+    }
+
+    function updateSettingsSensorIcon(selectEl) {
+        var iconName = selectEl.options[selectEl.selectedIndex].dataset.icon;
+        var wrap = document.getElementById('settings-sensor-icon-wrap');
+        wrap.innerHTML = '<i data-lucide="' + iconName + '" style="width:20px;height:20px;"></i>';
+        lucide.createIcons();
+    }
+
+    function switchTab(name) {
+        document.querySelectorAll('.tab-btn').forEach(function (btn) {
+            btn.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-panel').forEach(function (panel) {
+            panel.classList.remove('active');
+        });
+        event.currentTarget.classList.add('active');
+        document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    function togglePanel(id) {
+        var panel = document.getElementById(id);
+        var isOpen = panel.classList.contains('is-open');
+        document.querySelectorAll('.dropdown-panel').forEach(function (p) {
+            p.classList.remove('is-open');
+        });
+        if (!isOpen) {
+            panel.classList.add('is-open');
+        }
+    }
+
+    function openModal(id) {
+        document.getElementById(id).classList.add('is-open');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('is-open');
+    }
+
+    function previewPhoto(input) {
+        if (!input.files || !input.files[0]) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            document.getElementById('photo-upload-preview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;" />';
+            document.getElementById('photo-preview-img').src = e.target.result;
+            document.getElementById('photo-preview-img').style.display = 'block';
+            document.getElementById('photo-placeholder').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+</script>
+
+</body>
+</html>

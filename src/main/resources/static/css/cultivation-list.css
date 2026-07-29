@@ -1,0 +1,418 @@
+/* static/css/cultivation-list.css */
+@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
+
+:root {
+    --brown-900: #3f2a1d;
+    --brown-700: #6b4a30;
+    --brown-500: #8b5e3c;
+    --brown-300: #c9a97c;
+    --cream-100: #fbf6ea;
+    --cream-200: #f3ead4;
+    --sage-500: #7c9473;
+    --sage-600: #66805c;
+    --ink: #4a3b2e;
+    --danger: #c0574a;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: clamp(14px, 0.65vw + 6px, 30px); }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
+    color: var(--ink);
+    background: var(--cream-200) url("../images/workspaceback.jpg") center center / cover no-repeat fixed;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== Topbar (dashboard.css / cultivation-create.css 와 동일) ===== */
+.topbar {
+    flex-shrink: 0;
+    height: 5.5rem;
+    background: rgba(251, 246, 234, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 2px solid rgba(139, 94, 60, 0.25);
+    color: var(--brown-900);
+}
+
+.topbar-inner {
+    width: min(96vw, 2100px);
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.topbar-logo-link {
+    display: block;
+    line-height: 0;
+    transition: opacity 0.15s ease;
+}
+
+.topbar-logo-link:hover {
+    opacity: 0.85;
+}
+
+.topbar-logo {
+    height: 5.6rem;
+    width: auto;
+    display: block;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.topbar-nickname {
+    font-size: 1rem;
+    color: var(--brown-900);
+}
+
+.topbar-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    padding: 0.5rem 0.6rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brown-700);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.topbar-link svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--sage-600);
+}
+
+.topbar-link:hover {
+    background: rgba(139, 94, 60, 0.08);
+    color: var(--brown-900);
+}
+
+.topbar-link-danger { color: var(--danger); }
+.topbar-link-danger svg { color: var(--danger); }
+.topbar-link-danger:hover { background: rgba(192, 87, 74, 0.1); }
+
+.topbar-divider {
+    width: 2px;
+    height: 1.6rem;
+    background: rgba(139, 94, 60, 0.2);
+    margin: 0 0.4rem;
+}
+
+.avatar-circle {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--sage-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(251, 246, 234, 0.35);
+}
+
+.avatar-circle svg { width: 65%; height: 65%; }
+
+/* ===== page container ===== */
+.page-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: min(94vw, 2100px);
+    margin: 1.6rem auto;
+}
+
+/* ===== Tabs (dashboard.css 와 동일 스타일) ===== */
+.tabs-nav {
+    display: flex;
+    gap: 4px;
+}
+
+.tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: none;
+    background: rgba(251, 246, 234, 0.4);
+    padding: 0.8rem 1.8rem;
+    font-family: "Gaegu", inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--brown-700);
+    cursor: pointer;
+    border-radius: 14px 14px 0 0;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tab-btn svg { width: 1.05rem; height: 1.05rem; opacity: 0.75; }
+
+.tab-btn:hover:not(.active) {
+    background: rgba(251, 246, 234, 0.6);
+    color: var(--brown-900);
+}
+
+.tab-btn.active {
+    color: var(--brown-900);
+    background: rgba(251, 246, 234, 0.8);
+    backdrop-filter: blur(6px);
+    box-shadow: inset 0 3px 0 var(--sage-500);
+}
+
+.tab-btn.active svg { opacity: 1; color: var(--sage-600); }
+
+/* ===== list box ===== */
+.list-panels { display: grid; }
+
+.list-panel {
+    grid-area: 1 / 1;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: rgba(251, 246, 234, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.15);
+    border-radius: 0 20px 20px 20px;
+    padding: 1.8rem;
+    transition: opacity 0.2s ease;
+    /* 한 페이지 6개(헤더 1줄 + 데이터 6줄) + footer 기준으로 고정 :
+       목록 개수와 상관없이 상자 크기가 항상 같도록 함 (넘치는 항목은 페이징 처리) */
+    height: 33rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.list-panel.active {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ===== table ===== */
+/* 페이지마다 실제 행 개수가 달라져도(마지막 페이지 등) 높이가 항상 동일하도록 고정 :
+   행이 적으면 남는 공간은 그냥 빈 공간으로 둠 (버튼/페이지네이션 위치가 흔들리지 않게) */
+.list-table-wrap {
+    height: 24rem;
+    border: 2px solid rgba(139, 94, 60, 0.18);
+    border-radius: 14px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex-shrink: 0;
+}
+
+.list-table-wrap::-webkit-scrollbar { width: 8px; }
+.list-table-wrap::-webkit-scrollbar-thumb { background: var(--brown-300); border-radius: 8px; }
+.list-table-wrap::-webkit-scrollbar-track { background: transparent; }
+
+.list-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.list-table thead th {
+    background: rgba(139, 94, 60, 0.1);
+    color: var(--brown-700);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: left;
+    padding: 0.9rem 1.1rem;
+}
+
+.list-table tbody td {
+    padding: 0.9rem 1.1rem;
+    font-size: 0.9rem;
+    color: var(--ink);
+    border-top: 1px solid rgba(139, 94, 60, 0.14);
+}
+
+.list-table tbody tr {
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.list-table tbody tr:hover {
+    background: rgba(124, 148, 115, 0.1);
+}
+
+#tab-sensor .list-table tbody tr {
+    cursor: default;
+}
+
+#tab-sensor .list-table tbody tr:hover {
+    background: none;
+}
+
+/* ===== footer ===== */
+/* 버튼은 항상 우측 하단 고정, 페이지네이션은 버튼/내용과 무관하게 footer 정중앙에 절대배치 */
+.list-footer {
+    position: relative;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    min-height: 2.8rem;
+    margin-top: auto;
+    padding-top: 1.4rem;
+}
+
+.pagination {
+    position: absolute;
+    left: 50%;
+    top: calc(50% + 0.7rem);
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.page-arrow {
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--brown-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.page-arrow svg { width: 1.1rem; height: 1.1rem; }
+
+.page-arrow:hover {
+    background: rgba(139, 94, 60, 0.1);
+    color: var(--brown-900);
+}
+
+.page-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.page-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--brown-300);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.page-dot:hover { transform: scale(1.2); }
+
+.page-dot.active { background: var(--sage-500); }
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.8rem 1.5rem;
+    font-family: "Gaegu", inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    border: 2px solid var(--brown-900);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
+.btn-primary:hover { background: var(--sage-600); }
+
+.btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); }
+.btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
+
+/* ===== modal (다른 페이지와 동일 패턴) ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(63, 42, 29, 0.35);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-overlay.is-open { display: flex; }
+
+.modal-box {
+    background: var(--cream-100);
+    border: 2px solid var(--brown-300);
+    border-radius: 20px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 86vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(63, 42, 29, 0.25);
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--brown-500);
+}
+
+.modal-title {
+    font-family: "Gaegu", inherit;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin: 0 0 18px;
+}
+
+.modal-field { margin-bottom: 14px; }
+
+.modal-field label {
+    display: block;
+    font-size: 13px;
+    color: var(--brown-700);
+    margin-bottom: 6px;
+}
+
+.modal-field input,
+.modal-field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--brown-300);
+    border-radius: 10px;
+    font-family: inherit;
+    background: #fff;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}

@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -70,10 +71,30 @@ class AuthControllerTest {
     }
 
     @Test
-    void loginSubmissionReturnsLoginView() throws Exception {
+    void loginSubmissionSetsAccessTokenCookieAndRedirectsToHome() throws Exception {
+        MvcResult result = mockMvc.perform(post("/login")
+                        .param("email", "user@example.com")
+                        .param("password", "secret"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"))
+                .andReturn();
+
+        Cookie accessToken = result.getResponse().getCookie("accessToken");
+
+        assertNotNull(accessToken);
+        assertAll(
+                () -> assertEquals("demo-access-token", accessToken.getValue()),
+                () -> assertEquals(60 * 60 * 24, accessToken.getMaxAge()),
+                () -> assertEquals("/", accessToken.getPath()),
+                () -> assertTrue(accessToken.isHttpOnly()),
+                () -> assertFalse(accessToken.getSecure())
+        );
+    }
+
+    @Test
+    void loginSubmissionWithoutCredentialsReturnsBadRequest() throws Exception {
         mockMvc.perform(post("/login"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("auth/login"));
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -132,6 +153,6 @@ class AuthControllerTest {
         assertEquals(0, cookie.getMaxAge());
         assertEquals("/", cookie.getPath());
         assertTrue(cookie.isHttpOnly());
-        assertTrue(cookie.getSecure());
+        assertFalse(cookie.getSecure());
     }
 }
