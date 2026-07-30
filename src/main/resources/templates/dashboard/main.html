@@ -1,6 +1,6 @@
 <!-- templates/dashboard/main.html -->
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -510,7 +510,8 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
+    var CULTIVATION_ID = /*[[${cultivation.cultivationId}]]*/ 0;
     lucide.createIcons();
 
     function logout() {
@@ -643,24 +644,33 @@
         renderNotifPanel();
     }
 
-    // 담당자 목록 (데모 데이터, 실제로는 서버에서 받아와야 함)
-    var memberData = [
-        { id: 1, nickname: 'nickname', role: 'admin', email: 'nickname@example.com' },
-        { id: 2, nickname: 'nickname2', role: 'member', email: 'nickname2@example.com' },
-        { id: 3, nickname: 'nickname3', role: 'member', email: 'nickname3@example.com' },
-        { id: 4, nickname: 'nickname4', role: 'member', email: 'nickname4@example.com' },
-        { id: 5, nickname: 'nickname5', role: 'member', email: 'nickname5@example.com' },
-        { id: 6, nickname: 'nickname6', role: 'member', email: 'nickname6@example.com' }
-    ];
+    // 담당자 목록 (서버에서 주입된 실제 데이터)
+    var memberData = /*[[${members}]]*/ [];
+
     var MEMBER_PAGE_SIZE = 4;
     var memberState = { page: 0 };
+
+    function roleLabel(role) {
+        if (role === 'OWNER') return '소유자';
+        if (role === 'MANAGER') return '매니저';
+        return '멤버';
+    }
+
+    function refreshMembers() {
+        fetch('/cultivations/' + CULTIVATION_ID + '/members')
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                memberData = data;
+                renderMemberPanel();
+            });
+    }
 
     function renderMemberRow(m) {
         var row = document.createElement('div');
         row.className = 'member-row';
 
-        var removeBtn = m.role === 'admin' ? '' :
-            '<button class="member-remove" type="button" title="제거" onclick="removeMember(' + m.id + ')">' +
+        var removeBtn = m.role === 'OWNER' ? '' :
+            '<button class="member-remove" type="button" title="제거" onclick="removeMember(' + m.userId + ')">' +
             '<i data-lucide="user-minus" style="width:18px;height:18px;"></i></button>';
 
         row.innerHTML =
@@ -670,7 +680,7 @@
             '<span class="member-role"></span>' +
             '</div>' + removeBtn;
         row.querySelector('.member-name').textContent = m.nickname;
-        row.querySelector('.member-role').textContent = m.role;
+        row.querySelector('.member-role').textContent = roleLabel(m.role);
         return row;
     }
 
@@ -701,21 +711,14 @@
         renderMemberPanel();
     }
 
-    function removeMember(id) {
-        memberData = memberData.filter(function (m) { return m.id !== id; });
-        renderMemberPanel();
+    function removeMember(userId) {
+        fetch('/cultivations/' + CULTIVATION_ID + '/members/' + userId, { method: 'DELETE' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('remove failed');
+                refreshMembers();
+            })
+            .catch(function () { alert('담당자 제거에 실패했습니다.'); });
     }
-
-    // 담당자 추가: 검색 대상이 될 사용자 풀 (데모 데이터, 실제로는 서버 검색 API로 대체)
-    var USER_DIRECTORY = [
-        { id: 101, nickname: '버섯매니아', email: 'mush.lover@example.com' },
-        { id: 102, nickname: '느타리킹', email: 'oyster.king@example.com' },
-        { id: 103, nickname: '표고러버', email: 'shiitake.fan@example.com' },
-        { id: 104, nickname: '팽이대장', email: 'enoki.boss@example.com' },
-        { id: 105, nickname: '양송이집사', email: 'button.mushroom@example.com' },
-        { id: 106, nickname: 'nickname9', email: 'nickname9@example.com' }
-    ];
-    var nextMemberId = 200;
 
     function openMemberAddModal() {
         document.getElementById('member-search-input').value = '';
@@ -733,48 +736,48 @@
             return;
         }
 
-        var isEmailSearch = query.indexOf('@') !== -1;
-        var lowerQuery = query.toLowerCase();
+        fetch('/cultivations/' + CULTIVATION_ID + '/members/search?keyword=' + encodeURIComponent(query))
+            .then(function (res) { return res.json(); })
+            .then(function (matches) {
+                var existingUserIds = memberData.map(function (m) { return m.userId; });
+                matches = matches.filter(function (u) { return existingUserIds.indexOf(u.userId) === -1; });
 
-        var matches = USER_DIRECTORY.filter(function (u) {
-            var alreadyMember = memberData.some(function (m) { return m.email.toLowerCase() === u.email.toLowerCase(); });
-            if (alreadyMember) return false;
+                if (matches.length === 0) {
+                    resultsEl.innerHTML = '<div class="member-search-hint">검색 결과가 없습니다.</div>';
+                    return;
+                }
 
-            if (isEmailSearch) {
-                return u.email.toLowerCase() === lowerQuery;
-            }
-            return u.nickname.toLowerCase().indexOf(lowerQuery) !== -1;
-        });
-
-        if (matches.length === 0) {
-            resultsEl.innerHTML = '<div class="member-search-hint">검색 결과가 없습니다.</div>';
-            return;
-        }
-
-        resultsEl.innerHTML = '';
-        matches.forEach(function (u) {
-            var row = document.createElement('div');
-            row.className = 'member-search-row';
-            row.innerHTML =
-                '<div class="member-avatar"><i data-lucide="circle-user-round" style="width:20px;height:20px;"></i></div>' +
-                '<div class="member-search-info">' +
-                '<span class="member-name"></span>' +
-                '<span class="member-email"></span>' +
-                '</div>' +
-                '<button class="member-search-add" type="button">추가</button>';
-            row.querySelector('.member-name').textContent = u.nickname;
-            row.querySelector('.member-email').textContent = u.email;
-            row.querySelector('.member-search-add').onclick = function () { addMember(u); };
-            resultsEl.appendChild(row);
-        });
-        lucide.createIcons();
+                resultsEl.innerHTML = '';
+                matches.forEach(function (u) {
+                    var row = document.createElement('div');
+                    row.className = 'member-search-row';
+                    row.innerHTML =
+                        '<div class="member-avatar"><i data-lucide="circle-user-round" style="width:20px;height:20px;"></i></div>' +
+                        '<div class="member-search-info">' +
+                        '<span class="member-name"></span>' +
+                        '<span class="member-email"></span>' +
+                        '</div>' +
+                        '<button class="member-search-add" type="button">추가</button>';
+                    row.querySelector('.member-name').textContent = u.nickname;
+                    row.querySelector('.member-search-add').onclick = function () { addMember(u); };
+                    resultsEl.appendChild(row);
+                });
+                lucide.createIcons();
+            });
     }
 
     function addMember(u) {
-        memberData.push({ id: nextMemberId++, nickname: u.nickname, role: 'member', email: u.email });
-        memberState.page = Math.max(0, Math.ceil(memberData.length / MEMBER_PAGE_SIZE) - 1);
-        renderMemberPanel();
-        searchMemberCandidates();
+        fetch('/cultivations/' + CULTIVATION_ID + '/members', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: u.userId })
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error('add failed');
+                refreshMembers();
+                searchMemberCandidates();
+            })
+            .catch(function () { alert('담당자 추가에 실패했습니다.'); });
     }
 
     // ===== AI report 탭: 일자별 리포트 =====
