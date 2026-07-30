@@ -5,9 +5,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import site.yesaido.frontserver.dto.cultivation.response.UserSearchResponse;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
+
+import java.util.List;
 
 @FeignClient(name = "userClient", url = "${feign.client.gateway.url}")
 public interface UserClient {
@@ -27,5 +30,7 @@ public interface UserClient {
     @PostMapping("/auth/login")
     TokenResponse login(@RequestBody LoginRequest requestDto);
 
-
+    // 5. 재배 멤버 초대용 사용자 검색
+    @GetMapping("/users/search")
+    List<UserSearchResponse> search(@RequestParam("keyword") String keyword);
 }
