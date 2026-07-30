@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -156,29 +156,15 @@
     </div>
 </div>
 
-<script>
-    function logout() {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/logout';
-        document.body.appendChild(form);
-        form.submit();
-    }
+<script th:inline="javascript">
+    lucide.createIcons();
 
     var PAGE_SIZE = 6;
 
-    // 데모 데이터 (실제로는 서버에서 목록을 받아와야 함)
-    var cultivationData = [
-        { name: 'Cultivation1', type: '느타리버섯', members: 3, admin: 'nickname', createdAt: '2027.07.27' },
-        { name: 'Cultivation2', type: '양송이버섯', members: 5, admin: 'nickname', createdAt: '2027.07.29' },
-        { name: 'Cultivation3', type: '표고버섯', members: 2, admin: 'nickname', createdAt: '2027.08.02' },
-        { name: 'Cultivation4', type: '새송이버섯', members: 4, admin: 'nickname', createdAt: '2027.08.10' },
-        { name: 'Cultivation5', type: '팽이버섯', members: 1, admin: 'nickname', createdAt: '2027.08.15' },
-        { name: 'Cultivation6', type: '양송이버섯', members: 6, admin: 'nickname', createdAt: '2027.08.20' },
-        { name: 'Cultivation7', type: '느타리버섯', members: 3, admin: 'nickname', createdAt: '2027.08.25' },
-        { name: 'Cultivation8', type: '표고버섯', members: 2, admin: 'nickname', createdAt: '2027.09.01' }
-    ];
+    // 서버에서 내려준 실제 재배 목록 (CultivationSummaryResponse 리스트)
+    var cultivationData = /*[[${cultivations}]]*/ [];
 
+    // 센서는 아직 백엔드 연동 전이라 데모 데이터 유지
     var sensorData = [
         { location: '광주광역시', place: '우리 집', serial: '1000090909090', model: 'kljsdlkafjkl', type: '온도센서' },
         { location: '광주광역시', place: '우리 집', serial: '1000090909091', model: 'kljsdlkafjkm', type: '습도센서' },
@@ -189,16 +175,34 @@
         cultivation: { page: 0, data: cultivationData },
         sensor: { page: 0, data: sensorData }
     };
+  
+    function logout() {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/logout';
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function formatDate(value) {
+        if (!value) return '-';
+        var d = new Date(value);
+        if (isNaN(d.getTime())) return '-';
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return y + '.' + m + '.' + day;
+    }
 
     function renderCultivationRow(c) {
         var tr = document.createElement('tr');
-        tr.onclick = function () { location.href = '/dashboard'; };
+        tr.onclick = function () { location.href = '/cultivations/' + c.cultivationId; };
         tr.innerHTML =
             '<td>' + c.name + '</td>' +
-            '<td>' + c.type + '</td>' +
-            '<td>' + c.members + '</td>' +
-            '<td>' + c.admin + '</td>' +
-            '<td>' + c.createdAt + '</td>';
+            '<td>' + (c.mushroomId != null ? '버섯 #' + c.mushroomId : '-') + '</td>' +
+            '<td>-</td>' +
+            '<td>-</td>' +
+            '<td>' + formatDate(c.createdAt) + '</td>';
         return tr;
     }
 
@@ -249,7 +253,6 @@
         renderList(key);
     }
 
-    lucide.createIcons();
     renderList('cultivation');
     renderList('sensor');
 

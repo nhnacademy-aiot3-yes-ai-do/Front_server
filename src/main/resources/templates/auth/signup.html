@@ -18,7 +18,7 @@
                 <div class="field">
                     <div class="field-inline">
                         <input type="email" id="email" name="email" placeholder="you@example.com" required />
-                        <button type="button" class="btn btn-outline btn-inline">중복확인</button>
+                        <button type="button" class="btn btn-outline btn-inline" onclick="handleCheckEmail()">중복확인</button>
                     </div>
                 </div>
 
@@ -36,5 +36,27 @@
         </div>
     </div>
 </div>
+
+
+<script>
+    async function handleCheckEmail() {
+        const email = document.getElementById("email").value;
+
+        if (!email) {
+            alert("이메일을 입력해 주세요.");
+            return;
+        }
+
+        const response = await fetch(`/users/check-email?email=${email}`);
+        const isDuplicated = await response.json(); // true(중복), false(사용가능)
+
+        if (isDuplicated) {
+            alert("이미 사용 중인 이메일입니다!");
+        } else {
+            alert("사용 가능한 이메일입니다!");
+        }
+    }
+</script>
+
 </body>
 </html>
