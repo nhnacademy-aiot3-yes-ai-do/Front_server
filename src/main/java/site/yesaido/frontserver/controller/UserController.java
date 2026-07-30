@@ -7,9 +7,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.UserClient;
-import site.yesaido.frontserver.dto.user.LoginRequest;
-import site.yesaido.frontserver.dto.user.TokenResponse;
-import site.yesaido.frontserver.dto.user.UserSignUpRequest;
+import site.yesaido.frontserver.dto.user.request.LoginRequest;
+import site.yesaido.frontserver.dto.user.response.TokenResponse;
+import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 
 @Controller
 @RequiredArgsConstructor
@@ -38,7 +38,7 @@ public class UserController {
         accessCookie.setPath("/");
         response.addCookie(accessCookie);
 
-        return "redirect:/";
+        return "redirect:/cultivations";
     }
 
     @PostMapping("/signup")
