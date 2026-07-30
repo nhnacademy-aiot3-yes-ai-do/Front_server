@@ -4,10 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.dto.cultivation.request.CultivationCreateRequest;
-import site.yesaido.frontserver.dto.cultivation.response.CultivationCreateResponse;
-import site.yesaido.frontserver.dto.cultivation.response.CultivationDetailResponse;
-import site.yesaido.frontserver.dto.cultivation.response.CultivationFinishResponse;
-import site.yesaido.frontserver.dto.cultivation.response.CultivationSummaryResponse;
+import site.yesaido.frontserver.dto.cultivation.response.*;
 
 import java.util.List;
 
@@ -26,5 +23,6 @@ public interface CultivationClient {
     @PutMapping("/api/cultivations/{cultivation-id}/finish")
     ResponseEntity<CultivationFinishResponse> finishCultivation(@PathVariable("cultivation-id") Long cultivationId);
 
-
+    @GetMapping("/api/cultivations/history")
+    ResponseEntity<CultivationHistoryResponse> getHistory(@RequestParam("page") int page, @RequestParam("size") int size);
 }
