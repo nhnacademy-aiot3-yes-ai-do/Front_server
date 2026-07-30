@@ -234,8 +234,41 @@
         }
     }
 
+    // TEMP: 백엔드에 버섯 목록 조회 API가 없어서 임시로 이름→ID를 하드코딩함.
+    // mushroom_reference 테이블의 실제 값과 다를 수 있음 — 조회 API가 생기면 반드시 교체할 것.
+    var MUSHROOM_ID_MAP = {
+        '양송이버섯': 1,
+        '느타리버섯': 2,
+        '표고버섯': 3,
+        '새송이버섯': 4,
+        '팽이버섯': 5
+    };
+
     function finishCultivation() {
-        window.location.href = '/dashboard';
+        var name = document.getElementById('f-name').value.trim();
+        var mushroomName = document.getElementById('f-mushroom').value;
+        var mushroomId = MUSHROOM_ID_MAP[mushroomName];
+
+        if (!name) {
+            alert('재배지 이름을 입력해주세요.');
+            return;
+        }
+        if (!mushroomId) {
+            alert('버섯 종류를 확인해주세요.');
+            return;
+        }
+
+        fetch('/cultivations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'name=' + encodeURIComponent(name) + '&mushroomId=' + mushroomId
+        }).then(function (res) {
+            if (res.ok) {
+                window.location.href = '/cultivations';
+            } else {
+                alert('재배지 생성에 실패했습니다.');
+            }
+        });
     }
 </script>
 
