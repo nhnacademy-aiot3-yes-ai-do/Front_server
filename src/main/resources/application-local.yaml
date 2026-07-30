@@ -1,0 +1,8 @@
+# 로컬 http://localhost 개발 환경 전용 설정.
+# Secure 쿠키는 HTTPS에서만 브라우저가 저장/전송하므로, 로컬 http 테스트를 위해
+# 이 프로필을 켰을 때만 app.cookie.secure 를 false로 낮춥니다.
+# 실행 예: --spring.profiles.active=local 또는 SPRING_PROFILES_ACTIVE=local
+app:
+  cookie:
+    secure: false
+server.port: 8082
