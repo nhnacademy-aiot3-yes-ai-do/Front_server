@@ -10,6 +10,7 @@ import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.dto.cultivation.request.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.MemberAddFormRequest;
 import site.yesaido.frontserver.dto.cultivation.request.MemberAddRequest;
+import site.yesaido.frontserver.dto.cultivation.request.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.response.*;
 import site.yesaido.frontserver.util.LoginRequired;
 
@@ -90,5 +91,13 @@ public class CultivationController {
                                              @PathVariable("user-id") Long userId) {
         cultivationClient.removeMember(cultivationId, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    // 소유권 이전
+    @PutMapping("/{cultivation-id}/owner")
+    public ResponseEntity<Void> transferOwnership(@PathVariable("cultivation-id") Long cultivationId,
+                                                  @RequestBody OwnerTransferRequest request) {
+        cultivationClient.transferOwnership(cultivationId, request);
+        return ResponseEntity.ok().build();
     }
 }
