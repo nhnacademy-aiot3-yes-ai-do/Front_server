@@ -10,4 +10,9 @@ public class CultivationController {
     public String createCultivation() {
         return "cultivation/create";
     }
+
+    @GetMapping("/cultivations/history")
+    public String cultivationHistory() {
+        return "cultivation/history";
+    }
 }
