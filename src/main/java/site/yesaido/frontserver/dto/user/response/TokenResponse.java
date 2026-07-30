@@ -1,4 +1,4 @@
-package site.yesaido.frontserver.dto.user;
+package site.yesaido.frontserver.dto.user.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

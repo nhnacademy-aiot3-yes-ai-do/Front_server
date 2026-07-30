@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -7,14 +8,59 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.UserClient;
-import site.yesaido.frontserver.dto.user.LoginRequest;
-import site.yesaido.frontserver.dto.user.TokenResponse;
-import site.yesaido.frontserver.dto.user.UserSignUpRequest;
+import site.yesaido.frontserver.dto.user.request.LoginRequest;
+import site.yesaido.frontserver.dto.user.response.TokenResponse;
+import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 
 @Controller
 @RequiredArgsConstructor
 public class UserController {
+<<<<<<< HEAD:src/main/java/site/yesaido/frontserver/controller/user/UserController.java
     private final UserClient userClient;
+=======
+    private final UserClient userClient; // 👈 FeignClient 주입!
+  
+    @GetMapping("/mypage")
+    public String myPage() {
+        return "user/profile";
+    }
+
+    @GetMapping("/login")
+    public String loginPage() {
+        return "auth/login";
+    }
+
+    @GetMapping("/signup")
+    public String signupPage() {
+        return "auth/signup";
+    }
+
+    @PostMapping("/login")
+    public String login(@RequestParam String email,
+                        @RequestParam String password,
+                        HttpServletResponse response) {
+
+        LoginRequest request = new LoginRequest(email, password);
+        TokenResponse tokenResponse = userClient.login(request);
+
+        Cookie accessCookie = new Cookie("accessToken", tokenResponse.getAccessToken());
+        accessCookie.setPath("/");
+        response.addCookie(accessCookie);
+
+        return "redirect:/cultivations";
+    }
+
+    @PostMapping("/signup")
+    public String signup(@RequestParam String email,
+                         @RequestParam String password,
+                         @RequestParam String nickname) {
+
+        UserSignUpRequest request = new UserSignUpRequest(email, password, nickname, "USER");
+        userClient.signUp(request); // 👈 OpenFeign 로 백엔드 호출!
+
+        return "redirect:/login"; // 가입 성공 시 로그인 페이지로 이동
+    }
+>>>>>>> f39d61a588ea08297f4cf8e1a9c07f99bad93fe3:src/main/java/site/yesaido/frontserver/controller/UserController.java
 
     @GetMapping("/users/check-email")
     @ResponseBody
