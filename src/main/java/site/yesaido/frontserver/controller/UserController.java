@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,11 @@ import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 @RequiredArgsConstructor
 public class UserController {
     private final UserClient userClient; // 👈 FeignClient 주입!
+  
+    @GetMapping("/mypage")
+    public String myPage() {
+        return "user/profile";
+    }
 
     @GetMapping("/login")
     public String loginPage() {

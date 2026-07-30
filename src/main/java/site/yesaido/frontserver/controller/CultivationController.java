@@ -32,6 +32,11 @@ public class CultivationController {
         return "cultivation/create";
     }
 
+    @GetMapping("/cultivations/history")
+    public String cultivationHistory() {
+        return "cultivation/history";
+    }
+  
     @PostMapping
     public String createCultivation(@RequestParam String name, @RequestParam Long mushroomId) {
         cultivationClient.createCultivation(new CultivationCreateRequest(name, mushroomId));

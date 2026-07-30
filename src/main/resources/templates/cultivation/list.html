@@ -17,13 +17,13 @@
             </a>
         </div>
         <div class="topbar-right">
-            <button class="topbar-link" type="button">
+            <button class="topbar-link" type="button" onclick="location.href='/mypage'">
                 <i data-lucide="user"></i>내 정보 보기
             </button>
-            <button class="topbar-link" type="button">
+            <button class="topbar-link" type="button" onclick="location.href='/cultivations/history'">
                 <i data-lucide="history"></i>재배 이력
             </button>
-            <button class="topbar-link topbar-link-danger" type="button">
+            <button class="topbar-link topbar-link-danger" type="button" onclick="logout()">
                 <i data-lucide="log-out"></i>로그아웃
             </button>
             <span class="topbar-divider"></span>
@@ -175,6 +175,14 @@
         cultivation: { page: 0, data: cultivationData },
         sensor: { page: 0, data: sensorData }
     };
+  
+    function logout() {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/logout';
+        document.body.appendChild(form);
+        form.submit();
+    }
 
     function formatDate(value) {
         if (!value) return '-';

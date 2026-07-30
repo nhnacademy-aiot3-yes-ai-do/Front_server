@@ -1,0 +1,414 @@
+/* static/css/cultivation-history.css */
+@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
+
+:root {
+    --brown-900: #3f2a1d;
+    --brown-700: #6b4a30;
+    --brown-500: #8b5e3c;
+    --brown-300: #c9a97c;
+    --cream-100: #fbf6ea;
+    --cream-200: #f3ead4;
+    --sage-500: #7c9473;
+    --sage-600: #66805c;
+    --ink: #4a3b2e;
+    --danger: #c0574a;
+}
+
+* { box-sizing: border-box; }
+
+html { font-size: clamp(14px, 0.65vw + 6px, 30px); }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
+    color: var(--ink);
+    background: var(--cream-200) url("../images/mainback.jpg") center center / cover no-repeat fixed;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== Topbar (다른 페이지와 동일) ===== */
+.topbar {
+    flex-shrink: 0;
+    height: 5.5rem;
+    background: rgba(251, 246, 234, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 2px solid rgba(139, 94, 60, 0.25);
+    color: var(--brown-900);
+}
+
+.topbar-inner {
+    width: min(96vw, 2100px);
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 16px; }
+.topbar-logo-link { display: block; line-height: 0; transition: opacity 0.15s ease; }
+.topbar-logo-link:hover { opacity: 0.85; }
+.topbar-logo { height: 5.6rem; width: auto; display: block; }
+
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-nickname { font-size: 1rem; color: var(--brown-900); }
+
+.topbar-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: none;
+    border: none;
+    padding: 0.5rem 0.6rem;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brown-700);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.topbar-link svg { width: 1rem; height: 1rem; color: var(--sage-600); }
+.topbar-link:hover { background: rgba(139, 94, 60, 0.08); color: var(--brown-900); }
+
+.topbar-link-danger { color: var(--danger); }
+.topbar-link-danger svg { color: var(--danger); }
+.topbar-link-danger:hover { background: rgba(192, 87, 74, 0.1); }
+
+.topbar-divider {
+    width: 2px;
+    height: 1.6rem;
+    background: rgba(139, 94, 60, 0.2);
+    margin: 0 0.4rem;
+}
+
+.avatar-circle {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: var(--sage-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 3px rgba(251, 246, 234, 0.35);
+}
+
+.avatar-circle svg { width: 65%; height: 65%; }
+
+/* ===== page container ===== */
+.page-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: min(94vw, 2100px);
+    margin: 1.6rem auto;
+}
+
+.history-heading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 1.3rem;
+    color: var(--brown-900);
+    margin-bottom: 1rem;
+}
+
+.history-heading svg { color: var(--sage-600); }
+
+/* ===== history box: 왼쪽 재배 목록 + 오른쪽 상세 (mockup 레이아웃) ===== */
+.history-box {
+    display: grid;
+    grid-template-columns: 14rem 1fr;
+    gap: 1.3rem;
+    height: 33rem;
+}
+
+.history-sidebar {
+    background: rgba(251, 246, 234, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.15);
+    border-radius: 20px;
+    padding: 1.3rem 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.history-name-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.history-name-item {
+    padding: 0.8rem 0.9rem;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    color: var(--brown-700);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.history-name-item:hover {
+    background: rgba(139, 94, 60, 0.08);
+    color: var(--brown-900);
+}
+
+.history-name-item.active {
+    background: rgba(124, 148, 115, 0.18);
+    color: var(--sage-600);
+    font-weight: 700;
+}
+
+.history-detail {
+    position: relative;
+    background: rgba(251, 246, 234, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.15);
+    border-radius: 20px;
+    padding: 1.8rem;
+    overflow-y: auto;
+}
+
+.history-empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brown-500);
+    font-size: 0.95rem;
+}
+
+.history-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 1.1rem;
+}
+
+.history-detail-title {
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 1.25rem;
+    color: var(--brown-900);
+}
+
+.history-detail-period {
+    font-size: 0.82rem;
+    color: var(--brown-500);
+    margin-top: 4px;
+}
+
+.history-badge {
+    flex-shrink: 0;
+    background: rgba(124, 148, 115, 0.18);
+    color: var(--sage-600);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+}
+
+.history-summary {
+    margin: 1rem 0 0;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    color: var(--brown-700);
+}
+
+.history-compare-btn {
+    position: absolute;
+    right: 1.5rem;
+    bottom: 1.5rem;
+}
+
+/* ===== 환경 통계 그리드 (dashboard.css 와 동일 스타일) ===== */
+.env-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+}
+
+.env-stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(139, 94, 60, 0.18);
+    border-radius: 12px;
+    padding: 0.5rem 0.6rem;
+    min-width: 0;
+}
+
+.env-stat-icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--sage-600);
+    flex-shrink: 0;
+}
+
+.env-stat-label {
+    flex: 1;
+    font-size: 0.68rem;
+    color: var(--brown-500);
+    min-width: 0;
+}
+
+.env-stat-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--brown-900);
+    white-space: nowrap;
+}
+
+/* ===== 버튼 ===== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.7rem 1.3rem;
+    font-family: "Gaegu", inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 12px;
+    border: 2px solid var(--brown-900);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
+.btn-primary:hover { background: var(--sage-600); }
+
+.btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); }
+.btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
+
+/* ===== 재배 이력 비교 모달 ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(63, 42, 29, 0.35);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.modal-overlay.is-open { display: flex; }
+
+.modal-box {
+    background: var(--cream-100);
+    border: 2px solid var(--brown-300);
+    border-radius: 20px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 86vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 24px rgba(63, 42, 29, 0.25);
+    position: relative;
+}
+
+.modal-box-wide { max-width: 34rem; }
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--brown-500);
+}
+
+.modal-title {
+    font-family: "Gaegu", inherit;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin: 0 0 12px;
+}
+
+.modal-desc {
+    font-size: 0.85rem;
+    color: var(--brown-700);
+    margin: 0 0 16px;
+    line-height: 1.6;
+}
+
+.modal-field { margin-bottom: 16px; }
+
+.modal-field label {
+    display: block;
+    font-size: 13px;
+    color: var(--brown-700);
+    margin-bottom: 6px;
+}
+
+.modal-field select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--brown-300);
+    border-radius: 10px;
+    font-family: inherit;
+    background: #fff;
+}
+
+.compare-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.compare-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.8rem;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(139, 94, 60, 0.18);
+    border-radius: 12px;
+    padding: 0.7rem 1rem;
+}
+
+.compare-label {
+    flex: 1;
+    min-width: 5rem;
+    font-size: 0.85rem;
+    color: var(--brown-700);
+}
+
+.compare-current {
+    font-weight: 700;
+    color: var(--brown-900);
+    font-size: 0.9rem;
+}
+
+.compare-avg {
+    font-size: 0.75rem;
+    color: var(--brown-500);
+}
+
+.compare-diff {
+    font-size: 0.78rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.compare-diff.up { color: var(--sage-600); }
+.compare-diff.down { color: var(--danger); }
+.compare-diff.flat { color: var(--brown-500); }
