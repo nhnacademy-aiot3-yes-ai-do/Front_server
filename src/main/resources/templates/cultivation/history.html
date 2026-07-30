@@ -71,7 +71,7 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
     function logout() {
         var form = document.createElement('form');
         form.method = 'POST';
@@ -82,22 +82,17 @@
 
     var historyState = { selectedId: null };
 
-    function hashSeed(str) {
-        var h = 0;
-        for (var i = 0; i < str.length; i++) {
-            h = (h * 31 + str.charCodeAt(i)) >>> 0;
-        }
-        return h;
-    }
-
-    // 종료된 재배 이력 (데모 데이터, 실제로는 서버에서 사용자의 재배 이력을 받아와야 함)
-    var CULTIVATION_HISTORY = [
-        { id: 1, name: 'Cultivation1', type: '느타리버섯', period: '2027.01 ~ 2027.02', days: 24, amount: 340, count: 5 },
-        { id: 2, name: 'Cultivation2', type: '양송이버섯', period: '2027.03 ~ 2027.04', days: 26, amount: 410, count: 6 },
-        { id: 3, name: 'Cultivation3', type: '표고버섯', period: '2027.05 ~ 2027.06', days: 22, amount: 295, count: 4 },
-        { id: 4, name: 'Cultivation4', type: '새송이버섯', period: '2027.07 ~ 2027.08', days: 25, amount: 380, count: 5 },
-        { id: 5, name: 'Cultivation5', type: '팽이버섯', period: '2027.09 ~ 2027.10', days: 20, amount: 260, count: 3 }
-    ];
+    var pageData = /*[[${history}]]*/ { content: [] };
+    var CULTIVATION_HISTORY = pageData.content.map(function (c) {
+        return {
+            id: c.cultivationId,
+            name: c.name,
+            mushroomId: c.mushroomId,
+            amount: c.harvestWeight,
+            grade: c.productGrade,
+            finishedAt: c.finishedAt
+        };
+    });
 
     function findCultivation(id) {
         return CULTIVATION_HISTORY.filter(function (c) { return c.id === id; })[0];

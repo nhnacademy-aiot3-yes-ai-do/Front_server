@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.dto.cultivation.request.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.response.CultivationDetailResponse;
+import site.yesaido.frontserver.dto.cultivation.response.CultivationHistoryResponse;
 import site.yesaido.frontserver.dto.cultivation.response.CultivationSummaryResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
@@ -32,8 +33,12 @@ public class CultivationController {
         return "cultivation/create";
     }
 
-    @GetMapping("/cultivations/history")
-    public String cultivationHistory() {
+    @GetMapping("/history")
+    public String cultivationHistory(@RequestParam(defaultValue = "0") int page,
+                                     @RequestParam(defaultValue = "20") int size,
+                                     Model model) {
+        CultivationHistoryResponse history = cultivationClient.getHistory(page, size).getBody();
+        model.addAttribute("history", history);
         return "cultivation/history";
     }
   
