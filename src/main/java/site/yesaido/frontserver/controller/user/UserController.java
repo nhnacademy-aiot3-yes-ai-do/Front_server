@@ -15,7 +15,7 @@ import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 @Controller
 @RequiredArgsConstructor
 public class UserController {
-    private final UserClient userClient; // 👈 FeignClient 주입!
+    private final UserClient userClient;
   
     @GetMapping("/mypage")
     public String myPage() {
