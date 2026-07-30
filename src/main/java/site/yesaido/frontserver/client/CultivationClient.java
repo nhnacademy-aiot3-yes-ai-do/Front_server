@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.dto.cultivation.request.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.MemberAddRequest;
+import site.yesaido.frontserver.dto.cultivation.request.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.response.*;
 
 import java.util.List;
@@ -37,4 +38,9 @@ public interface CultivationClient {
 
     @DeleteMapping("/api/cultivations/{cultivation-id}/members/{user-id}")
     ResponseEntity<Void> removeMember(@PathVariable("cultivation-id") Long cultivationId, @PathVariable("user-id") Long userId);
+
+    // 소유권 이전
+    @PutMapping("/api/cultivations/{cultivation-id}/owner")
+    ResponseEntity<Void> transferOwnership(@PathVariable("cultivation-id") Long cultivationId,
+                                           @RequestBody OwnerTransferRequest request);
 }
