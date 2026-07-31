@@ -18,20 +18,29 @@ import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 @RequiredArgsConstructor
 public class UserController {
     private final UserClient userClient;
-  
-    @GetMapping("/mypage")
-    public String myPage() {
-        return "user/profile";
+
+    @GetMapping("/users/check-email")
+    @ResponseBody
+    public Boolean checkEmail(@RequestParam String email){
+        return userClient.checkEmail(email);
     }
 
-    @GetMapping("/login")
-    public String loginPage() {
-        return "auth/login";
+    @GetMapping("/users/check-nickname")
+    @ResponseBody
+    public Boolean checkNickname(@RequestParam String nickname){
+        return userClient.checkNickname(nickname);
     }
 
-    @GetMapping("/signup")
-    public String signupPage() {
-        return "auth/signup";
+
+    @PostMapping("/signup")
+    public String signup(@RequestParam String email,
+                         @RequestParam String password,
+                         @RequestParam String nickname) {
+
+        UserSignUpRequest request = new UserSignUpRequest(email, password, nickname, "USER");
+        userClient.signUp(request);
+
+        return "redirect:/login";
     }
 
     @PostMapping("/login")

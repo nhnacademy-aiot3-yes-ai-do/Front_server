@@ -12,6 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class UserViewController {
 
+    @GetMapping("/mypage")
+    public String myPage() {
+        return "user/profile";
+    }
+
     @GetMapping("/signup")
     public String signupPage() {
         return "auth/signup";
