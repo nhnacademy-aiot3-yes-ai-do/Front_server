@@ -1,12 +1,13 @@
 package site.yesaido.frontserver.controller.user;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.GetMapping;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
@@ -52,31 +53,50 @@ public class UserController {
 
         TokenResponse tokenResponse = userClient.login(request);
 
-        Cookie accessCookie = new Cookie("accessToken", tokenResponse.getAccessToken());
-        accessCookie.setPath("/");
-        accessCookie.setHttpOnly(true);
-        response.addCookie(accessCookie);
+        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.getAccessToken())
+                .path("/")
+                        .httpOnly(true)
+                                .sameSite("Lax")
+                                        .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
 
         if(tokenResponse.getRefreshToken() != null) {
-            Cookie refreshCookie = new Cookie("refreshToken", tokenResponse.getRefreshToken());
-            refreshCookie.setPath("/");
-            refreshCookie.setHttpOnly(true);
-            response.addCookie(refreshCookie);
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
+                .path("/")
+                .httpOnly(true)
+                    .sameSite("Lax")
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         }
         return "redirect:/";
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletResponse response) {
-        Cookie accessCookie = new Cookie("accessToken", null);
-        accessCookie.setPath("/");
-        accessCookie.setMaxAge(0);
-        response.addCookie(accessCookie);
+    public String logout(HttpServletResponse response, @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+        if(userId != null){
+            try {
+                userClient.logout(userId);
+            }catch (Exception e){
+                log.warn("백엔드 레디스 로그아웃 처리 중 예외 발생: ", e);
+            }
+        }
 
-        Cookie refreshCookie = new Cookie("refreshToken", null);
-        refreshCookie.setPath("/");
-        refreshCookie.setMaxAge(0);
-        response.addCookie(refreshCookie);
+        ResponseCookie deletedAccessCookie = ResponseCookie.from("accessToken", "")
+                .path("/")
+                .maxAge(0)
+                .httpOnly(true)
+                .sameSite("Lax")
+                .build();
+
+        ResponseCookie deletedRefreshCookie = ResponseCookie.from("refreshToken", "")
+                .path("/")
+                .maxAge(0)
+                .httpOnly(true)
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, deletedAccessCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, deletedRefreshCookie.toString());
 
         return "redirect:/login";
     }
