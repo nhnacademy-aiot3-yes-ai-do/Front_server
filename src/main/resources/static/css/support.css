@@ -333,6 +333,26 @@ body {
     gap: 0.5rem;
 }
 
+.support-item-cultivation {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    align-self: flex-start;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--brown-700);
+    background: rgba(139, 94, 60, 0.1);
+    border-radius: 999px;
+    padding: 0.24rem 0.6rem;
+}
+
+.support-item-cultivation::before {
+    content: "🍄";
+    font-size: 0.7rem;
+}
+
+.support-detail-head .support-item-cultivation { margin-left: 0.4rem; }
+
 .support-item-category {
     flex-shrink: 0;
     font-size: 0.7rem;

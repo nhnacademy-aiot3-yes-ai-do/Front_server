@@ -66,8 +66,8 @@
                     <tr>
                         <th>위치</th>
                         <th>장소</th>
-                        <th>고유번호</th>
                         <th>모델명</th>
+                        <th>고유번호</th>
                         <th>타입</th>
                     </tr>
                     </thead>
@@ -111,12 +111,12 @@
             <input type="text" id="ms-place" placeholder="예: 우리 집" />
         </div>
         <div class="modal-field">
-            <label>고유번호</label>
-            <input type="text" id="ms-serial" placeholder="예: 1000090909090" />
-        </div>
-        <div class="modal-field">
             <label>모델명</label>
             <input type="text" id="ms-model" placeholder="모델명을 입력하세요" />
+        </div>
+        <div class="modal-field">
+            <label>고유번호</label>
+            <input type="text" id="ms-serial" placeholder="예: 1000090909090" />
         </div>
         <div class="modal-field">
             <label>타입</label>
@@ -182,8 +182,8 @@
         tr.innerHTML =
             '<td>' + s.location + '</td>' +
             '<td>' + s.place + '</td>' +
-            '<td>' + s.serial + '</td>' +
             '<td>' + s.model + '</td>' +
+            '<td>' + s.serial + '</td>' +
             '<td>' + s.type + '</td>';
         return tr;
     }

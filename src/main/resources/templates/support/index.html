@@ -53,13 +53,18 @@
                 <form id="new-inquiry-form" onsubmit="submitNewInquiry(event)">
                     <div class="support-field">
                         <label>문의 유형</label>
-                        <select id="new-category" required>
+                        <select id="new-category" onchange="toggleCultivationField()" required>
                             <option value="계정/로그인">계정/로그인</option>
-                            <option value="재배 기능">재배 기능</option>
+                            <option value="재배">재배</option>
                             <option value="센서/기기">센서/기기</option>
                             <option value="버그 신고">버그 신고</option>
                             <option value="기타">기타</option>
                         </select>
+                    </div>
+
+                    <div class="support-field" id="new-cultivation-field" style="display:none;">
+                        <label>어떤 재배에 대한 문의인가요?</label>
+                        <select id="new-cultivation"></select>
                     </div>
 
                     <div class="support-field">
@@ -107,6 +112,7 @@
                 <div class="support-detail-head">
                     <div>
                         <span class="support-item-category" id="detail-category">계정/로그인</span>
+                        <span class="support-item-cultivation" id="detail-cultivation" style="display:none;"></span>
                         <h2 class="support-detail-title" id="detail-title">문의 제목</h2>
                         <span class="support-detail-date" id="detail-date">2026.07.31 작성</span>
                     </div>
@@ -136,16 +142,23 @@
         document.getElementById('support-panel-' + name).classList.add('active');
     }
 
+    // 내가 속해있는 Cultivation 목록 (데모 데이터. 실제로는 CultivationController가 내려주는 목록을 재사용해야 함)
+    var MY_CULTIVATIONS = [
+        { id: 1, name: 'Cultivation1', type: '느타리버섯' },
+        { id: 2, name: 'Cultivation2', type: '양송이버섯' },
+        { id: 3, name: 'Cultivation3', type: '표고버섯' }
+    ];
+
     // ===== 목록 (데모 데이터, 실제로는 관리자 서버에서 조회해야 함) =====
     // 답변 상태는 별도로 저장하지 않고 THREADS의 마지막 메시지 작성자로만 판단함 (목록/상세 상태 불일치 방지)
     var INQUIRIES = [
         { id: 1, category: '계정/로그인', title: '비밀번호를 변경했는데 로그인이 안 돼요', date: '2026.07.29' },
-        { id: 2, category: '재배 기능', title: '중간 재배 기록이 사라졌어요', date: '2026.07.28' },
+        { id: 2, category: '재배', cultivation: 'Cultivation1 · 느타리버섯', title: '중간 재배 기록이 사라졌어요', date: '2026.07.28' },
         { id: 3, category: '센서/기기', title: '온도센서 값이 이상하게 나와요', date: '2026.07.26' },
         { id: 4, category: '버그 신고', title: '재배 이력 페이지에서 사진이 안 보여요', date: '2026.07.24' },
         { id: 5, category: '기타', title: '재배지를 여러 명이 같이 관리할 수 있나요?', date: '2026.07.22' },
         { id: 6, category: '계정/로그인', title: '닉네임 변경이 반영이 안 돼요', date: '2026.07.20' },
-        { id: 7, category: '재배 기능', title: 'AI 리포트가 하루 늦게 생성돼요', date: '2026.07.18' },
+        { id: 7, category: '재배', cultivation: 'Cultivation3 · 표고버섯', title: 'AI 리포트가 하루 늦게 생성돼요', date: '2026.07.18' },
         { id: 8, category: '센서/기기', title: '센서 등록은 어떻게 하나요?', date: '2026.07.15' }
     ];
     var nextInquiryId = 9;
@@ -226,10 +239,12 @@
                 '<span class="support-item-category"></span>' +
                 '<span class="support-status-badge ' + statusBadgeClass(status) + '"></span>' +
                 '</div>' +
+                (q.cultivation ? '<div class="support-item-cultivation"></div>' : '') +
                 '<div class="support-card-title"></div>' +
                 '<div class="support-card-foot"><i data-lucide="calendar-days"></i><span></span></div>';
             card.querySelector('.support-item-category').textContent = q.category;
             card.querySelector('.support-status-badge').textContent = status;
+            if (q.cultivation) card.querySelector('.support-item-cultivation').textContent = q.cultivation;
             card.querySelector('.support-card-title').textContent = q.title;
             card.querySelector('.support-card-foot span').textContent = q.date;
             grid.appendChild(card);
@@ -267,8 +282,24 @@
         document.getElementById('new-inquiry-form').reset();
         document.getElementById('photo-preview').innerHTML = '<i data-lucide="image"></i>';
         document.getElementById('photo-filename').textContent = '';
+
+        var cultivationSelect = document.getElementById('new-cultivation');
+        cultivationSelect.innerHTML = MY_CULTIVATIONS.map(function (c) {
+            return '<option value="' + c.id + '">' + c.name + ' · ' + c.type + '</option>';
+        }).join('');
+        toggleCultivationField();
+
         lucide.createIcons();
         showPanel('new');
+    }
+
+    function toggleCultivationField() {
+        var category = document.getElementById('new-category').value;
+        var field = document.getElementById('new-cultivation-field');
+        var select = document.getElementById('new-cultivation');
+        var isCultivation = category === '재배';
+        field.style.display = isCultivation ? 'block' : 'none';
+        select.required = isCultivation;
     }
 
     function previewPhoto(input) {
@@ -300,11 +331,21 @@
         var content = document.getElementById('new-content').value.trim();
         if (!title || !content) return;
 
+        var cultivation = null;
+        if (category === '재배') {
+            var cultivationId = Number(document.getElementById('new-cultivation').value);
+            var picked = MY_CULTIVATIONS.filter(function (c) { return c.id === cultivationId; })[0];
+            if (!picked) return;
+            cultivation = picked.name + ' · ' + picked.type;
+        }
+
         var id = nextInquiryId++;
         var today = new Date();
         var dateLabel = today.getFullYear() + '.' + String(today.getMonth() + 1).padStart(2, '0') + '.' + String(today.getDate()).padStart(2, '0');
 
-        INQUIRIES.unshift({ id: id, category: category, title: title, date: dateLabel });
+        var inquiry = { id: id, category: category, title: title, date: dateLabel };
+        if (cultivation) inquiry.cultivation = cultivation;
+        INQUIRIES.unshift(inquiry);
         THREADS[id] = [{ sender: 'USER', name: '나', content: content, time: dateLabel + ' 12:00' }];
 
         renderList();
@@ -326,6 +367,13 @@
         if (!inquiry) return;
 
         document.getElementById('detail-category').textContent = inquiry.category;
+        var cultivationEl = document.getElementById('detail-cultivation');
+        if (inquiry.cultivation) {
+            cultivationEl.textContent = inquiry.cultivation;
+            cultivationEl.style.display = 'inline-flex';
+        } else {
+            cultivationEl.style.display = 'none';
+        }
         document.getElementById('detail-title').textContent = inquiry.title;
         document.getElementById('detail-date').textContent = inquiry.date + ' 작성';
 
