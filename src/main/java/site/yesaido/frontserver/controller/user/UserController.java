@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,6 +13,7 @@ import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class UserController {
@@ -30,30 +32,6 @@ public class UserController {
     @GetMapping("/signup")
     public String signupPage() {
         return "auth/signup";
-    }
-
-    @GetMapping("/users/check-email")
-    @ResponseBody
-    public Boolean checkEmail(@RequestParam String email){
-        return userClient.checkEmail(email);
-    }
-
-    @GetMapping("/users/check-nickname")
-    @ResponseBody
-    public Boolean checkNickname(@RequestParam String nickname){
-        return userClient.checkNickname(nickname);
-    }
-
-
-    @PostMapping("/signup")
-    public String signup(@RequestParam String email,
-                         @RequestParam String password,
-                         @RequestParam String nickname) {
-
-        UserSignUpRequest request = new UserSignUpRequest(email, password, nickname, "USER");
-        userClient.signUp(request);
-
-        return "redirect:/login";
     }
 
     @PostMapping("/login")

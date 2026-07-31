@@ -5,16 +5,13 @@ server:
       cookie:
         http-only: true
         secure: true
+  port: 9000
 
 spring:
   application:
     name: front_server
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 12MB
 
 feign:
   client:
     gateway:
-      url: ${GATEWAY_URL:http://localhost:8080}
+      url: ${GATEWAY_URL:http://localhost:8000}

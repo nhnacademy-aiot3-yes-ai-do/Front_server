@@ -1,38 +1,17 @@
 <!-- templates/dashboard/main.html -->
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배 대시보드 | MushMush</title>
     <link rel="stylesheet" href="/css/dashboard.css" />
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="topbar-left">
-            <a href="/" class="topbar-logo-link">
-                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
-            </a>
-        </div>
-        <div class="topbar-right">
-            <button class="topbar-link" type="button" onclick="location.href='/mypage'">
-                <i data-lucide="user"></i>내 정보 보기
-            </button>
-            <button class="topbar-link" type="button" onclick="location.href='/cultivations/history'">
-                <i data-lucide="history"></i>재배 이력
-            </button>
-            <button class="topbar-link topbar-link-danger" type="button" onclick="logout()">
-                <i data-lucide="log-out"></i>로그아웃
-            </button>
-            <span class="topbar-divider"></span>
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
-            <span class="topbar-nickname">오인택</span>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
 
 <div class="page-container">
 
@@ -259,9 +238,6 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" type="button" onclick="openModal('modal-harvest')">
-                중간 재배
-            </button>
             <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
                 <i data-lucide="users"></i>
             </button>
@@ -456,43 +432,6 @@
     </div>
 </div>
 
-<!-- 중간 재배(재배량/메모) 다이얼로그 -->
-<div class="modal-overlay" id="modal-harvest">
-    <div class="modal-box">
-        <button class="modal-close" type="button" onclick="closeModal('modal-harvest')">
-            <i data-lucide="x"></i>
-        </button>
-        <h3 class="modal-title">중간 재배 기록</h3>
-        <div class="modal-field">
-            <label>재배량 (g)</label>
-            <input type="number" id="harvest-amount-input" min="0" placeholder="예: 120" />
-        </div>
-        <div class="modal-field">
-            <label>재배 메모</label>
-            <textarea rows="3" id="harvest-memo-input" placeholder="메모를 입력하세요"></textarea>
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-outline" type="button" onclick="closeModal('modal-harvest')">Cancel</button>
-            <button class="btn btn-primary" type="button" onclick="submitHarvest()">OK</button>
-        </div>
-    </div>
-</div>
-
-<!-- 총 재배 요약 다이얼로그 -->
-<div class="modal-overlay" id="modal-summary">
-    <div class="modal-box">
-        <button class="modal-close" type="button" onclick="closeModal('modal-summary')">
-            <i data-lucide="x"></i>
-        </button>
-        <p class="modal-desc" style="margin-bottom:20px;">
-            현재까지 총 재배량은 <span id="harvest-total-amount">0</span>g 이며,<br />재배횟수는 <span id="harvest-total-count">0</span>번 입니다.
-        </p>
-        <div class="modal-actions">
-            <button class="btn btn-primary" type="button" onclick="closeModal('modal-summary')">OK</button>
-        </div>
-    </div>
-</div>
-
 <!-- 담당자 추가 다이얼로그 -->
 <div class="modal-overlay" id="modal-member-add">
     <div class="modal-box">
@@ -510,16 +449,9 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
+    var CULTIVATION_ID = /*[[${cultivation.cultivationId}]]*/ 0;
     lucide.createIcons();
-
-    function logout() {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/logout';
-        document.body.appendChild(form);
-        form.submit();
-    }
 
     var SENSOR_DATA = {
         temp: { '온도센서1': '18°C', '온도센서2': '19°C', '온도센서3': '20°C' },
@@ -643,34 +575,48 @@
         renderNotifPanel();
     }
 
-    // 담당자 목록 (데모 데이터, 실제로는 서버에서 받아와야 함)
-    var memberData = [
-        { id: 1, nickname: 'nickname', role: 'admin', email: 'nickname@example.com' },
-        { id: 2, nickname: 'nickname2', role: 'member', email: 'nickname2@example.com' },
-        { id: 3, nickname: 'nickname3', role: 'member', email: 'nickname3@example.com' },
-        { id: 4, nickname: 'nickname4', role: 'member', email: 'nickname4@example.com' },
-        { id: 5, nickname: 'nickname5', role: 'member', email: 'nickname5@example.com' },
-        { id: 6, nickname: 'nickname6', role: 'member', email: 'nickname6@example.com' }
-    ];
+    // 담당자 목록 (서버에서 주입된 실제 데이터)
+    var memberData = /*[[${members}]]*/ [];
+
     var MEMBER_PAGE_SIZE = 4;
     var memberState = { page: 0 };
+
+    function roleLabel(role) {
+        if (role === 'OWNER') return '소유자';
+        if (role === 'MANAGER') return '매니저';
+        return '멤버';
+    }
+
+    function refreshMembers() {
+        fetch('/cultivations/' + CULTIVATION_ID + '/members')
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                memberData = data;
+                renderMemberPanel();
+            });
+    }
 
     function renderMemberRow(m) {
         var row = document.createElement('div');
         row.className = 'member-row';
 
-        var removeBtn = m.role === 'admin' ? '' :
-            '<button class="member-remove" type="button" title="제거" onclick="removeMember(' + m.id + ')">' +
-            '<i data-lucide="user-minus" style="width:18px;height:18px;"></i></button>';
+        var actionBtns = '';
+        if (m.role !== 'OWNER') {
+            actionBtns +=
+                '<button class="member-transfer" type="button" title="방장 위임" onclick="transferOwnership(' + m.userId + ')">' +
+                '<i data-lucide="crown" style="width:18px;height:18px;"></i></button>' +
+                '<button class="member-remove" type="button" title="제거" onclick="removeMember(' + m.userId + ')">' +
+                '<i data-lucide="user-minus" style="width:18px;height:18px;"></i></button>';
+        }
 
         row.innerHTML =
             '<div class="member-avatar"><i data-lucide="circle-user-round" style="width:20px;height:20px;"></i></div>' +
             '<div class="member-info">' +
             '<span class="member-name"></span>' +
             '<span class="member-role"></span>' +
-            '</div>' + removeBtn;
+            '</div>' + actionBtns;
         row.querySelector('.member-name').textContent = m.nickname;
-        row.querySelector('.member-role').textContent = m.role;
+        row.querySelector('.member-role').textContent = roleLabel(m.role);
         return row;
     }
 
@@ -701,21 +647,14 @@
         renderMemberPanel();
     }
 
-    function removeMember(id) {
-        memberData = memberData.filter(function (m) { return m.id !== id; });
-        renderMemberPanel();
+    function removeMember(userId) {
+        fetch('/cultivations/' + CULTIVATION_ID + '/members/' + userId, { method: 'DELETE' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('remove failed');
+                refreshMembers();
+            })
+            .catch(function () { alert('담당자 제거에 실패했습니다.'); });
     }
-
-    // 담당자 추가: 검색 대상이 될 사용자 풀 (데모 데이터, 실제로는 서버 검색 API로 대체)
-    var USER_DIRECTORY = [
-        { id: 101, nickname: '버섯매니아', email: 'mush.lover@example.com' },
-        { id: 102, nickname: '느타리킹', email: 'oyster.king@example.com' },
-        { id: 103, nickname: '표고러버', email: 'shiitake.fan@example.com' },
-        { id: 104, nickname: '팽이대장', email: 'enoki.boss@example.com' },
-        { id: 105, nickname: '양송이집사', email: 'button.mushroom@example.com' },
-        { id: 106, nickname: 'nickname9', email: 'nickname9@example.com' }
-    ];
-    var nextMemberId = 200;
 
     function openMemberAddModal() {
         document.getElementById('member-search-input').value = '';
@@ -733,48 +672,62 @@
             return;
         }
 
-        var isEmailSearch = query.indexOf('@') !== -1;
-        var lowerQuery = query.toLowerCase();
+        fetch('/cultivations/' + CULTIVATION_ID + '/members/search?keyword=' + encodeURIComponent(query))
+            .then(function (res) { return res.json(); })
+            .then(function (matches) {
+                var existingUserIds = memberData.map(function (m) { return m.userId; });
+                matches = matches.filter(function (u) { return existingUserIds.indexOf(u.userId) === -1; });
 
-        var matches = USER_DIRECTORY.filter(function (u) {
-            var alreadyMember = memberData.some(function (m) { return m.email.toLowerCase() === u.email.toLowerCase(); });
-            if (alreadyMember) return false;
+                if (matches.length === 0) {
+                    resultsEl.innerHTML = '<div class="member-search-hint">검색 결과가 없습니다.</div>';
+                    return;
+                }
 
-            if (isEmailSearch) {
-                return u.email.toLowerCase() === lowerQuery;
-            }
-            return u.nickname.toLowerCase().indexOf(lowerQuery) !== -1;
-        });
-
-        if (matches.length === 0) {
-            resultsEl.innerHTML = '<div class="member-search-hint">검색 결과가 없습니다.</div>';
-            return;
-        }
-
-        resultsEl.innerHTML = '';
-        matches.forEach(function (u) {
-            var row = document.createElement('div');
-            row.className = 'member-search-row';
-            row.innerHTML =
-                '<div class="member-avatar"><i data-lucide="circle-user-round" style="width:20px;height:20px;"></i></div>' +
-                '<div class="member-search-info">' +
-                '<span class="member-name"></span>' +
-                '<span class="member-email"></span>' +
-                '</div>' +
-                '<button class="member-search-add" type="button">추가</button>';
-            row.querySelector('.member-name').textContent = u.nickname;
-            row.querySelector('.member-email').textContent = u.email;
-            row.querySelector('.member-search-add').onclick = function () { addMember(u); };
-            resultsEl.appendChild(row);
-        });
-        lucide.createIcons();
+                resultsEl.innerHTML = '';
+                matches.forEach(function (u) {
+                    var row = document.createElement('div');
+                    row.className = 'member-search-row';
+                    row.innerHTML =
+                        '<div class="member-avatar"><i data-lucide="circle-user-round" style="width:20px;height:20px;"></i></div>' +
+                        '<div class="member-search-info">' +
+                        '<span class="member-name"></span>' +
+                        '<span class="member-email"></span>' +
+                        '</div>' +
+                        '<button class="member-search-add" type="button">추가</button>';
+                    row.querySelector('.member-name').textContent = u.nickname;
+                    row.querySelector('.member-search-add').onclick = function () { addMember(u); };
+                    resultsEl.appendChild(row);
+                });
+                lucide.createIcons();
+            });
     }
 
     function addMember(u) {
-        memberData.push({ id: nextMemberId++, nickname: u.nickname, role: 'member', email: u.email });
-        memberState.page = Math.max(0, Math.ceil(memberData.length / MEMBER_PAGE_SIZE) - 1);
-        renderMemberPanel();
-        searchMemberCandidates();
+        fetch('/cultivations/' + CULTIVATION_ID + '/members', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: u.userId })
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error('add failed');
+                refreshMembers();
+                searchMemberCandidates();
+            })
+            .catch(function () { alert('담당자 추가에 실패했습니다.'); });
+    }
+
+    function transferOwnership(userId) {
+        if (!confirm('이 멤버에게 방장을 위임하시겠어요?')) return;
+        fetch('/cultivations/' + CULTIVATION_ID + '/owner', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId })
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error('transfer failed');
+                refreshMembers();
+            })
+            .catch(function () { alert('방장 위임에 실패했습니다.'); });
     }
 
     // ===== AI report 탭: 일자별 리포트 =====
@@ -931,48 +884,17 @@
     renderReportDateStrip();
     renderReportBody(reportState.selectedDate);
 
-    function openModal(id) {
-        document.getElementById(id).classList.add('is-open');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('is-open');
-    }
-
-    // 총 재배량 / 재배횟수 누적 (데모 데이터, 실제로는 서버에서 받아와야 함)
-    var harvestState = { totalAmount: 0, count: 0 };
-
-    function submitHarvest() {
-        var amountInput = document.getElementById('harvest-amount-input');
-        var memoInput = document.getElementById('harvest-memo-input');
-        var amount = Number(amountInput.value);
-
-        if (!amountInput.value || isNaN(amount) || amount <= 0) {
-            amountInput.focus();
-            return;
-        }
-
-        harvestState.totalAmount += amount;
-        harvestState.count += 1;
-
-        document.getElementById('harvest-total-amount').textContent = harvestState.totalAmount;
-        document.getElementById('harvest-total-count').textContent = harvestState.count;
-
-        amountInput.value = '';
-        memoInput.value = '';
-
-        closeModal('modal-harvest');
-        openModal('modal-summary');
-    }
+    // 재배량 (재배 종료 시 한 번만 입력, 실제로는 서버에서 받아와야 함)
+    var harvestState = { totalAmount: 0 };
 
     // ===== 재배 종료 흐름: 최종 재배량 -> AI 재배 리포트 -> 재배 이력 비교 -> 홈 =====
     var CULTIVATION_START_DATE_KEY = toDateKey(addDays(reportToday, -21)); // 데모: 21일 전 시작
 
     // 이전에 재배했던 이력 목록 (데모 데이터, 실제로는 서버에서 사용자의 재배 이력을 받아와야 함)
     var PAST_CULTIVATION_CYCLES = [
-        { id: 1, name: 'Cultivation1', type: '느타리버섯', period: '2027.01 ~ 2027.02', amount: 340, days: 24, count: 5 },
-        { id: 2, name: 'Cultivation2', type: '양송이버섯', period: '2027.03 ~ 2027.04', amount: 410, days: 26, count: 6 },
-        { id: 3, name: 'Cultivation3', type: '표고버섯', period: '2027.05 ~ 2027.06', amount: 295, days: 22, count: 4 }
+        { id: 1, name: 'Cultivation1', type: '느타리버섯', period: '2027.01 ~ 2027.02', amount: 340, days: 24 },
+        { id: 2, name: 'Cultivation2', type: '양송이버섯', period: '2027.03 ~ 2027.04', amount: 410, days: 26 },
+        { id: 3, name: 'Cultivation3', type: '표고버섯', period: '2027.05 ~ 2027.06', amount: 295, days: 22 }
     ];
     var endReportStats = null;
 
@@ -1000,8 +922,7 @@
             return;
         }
 
-        harvestState.totalAmount += amount;
-        harvestState.count += 1;
+        harvestState.totalAmount = amount;
 
         endReportStats = computeEndReportStats();
         renderEndReport(endReportStats);
@@ -1030,7 +951,6 @@
         return {
             totalDays: totalDays,
             totalAmount: harvestState.totalAmount,
-            totalCount: harvestState.count,
             avgTemp: Math.round(tempSum / dayCount),
             avgHumidity: Math.round(humiditySum / dayCount),
             pestDays: pestDays
@@ -1042,13 +962,12 @@
         grid.innerHTML =
             '<div class="env-stat-item"><i data-lucide="calendar-days" class="env-stat-icon"></i><span class="env-stat-label">총 재배기간</span><span class="env-stat-value">' + stats.totalDays + '일</span></div>' +
             '<div class="env-stat-item"><i data-lucide="package" class="env-stat-icon"></i><span class="env-stat-label">총 재배량</span><span class="env-stat-value">' + stats.totalAmount + 'g</span></div>' +
-            '<div class="env-stat-item"><i data-lucide="hash" class="env-stat-icon"></i><span class="env-stat-label">총 수확 횟수</span><span class="env-stat-value">' + stats.totalCount + '회</span></div>' +
             '<div class="env-stat-item"><i data-lucide="thermometer" class="env-stat-icon"></i><span class="env-stat-label">평균 온도</span><span class="env-stat-value">' + stats.avgTemp + '°C</span></div>' +
             '<div class="env-stat-item"><i data-lucide="droplet" class="env-stat-icon"></i><span class="env-stat-label">평균 습도</span><span class="env-stat-value">' + stats.avgHumidity + '%</span></div>' +
             '<div class="env-stat-item"><i data-lucide="shield-alert" class="env-stat-icon"></i><span class="env-stat-label">병충해 감지일</span><span class="env-stat-value">' + stats.pestDays + '일</span></div>';
 
         document.getElementById('end-report-summary').textContent =
-            '총 ' + stats.totalDays + '일 동안 재배해서 ' + stats.totalCount + '회에 걸쳐 총 ' + stats.totalAmount + 'g을 수확했어요. ' +
+            '총 ' + stats.totalDays + '일 동안 재배해서 총 ' + stats.totalAmount + 'g을 수확했어요. ' +
             '평균 온도 ' + stats.avgTemp + '°C, 평균 습도 ' + stats.avgHumidity + '%로 재배 환경은 대체로 안정적이었어요. ' +
             (stats.pestDays === 0 ? '병충해 없이 재배를 마쳤습니다.' : '병충해 징후가 ' + stats.pestDays + '일 감지되었으니 다음 재배 시 참고해 주세요.');
 
@@ -1082,8 +1001,7 @@
 
         document.getElementById('end-compare-rows').innerHTML =
             buildCompareRow('총 재배량', stats.totalAmount, target.amount, 'g') +
-            buildCompareRow('재배 기간', stats.totalDays, target.days, '일') +
-            buildCompareRow('수확 횟수', stats.totalCount, target.count, '회');
+            buildCompareRow('재배 기간', stats.totalDays, target.days, '일');
     }
 
     function finishCultivation() {

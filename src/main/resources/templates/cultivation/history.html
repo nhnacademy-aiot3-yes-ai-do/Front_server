@@ -1,38 +1,17 @@
 <!-- templates/cultivation/history.html -->
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배 이력 | MushMush</title>
     <link rel="stylesheet" href="/css/cultivation-history.css" />
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="topbar-left">
-            <a href="/" class="topbar-logo-link">
-                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
-            </a>
-        </div>
-        <div class="topbar-right">
-            <button class="topbar-link" type="button" onclick="location.href='/mypage'">
-                <i data-lucide="user"></i>내 정보 보기
-            </button>
-            <button class="topbar-link" type="button" onclick="location.href='/cultivations/history'">
-                <i data-lucide="history"></i>재배 이력
-            </button>
-            <button class="topbar-link topbar-link-danger" type="button" onclick="logout()">
-                <i data-lucide="log-out"></i>로그아웃
-            </button>
-            <span class="topbar-divider"></span>
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
-            <span class="topbar-nickname">오인택</span>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
 
 <div class="page-container">
 
@@ -72,32 +51,19 @@
 </div>
 
 <script>
-    function logout() {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/logout';
-        document.body.appendChild(form);
-        form.submit();
-    }
-
     var historyState = { selectedId: null };
 
-    function hashSeed(str) {
-        var h = 0;
-        for (var i = 0; i < str.length; i++) {
-            h = (h * 31 + str.charCodeAt(i)) >>> 0;
-        }
-        return h;
-    }
-
-    // 종료된 재배 이력 (데모 데이터, 실제로는 서버에서 사용자의 재배 이력을 받아와야 함)
-    var CULTIVATION_HISTORY = [
-        { id: 1, name: 'Cultivation1', type: '느타리버섯', period: '2027.01 ~ 2027.02', days: 24, amount: 340, count: 5 },
-        { id: 2, name: 'Cultivation2', type: '양송이버섯', period: '2027.03 ~ 2027.04', days: 26, amount: 410, count: 6 },
-        { id: 3, name: 'Cultivation3', type: '표고버섯', period: '2027.05 ~ 2027.06', days: 22, amount: 295, count: 4 },
-        { id: 4, name: 'Cultivation4', type: '새송이버섯', period: '2027.07 ~ 2027.08', days: 25, amount: 380, count: 5 },
-        { id: 5, name: 'Cultivation5', type: '팽이버섯', period: '2027.09 ~ 2027.10', days: 20, amount: 260, count: 3 }
-    ];
+    var pageData = /*[[${history}]]*/ { content: [] };
+    var CULTIVATION_HISTORY = pageData.content.map(function (c) {
+        return {
+            id: c.cultivationId,
+            name: c.name,
+            mushroomId: c.mushroomId,
+            amount: c.harvestWeight,
+            grade: c.productGrade,
+            finishedAt: c.finishedAt
+        };
+    });
 
     function findCultivation(id) {
         return CULTIVATION_HISTORY.filter(function (c) { return c.id === id; })[0];
@@ -110,7 +76,7 @@
         var pestDays = (seed >> 12) % 3;
 
         var summary =
-            '총 ' + c.days + '일 동안 재배해서 ' + c.count + '회에 걸쳐 총 ' + c.amount + 'g을 수확했어요. ' +
+            '총 ' + c.days + '일 동안 재배해서 총 ' + c.amount + 'g을 수확했어요. ' +
             '평균 온도 ' + avgTemp + '°C, 평균 습도 ' + avgHumidity + '%를 유지했고, ' +
             (pestDays === 0 ? '병충해 없이 잘 마무리된 재배였습니다.' : '병충해 징후가 ' + pestDays + '일 감지되었어요.');
 
@@ -162,7 +128,6 @@
             '<div class="env-stat-grid">' +
             '<div class="env-stat-item"><i data-lucide="calendar-days" class="env-stat-icon"></i><span class="env-stat-label">총 재배기간</span><span class="env-stat-value">' + c.days + '일</span></div>' +
             '<div class="env-stat-item"><i data-lucide="package" class="env-stat-icon"></i><span class="env-stat-label">총 재배량</span><span class="env-stat-value">' + c.amount + 'g</span></div>' +
-            '<div class="env-stat-item"><i data-lucide="hash" class="env-stat-icon"></i><span class="env-stat-label">총 수확 횟수</span><span class="env-stat-value">' + c.count + '회</span></div>' +
             '<div class="env-stat-item"><i data-lucide="shield-alert" class="env-stat-icon"></i><span class="env-stat-label">병충해 감지일</span><span class="env-stat-value">' + info.pestDays + '일</span></div>' +
             '</div>' +
             '<p class="history-summary">' +
@@ -171,14 +136,6 @@
             '<button class="btn btn-primary history-compare-btn" type="button" onclick="openCompareModal()">비교하기</button>';
 
         lucide.createIcons();
-    }
-
-    function openModal(id) {
-        document.getElementById(id).classList.add('is-open');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('is-open');
     }
 
     function openCompareModal() {
@@ -218,8 +175,7 @@
 
         document.getElementById('compare-rows').innerHTML =
             buildCompareRow('총 재배량', current.amount, target.amount, 'g') +
-            buildCompareRow('재배 기간', current.days, target.days, '일') +
-            buildCompareRow('수확 횟수', current.count, target.count, '회');
+            buildCompareRow('재배 기간', current.days, target.days, '일');
     }
 
     lucide.createIcons();

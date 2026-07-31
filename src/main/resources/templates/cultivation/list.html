@@ -5,33 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>내 재배지 | MushMush</title>
     <link rel="stylesheet" href="/css/cultivation-list.css" />
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="topbar-left">
-            <a href="/" class="topbar-logo-link">
-                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
-            </a>
-        </div>
-        <div class="topbar-right">
-            <button class="topbar-link" type="button" onclick="location.href='/mypage'">
-                <i data-lucide="user"></i>내 정보 보기
-            </button>
-            <button class="topbar-link" type="button" onclick="location.href='/cultivations/history'">
-                <i data-lucide="history"></i>재배 이력
-            </button>
-            <button class="topbar-link topbar-link-danger" type="button" onclick="logout()">
-                <i data-lucide="log-out"></i>로그아웃
-            </button>
-            <span class="topbar-divider"></span>
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
-            <span class="topbar-nickname">오인택</span>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
 
 <div class="page-container">
 
@@ -87,8 +66,8 @@
                     <tr>
                         <th>위치</th>
                         <th>장소</th>
-                        <th>고유번호</th>
                         <th>모델명</th>
+                        <th>고유번호</th>
                         <th>타입</th>
                     </tr>
                     </thead>
@@ -132,12 +111,12 @@
             <input type="text" id="ms-place" placeholder="예: 우리 집" />
         </div>
         <div class="modal-field">
-            <label>고유번호</label>
-            <input type="text" id="ms-serial" placeholder="예: 1000090909090" />
-        </div>
-        <div class="modal-field">
             <label>모델명</label>
             <input type="text" id="ms-model" placeholder="모델명을 입력하세요" />
+        </div>
+        <div class="modal-field">
+            <label>고유번호</label>
+            <input type="text" id="ms-serial" placeholder="예: 1000090909090" />
         </div>
         <div class="modal-field">
             <label>타입</label>
@@ -175,14 +154,6 @@
         cultivation: { page: 0, data: cultivationData },
         sensor: { page: 0, data: sensorData }
     };
-  
-    function logout() {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/logout';
-        document.body.appendChild(form);
-        form.submit();
-    }
 
     function formatDate(value) {
         if (!value) return '-';
@@ -211,8 +182,8 @@
         tr.innerHTML =
             '<td>' + s.location + '</td>' +
             '<td>' + s.place + '</td>' +
-            '<td>' + s.serial + '</td>' +
             '<td>' + s.model + '</td>' +
+            '<td>' + s.serial + '</td>' +
             '<td>' + s.type + '</td>';
         return tr;
     }
@@ -261,14 +232,6 @@
         document.querySelectorAll('.list-panel').forEach(function (panel) { panel.classList.remove('active'); });
         event.currentTarget.classList.add('active');
         document.getElementById('tab-' + name).classList.add('active');
-    }
-
-    function openModal(id) {
-        document.getElementById(id).classList.add('is-open');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('is-open');
     }
 
     function registerSensor() {
