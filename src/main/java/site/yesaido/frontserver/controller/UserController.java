@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,6 +13,7 @@ import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 public class UserController {
@@ -38,6 +40,7 @@ public class UserController {
                         HttpServletResponse response) {
 
         LoginRequest request = new LoginRequest(email, password);
+        log.info("login 요청. url: {}",request);
         TokenResponse tokenResponse = userClient.login(request);
 
         Cookie accessCookie = new Cookie("accessToken", tokenResponse.getAccessToken());

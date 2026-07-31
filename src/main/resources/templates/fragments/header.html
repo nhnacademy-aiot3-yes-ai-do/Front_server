@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header class="topbar" th:fragment="header">
+    <div class="topbar-inner">
+        <div class="topbar-left">
+            <a href="/" class="topbar-logo-link">
+                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
+            </a>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-link" type="button" onclick="location.href='/mypage'">
+                <i data-lucide="user"></i>내 정보 보기
+            </button>
+            <button class="topbar-link" type="button" onclick="location.href='/cultivations/history'">
+                <i data-lucide="history"></i>재배 이력
+            </button>
+            <button class="topbar-link topbar-link-danger" type="button" onclick="logout()">
+                <i data-lucide="log-out"></i>로그아웃
+            </button>
+            <span class="topbar-divider"></span>
+            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+            <span class="topbar-nickname" id="topbar-nickname-label">오인택</span>
+        </div>
+    </div>
+</header>
+
+</body>
+</html>

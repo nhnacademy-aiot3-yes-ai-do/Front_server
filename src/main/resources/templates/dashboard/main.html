@@ -7,32 +7,11 @@
     <title>재배 대시보드 | MushMush</title>
     <link rel="stylesheet" href="/css/dashboard.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/common.js"></script>
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="topbar-left">
-            <a href="/" class="topbar-logo-link">
-                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
-            </a>
-        </div>
-        <div class="topbar-right">
-            <button class="topbar-link" type="button" onclick="location.href='/mypage'">
-                <i data-lucide="user"></i>내 정보 보기
-            </button>
-            <button class="topbar-link" type="button" onclick="location.href='/cultivations/history'">
-                <i data-lucide="history"></i>재배 이력
-            </button>
-            <button class="topbar-link topbar-link-danger" type="button" onclick="logout()">
-                <i data-lucide="log-out"></i>로그아웃
-            </button>
-            <span class="topbar-divider"></span>
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
-            <span class="topbar-nickname">오인택</span>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
 
 <div class="page-container">
 
@@ -514,14 +493,6 @@
     var CULTIVATION_ID = /*[[${cultivation.cultivationId}]]*/ 0;
     lucide.createIcons();
 
-    function logout() {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/logout';
-        document.body.appendChild(form);
-        form.submit();
-    }
-
     var SENSOR_DATA = {
         temp: { '온도센서1': '18°C', '온도센서2': '19°C', '온도센서3': '20°C' },
         humidity: { '습도센서1': '61%', '습도센서2': '58%' },
@@ -952,14 +923,6 @@
 
     renderReportDateStrip();
     renderReportBody(reportState.selectedDate);
-
-    function openModal(id) {
-        document.getElementById(id).classList.add('is-open');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('is-open');
-    }
 
     // 총 재배량 / 재배횟수 누적 (데모 데이터, 실제로는 서버에서 받아와야 함)
     var harvestState = { totalAmount: 0, count: 0 };

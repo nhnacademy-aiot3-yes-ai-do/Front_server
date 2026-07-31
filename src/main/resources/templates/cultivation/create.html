@@ -1,37 +1,16 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배지 생성 | MushMush</title>
     <link rel="stylesheet" href="/css/cultivation-create.css" />
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/common.js"></script>
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="topbar-left">
-            <a href="/" class="topbar-logo-link">
-                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
-            </a>
-        </div>
-        <div class="topbar-right">
-            <button class="topbar-link" type="button" onclick="location.href='/mypage'">
-                <i data-lucide="user"></i>내 정보 보기
-            </button>
-            <button class="topbar-link" type="button" onclick="location.href='/cultivations/history'">
-                <i data-lucide="history"></i>재배 이력
-            </button>
-            <button class="topbar-link topbar-link-danger" type="button" onclick="logout()">
-                <i data-lucide="log-out"></i>로그아웃
-            </button>
-            <span class="topbar-divider"></span>
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
-            <span class="topbar-nickname">오인택</span>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
 
 <div class="wizard-page">
     <div class="wizard-box">
@@ -181,14 +160,6 @@
 
 <script>
     lucide.createIcons();
-
-    function logout() {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/logout';
-        document.body.appendChild(form);
-        form.submit();
-    }
 
     // 이미 등록된 센서 목록 (데모 데이터) - 실제로는 서버에서 조회
     var REGISTERED_SENSORS = [
