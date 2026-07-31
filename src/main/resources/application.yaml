@@ -9,6 +9,10 @@ server:
 spring:
   application:
     name: front_server
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
 
 feign:
   client:
