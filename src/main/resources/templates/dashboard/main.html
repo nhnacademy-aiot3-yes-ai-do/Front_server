@@ -922,16 +922,30 @@
             return;
         }
 
-        harvestState.totalAmount = amount;
+        var memo = memoInput.value;
 
-        endReportStats = computeEndReportStats();
-        renderEndReport(endReportStats);
+        fetch('/cultivations/' + CULTIVATION_ID + '/harvest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ harvestWeight: amount, memo: memo })
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error('harvest failed');
+                return res.json();
+            })
+            .then(function () {
+                harvestState.totalAmount = amount;
 
-        amountInput.value = '';
-        memoInput.value = '';
+                endReportStats = computeEndReportStats();
+                renderEndReport(endReportStats);
 
-        closeModal('modal-end-amount');
-        openModal('modal-end-report');
+                amountInput.value = '';
+                memoInput.value = '';
+
+                closeModal('modal-end-amount');
+                openModal('modal-end-report');
+            })
+            .catch(function () { alert('수확 기록에 실패했습니다.'); });
     }
 
     function computeEndReportStats() {

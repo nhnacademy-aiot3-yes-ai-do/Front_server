@@ -7,10 +7,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.UserClient;
-import site.yesaido.frontserver.dto.cultivation.request.CultivationCreateRequest;
-import site.yesaido.frontserver.dto.cultivation.request.MemberAddFormRequest;
-import site.yesaido.frontserver.dto.cultivation.request.MemberAddRequest;
-import site.yesaido.frontserver.dto.cultivation.request.OwnerTransferRequest;
+import site.yesaido.frontserver.dto.cultivation.request.*;
 import site.yesaido.frontserver.dto.cultivation.response.*;
 import site.yesaido.frontserver.util.LoginRequired;
 
@@ -41,7 +38,7 @@ public class CultivationController {
     public String cultivationHistory(@RequestParam(defaultValue = "0") int page,
                                      @RequestParam(defaultValue = "20") int size,
                                      Model model) {
-        CultivationHistoryResponse history = cultivationClient.getHistory(page, size).getBody();
+        CultivationHistoryPageResponse history = cultivationClient.getHistory(page, size).getBody();
         model.addAttribute("history", history);
         return "cultivation/history";
     }
@@ -99,5 +96,12 @@ public class CultivationController {
                                                   @RequestBody OwnerTransferRequest request) {
         cultivationClient.transferOwnership(cultivationId, request);
         return ResponseEntity.ok().build();
+    }
+
+    // 수확
+    @PostMapping("/{cultivation-id}/harvest")
+    public ResponseEntity<HarvestCreateResponse> createHarvest(@PathVariable("cultivation-id") Long cultivationId,
+                                                               @RequestBody HarvestCreateRequest request) {
+        return cultivationClient.createHarvest(cultivationId, request);
     }
 }
