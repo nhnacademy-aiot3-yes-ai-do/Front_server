@@ -41,11 +41,11 @@ public class UserViewController {
 //        return "auth/find-password";
 //    }
 
-//    @GetMapping("/verify-code")
-//    public String verifyCodePage(@RequestParam String email, Model model) {
-//        model.addAttribute("email", email);
-//        return "auth/verify-code";
-//    }
+    @GetMapping("/verify-code")
+    public String verifyCodePage(@RequestParam String email, Model model) {
+        model.addAttribute("email", email);
+        return "auth/verify-code";
+    }
 
 //    @GetMapping("/reset-password")
 //    public String resetPasswordPage(@RequestParam String email,
