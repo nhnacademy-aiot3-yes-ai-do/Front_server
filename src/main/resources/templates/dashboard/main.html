@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배 대시보드 | MushMush</title>
     <link rel="stylesheet" href="/css/dashboard.css" />
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/lucide.js"></script>
     <script src="/js/common.js"></script>
 </head>
 <body>
@@ -238,9 +238,6 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" type="button" onclick="openModal('modal-harvest')">
-                중간 재배
-            </button>
             <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
                 <i data-lucide="users"></i>
             </button>
@@ -431,43 +428,6 @@
         <div class="compare-rows" id="end-compare-rows"></div>
         <div class="modal-actions">
             <button class="btn btn-primary" type="button" onclick="finishCultivation()">홈으로</button>
-        </div>
-    </div>
-</div>
-
-<!-- 중간 재배(재배량/메모) 다이얼로그 -->
-<div class="modal-overlay" id="modal-harvest">
-    <div class="modal-box">
-        <button class="modal-close" type="button" onclick="closeModal('modal-harvest')">
-            <i data-lucide="x"></i>
-        </button>
-        <h3 class="modal-title">중간 재배 기록</h3>
-        <div class="modal-field">
-            <label>재배량 (g)</label>
-            <input type="number" id="harvest-amount-input" min="0" placeholder="예: 120" />
-        </div>
-        <div class="modal-field">
-            <label>재배 메모</label>
-            <textarea rows="3" id="harvest-memo-input" placeholder="메모를 입력하세요"></textarea>
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-outline" type="button" onclick="closeModal('modal-harvest')">Cancel</button>
-            <button class="btn btn-primary" type="button" onclick="submitHarvest()">OK</button>
-        </div>
-    </div>
-</div>
-
-<!-- 총 재배 요약 다이얼로그 -->
-<div class="modal-overlay" id="modal-summary">
-    <div class="modal-box">
-        <button class="modal-close" type="button" onclick="closeModal('modal-summary')">
-            <i data-lucide="x"></i>
-        </button>
-        <p class="modal-desc" style="margin-bottom:20px;">
-            현재까지 총 재배량은 <span id="harvest-total-amount">0</span>g 이며,<br />재배횟수는 <span id="harvest-total-count">0</span>번 입니다.
-        </p>
-        <div class="modal-actions">
-            <button class="btn btn-primary" type="button" onclick="closeModal('modal-summary')">OK</button>
         </div>
     </div>
 </div>
@@ -924,40 +884,17 @@
     renderReportDateStrip();
     renderReportBody(reportState.selectedDate);
 
-    // 총 재배량 / 재배횟수 누적 (데모 데이터, 실제로는 서버에서 받아와야 함)
-    var harvestState = { totalAmount: 0, count: 0 };
-
-    function submitHarvest() {
-        var amountInput = document.getElementById('harvest-amount-input');
-        var memoInput = document.getElementById('harvest-memo-input');
-        var amount = Number(amountInput.value);
-
-        if (!amountInput.value || isNaN(amount) || amount <= 0) {
-            amountInput.focus();
-            return;
-        }
-
-        harvestState.totalAmount += amount;
-        harvestState.count += 1;
-
-        document.getElementById('harvest-total-amount').textContent = harvestState.totalAmount;
-        document.getElementById('harvest-total-count').textContent = harvestState.count;
-
-        amountInput.value = '';
-        memoInput.value = '';
-
-        closeModal('modal-harvest');
-        openModal('modal-summary');
-    }
+    // 재배량 (재배 종료 시 한 번만 입력, 실제로는 서버에서 받아와야 함)
+    var harvestState = { totalAmount: 0 };
 
     // ===== 재배 종료 흐름: 최종 재배량 -> AI 재배 리포트 -> 재배 이력 비교 -> 홈 =====
     var CULTIVATION_START_DATE_KEY = toDateKey(addDays(reportToday, -21)); // 데모: 21일 전 시작
 
     // 이전에 재배했던 이력 목록 (데모 데이터, 실제로는 서버에서 사용자의 재배 이력을 받아와야 함)
     var PAST_CULTIVATION_CYCLES = [
-        { id: 1, name: 'Cultivation1', type: '느타리버섯', period: '2027.01 ~ 2027.02', amount: 340, days: 24, count: 5 },
-        { id: 2, name: 'Cultivation2', type: '양송이버섯', period: '2027.03 ~ 2027.04', amount: 410, days: 26, count: 6 },
-        { id: 3, name: 'Cultivation3', type: '표고버섯', period: '2027.05 ~ 2027.06', amount: 295, days: 22, count: 4 }
+        { id: 1, name: 'Cultivation1', type: '느타리버섯', period: '2027.01 ~ 2027.02', amount: 340, days: 24 },
+        { id: 2, name: 'Cultivation2', type: '양송이버섯', period: '2027.03 ~ 2027.04', amount: 410, days: 26 },
+        { id: 3, name: 'Cultivation3', type: '표고버섯', period: '2027.05 ~ 2027.06', amount: 295, days: 22 }
     ];
     var endReportStats = null;
 
@@ -985,8 +922,7 @@
             return;
         }
 
-        harvestState.totalAmount += amount;
-        harvestState.count += 1;
+        harvestState.totalAmount = amount;
 
         endReportStats = computeEndReportStats();
         renderEndReport(endReportStats);
@@ -1015,7 +951,6 @@
         return {
             totalDays: totalDays,
             totalAmount: harvestState.totalAmount,
-            totalCount: harvestState.count,
             avgTemp: Math.round(tempSum / dayCount),
             avgHumidity: Math.round(humiditySum / dayCount),
             pestDays: pestDays
@@ -1027,13 +962,12 @@
         grid.innerHTML =
             '<div class="env-stat-item"><i data-lucide="calendar-days" class="env-stat-icon"></i><span class="env-stat-label">총 재배기간</span><span class="env-stat-value">' + stats.totalDays + '일</span></div>' +
             '<div class="env-stat-item"><i data-lucide="package" class="env-stat-icon"></i><span class="env-stat-label">총 재배량</span><span class="env-stat-value">' + stats.totalAmount + 'g</span></div>' +
-            '<div class="env-stat-item"><i data-lucide="hash" class="env-stat-icon"></i><span class="env-stat-label">총 수확 횟수</span><span class="env-stat-value">' + stats.totalCount + '회</span></div>' +
             '<div class="env-stat-item"><i data-lucide="thermometer" class="env-stat-icon"></i><span class="env-stat-label">평균 온도</span><span class="env-stat-value">' + stats.avgTemp + '°C</span></div>' +
             '<div class="env-stat-item"><i data-lucide="droplet" class="env-stat-icon"></i><span class="env-stat-label">평균 습도</span><span class="env-stat-value">' + stats.avgHumidity + '%</span></div>' +
             '<div class="env-stat-item"><i data-lucide="shield-alert" class="env-stat-icon"></i><span class="env-stat-label">병충해 감지일</span><span class="env-stat-value">' + stats.pestDays + '일</span></div>';
 
         document.getElementById('end-report-summary').textContent =
-            '총 ' + stats.totalDays + '일 동안 재배해서 ' + stats.totalCount + '회에 걸쳐 총 ' + stats.totalAmount + 'g을 수확했어요. ' +
+            '총 ' + stats.totalDays + '일 동안 재배해서 총 ' + stats.totalAmount + 'g을 수확했어요. ' +
             '평균 온도 ' + stats.avgTemp + '°C, 평균 습도 ' + stats.avgHumidity + '%로 재배 환경은 대체로 안정적이었어요. ' +
             (stats.pestDays === 0 ? '병충해 없이 재배를 마쳤습니다.' : '병충해 징후가 ' + stats.pestDays + '일 감지되었으니 다음 재배 시 참고해 주세요.');
 
@@ -1067,8 +1001,7 @@
 
         document.getElementById('end-compare-rows').innerHTML =
             buildCompareRow('총 재배량', stats.totalAmount, target.amount, 'g') +
-            buildCompareRow('재배 기간', stats.totalDays, target.days, '일') +
-            buildCompareRow('수확 횟수', stats.totalCount, target.count, '회');
+            buildCompareRow('재배 기간', stats.totalDays, target.days, '일');
     }
 
     function finishCultivation() {

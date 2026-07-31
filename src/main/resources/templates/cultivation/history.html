@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배 이력 | MushMush</title>
     <link rel="stylesheet" href="/css/cultivation-history.css" />
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/lucide.js"></script>
     <script src="/js/common.js"></script>
 </head>
 <body>
@@ -76,7 +76,7 @@
         var pestDays = (seed >> 12) % 3;
 
         var summary =
-            '총 ' + c.days + '일 동안 재배해서 ' + c.count + '회에 걸쳐 총 ' + c.amount + 'g을 수확했어요. ' +
+            '총 ' + c.days + '일 동안 재배해서 총 ' + c.amount + 'g을 수확했어요. ' +
             '평균 온도 ' + avgTemp + '°C, 평균 습도 ' + avgHumidity + '%를 유지했고, ' +
             (pestDays === 0 ? '병충해 없이 잘 마무리된 재배였습니다.' : '병충해 징후가 ' + pestDays + '일 감지되었어요.');
 
@@ -128,7 +128,6 @@
             '<div class="env-stat-grid">' +
             '<div class="env-stat-item"><i data-lucide="calendar-days" class="env-stat-icon"></i><span class="env-stat-label">총 재배기간</span><span class="env-stat-value">' + c.days + '일</span></div>' +
             '<div class="env-stat-item"><i data-lucide="package" class="env-stat-icon"></i><span class="env-stat-label">총 재배량</span><span class="env-stat-value">' + c.amount + 'g</span></div>' +
-            '<div class="env-stat-item"><i data-lucide="hash" class="env-stat-icon"></i><span class="env-stat-label">총 수확 횟수</span><span class="env-stat-value">' + c.count + '회</span></div>' +
             '<div class="env-stat-item"><i data-lucide="shield-alert" class="env-stat-icon"></i><span class="env-stat-label">병충해 감지일</span><span class="env-stat-value">' + info.pestDays + '일</span></div>' +
             '</div>' +
             '<p class="history-summary">' +
@@ -176,8 +175,7 @@
 
         document.getElementById('compare-rows').innerHTML =
             buildCompareRow('총 재배량', current.amount, target.amount, 'g') +
-            buildCompareRow('재배 기간', current.days, target.days, '일') +
-            buildCompareRow('수확 횟수', current.count, target.count, '회');
+            buildCompareRow('재배 기간', current.days, target.days, '일');
     }
 
     lucide.createIcons();
