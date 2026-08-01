@@ -1,18 +1,16 @@
 package site.yesaido.frontserver.controller.user;
 
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.web.bind.annotation.GetMapping;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
-import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
+import site.yesaido.frontserver.dto.user.response.TokenResponse;
 
 @Slf4j
 @Controller
