@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: front_server
+
+feign:
+  client:
+    gateway:
+      url: http://localhost:8000

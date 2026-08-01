@@ -32,7 +32,7 @@ class HomeControllerTest {
     @Test
     void homeWithAccessTokenReturnsCultivationListView() throws Exception {
         mockMvc.perform(get("/").cookie(new Cookie("accessToken", "demo-access-token")))
-                .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/list"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name("redirect:/cultivations"));
     }
 }

@@ -450,7 +450,7 @@
 </div>
 
 <script th:inline="javascript">
-    var CULTIVATION_ID = /*[[${cultivation.cultivationId}]]*/ 0;
+    var CULTIVATION_ID = /*[[${cultivation?.cultivationId}]]*/ 0;
     lucide.createIcons();
 
     var SENSOR_DATA = {
