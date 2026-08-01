@@ -7,9 +7,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(HomeController.class)
 class HomeControllerTest {
@@ -34,7 +32,7 @@ class HomeControllerTest {
     @Test
     void homeWithAccessTokenReturnsCultivationListView() throws Exception {
         mockMvc.perform(get("/").cookie(new Cookie("accessToken", "demo-access-token")))
-                .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/list"));
+                .andExpect(status().is3xxRedirection())
+                .andExpect(view().name("redirect:/cultivations"));
     }
 }

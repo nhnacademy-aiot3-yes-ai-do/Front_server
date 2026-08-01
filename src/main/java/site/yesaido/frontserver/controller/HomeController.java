@@ -14,6 +14,6 @@ public class HomeController {
         if (accessToken == null || accessToken.isBlank()) {
             return "redirect:/login";
         }
-        return "cultivation/list";
+        return "redirect:/cultivations";
     }
 }
