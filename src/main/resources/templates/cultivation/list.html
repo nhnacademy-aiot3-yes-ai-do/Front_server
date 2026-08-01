@@ -171,8 +171,8 @@
         tr.innerHTML =
             '<td>' + c.name + '</td>' +
             '<td>' + (c.mushroomId != null ? '버섯 #' + c.mushroomId : '-') + '</td>' +
-            '<td>-</td>' +
-            '<td>-</td>' +
+            '<td>' + (c.memberCount != null ? c.memberCount + '명' : '-') + '</td>' +
+            '<td>' + (c.ownerNickname || '-') + '</td>' +
             '<td>' + formatDate(c.createdAt) + '</td>';
         return tr;
     }

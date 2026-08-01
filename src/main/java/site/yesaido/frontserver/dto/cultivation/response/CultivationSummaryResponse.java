@@ -8,6 +8,8 @@ public record CultivationSummaryResponse(
         Long mushroomId,
         String status,
         String mode,
+        Integer memberCount,
+        String ownerNickname,
         LocalDateTime createdAt
 ) {
 }
