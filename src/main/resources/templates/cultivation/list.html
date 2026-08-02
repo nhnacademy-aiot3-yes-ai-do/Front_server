@@ -1,37 +1,16 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>내 재배지 | MushMush</title>
     <link rel="stylesheet" href="/css/cultivation-list.css" />
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="topbar-left">
-            <a href="/" class="topbar-logo-link">
-                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
-            </a>
-        </div>
-        <div class="topbar-right">
-            <button class="topbar-link" type="button">
-                <i data-lucide="user"></i>내 정보 보기
-            </button>
-            <button class="topbar-link" type="button">
-                <i data-lucide="history"></i>재배 이력
-            </button>
-            <button class="topbar-link topbar-link-danger" type="button">
-                <i data-lucide="log-out"></i>로그아웃
-            </button>
-            <span class="topbar-divider"></span>
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
-            <span class="topbar-nickname">오인택</span>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/header :: header}"></header>
 
 <div class="page-container">
 
@@ -87,8 +66,8 @@
                     <tr>
                         <th>위치</th>
                         <th>장소</th>
-                        <th>고유번호</th>
                         <th>모델명</th>
+                        <th>고유번호</th>
                         <th>타입</th>
                     </tr>
                     </thead>
@@ -132,12 +111,12 @@
             <input type="text" id="ms-place" placeholder="예: 우리 집" />
         </div>
         <div class="modal-field">
-            <label>고유번호</label>
-            <input type="text" id="ms-serial" placeholder="예: 1000090909090" />
-        </div>
-        <div class="modal-field">
             <label>모델명</label>
             <input type="text" id="ms-model" placeholder="모델명을 입력하세요" />
+        </div>
+        <div class="modal-field">
+            <label>고유번호</label>
+            <input type="text" id="ms-serial" placeholder="예: 1000090909090" />
         </div>
         <div class="modal-field">
             <label>타입</label>
@@ -156,21 +135,15 @@
     </div>
 </div>
 
-<script>
+<script th:inline="javascript">
+    lucide.createIcons();
+
     var PAGE_SIZE = 6;
 
-    // 데모 데이터 (실제로는 서버에서 목록을 받아와야 함)
-    var cultivationData = [
-        { name: 'Cultivation1', type: '느타리버섯', members: 3, admin: 'nickname', createdAt: '2027.07.27' },
-        { name: 'Cultivation2', type: '양송이버섯', members: 5, admin: 'nickname', createdAt: '2027.07.29' },
-        { name: 'Cultivation3', type: '표고버섯', members: 2, admin: 'nickname', createdAt: '2027.08.02' },
-        { name: 'Cultivation4', type: '새송이버섯', members: 4, admin: 'nickname', createdAt: '2027.08.10' },
-        { name: 'Cultivation5', type: '팽이버섯', members: 1, admin: 'nickname', createdAt: '2027.08.15' },
-        { name: 'Cultivation6', type: '양송이버섯', members: 6, admin: 'nickname', createdAt: '2027.08.20' },
-        { name: 'Cultivation7', type: '느타리버섯', members: 3, admin: 'nickname', createdAt: '2027.08.25' },
-        { name: 'Cultivation8', type: '표고버섯', members: 2, admin: 'nickname', createdAt: '2027.09.01' }
-    ];
+    // 서버에서 내려준 실제 재배 목록 (CultivationSummaryResponse 리스트)
+    var cultivationData = /*[[${cultivations}]]*/ [];
 
+    // 센서는 아직 백엔드 연동 전이라 데모 데이터 유지
     var sensorData = [
         { location: '광주광역시', place: '우리 집', serial: '1000090909090', model: 'kljsdlkafjkl', type: '온도센서' },
         { location: '광주광역시', place: '우리 집', serial: '1000090909091', model: 'kljsdlkafjkm', type: '습도센서' },
@@ -182,15 +155,25 @@
         sensor: { page: 0, data: sensorData }
     };
 
+    function formatDate(value) {
+        if (!value) return '-';
+        var d = new Date(value);
+        if (isNaN(d.getTime())) return '-';
+        var y = d.getFullYear();
+        var m = String(d.getMonth() + 1).padStart(2, '0');
+        var day = String(d.getDate()).padStart(2, '0');
+        return y + '.' + m + '.' + day;
+    }
+
     function renderCultivationRow(c) {
         var tr = document.createElement('tr');
-        tr.onclick = function () { location.href = '/dashboard'; };
+        tr.onclick = function () { location.href = '/cultivations/' + c.cultivationId; };
         tr.innerHTML =
             '<td>' + c.name + '</td>' +
-            '<td>' + c.type + '</td>' +
-            '<td>' + c.members + '</td>' +
-            '<td>' + c.admin + '</td>' +
-            '<td>' + c.createdAt + '</td>';
+            '<td>' + (c.mushroomId != null ? '버섯 #' + c.mushroomId : '-') + '</td>' +
+            '<td>' + (c.memberCount != null ? c.memberCount + '명' : '-') + '</td>' +
+            '<td>' + (c.ownerNickname || '-') + '</td>' +
+            '<td>' + formatDate(c.createdAt) + '</td>';
         return tr;
     }
 
@@ -199,8 +182,8 @@
         tr.innerHTML =
             '<td>' + s.location + '</td>' +
             '<td>' + s.place + '</td>' +
-            '<td>' + s.serial + '</td>' +
             '<td>' + s.model + '</td>' +
+            '<td>' + s.serial + '</td>' +
             '<td>' + s.type + '</td>';
         return tr;
     }
@@ -241,7 +224,6 @@
         renderList(key);
     }
 
-    lucide.createIcons();
     renderList('cultivation');
     renderList('sensor');
 
@@ -250,14 +232,6 @@
         document.querySelectorAll('.list-panel').forEach(function (panel) { panel.classList.remove('active'); });
         event.currentTarget.classList.add('active');
         document.getElementById('tab-' + name).classList.add('active');
-    }
-
-    function openModal(id) {
-        document.getElementById(id).classList.add('is-open');
-    }
-
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('is-open');
     }
 
     function registerSensor() {

@@ -1,0 +1,233 @@
+<!-- templates/user/profile.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>내 정보 | MushMush</title>
+    <link rel="stylesheet" href="/css/user-profile.css" />
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="page-container">
+    <div class="profile-panels">
+
+        <!-- 내 정보 보기 -->
+        <section id="profile-view" class="profile-panel active">
+            <div class="profile-card">
+                <div class="profile-avatar"><i data-lucide="circle-user-round" style="width:40px;height:40px;"></i></div>
+                <h2 class="profile-name" id="profile-view-nickname">오인택</h2>
+
+                <div class="info-rows">
+                    <div class="info-row">
+                        <span class="info-label"><i data-lucide="mail"></i>이메일</span>
+                        <span class="info-value">user@example.com</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i data-lucide="user"></i>닉네임</span>
+                        <span class="info-value" id="profile-view-nickname-row">오인택</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i data-lucide="calendar-plus"></i>가입일</span>
+                        <span class="info-value" id="profile-view-joined-at"></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label"><i data-lucide="calendar-clock"></i>최종 수정일</span>
+                        <span class="info-value" id="profile-view-updated-at"></span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary profile-full-btn" type="button" onclick="startProfileEdit()">
+                    <i data-lucide="pencil"></i>회원정보 수정
+                </button>
+                <button class="profile-delete-link" type="button" onclick="startProfileDelete()">
+                    회원 탈퇴
+                </button>
+            </div>
+        </section>
+
+        <!-- 비밀번호 확인 -->
+        <section id="profile-verify" class="profile-panel">
+            <div class="profile-card">
+                <h3 class="modal-title">비밀번호 확인</h3>
+                <p class="modal-desc">회원정보를 수정하려면 현재 비밀번호를 입력해주세요.</p>
+                <div class="modal-field">
+                    <label>비밀번호</label>
+                    <input type="password" id="profile-verify-password" placeholder="비밀번호 입력" />
+                </div>
+                <p class="profile-error" id="profile-verify-error" style="display:none;">비밀번호가 일치하지 않습니다.</p>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" type="button" onclick="cancelProfileEdit()">취소</button>
+                    <button class="btn btn-primary" type="button" onclick="confirmProfilePassword()">확인</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 회원정보 수정 -->
+        <section id="profile-edit" class="profile-panel">
+            <div class="profile-card">
+                <h3 class="modal-title">회원정보 수정</h3>
+                <div class="modal-field">
+                    <label>닉네임</label>
+                    <input type="text" id="profile-edit-nickname" placeholder="닉네임을 입력하세요" />
+                </div>
+                <div class="modal-field">
+                    <label>새 비밀번호 (변경할 때만 입력)</label>
+                    <input type="password" id="profile-edit-password" placeholder="새 비밀번호" />
+                </div>
+                <div class="modal-field">
+                    <label>새 비밀번호 확인</label>
+                    <input type="password" id="profile-edit-password-confirm" placeholder="새 비밀번호 확인" />
+                </div>
+                <p class="profile-error" id="profile-edit-error" style="display:none;"></p>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" type="button" onclick="cancelProfileEdit()">취소</button>
+                    <button class="btn btn-primary" type="button" onclick="saveProfileEdit()">저장</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 회원 탈퇴 -->
+        <section id="profile-delete-confirm" class="profile-panel">
+            <div class="profile-card">
+                <div class="delete-warning-icon">
+                    <i data-lucide="triangle-alert"></i>
+                </div>
+                <h3 class="modal-title profile-title-center">정말 탈퇴하시겠어요?</h3>
+                <div class="delete-warning-box">
+                    탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며 복구할 수 없어요.
+                </div>
+                <div class="modal-field">
+                    <label>비밀번호 확인</label>
+                    <input type="password" id="profile-delete-password" placeholder="비밀번호 입력" />
+                </div>
+                <p class="profile-error" id="profile-delete-error" style="display:none;">비밀번호가 일치하지 않습니다.</p>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" type="button" onclick="cancelProfileEdit()">취소</button>
+                    <button class="btn btn-danger" type="button" onclick="confirmProfileDelete()">탈퇴하기</button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    // 데모 데이터 (실제로는 서버에서 조회/검증해야 함)
+    var DEMO_PASSWORD = 'password1!';
+
+    function formatDemoDate(date) {
+        var y = date.getFullYear();
+        var m = String(date.getMonth() + 1).padStart(2, '0');
+        var d = String(date.getDate()).padStart(2, '0');
+        return y + '.' + m + '.' + d;
+    }
+
+    function addDaysDemo(date, days) {
+        var result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    }
+
+    // 가입일 < 최종 수정일 <= 오늘 순서가 항상 유지되도록 오늘 날짜 기준 상대값으로 계산
+    var demoToday = new Date();
+    var profileState = {
+        nickname: '오인택',
+        joinedAt: formatDemoDate(addDaysDemo(demoToday, -200)),
+        updatedAt: formatDemoDate(addDaysDemo(demoToday, -30))
+    };
+
+    document.getElementById('profile-view-joined-at').textContent = profileState.joinedAt;
+    document.getElementById('profile-view-updated-at').textContent = profileState.updatedAt;
+
+    function showProfilePanel(id) {
+        document.querySelectorAll('.profile-panel').forEach(function (p) { p.classList.remove('active'); });
+        document.getElementById(id).classList.add('active');
+    }
+
+    function startProfileEdit() {
+        document.getElementById('profile-verify-password').value = '';
+        document.getElementById('profile-verify-error').style.display = 'none';
+        showProfilePanel('profile-verify');
+    }
+
+    function confirmProfilePassword() {
+        var input = document.getElementById('profile-verify-password');
+        var errorEl = document.getElementById('profile-verify-error');
+
+        if (input.value !== DEMO_PASSWORD) {
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        document.getElementById('profile-edit-nickname').value = profileState.nickname;
+        document.getElementById('profile-edit-password').value = '';
+        document.getElementById('profile-edit-password-confirm').value = '';
+        document.getElementById('profile-edit-error').style.display = 'none';
+        showProfilePanel('profile-edit');
+    }
+
+    function cancelProfileEdit() {
+        showProfilePanel('profile-view');
+    }
+
+    function saveProfileEdit() {
+        var nickname = document.getElementById('profile-edit-nickname').value.trim();
+        var password = document.getElementById('profile-edit-password').value;
+        var passwordConfirm = document.getElementById('profile-edit-password-confirm').value;
+        var errorEl = document.getElementById('profile-edit-error');
+
+        if (!nickname) {
+            errorEl.textContent = '닉네임을 입력해주세요.';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        if (password || passwordConfirm) {
+            if (password !== passwordConfirm) {
+                errorEl.textContent = '새 비밀번호가 일치하지 않습니다.';
+                errorEl.style.display = 'block';
+                return;
+            }
+        }
+
+        errorEl.style.display = 'none';
+        profileState.nickname = nickname;
+        profileState.updatedAt = formatDemoDate(new Date());
+
+        document.getElementById('profile-view-nickname').textContent = nickname;
+        document.getElementById('profile-view-nickname-row').textContent = nickname;
+        document.getElementById('topbar-nickname-label').textContent = nickname;
+        document.getElementById('profile-view-updated-at').textContent = profileState.updatedAt;
+
+        showProfilePanel('profile-view');
+    }
+
+    function startProfileDelete() {
+        document.getElementById('profile-delete-password').value = '';
+        document.getElementById('profile-delete-error').style.display = 'none';
+        showProfilePanel('profile-delete-confirm');
+    }
+
+    function confirmProfileDelete() {
+        var input = document.getElementById('profile-delete-password');
+        var errorEl = document.getElementById('profile-delete-error');
+
+        if (input.value !== DEMO_PASSWORD) {
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        // 데모: 실제로는 서버에 탈퇴 요청을 보내고 세션을 종료해야 함
+        location.href = '/login';
+    }
+</script>
+
+</body>
+</html>

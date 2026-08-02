@@ -133,6 +133,13 @@ body::before {
     box-shadow: none;
 }
 
+/* .btn:active 의 transform이 위 translateY(-50%)를 덮어써서
+   버튼이 세로 중앙에서 벗어나 보이는 문제 방지 (두 transform을 합쳐서 유지) */
+.field-inline .btn-inline:active {
+    transform: translateY(-50%) translate(1px, 1px);
+    box-shadow: none;
+}
+
 .profile-row {
     display: flex;
     align-items: center;
