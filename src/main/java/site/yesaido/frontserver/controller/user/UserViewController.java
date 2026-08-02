@@ -31,25 +31,11 @@ public class UserViewController {
         model.addAttribute("password", password);
         return "auth/signup-nickname";
     }
-//
-//    @GetMapping("/find-password")
-//    public String findPasswordPage() {
-//        return "auth/find-password";
-//    }
 
     @GetMapping("/verify-code")
     public String verifyCodePage(@RequestParam String email, Model model) {
         model.addAttribute("email", email);
         return "auth/verify-code";
     }
-
-//    @GetMapping("/reset-password")
-//    public String resetPasswordPage(@RequestParam String email,
-//                                    @RequestParam String code,
-//                                    Model model) {
-//        model.addAttribute("email", email);
-//        return "auth/reset-password";
-//    }
-
 
 }

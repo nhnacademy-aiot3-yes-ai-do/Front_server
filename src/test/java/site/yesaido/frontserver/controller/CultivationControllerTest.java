@@ -11,11 +11,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.UserClient;
-import site.yesaido.frontserver.dto.cultivation.request.CultivationCreateRequest;
-import site.yesaido.frontserver.dto.cultivation.request.HarvestCreateRequest;
-import site.yesaido.frontserver.dto.cultivation.request.MemberAddFormRequest;
-import site.yesaido.frontserver.dto.cultivation.request.MemberAddRequest;
-import site.yesaido.frontserver.dto.cultivation.request.OwnerTransferRequest;
+import site.yesaido.frontserver.dto.cultivation.request.*;
 import site.yesaido.frontserver.dto.cultivation.response.*;
 import tools.jackson.databind.ObjectMapper;
 
@@ -25,7 +21,6 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -171,7 +166,7 @@ class CultivationControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(cultivationClient).addMember(eq(cultivationId), eq(new MemberAddRequest(200L, "MEMBER")));
+        verify(cultivationClient).addMember(cultivationId, new MemberAddRequest(200L, "MEMBER"));
     }
 
     @Test
@@ -199,7 +194,7 @@ class CultivationControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(cultivationClient).transferOwnership(eq(cultivationId), eq(request));
+        verify(cultivationClient).transferOwnership(cultivationId, request);
     }
 
     @Test
