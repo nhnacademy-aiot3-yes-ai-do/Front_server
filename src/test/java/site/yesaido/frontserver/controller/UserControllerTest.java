@@ -1,6 +1,5 @@
 package site.yesaido.frontserver.controller;
 
-import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
