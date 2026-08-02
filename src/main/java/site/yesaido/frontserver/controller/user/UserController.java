@@ -5,47 +5,47 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 
+import java.io.IOException;
+
 @Slf4j
-@Controller
+@RestController
 @RequiredArgsConstructor
 public class UserController {
     private final UserClient userClient;
 
     @GetMapping("/users/check-email")
-    @ResponseBody
     public Boolean checkEmail(@RequestParam String email){
         return userClient.checkEmail(email);
     }
 
     @GetMapping("/users/check-nickname")
-    @ResponseBody
     public Boolean checkNickname(@RequestParam String nickname){
         return userClient.checkNickname(nickname);
     }
 
 
     @PostMapping("/signup")
-    public String signup(@RequestParam String email,
+    public void signup(@RequestParam String email,
                          @RequestParam String password,
-                         @RequestParam String nickname) {
+                         @RequestParam String nickname,
+                         HttpServletResponse response) throws IOException {
 
         UserSignUpRequest request = new UserSignUpRequest(email, password, nickname, "USER");
         userClient.signUp(request);
 
-        return "redirect:/login";
+        response.sendRedirect("/login");
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String email,
+    public void login(@RequestParam String email,
                         @RequestParam String password,
-                        HttpServletResponse response) {
+                        HttpServletResponse response) throws IOException {
 
         LoginRequest request = new LoginRequest(email, password);
 
@@ -66,11 +66,11 @@ public class UserController {
                     .build();
             response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         }
-        return "redirect:/";
+        response.sendRedirect("/");
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletResponse response, @RequestHeader(value = "X-User-Id", required = false) Long userId) {
+    public void logout(HttpServletResponse response, @RequestHeader(value = "X-User-Id", required = false) Long userId) throws IOException {
         if(userId != null){
             try {
                 userClient.logout(userId);
@@ -96,7 +96,7 @@ public class UserController {
         response.addHeader(HttpHeaders.SET_COOKIE, deletedAccessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, deletedRefreshCookie.toString());
 
-        return "redirect:/login";
+        response.sendRedirect("/login");
     }
 
 }
