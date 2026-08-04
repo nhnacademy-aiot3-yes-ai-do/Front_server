@@ -7,8 +7,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.dto.user.request.EmailVerifyRequest;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
+import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 
 import java.io.IOException;
@@ -27,6 +29,18 @@ public class UserController {
     @GetMapping("/users/check-nickname")
     public Boolean checkNickname(@RequestParam String nickname){
         return userClient.checkNickname(nickname);
+    }
+
+    // 이메일 인증번호 발송
+    @PostMapping("/users/email/send")
+    public String sendEmail(@RequestParam String email) {
+        return userClient.sendEmail(new EmailSendResponse(email));
+    }
+
+    // 이메일 인증번호 확인
+    @PostMapping("/users/email/verify")
+    public Boolean verifyEmail(@RequestParam String email, @RequestParam String code) {
+        return userClient.verifyEmail(new EmailVerifyRequest(email, code));
     }
 
 
