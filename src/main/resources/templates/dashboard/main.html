@@ -28,11 +28,14 @@
 
             <!-- 사진 카드 -->
             <div class="card photo-card">
-                <div class="photo-placeholder" id="photo-placeholder">
+                <div class="photo-placeholder" id="photo-placeholder" th:style="${photos != null and !photos.isEmpty()} ? 'display:none;' : ''">
                     <i data-lucide="image" style="width:48px;height:48px;"></i>
                     <span>등록된 사진이 없습니다</span>
                 </div>
-                <img id="photo-preview-img" src="" alt="재배 사진" style="display:none;" />
+                <img id="photo-preview-img"
+                     th:src="${photos != null and !photos.isEmpty()} ? ${photos[0].uri} : ''"
+                     th:style="${photos != null and !photos.isEmpty()} ? 'display:block;' : 'display:none;'"
+                     alt="재배 사진" />
 
                 <button class="photo-settings-btn" type="button" onclick="openModal('modal-settings')">
                     <i data-lucide="settings" style="width:20px;height:20px;"></i>
@@ -318,7 +321,9 @@
             <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
                 <i data-lucide="upload" style="width:28px;height:28px;"></i>
             </div>
-            <input type="file" id="settings-photo-input" accept="image/*" onchange="previewPhoto(this)" style="display:none;" />
+            <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
+
+            <div class="settings-photo-thumbs" id="settings-photo-thumbs"></div>
 
             <div class="settings-sensor-list">
                 <div class="settings-sensor-row">
@@ -451,6 +456,8 @@
 
 <script th:inline="javascript">
     var CULTIVATION_ID = /*[[${cultivation?.cultivationId}]]*/ 0;
+    var CULTIVATION_ID = /*[[${cultivation?.cultivationId}]]*/ 0;
+    var PHOTOS = /*[[${photos}]]*/ [];
     lucide.createIcons();
 
     var SENSOR_DATA = {
@@ -1023,17 +1030,86 @@
         location.href = '/';
     }
 
-    function previewPhoto(input) {
-        if (!input.files || !input.files[0]) return;
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            document.getElementById('photo-upload-preview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;" />';
-            document.getElementById('photo-preview-img').src = e.target.result;
-            document.getElementById('photo-preview-img').style.display = 'block';
-            document.getElementById('photo-placeholder').style.display = 'none';
-        };
-        reader.readAsDataURL(input.files[0]);
+    function renderMainPhoto() {
+        var placeholder = document.getElementById('photo-placeholder');
+        var img = document.getElementById('photo-preview-img');
+        if (PHOTOS.length === 0) {
+            placeholder.style.display = 'flex';
+            img.style.display = 'none';
+            img.src = '';
+            return;
+        }
+        placeholder.style.display = 'none';
+        img.style.display = 'block';
+        img.src = PHOTOS[0].uri;
     }
+
+    function renderPhotoThumbs() {
+        var wrap = document.getElementById('settings-photo-thumbs');
+        wrap.innerHTML = '';
+        PHOTOS.forEach(function (photo) {
+            var thumb = document.createElement('div');
+            thumb.className = 'settings-photo-thumb';
+            thumb.innerHTML =
+                '<img src="' + photo.uri + '" alt="재배 사진" />' +
+                '<button type="button" class="settings-photo-thumb-remove" title="삭제">' +
+                '<i data-lucide="x"></i></button>';
+            thumb.querySelector('.settings-photo-thumb-remove').onclick = function () {
+                deletePhoto(photo.photoId);
+            };
+            wrap.appendChild(thumb);
+        });
+        lucide.createIcons();
+    }
+
+    function handlePhotoSelect(input) {
+        if (!input.files || !input.files[0]) return;
+        var file = input.files[0];
+
+        if (file.size > 10 * 1024 * 1024) {
+            alert('사진 파일 크기는 10MB를 초과할 수 없습니다.');
+            input.value = '';
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/cultivations/' + CULTIVATION_ID + '/photos', {
+            method: 'POST',
+            body: formData
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error('upload failed');
+                return res.json();
+            })
+            .then(function (uploaded) {
+                PHOTOS.unshift(uploaded);
+                renderMainPhoto();
+                renderPhotoThumbs();
+                document.getElementById('photo-upload-preview').innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
+                lucide.createIcons();
+                input.value = '';
+            })
+            .catch(function () {
+                alert('사진 업로드에 실패했습니다.');
+                input.value = '';
+            });
+    }
+
+    function deletePhoto(photoId) {
+        if (!confirm('이 사진을 삭제하시겠어요?')) return;
+        fetch('/cultivations/' + CULTIVATION_ID + '/photos/' + photoId, { method: 'DELETE' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('delete failed');
+                PHOTOS = PHOTOS.filter(function (p) { return p.photoId !== photoId; });
+                renderMainPhoto();
+                renderPhotoThumbs();
+            })
+            .catch(function () { alert('사진 삭제에 실패했습니다.'); });
+    }
+
+    renderPhotoThumbs();
 </script>
 
 </body>

@@ -2,8 +2,10 @@ package site.yesaido.frontserver.client;
 
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.dto.cultivation.request.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.HarvestCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.MemberAddRequest;
@@ -50,4 +52,15 @@ public interface CultivationClient {
     @PostMapping("/api/cultivations/{cultivation-id}/harvest")
     ResponseEntity<HarvestCreateResponse> createHarvest(@PathVariable("cultivation-id") Long cultivationId,
                                                         @Valid @RequestBody HarvestCreateRequest request);
+
+    // 사진
+    @PostMapping(value = "/api/cultivations/{cultivation-id}/photos", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable("cultivation-id") Long cultivationId, @RequestPart("file") MultipartFile file);
+
+    @GetMapping("/api/cultivations/{cultivation-id}/photos")
+    ResponseEntity<List<PhotoResponse>> getPhoto(@PathVariable("cultivation-id") Long cultivationId);
+
+    @DeleteMapping("/api/cultivations/{cultivation-id}/photos/{photo-id}")
+    ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
+                                     @PathVariable("photo-id") Long photoId);
 }
