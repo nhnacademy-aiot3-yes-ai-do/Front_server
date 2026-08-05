@@ -8,6 +8,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.controller.user.UserController;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
@@ -32,7 +33,7 @@ class UserControllerTest {
     @Test
     @DisplayName("이메일 중복 확인 - 중복 아님")
     void checkEmailReturnsFalse() throws Exception {
-        when(userClient.checkEmail("test@test.com")).thenReturn(false);
+        when(userClient.checkEmail("test@test.com")).thenReturn(new ApiResponse<>(true, "조회 성공", false));
 
         mockMvc.perform(get("/users/check-email").param("email", "test@test.com"))
                 .andExpect(status().isOk())
@@ -42,7 +43,7 @@ class UserControllerTest {
     @Test
     @DisplayName("닉네임 중복 확인 - 중복임")
     void checkNicknameReturnsTrue() throws Exception {
-        when(userClient.checkNickname("중복닉")).thenReturn(true);
+        when(userClient.checkNickname("중복닉")).thenReturn(new ApiResponse<>(true, "조회 성공", true));
 
         mockMvc.perform(get("/users/check-nickname").param("nickname", "중복닉"))
                 .andExpect(status().isOk())
@@ -63,22 +64,20 @@ class UserControllerTest {
         verify(userClient).signUp(captor.capture());
 
         UserSignUpRequest captured = captor.getValue();
-        assertThat(captured.getEmail()).isEqualTo("test@test.com");
-        assertThat(captured.getPassword()).isEqualTo("password123");
-        assertThat(captured.getNickName()).isEqualTo("닉네임");
-        assertThat(captured.getRole()).isEqualTo("USER");
+        assertThat(captured.email()).isEqualTo("test@test.com");
+        assertThat(captured.password()).isEqualTo("password123");
+        assertThat(captured.nickName()).isEqualTo("닉네임");
+        assertThat(captured.role()).isEqualTo("USER");
     }
 
     @Test
     @DisplayName("로그인 성공 시 액세스/리프레시 토큰 쿠키가 설정되고 루트로 리다이렉트")
     void loginSetsCookiesAndRedirectsToRoot() throws Exception {
         TokenResponse tokenResponse = TokenResponse.builder()
-                .type("Bearer")
                 .accessToken("access-token-value")
                 .refreshToken("refresh-token-value")
-                .expireIn(3600L)
                 .build();
-        when(userClient.login(any(LoginRequest.class))).thenReturn(tokenResponse);
+        when(userClient.login(any(LoginRequest.class))).thenReturn(new ApiResponse<>(true, "로그인 성공", tokenResponse));
 
         mockMvc.perform(post("/login")
                         .param("email", "test@test.com")
@@ -93,12 +92,10 @@ class UserControllerTest {
     @DisplayName("로그인 성공 시 refreshToken이 없으면 refreshToken 쿠키는 설정 안 함")
     void loginWithoutRefreshTokenOnlySetsAccessTokenCookie() throws Exception {
         TokenResponse tokenResponse = TokenResponse.builder()
-                .type("Bearer")
                 .accessToken("access-token-value")
                 .refreshToken(null)
-                .expireIn(3600L)
                 .build();
-        when(userClient.login(any(LoginRequest.class))).thenReturn(tokenResponse);
+        when(userClient.login(any(LoginRequest.class))).thenReturn(new ApiResponse<>(true, "로그인 성공", tokenResponse));
 
         mockMvc.perform(post("/login")
                         .param("email", "test@test.com")
