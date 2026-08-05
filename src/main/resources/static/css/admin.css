@@ -1,23 +1,7 @@
 /* static/css/admin.css */
-/* 관리자 페이지 전용 테마: 배경 사진 없이 플랫하게 가되,
+/* 관리자 페이지 전용 테마: 일반 사용자 페이지와 같은 배경 사진 + 반투명 헤더를 쓰되
    로고(MushMush - 크림/우드브라운/세이지그린, 둥근 손글씨 로고)와 톤을 맞춘 배색. */
-@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
-
-:root {
-    --brown-900: #3f2a1d;
-    --brown-700: #6b4a30;
-    --brown-500: #8b5e3c;
-    --brown-300: #c9a97c;
-    --cream-100: #fbf6ea;
-    --cream-200: #f3ead4;
-    --sage-500: #7c9473;
-    --sage-600: #66805c;
-    --ink: #4a3b2e;
-    --danger: #c0574a;
-    --danger-dark: #a5453a;
-}
-
-* { box-sizing: border-box; }
+@import url("common.css");
 
 html { font-size: clamp(14px, 0.65vw + 6px, 28px); }
 
@@ -26,97 +10,9 @@ body {
     min-height: 100vh;
     font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
     color: var(--ink);
-    background: linear-gradient(180deg, var(--cream-100) 0%, var(--cream-200) 100%);
+    background: var(--cream-200) url("../images/mainback.jpg") center center / cover no-repeat fixed;
     display: flex;
     flex-direction: column;
-}
-
-/* ===== Topbar ===== */
-.topbar {
-    flex-shrink: 0;
-    height: 5.5rem;
-    background: var(--brown-900);
-    border-bottom: 3px solid var(--brown-500);
-    color: var(--cream-100);
-}
-
-.topbar-inner {
-    width: min(96vw, 2100px);
-    height: 100%;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.topbar-left { display: flex; align-items: center; gap: 14px; }
-.topbar-logo-link { display: block; line-height: 0; transition: opacity 0.15s ease; }
-.topbar-logo-link:hover { opacity: 0.85; }
-.topbar-logo { height: 5.6rem; width: auto; display: block; border-radius: 10px; }
-
-.admin-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-family: "Gaegu", inherit;
-    font-weight: 700;
-    font-size: 1.05rem;
-    color: var(--cream-100);
-    background: rgba(124, 148, 115, 0.35);
-    border: 1px solid rgba(251, 246, 234, 0.4);
-    border-radius: 999px;
-    padding: 0.4rem 0.9rem;
-}
-
-.admin-badge svg { width: 1.05rem; height: 1.05rem; }
-
-.topbar-right { display: flex; align-items: center; gap: 12px; }
-
-.topbar-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: none;
-    border: none;
-    padding: 0.5rem 0.6rem;
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--cream-200);
-    cursor: pointer;
-    border-radius: 10px;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-
-.topbar-link svg { width: 1rem; height: 1rem; }
-.topbar-link:hover { background: rgba(251, 246, 234, 0.14); color: #fff; }
-
-.topbar-divider {
-    width: 1px;
-    height: 1.6rem;
-    background: rgba(251, 246, 234, 0.25);
-    margin: 0 2px;
-}
-
-.topbar .avatar-circle {
-    width: 2.4rem;
-    height: 2.4rem;
-    border-radius: 50%;
-    background: var(--sage-500);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    box-shadow: 0 0 0 3px rgba(251, 246, 234, 0.3);
-}
-
-.topbar .avatar-circle svg { width: 1.4rem; height: 1.4rem; }
-
-.topbar-nickname {
-    font-family: "Gaegu", inherit;
-    font-weight: 700;
-    font-size: 1rem;
-    color: var(--cream-100);
 }
 
 /* ===== page container ===== */
@@ -157,13 +53,81 @@ body {
 
 .admin-heading svg { width: 1.4rem; height: 1.4rem; color: var(--sage-600); }
 
-/* ===== 허브: 큰 아이콘 타일 3개 ===== */
+/* ===== 허브: 인사말 + 요약 통계 + 큰 아이콘 타일 3개 ===== */
 .admin-hub-page {
     flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
 }
+
+.admin-hub-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2.2rem;
+    width: 100%;
+}
+
+.admin-welcome { text-align: center; }
+
+.admin-welcome-title {
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 1.9rem;
+    color: var(--brown-900);
+}
+
+.admin-welcome-date {
+    font-size: 0.85rem;
+    color: var(--brown-500);
+    margin-top: 0.35rem;
+}
+
+.admin-stat-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.2rem;
+}
+
+.admin-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: rgba(251, 246, 234, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    border-radius: 18px;
+    padding: 1rem 1.6rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.12);
+    min-width: 11.5rem;
+}
+
+.admin-stat-icon-wrap {
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    background: var(--cream-200);
+    color: var(--sage-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.admin-stat-icon-wrap svg { width: 1.4rem; height: 1.4rem; }
+
+.admin-stat-value {
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--brown-900);
+    line-height: 1;
+}
+
+.admin-stat-label { font-size: 0.78rem; color: var(--brown-500); margin-top: 0.2rem; }
 
 .admin-hub-grid {
     display: flex;
@@ -177,9 +141,11 @@ body {
 .admin-hub-tile {
     width: 27rem;
     min-height: 32rem;
-    background: var(--cream-100);
-    border: 2px solid var(--brown-300);
-    box-shadow: 5px 5px 0 rgba(63, 42, 29, 0.1);
+    background: rgba(251, 246, 234, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.18);
     border-radius: 28px;
     padding: 3.6rem 2.2rem 2.6rem;
     display: flex;
@@ -224,9 +190,11 @@ body {
 
 /* ===== 하위 페이지 공통: 상단 타이틀 + 뒤로가기 + 필터 ===== */
 .admin-panel {
-    background: var(--cream-100);
-    border: 2px solid var(--brown-300);
-    box-shadow: 4px 4px 0 rgba(63, 42, 29, 0.08);
+    background: rgba(251, 246, 234, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.18);
     border-radius: 24px;
     padding: 1.8rem;
 }
@@ -443,15 +411,17 @@ body {
 .modal-overlay.is-open { display: flex; }
 
 .modal-box {
-    background: var(--cream-100);
-    border: 2px solid var(--brown-300);
+    background: rgba(251, 246, 234, 0.94);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
     border-radius: 20px;
     padding: 28px;
     width: 100%;
     max-width: 420px;
     max-height: 86vh;
     overflow-y: auto;
-    box-shadow: 6px 6px 0 rgba(63, 42, 29, 0.15);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 30px rgba(63, 42, 29, 0.25);
     position: relative;
 }
 
