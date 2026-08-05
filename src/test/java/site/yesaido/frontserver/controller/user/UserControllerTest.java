@@ -7,6 +7,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
@@ -31,7 +32,7 @@ class UserControllerTest {
     @Test
     @DisplayName("이메일 중복 확인 요청 시 UserClient 호출 및 결과 반환")
     void checkEmailSuccess() throws Exception {
-        given(userClient.checkEmail("test@naver.com")).willReturn(true);
+        given(userClient.checkEmail("test@naver.com")).willReturn(new ApiResponse<>(true, "조회 성공", true));
 
         mockMvc.perform(get("/users/check-email").param("email", "test@naver.com"))
                 .andExpect(status().isOk())
@@ -41,9 +42,19 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("이메일 중복 확인 실패 또는 null 응답 시 false 반환")
+    void checkEmailFailedResponseReturnsFalse() throws Exception {
+        given(userClient.checkEmail("fail@naver.com")).willReturn(new ApiResponse<>(false, "조회 실패", null));
+
+        mockMvc.perform(get("/users/check-email").param("email", "fail@naver.com"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
     @DisplayName("닉네임 중복 확인 요청 시 UserClient 호출 및 결과 반환")
     void checkNicknameSuccess() throws Exception {
-        given(userClient.checkNickname("nickTest")).willReturn(false);
+        given(userClient.checkNickname("nickTest")).willReturn(new ApiResponse<>(true, "조회 성공", false));
 
         mockMvc.perform(get("/users/check-nickname").param("nickname", "nickTest"))
                 .andExpect(status().isOk())
@@ -73,7 +84,7 @@ class UserControllerTest {
                 .refreshToken("mockRefreshToken")
                 .build();
 
-        given(userClient.login(any(LoginRequest.class))).willReturn(tokenResponse);
+        given(userClient.login(any(LoginRequest.class))).willReturn(new ApiResponse<>(true, "로그인 성공", tokenResponse));
 
         mockMvc.perform(post("/login")
                         .param("email", "test@naver.com")

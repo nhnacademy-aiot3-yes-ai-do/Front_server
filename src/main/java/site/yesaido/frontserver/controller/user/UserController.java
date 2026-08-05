@@ -5,8 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.EmailVerifyRequest;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
@@ -23,24 +26,27 @@ public class UserController {
 
     @GetMapping("/users/check-email")
     public Boolean checkEmail(@RequestParam String email){
-        return userClient.checkEmail(email);
+        ApiResponse<Boolean> response = userClient.checkEmail(email);
+        return response != null && Boolean.TRUE.equals(response.data());
     }
 
     @GetMapping("/users/check-nickname")
     public Boolean checkNickname(@RequestParam String nickname){
-        return userClient.checkNickname(nickname);
+        ApiResponse<Boolean> response = userClient.checkNickname(nickname);
+        return response != null && Boolean.TRUE.equals(response.data());
     }
 
     // 이메일 인증번호 발송
     @PostMapping("/users/email/send")
-    public String sendEmail(@RequestParam String email) {
+    public ApiResponse<Void> sendEmail(@RequestParam String email) {
         return userClient.sendEmail(new EmailSendResponse(email));
     }
 
     // 이메일 인증번호 확인
     @PostMapping("/users/email/verify")
     public Boolean verifyEmail(@RequestParam String email, @RequestParam String code) {
-        return userClient.verifyEmail(new EmailVerifyRequest(email, code));
+        ApiResponse<Boolean> response = userClient.verifyEmail(new EmailVerifyRequest(email.trim(), code.trim()));
+        return response != null && Boolean.TRUE.equals(response.data());
     }
 
 
@@ -62,7 +68,7 @@ public class UserController {
     @PostMapping("/login")
     public void login(@RequestParam String email,
                         @RequestParam String password,
-                        HttpServletResponse response) throws IOException {
+                        HttpServletResponse response, RedirectAttributes redirectAttributes) throws IOException {
 
         if (ADMIN_ID.equals(email) && ADMIN_PASSWORD.equals(password)) {
             ResponseCookie adminCookie = ResponseCookie.from("isAdmin", "true")
@@ -75,26 +81,36 @@ public class UserController {
             return;
         }
 
-        LoginRequest request = new LoginRequest(email, password);
+        try{
+            LoginRequest request = new LoginRequest(email, password);
+            ApiResponse<TokenResponse> apiResponse = userClient.login(request);
+            TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
+            if (tokenResponse == null) {
+                throw new IllegalStateException("Token response is null");
+            }
 
-        TokenResponse tokenResponse = userClient.login(request);
-
-        ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.getAccessToken())
-                .path("/")
-                        .httpOnly(true)
-                                .sameSite("Lax")
-                                        .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-
-        if(tokenResponse.getRefreshToken() != null) {
-            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.getRefreshToken())
-                .path("/")
-                .httpOnly(true)
+            ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
+                    .path("/")
+                    .httpOnly(true)
                     .sameSite("Lax")
                     .build();
-            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+            response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+
+            if(tokenResponse.refreshToken() != null) {
+                ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
+                        .path("/")
+                        .httpOnly(true)
+                        .sameSite("Lax")
+                        .build();
+                response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+            }
+            response.sendRedirect("/");
+        }catch (Exception e){
+            log.warn("로그인 실패 (미가입 또는 비밀번호 불일치): {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("loginError", "아이디 또는 비밀번호가 일치하지 않습니다.");
+            response.sendRedirect("/");
         }
-        response.sendRedirect("/");
+
     }
 
     @PostMapping("/logout")
