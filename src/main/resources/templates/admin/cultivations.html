@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>재배지 관리 | MushMush</title>
+    <link rel="stylesheet" href="/css/admin.css" />
+    <script src="/js/lucide.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="topbar-left">
+            <a href="/admin" class="topbar-logo-link">
+                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
+            </a>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-link" type="button" onclick="handleLogout()">
+                <i data-lucide="log-out"></i>로그아웃
+            </button>
+            <span class="topbar-divider"></span>
+            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+            <span class="topbar-nickname">관리자</span>
+        </div>
+    </div>
+</header>
+
+<div class="page-container admin-list-page">
+
+    <div class="admin-panel">
+        <div class="admin-page-head">
+            <button class="admin-back-link" type="button" onclick="location.href='/admin'">
+                <i data-lucide="chevron-left"></i>재배지 관리
+            </button>
+            <div class="admin-filters">
+                <select class="admin-select" id="cultivation-type-select" onchange="cultivationPage=1; renderCultivations()">
+                    <option value="all">전체 버섯 종류</option>
+                    <option value="양송이버섯">양송이버섯</option>
+                    <option value="느타리버섯">느타리버섯</option>
+                    <option value="표고버섯">표고버섯</option>
+                    <option value="새송이버섯">새송이버섯</option>
+                    <option value="팽이버섯">팽이버섯</option>
+                </select>
+                <select class="admin-select" id="cultivation-sort-select" onchange="renderCultivations()">
+                    <option value="latest">최신순</option>
+                    <option value="oldest">오래된순</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="list-table-wrap">
+            <table class="list-table">
+                <thead>
+                <tr>
+                    <th>Cultivation 이름</th>
+                    <th>버섯 종류</th>
+                    <th>인원</th>
+                    <th>관리자</th>
+                    <th>생성일</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="cultivation-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="admin-pagination" id="cultivation-pagination"></div>
+    </div>
+
+</div>
+
+<!-- 재배지 상세 팝업: 사진 / 센서현황 / 환경통계 / 일간추이 / AI 리포트 -->
+<div class="modal-overlay" id="modal-cultivation-detail">
+    <div class="modal-box modal-box-xl">
+        <button class="modal-close" type="button" onclick="closeModal('modal-cultivation-detail')">
+            <i data-lucide="x"></i>
+        </button>
+
+        <div class="cultivation-detail-head">
+            <div>
+                <div class="cultivation-detail-title" id="cd-title">Cultivation1 · 느타리버섯</div>
+                <div class="cultivation-detail-sub" id="cd-sub">관리자 nickname · 2027.07.29 생성 · 인원 3명</div>
+            </div>
+            <div class="cd-member-toggle-wrap">
+                <button class="cd-member-toggle-btn" type="button" onclick="toggleCdMembers()">
+                    <i data-lucide="users"></i>참여 인원
+                </button>
+                <div class="cd-member-dropdown" id="cd-member-dropdown">
+                    <div class="cd-member-chip-list" id="cd-member-chip-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="cd-modal-tabs">
+            <button class="cd-modal-tab-btn active" type="button" onclick="switchCdTab('main')">
+                <i data-lucide="layout-dashboard"></i>메인
+            </button>
+            <button class="cd-modal-tab-btn" type="button" onclick="switchCdTab('report')">
+                <i data-lucide="sparkles"></i>AI 리포트
+            </button>
+        </nav>
+
+        <!-- 메인: 사진 / 센서현황 / 환경통계 / 일간추이 -->
+        <div class="cd-modal-panel active" id="cd-panel-main">
+            <div class="cd-main-row">
+                <div class="cd-card cd-photo-card">
+                    <div class="cd-photo-placeholder">
+                        <i data-lucide="image"></i>
+                        <span>등록된 사진이 없습니다</span>
+                    </div>
+                </div>
+
+                <div class="cd-card cd-sensor-col">
+                    <div class="cd-card-title">센서 현황</div>
+                    <div class="cd-sensor-row">
+                        <i data-lucide="thermometer" class="cd-sensor-icon"></i>
+                        <div>
+                            <select class="cd-sensor-select" onchange="updateCdSensor(this, 'temp')">
+                                <option>온도센서1</option>
+                                <option>온도센서2</option>
+                                <option selected>온도센서3</option>
+                            </select>
+                            <div class="cd-sensor-value" data-sensor="temp">20°C</div>
+                        </div>
+                    </div>
+                    <div class="cd-sensor-row">
+                        <i data-lucide="droplet" class="cd-sensor-icon"></i>
+                        <div>
+                            <select class="cd-sensor-select" onchange="updateCdSensor(this, 'humidity')">
+                                <option selected>습도센서1</option>
+                                <option>습도센서2</option>
+                            </select>
+                            <div class="cd-sensor-value" data-sensor="humidity">61%</div>
+                        </div>
+                    </div>
+                    <div class="cd-sensor-row">
+                        <i data-lucide="cloudy" class="cd-sensor-icon"></i>
+                        <div>
+                            <select class="cd-sensor-select" onchange="updateCdSensor(this, 'co2')">
+                                <option>CO2센서1</option>
+                                <option selected>CO2센서2</option>
+                            </select>
+                            <div class="cd-sensor-value" data-sensor="co2">530ppm</div>
+                        </div>
+                    </div>
+                    <div class="cd-sensor-row">
+                        <i data-lucide="sun" class="cd-sensor-icon"></i>
+                        <div>
+                            <select class="cd-sensor-select" onchange="updateCdSensor(this, 'light')">
+                                <option selected>조도센서1</option>
+                                <option>조도센서2</option>
+                            </select>
+                            <div class="cd-sensor-value" data-sensor="light">350lux</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cd-main-row">
+                <div class="cd-card">
+                    <div class="cd-card-title">환경 통계 <span style="font-weight:400;font-size:0.78rem;color:var(--brown-500);">최근 24시간 평균</span></div>
+                    <div class="env-stat-grid">
+                        <div class="env-stat-item">
+                            <i data-lucide="thermometer" class="env-stat-icon"></i>
+                            <span class="env-stat-label">평균 온도</span>
+                            <span class="env-stat-value">19°C</span>
+                        </div>
+                        <div class="env-stat-item">
+                            <i data-lucide="droplet" class="env-stat-icon"></i>
+                            <span class="env-stat-label">평균 습도</span>
+                            <span class="env-stat-value">60%</span>
+                        </div>
+                        <div class="env-stat-item">
+                            <i data-lucide="cloudy" class="env-stat-icon"></i>
+                            <span class="env-stat-label">평균 CO2</span>
+                            <span class="env-stat-value">505ppm</span>
+                        </div>
+                        <div class="env-stat-item">
+                            <i data-lucide="sun" class="env-stat-icon"></i>
+                            <span class="env-stat-label">평균 조도</span>
+                            <span class="env-stat-value">380lux</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cd-card">
+                    <div class="cd-chart-card-header">
+                        <div class="cd-card-title" style="margin-bottom:0;">일간 추이</div>
+                        <select class="cd-chart-select" id="cd-chart-select" onchange="renderCdChart(this.value)">
+                            <optgroup label="온도">
+                                <option value="temp1">온도센서1</option>
+                                <option value="temp2">온도센서2</option>
+                                <option value="temp3" selected>온도센서3</option>
+                            </optgroup>
+                            <optgroup label="습도">
+                                <option value="humidity1">습도센서1</option>
+                                <option value="humidity2">습도센서2</option>
+                            </optgroup>
+                            <optgroup label="CO2">
+                                <option value="co21">CO2센서1</option>
+                                <option value="co22">CO2센서2</option>
+                            </optgroup>
+                            <optgroup label="조도">
+                                <option value="light1">조도센서1</option>
+                                <option value="light2">조도센서2</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="cd-chart-placeholder">
+                        <svg viewBox="0 0 260 110" class="cd-chart-svg" preserveAspectRatio="none" id="cd-chart-svg">
+                            <defs>
+                                <linearGradient id="cdChartFill" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="var(--sage-500)" stop-opacity="0.35" />
+                                    <stop offset="100%" stop-color="var(--sage-500)" stop-opacity="0" />
+                                </linearGradient>
+                            </defs>
+                            <polyline points="0,20 260,20" style="stroke:rgba(139,94,60,0.15);stroke-width:1;" />
+                            <polyline points="0,55 260,55" style="stroke:rgba(139,94,60,0.15);stroke-width:1;" />
+                            <polyline points="0,90 260,90" style="stroke:rgba(139,94,60,0.15);stroke-width:1;" />
+                            <polygon id="cd-chart-fill" fill="url(#cdChartFill)" points="0,80 32,62 65,70 98,40 130,50 163,25 195,35 228,18 260,28 260,110 0,110" />
+                            <polyline id="cd-chart-line" fill="none" style="stroke:var(--sage-600);stroke-width:2;" points="0,80 32,62 65,70 98,40 130,50 163,25 195,35 228,18 260,28" />
+                            <circle id="cd-chart-dot" style="fill:var(--sage-600);" cx="228" cy="18" r="4.5" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI 리포트 (사용자쪽과 동일하게 이전 날짜도 조회 가능) -->
+        <div class="cd-modal-panel" id="cd-panel-report">
+            <div class="cd-report-date-nav">
+                <button class="cd-report-nav-btn" type="button" title="이전 주" onclick="shiftCdReportWeek(-1)">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+                <div class="cd-report-date-strip" id="cd-report-date-strip"></div>
+                <button class="cd-report-nav-btn" type="button" title="다음 주" onclick="shiftCdReportWeek(1)">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
+
+            <div class="cd-report-date-label" id="cd-report-date-label"></div>
+
+            <div class="cd-ai-summary" id="cd-ai-summary-text"></div>
+
+            <div class="env-stat-grid" id="cd-report-stat-grid"></div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-danger btn-sm" type="button" onclick="openDeleteConfirm()">
+                <i data-lucide="shield-alert" style="width:14px;height:14px;"></i>재배 삭제
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 재배 삭제 확인 -->
+<div class="modal-overlay" id="modal-delete-confirm">
+    <div class="modal-box">
+        <h3 class="modal-title">재배를 삭제하겠습니까?</h3>
+        <p class="modal-sub">삭제한 재배지 정보는 되돌릴 수 없어요.</p>
+        <div class="modal-actions">
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-delete-confirm')">취소</button>
+            <button class="btn btn-danger" type="button" onclick="confirmDeleteCultivation()">삭제</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    function handleLogout() {
+        fetch('/logout', { method: 'POST' }).finally(function () {
+            location.href = '/login';
+        });
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('is-open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('is-open'); }
+
+    // ===== 재배지 관리 (데모 데이터) =====
+    var CULTIVATIONS = [
+        { id: 1, name: 'Cultivation1', type: '느타리버섯', members: 3, owner: 'nickname', created: '2027.07.27' },
+        { id: 2, name: 'Cultivation2', type: '양송이버섯', members: 5, owner: 'nickname2', created: '2027.07.29' },
+        { id: 3, name: 'Cultivation3', type: '표고버섯', members: 2, owner: 'nickname3', created: '2027.07.15' },
+        { id: 4, name: 'Cultivation4', type: '표고버섯', members: 4, owner: 'nickname4', created: '2027.07.10' },
+        { id: 5, name: 'Cultivation5', type: '느타리버섯', members: 1, owner: 'nickname5', created: '2027.07.05' },
+        { id: 6, name: 'Cultivation6', type: '양송이버섯', members: 6, owner: 'nickname6', created: '2027.06.30' },
+        { id: 7, name: 'Cultivation7', type: '느타리버섯', members: 2, owner: 'nickname7', created: '2027.06.25' },
+        { id: 8, name: 'Cultivation8', type: '표고버섯', members: 3, owner: 'nickname8', created: '2027.06.20' },
+        { id: 9, name: 'Cultivation9', type: '양송이버섯', members: 5, owner: 'nickname10', created: '2027.06.15' },
+        { id: 10, name: 'Cultivation10', type: '느타리버섯', members: 4, owner: 'nickname11', created: '2027.06.10' },
+        { id: 11, name: 'Cultivation11', type: '새송이버섯', members: 3, owner: 'nickname12', created: '2027.06.05' },
+        { id: 12, name: 'Cultivation12', type: '팽이버섯', members: 2, owner: 'nickname13', created: '2027.06.01' }
+    ];
+
+    var cultivationPage = 1;
+    var CULTIVATION_PAGE_SIZE = 8;
+
+    function renderCultivations() {
+        var type = document.getElementById('cultivation-type-select').value;
+        var sort = document.getElementById('cultivation-sort-select').value;
+
+        var data = CULTIVATIONS.slice();
+        if (type !== 'all') data = data.filter(function (c) { return c.type === type; });
+        if (sort === 'oldest') data.reverse();
+
+        var totalPages = Math.max(1, Math.ceil(data.length / CULTIVATION_PAGE_SIZE));
+        if (cultivationPage > totalPages) cultivationPage = totalPages;
+
+        var start = (cultivationPage - 1) * CULTIVATION_PAGE_SIZE;
+        var pageData = data.slice(start, start + CULTIVATION_PAGE_SIZE);
+
+        var tbody = document.getElementById('cultivation-tbody');
+        tbody.innerHTML = '';
+        pageData.forEach(function (c) {
+            var tr = document.createElement('tr');
+            tr.onclick = function () { openCultivationDetail(c.id); };
+            tr.innerHTML =
+                '<td>' + c.name + '</td>' +
+                '<td>' + c.type + '</td>' +
+                '<td>' + c.members + '</td>' +
+                '<td>' + c.owner + '</td>' +
+                '<td>' + c.created + '</td>' +
+                '<td><button class="row-action-btn" type="button" title="삭제" onclick="event.stopPropagation(); openDeleteConfirm(' + c.id + ')"><i data-lucide="shield-alert"></i></button></td>';
+            tbody.appendChild(tr);
+        });
+
+        renderCultivationPagination(totalPages);
+        lucide.createIcons();
+    }
+
+    function goToCultivationPage(page) {
+        cultivationPage = page;
+        renderCultivations();
+    }
+
+    function renderCultivationPagination(totalPages) {
+        var wrap = document.getElementById('cultivation-pagination');
+        if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+
+        var prevDisabled = cultivationPage === 1 ? ' disabled' : '';
+        var nextDisabled = cultivationPage === totalPages ? ' disabled' : '';
+        wrap.innerHTML =
+            '<button class="admin-page-btn' + prevDisabled + '" type="button" onclick="goToCultivationPage(' + (cultivationPage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
+            '<span class="admin-page-label">' + cultivationPage + ' / ' + totalPages + '</span>' +
+            '<button class="admin-page-btn' + nextDisabled + '" type="button" onclick="goToCultivationPage(' + (cultivationPage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+    }
+
+    var currentCultivationId = null;
+
+    // 센서 종류별 데모 값 (사용자쪽 대시보드와 동일한 방식)
+    var CD_SENSOR_DATA = {
+        temp: { '온도센서1': '18°C', '온도센서2': '19°C', '온도센서3': '20°C' },
+        humidity: { '습도센서1': '61%', '습도센서2': '58%' },
+        co2: { 'CO2센서1': '480ppm', 'CO2센서2': '530ppm' },
+        light: { '조도센서1': '350lux', '조도센서2': '410lux' }
+    };
+
+    function updateCdSensor(selectEl, type) {
+        var valueEl = selectEl.closest('.cd-sensor-row').querySelector('.cd-sensor-value');
+        valueEl.textContent = CD_SENSOR_DATA[type][selectEl.value];
+    }
+
+    // 센서별 데모 추이 (일간 추이 그래프용)
+    var CD_CHART_DATA = {
+        temp1: [70, 55, 60, 45, 55, 35, 45, 25, 40],
+        temp2: [75, 65, 68, 50, 58, 40, 48, 30, 38],
+        temp3: [80, 62, 70, 40, 50, 25, 35, 18, 28],
+        humidity1: [40, 48, 42, 55, 50, 60, 55, 65, 60],
+        humidity2: [45, 40, 50, 46, 58, 52, 62, 56, 66],
+        co21: [30, 42, 38, 50, 46, 58, 52, 62, 56],
+        co22: [50, 45, 55, 48, 60, 52, 65, 55, 68],
+        light1: [90, 75, 82, 60, 70, 45, 55, 30, 42],
+        light2: [85, 70, 78, 58, 66, 48, 58, 35, 46]
+    };
+
+    function renderCdChart(key) {
+        var xs = [0, 32, 65, 98, 130, 163, 195, 228, 260];
+        var points = CD_CHART_DATA[key] || CD_CHART_DATA.temp3;
+        var linePoints = xs.map(function (x, i) { return x + ',' + points[i]; }).join(' ');
+        var last = points.length - 1;
+
+        document.getElementById('cd-chart-line').setAttribute('points', linePoints);
+        document.getElementById('cd-chart-fill').setAttribute('points', linePoints + ' 260,110 0,110');
+        document.getElementById('cd-chart-dot').setAttribute('cx', xs[last]);
+        document.getElementById('cd-chart-dot').setAttribute('cy', points[last]);
+    }
+
+    // 참여 인원 (데모: owner 1명 + 나머지는 멤버로 채움, 실제로는 서버에서 받아와야 함)
+    function renderCdMembers(c) {
+        var list = document.getElementById('cd-member-chip-list');
+        list.innerHTML = '';
+
+        var members = [{ nickname: c.owner, role: '소유자', isOwner: true }];
+        for (var i = 1; i < c.members; i++) {
+            members.push({ nickname: '멤버' + i, role: '멤버', isOwner: false });
+        }
+
+        members.forEach(function (m) {
+            var chip = document.createElement('div');
+            chip.className = 'cd-member-chip' + (m.isOwner ? ' owner' : '');
+            chip.innerHTML =
+                '<span class="cd-member-chip-avatar"><i data-lucide="' + (m.isOwner ? 'crown' : 'circle-user-round') + '"></i></span>' +
+                '<span>' + m.nickname + '</span>' +
+                '<span class="cd-member-chip-role">' + m.role + '</span>';
+            list.appendChild(chip);
+        });
+
+        lucide.createIcons();
+    }
+
+    // ===== AI 리포트: 사용자쪽과 동일하게 이전 날짜 조회 가능 (데모 데이터) =====
+    var CD_DOW_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+    var CD_REPORT_AVAILABLE_DAYS = 14; // 오늘 포함 최근 14일치만 제공 (데모)
+
+    function cdToDateKey(date) {
+        var y = date.getFullYear();
+        var m = String(date.getMonth() + 1).padStart(2, '0');
+        var d = String(date.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + d;
+    }
+
+    function cdAddDays(date, days) {
+        var result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    }
+
+    function cdStartOfDay(date) {
+        var result = new Date(date);
+        result.setHours(0, 0, 0, 0);
+        return result;
+    }
+
+    function cdStartOfWeek(date) {
+        return cdAddDays(cdStartOfDay(date), -date.getDay());
+    }
+
+    var cdReportToday = cdStartOfDay(new Date());
+    var cdReportOldestAvailable = cdAddDays(cdReportToday, -(CD_REPORT_AVAILABLE_DAYS - 1));
+    var cdReportState = {
+        selectedDate: cdToDateKey(cdReportToday),
+        stripStart: cdStartOfWeek(cdReportToday)
+    };
+
+    function cdHashSeed(str) {
+        var h = 0;
+        for (var i = 0; i < str.length; i++) {
+            h = (h * 31 + str.charCodeAt(i)) >>> 0;
+        }
+        return h;
+    }
+
+    function cdGenerateReportData(dateKey) {
+        var seed = cdHashSeed(dateKey);
+
+        var temp = 17 + (seed % 6);
+        var humidity = 52 + ((seed >> 3) % 18);
+        var co2 = 440 + ((seed >> 6) % 140);
+        var light = 300 + ((seed >> 9) % 160);
+        var pestSafe = ((seed >> 12) % 10) !== 0;
+
+        var tempComment = temp <= 21 ? '재배에 적합한 온도' : '평소보다 다소 높은 온도';
+        var humidComment = (humidity >= 55 && humidity <= 65) ? '적정 습도 범위' : '습도 관리가 필요한 범위';
+
+        var summary =
+            '이 날 평균 온도는 ' + temp + '°C, 습도는 ' + humidity + '%로 ' + tempComment + '였고, ' + humidComment + '였어요. ' +
+            'CO2 농도는 ' + co2 + 'ppm, 조도는 ' + light + 'lux를 기록했습니다. ' +
+            (pestSafe ? '병충해 징후는 발견되지 않아 안전한 하루였습니다.' : '병충해 징후가 일부 감지되어 관찰이 필요해요.');
+
+        return { temp: temp, humidity: humidity, co2: co2, light: light, pestSafe: pestSafe, summary: summary };
+    }
+
+    function renderCdReportBody(dateKey) {
+        var data = cdGenerateReportData(dateKey);
+        var parts = dateKey.split('-');
+        var labelDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+
+        document.getElementById('cd-report-date-label').textContent =
+            labelDate.getFullYear() + '년 ' + (labelDate.getMonth() + 1) + '월 ' + labelDate.getDate() + '일 (' + CD_DOW_LABELS[labelDate.getDay()] + ')';
+        document.getElementById('cd-ai-summary-text').textContent = data.summary;
+
+        document.getElementById('cd-report-stat-grid').innerHTML =
+            '<div class="env-stat-item"><i data-lucide="thermometer" class="env-stat-icon"></i><span class="env-stat-label">평균 온도</span><span class="env-stat-value">' + data.temp + '°C</span></div>' +
+            '<div class="env-stat-item"><i data-lucide="droplet" class="env-stat-icon"></i><span class="env-stat-label">평균 습도</span><span class="env-stat-value">' + data.humidity + '%</span></div>' +
+            '<div class="env-stat-item"><i data-lucide="cloudy" class="env-stat-icon"></i><span class="env-stat-label">평균 CO2</span><span class="env-stat-value">' + data.co2 + 'ppm</span></div>' +
+            '<div class="env-stat-item"><i data-lucide="sun" class="env-stat-icon"></i><span class="env-stat-label">평균 조도</span><span class="env-stat-value">' + data.light + 'lux</span></div>' +
+            '<div class="env-stat-item"><i data-lucide="shield-check" class="env-stat-icon"></i><span class="env-stat-label">병충해 감지</span><span class="env-stat-value">' + (data.pestSafe ? '없음' : '있음') + '</span></div>';
+
+        lucide.createIcons();
+    }
+
+    function renderCdReportDateStrip() {
+        var strip = document.getElementById('cd-report-date-strip');
+        strip.innerHTML = '';
+
+        for (var i = 0; i < 7; i++) {
+            var date = cdAddDays(cdReportState.stripStart, i);
+            if (date > cdReportToday) continue;
+
+            var dateKey = cdToDateKey(date);
+            var isToday = dateKey === cdToDateKey(cdReportToday);
+            var disabled = date < cdReportOldestAvailable;
+
+            var chip = document.createElement('div');
+            chip.className = 'cd-report-date-chip' +
+                (dateKey === cdReportState.selectedDate ? ' active' : '') +
+                (disabled ? ' disabled' : '') +
+                (isToday ? ' today' : '');
+            chip.innerHTML =
+                '<span class="cd-chip-dow">' + CD_DOW_LABELS[date.getDay()] + '</span>' +
+                '<span class="cd-chip-day">' + (isToday ? '오늘' : date.getDate()) + '</span>';
+
+            if (!disabled) {
+                chip.onclick = (function (key) {
+                    return function () { selectCdReportDate(key); };
+                })(dateKey);
+            }
+            strip.appendChild(chip);
+        }
+    }
+
+    function selectCdReportDate(dateKey) {
+        cdReportState.selectedDate = dateKey;
+        renderCdReportDateStrip();
+        renderCdReportBody(dateKey);
+    }
+
+    function shiftCdReportWeek(delta) {
+        var next = cdAddDays(cdReportState.stripStart, delta * 7);
+        var currentWeekStart = cdStartOfWeek(cdReportToday);
+        if (next > currentWeekStart) next = currentWeekStart;
+        cdReportState.stripStart = next;
+        renderCdReportDateStrip();
+    }
+
+    function resetCdReport() {
+        cdReportState.selectedDate = cdToDateKey(cdReportToday);
+        cdReportState.stripStart = cdStartOfWeek(cdReportToday);
+        renderCdReportDateStrip();
+        renderCdReportBody(cdReportState.selectedDate);
+    }
+
+    function toggleCdMembers() {
+        document.getElementById('cd-member-dropdown').classList.toggle('is-open');
+    }
+
+    function openCultivationDetail(id) {
+        var c = CULTIVATIONS.filter(function (x) { return x.id === id; })[0];
+        if (!c) return;
+        currentCultivationId = id;
+        document.getElementById('cd-title').textContent = c.name + ' · ' + c.type;
+        document.getElementById('cd-sub').textContent = '관리자 ' + c.owner + ' · ' + c.created + ' 생성 · 인원 ' + c.members + '명';
+        document.getElementById('cd-member-dropdown').classList.remove('is-open');
+        renderCdMembers(c);
+        document.getElementById('cd-chart-select').value = 'temp3';
+        renderCdChart('temp3');
+        resetCdReport();
+        switchCdTab('main');
+        openModal('modal-cultivation-detail');
+    }
+
+    function switchCdTab(name) {
+        document.querySelectorAll('.cd-modal-tab-btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('.cd-modal-panel').forEach(function (p) { p.classList.remove('active'); });
+        document.querySelector('.cd-modal-tab-btn[onclick="switchCdTab(\'' + name + '\')"]').classList.add('active');
+        document.getElementById('cd-panel-' + name).classList.add('active');
+    }
+
+    function openDeleteConfirm(id) {
+        if (id !== undefined) currentCultivationId = id;
+        openModal('modal-delete-confirm');
+    }
+
+    // 데모: 실제로는 관리자 서버 API로 삭제 요청을 보내야 함
+    function confirmDeleteCultivation() {
+        CULTIVATIONS = CULTIVATIONS.filter(function (c) { return c.id !== currentCultivationId; });
+        renderCultivations();
+        closeModal('modal-delete-confirm');
+        closeModal('modal-cultivation-detail');
+    }
+
+    renderCultivations();
+</script>
+
+</body>
+</html>
