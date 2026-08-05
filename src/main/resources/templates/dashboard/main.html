@@ -323,6 +323,8 @@
             </div>
             <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
 
+            <div class="settings-photo-thumbs" id="settings-photo-thumbs"></div>
+
             <div class="settings-sensor-list">
                 <div class="settings-sensor-row">
                     <span id="settings-sensor-icon-wrap"><i data-lucide="thermometer" style="width:20px;height:20px;"></i></span>
@@ -1089,7 +1091,10 @@
                 lucide.createIcons();
                 input.value = '';
             })
-            .catch(function () { alert('사진 업로드에 실패했습니다.'); });
+            .catch(function () {
+                alert('사진 업로드에 실패했습니다.');
+                input.value = '';
+            });
     }
 
     function deletePhoto(photoId) {
