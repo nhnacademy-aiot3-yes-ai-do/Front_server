@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.dto.cultivation.request.*;
@@ -53,8 +54,10 @@ public class CultivationController {
     public String detail(@PathVariable("cultivation-id") Long cultivationId, Model model) {
         CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
         List<MemberResponse> members = cultivationClient.getMembers(cultivationId).getBody();
+        List<PhotoResponse> photos = cultivationClient.getPhoto(cultivationId).getBody();
         model.addAttribute("cultivation", cultivation);
         model.addAttribute("members", members);
+        model.addAttribute("photos", photos);
         return "dashboard/main";
     }
 
@@ -103,5 +106,23 @@ public class CultivationController {
     public ResponseEntity<HarvestCreateResponse> createHarvest(@PathVariable("cultivation-id") Long cultivationId,
                                                                @RequestBody HarvestCreateRequest request) {
         return cultivationClient.createHarvest(cultivationId, request);
+    }
+
+    // 사진
+    @PostMapping("/{cultivation-id}/photos")
+    public ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
+                                                     @RequestParam("file") MultipartFile file) {
+        return cultivationClient.uploadPhoto(cultivationId, file);
+    }
+
+    @GetMapping("{cultivation-id}/photos")
+    public ResponseEntity<List<PhotoResponse>> getPhoto(@PathVariable("cultivation-id") Long cultivationId) {
+        return cultivationClient.getPhoto(cultivationId);
+    }
+
+    @DeleteMapping("/{cultivation-id}/photos/{photo-id}")
+    public ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
+                                            @PathVariable("photo-id") Long photoId) {
+        return cultivationClient.deletePhoto(cultivationId, photoId);
     }
 }

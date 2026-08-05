@@ -1,8 +1,13 @@
 package site.yesaido.frontserver.config;
 
 import feign.RequestInterceptor;
+import feign.codec.Encoder;
+import feign.form.spring.SpringFormEncoder;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.cloud.openfeign.support.FeignHttpMessageConverters;
+import org.springframework.cloud.openfeign.support.SpringEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -28,5 +33,10 @@ public class FeignConfig {
                 }
             }
         };
+    }
+
+    @Bean
+    public Encoder feignEncoder(ObjectProvider<FeignHttpMessageConverters> messageConverters) {
+        return new SpringFormEncoder(new SpringEncoder(messageConverters));
     }
 }
