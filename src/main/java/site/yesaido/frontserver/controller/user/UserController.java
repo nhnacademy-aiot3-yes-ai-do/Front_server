@@ -56,10 +56,24 @@ public class UserController {
         response.sendRedirect("/login");
     }
 
+    private static final String ADMIN_ID = "admin@admin";
+    private static final String ADMIN_PASSWORD = "admin123!";
+
     @PostMapping("/login")
     public void login(@RequestParam String email,
                         @RequestParam String password,
                         HttpServletResponse response) throws IOException {
+
+        if (ADMIN_ID.equals(email) && ADMIN_PASSWORD.equals(password)) {
+            ResponseCookie adminCookie = ResponseCookie.from("isAdmin", "true")
+                    .path("/")
+                    .httpOnly(true)
+                    .sameSite("Lax")
+                    .build();
+            response.addHeader(HttpHeaders.SET_COOKIE, adminCookie.toString());
+            response.sendRedirect("/admin");
+            return;
+        }
 
         LoginRequest request = new LoginRequest(email, password);
 
@@ -107,8 +121,16 @@ public class UserController {
                 .sameSite("Lax")
                 .build();
 
+        ResponseCookie deletedAdminCookie = ResponseCookie.from("isAdmin", "")
+                .path("/")
+                .maxAge(0)
+                .httpOnly(true)
+                .sameSite("Lax")
+                .build();
+
         response.addHeader(HttpHeaders.SET_COOKIE, deletedAccessCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, deletedRefreshCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, deletedAdminCookie.toString());
 
         response.sendRedirect("/login");
     }

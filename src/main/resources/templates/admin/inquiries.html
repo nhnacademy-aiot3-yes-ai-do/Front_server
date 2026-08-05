@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원 문의 | MushMush</title>
+    <link rel="stylesheet" href="/css/admin.css" />
+    <script src="/js/lucide.js"></script>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="topbar-left">
+            <a href="/admin" class="topbar-logo-link">
+                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
+            </a>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-link" type="button" onclick="handleLogout()">
+                <i data-lucide="log-out"></i>로그아웃
+            </button>
+            <span class="topbar-divider"></span>
+            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+            <span class="topbar-nickname">관리자</span>
+        </div>
+    </div>
+</header>
+
+<div class="page-container admin-list-page">
+
+    <div class="admin-panel">
+        <div class="admin-page-head">
+            <button class="admin-back-link" type="button" onclick="location.href='/admin'">
+                <i data-lucide="chevron-left"></i>회원 문의
+            </button>
+            <div class="admin-filters">
+                <select class="admin-select" id="inquiry-category-select" onchange="inquiryPage=1; renderInquiries()">
+                    <option value="all">전체 구분</option>
+                    <option value="계정/로그인">계정/로그인</option>
+                    <option value="재배">재배</option>
+                    <option value="센서/기기">센서/기기</option>
+                    <option value="버그 신고">버그 신고</option>
+                    <option value="기타">기타</option>
+                </select>
+                <select class="admin-select" id="inquiry-status-select" onchange="inquiryPage=1; renderInquiries()">
+                    <option value="all">전체 답변여부</option>
+                    <option value="답변완료">답변완료</option>
+                    <option value="답변대기">답변대기</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="list-table-wrap">
+            <table class="list-table">
+                <thead>
+                <tr>
+                    <th>구분</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>작성일</th>
+                    <th>답변여부</th>
+                </tr>
+                </thead>
+                <tbody id="inquiry-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="admin-pagination" id="inquiry-pagination"></div>
+    </div>
+
+</div>
+
+<!-- 문의 상세 + 답변 작성 -->
+<div class="modal-overlay" id="modal-inquiry-detail">
+    <div class="modal-box modal-box-xl">
+        <button class="modal-close" type="button" onclick="closeModal('modal-inquiry-detail')">
+            <i data-lucide="x"></i>
+        </button>
+
+        <div class="iq-detail-head">
+            <div>
+                <div class="iq-detail-meta">
+                    <span class="iq-category-badge" id="iq-category">계정/로그인</span>
+                    <span class="iq-cultivation-tag" id="iq-cultivation" style="display:none;"></span>
+                </div>
+                <div class="iq-detail-title" id="iq-title">문의 제목</div>
+                <div class="iq-detail-date" id="iq-date">2026.07.29 작성 · nickname</div>
+            </div>
+            <span class="status-badge" id="iq-status-badge">답변대기</span>
+        </div>
+
+        <div class="iq-chat" id="iq-chat"></div>
+
+        <form class="iq-composer" onsubmit="submitAdminReply(event)">
+            <textarea id="iq-reply-input" rows="1" placeholder="답변을 입력하세요" required></textarea>
+            <button class="iq-composer-send" type="submit" title="답변 보내기">
+                <i data-lucide="send"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+
+    function handleLogout() {
+        fetch('/logout', { method: 'POST' }).finally(function () {
+            location.href = '/login';
+        });
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('is-open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('is-open'); }
+
+    // ===== 회원 문의 (데모 데이터) =====
+    var INQUIRIES = [
+        { id: 1, category: '계정/로그인', title: '비밀번호를 변경했는데 로그인이 안 돼요', author: 'nickname', date: '2026.07.29' },
+        { id: 2, category: '재배', cultivation: 'Cultivation1 · 느타리버섯', title: '중간 재배 기록이 사라졌어요', author: 'nickname2', date: '2026.07.28' },
+        { id: 3, category: '센서/기기', title: '온도센서 값이 이상하게 나와요', author: 'nickname3', date: '2026.07.26' },
+        { id: 4, category: '버그 신고', title: '재배 이력 페이지에서 사진이 안 보여요', author: 'nickname', date: '2026.07.24' },
+        { id: 5, category: '계정/로그인', title: '닉네임 변경이 반영이 안 돼요', author: 'nickname2', date: '2026.07.20' },
+        { id: 6, category: '재배', cultivation: 'Cultivation3 · 표고버섯', title: '수확량 입력이 저장되지 않아요', author: 'nickname4', date: '2026.07.18' },
+        { id: 7, category: '센서/기기', title: '습도 센서 연결이 자주 끊겨요', author: 'nickname5', date: '2026.07.12' },
+        { id: 8, category: '계정/로그인', title: '탈퇴 후 재가입이 안 돼요', author: 'nickname6', date: '2026.07.09' },
+        { id: 9, category: '재배', cultivation: 'Cultivation6 · 양송이버섯', title: '재배 이력이 중복으로 표시돼요', author: 'nickname7', date: '2026.07.06' },
+        { id: 10, category: '버그 신고', title: '알림이 두 번씩 와요', author: 'nickname8', date: '2026.07.02' },
+        { id: 11, category: '기타', title: '재배지를 여러 명이 같이 관리할 수 있나요?', author: 'nickname9', date: '2026.06.28' }
+    ];
+
+    // 문의별 대화 스레드 (데모 데이터, 실제로는 관리자 서버에서 조회/저장해야 함)
+    var THREADS = {
+        1: [
+            { sender: 'USER', content: '비밀번호를 방금 바꿨는데 새 비밀번호로 로그인이 안 돼요. 어떻게 해야 하나요?', time: '2026.07.29 09:12' },
+            { sender: 'ADMIN', content: '안녕하세요! 브라우저 캐시나 자동완성 때문일 수 있어요. 시크릿 창에서 다시 시도해보시겠어요?', time: '2026.07.29 14:30' }
+        ],
+        2: [
+            { sender: 'USER', content: '어제 입력한 중간 재배 기록이 오늘 보니까 없어졌어요.', time: '2026.07.28 11:02' }
+        ],
+        3: [
+            { sender: 'USER', content: '온도센서 값이 실제보다 5도 정도 높게 나와요.', time: '2026.07.26 10:20' },
+            { sender: 'ADMIN', content: '센서 설치 위치가 직사광선을 받는 곳은 아닌지 확인해주세요. 그늘로 옮기면 대부분 해결돼요!', time: '2026.07.26 16:05' }
+        ],
+        4: [
+            { sender: 'USER', content: '재배 이력 페이지에서 예전에 올린 사진이 하나도 안 보여요.', time: '2026.07.24 20:41' }
+        ],
+        5: [
+            { sender: 'USER', content: '닉네임을 바꿨는데 대시보드에는 예전 닉네임이 계속 떠요.', time: '2026.07.20 09:30' },
+            { sender: 'ADMIN', content: '로그아웃 후 다시 로그인하면 새 닉네임으로 반영돼요. 확인 부탁드려요!', time: '2026.07.20 11:47' }
+        ],
+        6: [
+            { sender: 'USER', content: '수확량을 입력하고 저장을 눌렀는데 다시 들어가면 0으로 보여요.', time: '2026.07.18 19:03' }
+        ],
+        7: [
+            { sender: 'USER', content: '습도 센서가 하루에도 몇 번씩 연결이 끊겨요.', time: '2026.07.12 15:12' },
+            { sender: 'ADMIN', content: '센서와 공유기 사이 거리가 멀면 그럴 수 있어요. 공유기 가까운 곳으로 옮겨서 테스트해보시겠어요?', time: '2026.07.12 17:38' }
+        ],
+        8: [
+            { sender: 'USER', content: '탈퇴했다가 같은 이메일로 다시 가입하려는데 안 돼요.', time: '2026.07.09 08:20' }
+        ],
+        9: [
+            { sender: 'USER', content: '재배 이력에 같은 재배가 두 번씩 나와요.', time: '2026.07.06 13:44' },
+            { sender: 'ADMIN', content: '확인해보니 일시적인 캐시 문제였어요. 새로고침 후에도 반복되면 다시 알려주세요!', time: '2026.07.06 18:02' }
+        ],
+        10: [
+            { sender: 'USER', content: '똑같은 알림이 항상 두 번씩 와요.', time: '2026.07.02 10:00' }
+        ],
+        11: [
+            { sender: 'USER', content: '가족이랑 같이 재배지 하나를 관리하고 싶은데 계정 공유가 되나요?', time: '2026.06.28 08:55' },
+            { sender: 'ADMIN', content: '현재는 계정당 1개 재배지만 지원돼요. 공동 관리 기능은 다음 업데이트로 준비 중입니다!', time: '2026.06.28 13:12' }
+        ]
+    };
+
+    function getInquiryStatus(id) {
+        var messages = THREADS[id] || [];
+        var lastSender = messages.length ? messages[messages.length - 1].sender : 'USER';
+        return lastSender === 'ADMIN' ? '답변완료' : '답변대기';
+    }
+
+    var inquiryPage = 1;
+    var INQUIRY_PAGE_SIZE = 8;
+
+    function renderInquiries() {
+        var category = document.getElementById('inquiry-category-select').value;
+        var status = document.getElementById('inquiry-status-select').value;
+
+        var data = INQUIRIES.filter(function (q) {
+            var qStatus = getInquiryStatus(q.id);
+            return (category === 'all' || q.category === category) && (status === 'all' || qStatus === status);
+        });
+
+        var totalPages = Math.max(1, Math.ceil(data.length / INQUIRY_PAGE_SIZE));
+        if (inquiryPage > totalPages) inquiryPage = totalPages;
+
+        var start = (inquiryPage - 1) * INQUIRY_PAGE_SIZE;
+        var pageData = data.slice(start, start + INQUIRY_PAGE_SIZE);
+
+        var tbody = document.getElementById('inquiry-tbody');
+        tbody.innerHTML = '';
+        pageData.forEach(function (q) {
+            var qStatus = getInquiryStatus(q.id);
+            var badgeClass = qStatus === '답변완료' ? 'answered' : 'pending';
+            var tr = document.createElement('tr');
+            tr.onclick = function () { openInquiryDetail(q.id); };
+            tr.innerHTML =
+                '<td>' + q.category + '</td>' +
+                '<td>' + q.title + '</td>' +
+                '<td>' + q.author + '</td>' +
+                '<td>' + q.date + '</td>' +
+                '<td><span class="status-badge ' + badgeClass + '">' + qStatus + '</span></td>';
+            tbody.appendChild(tr);
+        });
+
+        renderInquiryPagination(totalPages);
+        lucide.createIcons();
+    }
+
+    function goToInquiryPage(page) {
+        inquiryPage = page;
+        renderInquiries();
+    }
+
+    function renderInquiryPagination(totalPages) {
+        var wrap = document.getElementById('inquiry-pagination');
+        if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+
+        var prevDisabled = inquiryPage === 1 ? ' disabled' : '';
+        var nextDisabled = inquiryPage === totalPages ? ' disabled' : '';
+        wrap.innerHTML =
+            '<button class="admin-page-btn' + prevDisabled + '" type="button" onclick="goToInquiryPage(' + (inquiryPage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
+            '<span class="admin-page-label">' + inquiryPage + ' / ' + totalPages + '</span>' +
+            '<button class="admin-page-btn' + nextDisabled + '" type="button" onclick="goToInquiryPage(' + (inquiryPage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+    }
+
+    // ===== 문의 상세 + 답변 작성 =====
+    var currentInquiryId = null;
+
+    function openInquiryDetail(id) {
+        currentInquiryId = id;
+        renderInquiryDetail();
+        openModal('modal-inquiry-detail');
+    }
+
+    function renderInquiryDetail() {
+        var q = INQUIRIES.filter(function (x) { return x.id === currentInquiryId; })[0];
+        if (!q) return;
+
+        document.getElementById('iq-category').textContent = q.category;
+
+        var cultivationEl = document.getElementById('iq-cultivation');
+        if (q.cultivation) {
+            cultivationEl.textContent = q.cultivation;
+            cultivationEl.style.display = 'inline-flex';
+        } else {
+            cultivationEl.style.display = 'none';
+        }
+
+        document.getElementById('iq-title').textContent = q.title;
+        document.getElementById('iq-date').textContent = q.date + ' 작성 · ' + q.author;
+
+        var status = getInquiryStatus(q.id);
+        var statusBadge = document.getElementById('iq-status-badge');
+        statusBadge.textContent = status;
+        statusBadge.className = 'status-badge ' + (status === '답변완료' ? 'answered' : 'pending');
+
+        var chat = document.getElementById('iq-chat');
+        chat.innerHTML = '';
+        (THREADS[q.id] || []).forEach(function (m) {
+            var isAdmin = m.sender === 'ADMIN';
+            var row = document.createElement('div');
+            row.className = 'iq-chat-msg' + (isAdmin ? ' from-admin' : '');
+            row.innerHTML =
+                '<div class="iq-chat-avatar">' + (isAdmin ? '관' : q.author.charAt(0)) + '</div>' +
+                '<div class="iq-chat-col">' +
+                '<div class="iq-chat-name"></div>' +
+                '<div class="iq-chat-bubble"><span></span></div>' +
+                '<div class="iq-chat-time"></div>' +
+                '</div>';
+            row.querySelector('.iq-chat-name').textContent = isAdmin ? '관리자' : q.author;
+            row.querySelector('.iq-chat-bubble span').textContent = m.content;
+            row.querySelector('.iq-chat-time').textContent = m.time;
+            chat.appendChild(row);
+        });
+        chat.scrollTop = chat.scrollHeight;
+
+        document.getElementById('iq-reply-input').value = '';
+    }
+
+    // 데모: 실제로는 관리자 서버에 답변을 등록해야 함
+    function submitAdminReply(event) {
+        event.preventDefault();
+        var input = document.getElementById('iq-reply-input');
+        var text = input.value.trim();
+        if (!text || currentInquiryId == null) return;
+
+        var now = new Date();
+        var time = now.getFullYear() + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + String(now.getDate()).padStart(2, '0') +
+            ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+        THREADS[currentInquiryId].push({ sender: 'ADMIN', content: text, time: time });
+
+        renderInquiryDetail();
+        renderInquiries();
+    }
+
+    renderInquiries();
+</script>
+
+</body>
+</html>
