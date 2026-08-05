@@ -108,6 +108,7 @@ class CultivationControllerTest {
 
         when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(detail));
         when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(List.of(member)));
+        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(List.of()));
 
         mockMvc.perform(get("/cultivations/{cultivation-id}", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
