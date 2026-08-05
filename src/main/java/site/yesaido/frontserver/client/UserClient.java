@@ -2,6 +2,7 @@ package site.yesaido.frontserver.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.UserSearchResponse;
 import site.yesaido.frontserver.dto.user.request.EmailVerifyRequest;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
@@ -16,19 +17,19 @@ import java.util.List;
 public interface UserClient {
     // 1. 이메일 중복 확인
     @GetMapping("/api/users/check-email")
-    Boolean checkEmail(@RequestParam("email") String email);
+    ApiResponse<Boolean> checkEmail(@RequestParam("email") String email);
 
     // 2. 닉네임 중복 확인
     @GetMapping("/api/users/check-nickname")
-    Boolean checkNickname(@RequestParam("nickname") String nickname);
+    ApiResponse<Boolean> checkNickname(@RequestParam("nickname") String nickname);
 
     // 3. 회원가입
     @PostMapping("/api/users/signup")
-    Object signUp(@RequestBody UserSignUpRequest requestDto);
+    ApiResponse<Object> signUp(@RequestBody UserSignUpRequest requestDto);
 
     // 4. 로그인
     @PostMapping("/api/auth/login")
-    TokenResponse login(@RequestBody LoginRequest requestDto);
+    ApiResponse<TokenResponse> login(@RequestBody LoginRequest requestDto);
 
     // 5. 재배 멤버 초대용 사용자 검색
     @GetMapping("/api/users/search")
@@ -40,13 +41,13 @@ public interface UserClient {
 
     // 7. Token 재발급
     @PostMapping("/api/auth/reissue")
-    TokenResponse reissue(@RequestBody ReissueRequest reissueRequest);
+    ApiResponse<TokenResponse> reissue(@RequestBody ReissueRequest reissueRequest);
 
     // 8. 이메일 인증 코드 발송
     @PostMapping("/api/auth/email/send")
-    String sendEmail(@RequestBody EmailSendResponse response);
+    ApiResponse<Void> sendEmail(@RequestBody EmailSendResponse response);
 
     // 9. 이메일 인증 코드 검증 요청
     @PostMapping("/api/auth/email/verify")
-    Boolean verifyEmail(@RequestBody EmailVerifyRequest request);
+    ApiResponse<Boolean> verifyEmail(@RequestBody EmailVerifyRequest request);
 }
