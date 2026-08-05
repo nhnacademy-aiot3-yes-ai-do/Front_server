@@ -42,6 +42,16 @@ class UserControllerTest {
     }
 
     @Test
+    @DisplayName("이메일 중복 확인 실패 또는 null 응답 시 false 반환")
+    void checkEmailFailedResponseReturnsFalse() throws Exception {
+        given(userClient.checkEmail("fail@naver.com")).willReturn(new ApiResponse<>(false, "조회 실패", null));
+
+        mockMvc.perform(get("/users/check-email").param("email", "fail@naver.com"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
     @DisplayName("닉네임 중복 확인 요청 시 UserClient 호출 및 결과 반환")
     void checkNicknameSuccess() throws Exception {
         given(userClient.checkNickname("nickTest")).willReturn(new ApiResponse<>(true, "조회 성공", false));
