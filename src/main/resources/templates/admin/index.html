@@ -28,25 +28,56 @@
 </header>
 
 <div class="page-container admin-hub-page">
+    <div class="admin-hub-content">
 
-    <div class="admin-hub-grid">
-        <div class="admin-hub-tile" onclick="location.href='/admin/members'">
-            <i data-lucide="users" class="admin-hub-icon"></i>
-            <span class="admin-hub-label">회원 관리</span>
-            <span class="admin-hub-desc">가입한 회원 목록을 확인하고<br />활성/탈퇴 상태를 관리해요</span>
+        <div class="admin-welcome">
+            <div class="admin-welcome-title">안녕하세요, 관리자님 🍄</div>
+            <div class="admin-welcome-date" id="admin-today-date"></div>
         </div>
-        <div class="admin-hub-tile" onclick="location.href='/admin/cultivations'">
-            <i data-lucide="sprout" class="admin-hub-icon"></i>
-            <span class="admin-hub-label">재배지 관리</span>
-            <span class="admin-hub-desc">등록된 재배지와 환경 통계를<br />확인하고 필요 시 삭제해요</span>
+
+        <div class="admin-stat-row">
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon-wrap"><i data-lucide="users"></i></span>
+                <div>
+                    <div class="admin-stat-value">12</div>
+                    <div class="admin-stat-label">전체 회원</div>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon-wrap"><i data-lucide="sprout"></i></span>
+                <div>
+                    <div class="admin-stat-value">12</div>
+                    <div class="admin-stat-label">운영 중인 재배지</div>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon-wrap"><i data-lucide="message-square"></i></span>
+                <div>
+                    <div class="admin-stat-value">5</div>
+                    <div class="admin-stat-label">미답변 문의</div>
+                </div>
+            </div>
         </div>
-        <div class="admin-hub-tile" onclick="location.href='/admin/inquiries'">
-            <i data-lucide="message-square" class="admin-hub-icon"></i>
-            <span class="admin-hub-label">회원 문의</span>
-            <span class="admin-hub-desc">회원이 남긴 문의 내역을<br />구분별로 확인해요</span>
+
+        <div class="admin-hub-grid">
+            <div class="admin-hub-tile" onclick="location.href='/admin/members'">
+                <i data-lucide="users" class="admin-hub-icon"></i>
+                <span class="admin-hub-label">회원 관리</span>
+                <span class="admin-hub-desc">가입한 회원 목록을 확인하고<br />활성/탈퇴 상태를 관리해요</span>
+            </div>
+            <div class="admin-hub-tile" onclick="location.href='/admin/cultivations'">
+                <i data-lucide="sprout" class="admin-hub-icon"></i>
+                <span class="admin-hub-label">재배지 관리</span>
+                <span class="admin-hub-desc">등록된 재배지와 환경 통계를<br />확인하고 필요 시 삭제해요</span>
+            </div>
+            <div class="admin-hub-tile" onclick="location.href='/admin/inquiries'">
+                <i data-lucide="message-square" class="admin-hub-icon"></i>
+                <span class="admin-hub-label">회원 문의</span>
+                <span class="admin-hub-desc">회원이 남긴 문의 내역을<br />구분별로 확인해요</span>
+            </div>
         </div>
+
     </div>
-
 </div>
 
 <script>
@@ -57,6 +88,13 @@
             location.href = '/login';
         });
     }
+
+    (function renderTodayLabel() {
+        var DOW = ['일', '월', '화', '수', '목', '금', '토'];
+        var today = new Date();
+        document.getElementById('admin-today-date').textContent =
+            today.getFullYear() + '년 ' + (today.getMonth() + 1) + '월 ' + today.getDate() + '일 (' + DOW[today.getDay()] + ') 오늘도 MushMush를 살펴봐요';
+    })();
 </script>
 
 </body>

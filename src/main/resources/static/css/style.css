@@ -1,22 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
-
-:root {
-    --brown-900: #3f2a1d;
-    --brown-700: #6b4a30;
-    --brown-500: #8b5e3c;
-    --brown-300: #c9a97c;
-    --cream-100: #fbf6ea;
-    --cream-200: #f3ead4;
-    --sage-500: #7c9473;
-    --sage-600: #66805c;
-    --ink: #4a3b2e;
-    --danger: #c0574a;
-    --shadow-color: #d8c6a5;
-}
-
-* {
-    box-sizing: border-box;
-}
+@import url("common.css");
 
 body {
     margin: 0;
