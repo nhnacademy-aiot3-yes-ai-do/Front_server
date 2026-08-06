@@ -153,7 +153,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease;
 }
 
@@ -169,7 +169,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
@@ -207,7 +207,7 @@ body {
     border: 2px solid rgba(139, 94, 60, 0.2);
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.5);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
 }
 
@@ -221,7 +221,7 @@ body {
     height: 1.1rem;
     accent-color: var(--sage-500);
     flex-shrink: 0;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .sensor-select-icon {

@@ -87,7 +87,7 @@
     font-size: 0.85rem;
     font-weight: 700;
     color: var(--brown-700);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     border-radius: 10px;
     transition: background 0.15s ease, color 0.15s ease;
 }
@@ -138,4 +138,21 @@
 .avatar-circle svg {
     width: 65%;
     height: 65%;
+}
+
+/* ===== MushMush 커스텀 커서 ===== */
+body {
+    cursor: url("/images/cursor-default.png") 3 2, auto;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="number"],
+input[type="tel"],
+input:not([type]),
+textarea,
+[contenteditable="true"] {
+    cursor: url("/images/cursor-text.png") 9 16, text;
 }

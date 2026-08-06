@@ -46,7 +46,7 @@ body {
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--brown-700);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     border-radius: 14px 14px 0 0;
     transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
@@ -259,7 +259,7 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     border-width: 2px;
     border-style: solid;
     transition: background 0.15s ease, transform 0.15s ease;
@@ -390,7 +390,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     box-shadow: 0 2px 8px rgba(63, 42, 29, 0.2);
     transition: transform 0.25s ease, color 0.15s ease;
 }
@@ -442,16 +442,156 @@ body {
     min-width: 0;
 }
 
-.sensor-row select {
+/* ===== 커스텀 드롭다운 (네이티브 select는 옵션 목록에 커스텀 커서를 적용할 수 없어서 직접 구현) ===== */
+.msh-select {
+    position: relative;
+}
+
+/* 드롭다운이 열려있는 동안, 그 드롭다운을 담고 있는 카드를 형제 카드들보다 앞으로 끌어올림
+   (카드들은 backdrop-filter 때문에 각자 stacking context를 가져서, 그냥 메뉴에만 z-index를 줘도
+   DOM상 다음에 오는 카드 밑에 깔려버리는 문제를 막기 위함) */
+.msh-dropdown-active {
+    position: relative;
+    z-index: 60;
+}
+
+.msh-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
     width: 100%;
+    background: none;
     border: none;
-    background: transparent;
     font-family: inherit;
+    text-align: left;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+}
+
+.msh-select-value {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.msh-select-chevron {
+    width: 0.85rem;
+    height: 0.85rem;
+    flex-shrink: 0;
+    color: var(--brown-500);
+    transition: transform 0.15s ease;
+}
+
+.msh-select.open .msh-select-chevron {
+    transform: rotate(180deg);
+}
+
+.msh-select-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 100%;
+    max-height: 14rem;
+    overflow-y: auto;
+    background: var(--cream-100);
+    border: 2px solid var(--brown-300);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(63, 42, 29, 0.2);
+    padding: 6px;
+    z-index: 40;
+}
+
+.msh-select.open .msh-select-menu {
+    display: block;
+    animation: mshSelectPop 0.12s ease;
+}
+
+@keyframes mshSelectPop {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.msh-select-group-label {
+    padding: 6px 10px 2px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--brown-500);
+}
+
+.msh-select-option {
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--ink);
+    white-space: nowrap;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: background 0.12s ease;
+}
+
+.msh-select-option:hover {
+    background: rgba(124, 148, 115, 0.14);
+}
+
+.msh-select-option.selected {
+    background: rgba(124, 148, 115, 0.22);
+    color: var(--sage-600);
+    font-weight: 700;
+}
+
+/* 센서 카드 안의 작은 borderless 드롭다운 */
+.msh-select--sensor .msh-select-trigger {
+    padding: 0;
     font-size: 0.8rem;
     color: var(--brown-500);
-    padding: 0;
     margin-bottom: 2px;
-    cursor: pointer;
+}
+
+/* 그래프 카드 헤더의 테두리 있는 드롭다운 */
+.msh-select--chart .msh-select-trigger {
+    padding: 6px 10px;
+    border: 2px solid var(--brown-300);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.8rem;
+    color: var(--ink);
+}
+
+.msh-select--chart .msh-select-menu {
+    left: auto;
+    right: 0;
+    min-width: 8rem;
+}
+
+/* 환경설정 모달의 flex 안 borderless 드롭다운 */
+.msh-select--settings {
+    flex: 1;
+}
+
+.msh-select--settings .msh-select-trigger {
+    padding: 0;
+    font-size: 0.85rem;
+    color: var(--ink);
+}
+
+/* 모달 안 일반 입력창처럼 보이는 드롭다운 (재배 이력 비교 등) */
+.msh-select--modal-field {
+    display: block;
+    width: 100%;
+}
+
+.msh-select--modal-field .msh-select-trigger {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--brown-300);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 0.9rem;
+    color: var(--ink);
+}
+
+.msh-select--modal-field .msh-select-menu {
+    width: 100%;
 }
 
 .sensor-row .sensor-value {
@@ -569,15 +709,6 @@ body {
     padding: 1.1rem 1.2rem 0;
 }
 
-.chart-card-header select {
-    padding: 6px 10px;
-    border: 2px solid var(--brown-300);
-    border-radius: 8px;
-    font-family: inherit;
-    background: #fff;
-    font-size: 0.8rem;
-}
-
 .chart-placeholder {
     flex: 1;
     display: flex;
@@ -637,7 +768,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -664,7 +795,7 @@ body {
     border: 2px solid rgba(139, 94, 60, 0.28);
     border-radius: 12px;
     background: rgba(251, 246, 234, 0.7);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
@@ -769,7 +900,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -798,7 +929,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -891,7 +1022,7 @@ body {
 .dropdown-panel-title button {
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     color: var(--sage-600);
 }
 
@@ -946,7 +1077,7 @@ body {
 .member-remove {
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     color: var(--danger);
 }
 
@@ -974,7 +1105,7 @@ body {
 .panel-pagination button {
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     color: var(--sage-600);
     display: flex;
     align-items: center;
@@ -1043,7 +1174,7 @@ body {
     border-radius: 8px;
     padding: 6px 12px;
     font-size: 13px;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     flex-shrink: 0;
 }
 
@@ -1125,7 +1256,7 @@ body {
     right: 16px;
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     color: var(--brown-500);
 }
 
@@ -1175,7 +1306,7 @@ body {
     color: var(--brown-300);
     flex-shrink: 0;
     overflow: hidden;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
@@ -1230,7 +1361,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     padding: 0;
 }
 
@@ -1266,16 +1397,6 @@ body {
     flex-shrink: 0;
 }
 
-.settings-sensor-row select {
-    flex: 1;
-    border: none;
-    background: transparent;
-    font-family: inherit;
-    color: var(--ink);
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
 .settings-threshold {
     display: flex;
     flex-direction: column;
@@ -1302,7 +1423,7 @@ body {
     background: none;
     border: none;
     color: var(--sage-600);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .modal-field {

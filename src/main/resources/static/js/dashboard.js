@@ -7,10 +7,103 @@ var SENSOR_DATA = {
     light: { '조도센서1': '350lux', '조도센서2': '410lux' }
 };
 
-function updateSensor(selectEl, type) {
-    var valueEl = selectEl.closest('.sensor-main').querySelector('.sensor-value');
-    valueEl.textContent = SENSOR_DATA[type][selectEl.value];
+function updateSensor(wrapperEl, optionEl, type) {
+    var valueEl = wrapperEl.closest('.sensor-main').querySelector('.sensor-value');
+    valueEl.textContent = SENSOR_DATA[type][wrapperEl.dataset.value];
 }
+
+// ===== 커스텀 드롭다운 (네이티브 select의 옵션 목록에는 커스텀 커서를 적용할 수 없어서 직접 구현) =====
+// 카드(.card)는 backdrop-filter 때문에, 모달(.modal-box)은 overflow-y:auto 때문에
+// 그 안에 있는 드롭다운 메뉴가 다른 카드에 가려지거나 모달 경계에서 잘려버림.
+// 그래서 열려있는 동안에는 메뉴를 body 바로 아래로 옮기고 position:fixed로 좌표를 직접 계산해서 붙여줌
+// (닫히면 원래 있던 자리로 다시 돌려놓음).
+(function initMshSelects() {
+    document.querySelectorAll('.msh-select').forEach(function (el, i) {
+        if (!el.id) el.id = 'msh-select-auto-' + i;
+        var menu = el.querySelector('.msh-select-menu');
+        if (menu) menu.dataset.owner = el.id;
+    });
+})();
+
+function closeMshSelect(wrapperEl) {
+    wrapperEl.classList.remove('open');
+    var host = wrapperEl.closest('.card') || wrapperEl.parentElement;
+    if (host) host.classList.remove('msh-dropdown-active');
+
+    var menu = document.querySelector('.msh-select-menu[data-owner="' + wrapperEl.id + '"]');
+    if (menu && menu.parentElement === document.body) {
+        menu.style.position = '';
+        menu.style.zIndex = '';
+        menu.style.top = '';
+        menu.style.left = '';
+        menu.style.right = '';
+        menu.style.minWidth = '';
+        menu.style.display = '';
+        wrapperEl.appendChild(menu);
+    }
+}
+
+function toggleMshSelect(wrapperEl) {
+    var isOpen = wrapperEl.classList.contains('open');
+    document.querySelectorAll('.msh-select.open').forEach(closeMshSelect);
+    if (isOpen) return;
+
+    wrapperEl.classList.add('open');
+    var host = wrapperEl.closest('.card') || wrapperEl.parentElement;
+    if (host) host.classList.add('msh-dropdown-active');
+
+    var trigger = wrapperEl.querySelector('.msh-select-trigger');
+    var menu = wrapperEl.querySelector('.msh-select-menu');
+    var rect = trigger.getBoundingClientRect();
+
+    document.body.appendChild(menu);
+    menu.style.display = 'block';
+    menu.style.position = 'fixed';
+    menu.style.zIndex = '200';
+    menu.style.top = (rect.bottom + 6) + 'px';
+    menu.style.minWidth = rect.width + 'px';
+
+    var menuWidth = menu.offsetWidth;
+    if (rect.left + menuWidth > window.innerWidth - 12) {
+        menu.style.left = '';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+    } else {
+        menu.style.right = '';
+        menu.style.left = rect.left + 'px';
+    }
+}
+
+function selectMshOption(optionEl) {
+    var menuEl = optionEl.closest('.msh-select-menu');
+    var wrapperEl = document.getElementById(menuEl.dataset.owner);
+    var value = optionEl.dataset.value != null ? optionEl.dataset.value : optionEl.textContent.trim();
+
+    wrapperEl.dataset.value = value;
+    wrapperEl.querySelector('.msh-select-value').textContent = optionEl.textContent.trim();
+    menuEl.querySelectorAll('.msh-select-option').forEach(function (o) {
+        o.classList.remove('selected');
+    });
+    optionEl.classList.add('selected');
+    closeMshSelect(wrapperEl);
+
+    var handlerName = wrapperEl.dataset.onchange;
+    if (handlerName && typeof window[handlerName] === 'function') {
+        window[handlerName](wrapperEl, optionEl, wrapperEl.dataset.onchangeArg);
+    }
+}
+
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('.msh-select') && !e.target.closest('.msh-select-menu')) {
+        document.querySelectorAll('.msh-select.open').forEach(closeMshSelect);
+    }
+});
+
+// 메뉴가 body로 옮겨진 상태로 고정 좌표를 쓰기 때문에, 모달/카드 내부가 스크롤되면
+// 트리거 위치와 어긋나 버림 -> 스크롤이 일어나면 그냥 닫아버림 (메뉴 자체 스크롤은 제외)
+document.addEventListener('scroll', function (e) {
+    if (e.target.closest && e.target.closest('.msh-select-menu')) return;
+    document.querySelectorAll('.msh-select.open').forEach(closeMshSelect);
+}, true);
 
 var CHATBOT_REPLIES = [
     '음... 조금 더 지켜봐야 할 것 같아요 🍄',
@@ -47,8 +140,8 @@ function sendChatMessage(event) {
     }, 500);
 }
 
-function updateSettingsSensorIcon(selectEl) {
-    var iconName = selectEl.options[selectEl.selectedIndex].dataset.icon;
+function updateSettingsSensorIcon(wrapperEl, optionEl) {
+    var iconName = optionEl.dataset.icon;
     var wrap = document.getElementById('settings-sensor-icon-wrap');
     wrap.innerHTML = '<i data-lucide="' + iconName + '" style="width:20px;height:20px;"></i>';
     lucide.createIcons();
@@ -443,12 +536,24 @@ var PAST_CULTIVATION_CYCLES = [
 var endReportStats = null;
 
 function populateCompareSelect() {
-    var select = document.getElementById('end-compare-select');
-    select.innerHTML = PAST_CULTIVATION_CYCLES.map(function (c) {
-        return '<option value="' + c.id + '">' + c.name + ' · ' + c.type + ' (' + c.period + ')</option>';
+    var wrapperEl = document.getElementById('end-compare-select');
+    var menu = wrapperEl.querySelector('.msh-select-menu');
+    menu.innerHTML = PAST_CULTIVATION_CYCLES.map(function (c, i) {
+        return '<div class="msh-select-option' + (i === 0 ? ' selected' : '') + '" data-value="' + c.id + '" onclick="selectMshOption(this)">' +
+            c.name + ' · ' + c.type + ' (' + c.period + ')</div>';
     }).join('');
+
+    var first = PAST_CULTIVATION_CYCLES[0];
+    if (first) {
+        wrapperEl.dataset.value = first.id;
+        wrapperEl.querySelector('.msh-select-value').textContent = first.name + ' · ' + first.type + ' (' + first.period + ')';
+    }
 }
 populateCompareSelect();
+
+function handleCompareSelectChange() {
+    renderEndCompare(endReportStats);
+}
 
 function openEndAmountModal() {
     document.getElementById('end-amount-input').value = '0';
@@ -553,7 +658,7 @@ function buildCompareRow(label, currentValue, targetValue, unit) {
 }
 
 function renderEndCompare(stats) {
-    var selectedId = Number(document.getElementById('end-compare-select').value);
+    var selectedId = Number(document.getElementById('end-compare-select').dataset.value);
     var target = PAST_CULTIVATION_CYCLES.filter(function (c) { return c.id === selectedId; })[0]
         || PAST_CULTIVATION_CYCLES[0];
 

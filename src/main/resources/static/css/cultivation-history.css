@@ -70,7 +70,7 @@ body {
     border-radius: 12px;
     font-size: 0.95rem;
     color: var(--brown-700);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -199,7 +199,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease;
 }
 
@@ -243,7 +243,7 @@ body {
     right: 16px;
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     color: var(--brown-500);
 }
 

@@ -1,0 +1,25 @@
+
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<header class="topbar" th:fragment="adminHeader">
+    <div class="topbar-inner">
+        <div class="topbar-left">
+            <a href="/admin" class="topbar-logo-link">
+                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
+            </a>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-link" type="button" onclick="handleLogout()">
+                <i data-lucide="log-out"></i>로그아웃
+            </button>
+            <span class="topbar-divider"></span>
+            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+            <span class="topbar-nickname">관리자</span>
+        </div>
+    </div>
+</header>
+
+</body>
+</html>

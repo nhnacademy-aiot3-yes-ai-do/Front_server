@@ -1,31 +1,17 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/images/favicon-192.png" />
     <title>관리자 | MushMush</title>
     <link rel="stylesheet" href="/css/admin.css" />
     <script src="/js/lucide.js"></script>
+    <script src="/js/admin-common.js"></script>
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="topbar-left">
-            <a href="/admin" class="topbar-logo-link">
-                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
-            </a>
-        </div>
-        <div class="topbar-right">
-            <button class="topbar-link" type="button" onclick="handleLogout()">
-                <i data-lucide="log-out"></i>로그아웃
-            </button>
-            <span class="topbar-divider"></span>
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
-            <span class="topbar-nickname">관리자</span>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/admin-header :: adminHeader}"></header>
 
 <div class="page-container admin-hub-page">
     <div class="admin-hub-content">
@@ -57,6 +43,13 @@
                     <div class="admin-stat-label">미답변 문의</div>
                 </div>
             </div>
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon-wrap"><i data-lucide="package"></i></span>
+                <div>
+                    <div class="admin-stat-value">5</div>
+                    <div class="admin-stat-label">등록된 버섯 종류</div>
+                </div>
+            </div>
         </div>
 
         <div class="admin-hub-grid">
@@ -75,6 +68,11 @@
                 <span class="admin-hub-label">회원 문의</span>
                 <span class="admin-hub-desc">회원이 남긴 문의 내역을<br />구분별로 확인해요</span>
             </div>
+            <div class="admin-hub-tile" onclick="location.href='/admin/mushrooms'">
+                <i data-lucide="package" class="admin-hub-icon"></i>
+                <span class="admin-hub-label">버섯 등록</span>
+                <span class="admin-hub-desc">재배 가능한 버섯 종류와<br />적정 생육 환경을 등록·관리해요</span>
+            </div>
         </div>
 
     </div>
@@ -82,12 +80,6 @@
 
 <script>
     lucide.createIcons();
-
-    function handleLogout() {
-        fetch('/logout', { method: 'POST' }).finally(function () {
-            location.href = '/login';
-        });
-    }
 
     (function renderTodayLabel() {
         var DOW = ['일', '월', '화', '수', '목', '금', '토'];
