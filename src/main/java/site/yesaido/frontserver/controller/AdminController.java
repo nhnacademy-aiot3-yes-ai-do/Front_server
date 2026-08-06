@@ -25,4 +25,9 @@ public class AdminController {
     public String inquiries() {
         return "admin/inquiries";
     }
+
+    @GetMapping("/admin/mushrooms")
+    public String mushrooms() {
+        return "admin/mushrooms";
+    }
 }

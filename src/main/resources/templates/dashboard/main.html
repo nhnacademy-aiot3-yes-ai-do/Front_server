@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/images/favicon-192.png" />
     <title>재배 대시보드 | MushMush</title>
     <link rel="stylesheet" href="/css/dashboard.css" />
     <script src="/js/lucide.js"></script>
@@ -48,41 +49,65 @@
                     <div class="card sensor-row">
                         <i data-lucide="thermometer" class="sensor-icon"></i>
                         <div class="sensor-main">
-                            <select onchange="updateSensor(this, 'temp')">
-                                <option>온도센서1</option>
-                                <option>온도센서2</option>
-                                <option selected>온도센서3</option>
-                            </select>
+                            <div class="msh-select msh-select--sensor" data-value="온도센서3" data-onchange="updateSensor" data-onchange-arg="temp">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">온도센서3</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu">
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">온도센서1</div>
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">온도센서2</div>
+                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">온도센서3</div>
+                                </div>
+                            </div>
                             <div class="sensor-value">20°C</div>
                         </div>
                     </div>
                     <div class="card sensor-row">
                         <i data-lucide="droplet" class="sensor-icon"></i>
                         <div class="sensor-main">
-                            <select onchange="updateSensor(this, 'humidity')">
-                                <option selected>습도센서1</option>
-                                <option>습도센서2</option>
-                            </select>
+                            <div class="msh-select msh-select--sensor" data-value="습도센서1" data-onchange="updateSensor" data-onchange-arg="humidity">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">습도센서1</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu">
+                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">습도센서1</div>
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">습도센서2</div>
+                                </div>
+                            </div>
                             <div class="sensor-value">61%</div>
                         </div>
                     </div>
                     <div class="card sensor-row">
                         <i data-lucide="cloudy" class="sensor-icon"></i>
                         <div class="sensor-main">
-                            <select onchange="updateSensor(this, 'co2')">
-                                <option>CO2센서1</option>
-                                <option selected>CO2센서2</option>
-                            </select>
+                            <div class="msh-select msh-select--sensor" data-value="CO2센서2" data-onchange="updateSensor" data-onchange-arg="co2">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">CO2센서2</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu">
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">CO2센서1</div>
+                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">CO2센서2</div>
+                                </div>
+                            </div>
                             <div class="sensor-value">530ppm</div>
                         </div>
                     </div>
                     <div class="card sensor-row">
                         <i data-lucide="sun" class="sensor-icon"></i>
                         <div class="sensor-main">
-                            <select onchange="updateSensor(this, 'light')">
-                                <option selected>조도센서1</option>
-                                <option>조도센서2</option>
-                            </select>
+                            <div class="msh-select msh-select--sensor" data-value="조도센서1" data-onchange="updateSensor" data-onchange-arg="light">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">조도센서1</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu">
+                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">조도센서1</div>
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">조도센서2</div>
+                                </div>
+                            </div>
                             <div class="sensor-value">350lux</div>
                         </div>
                     </div>
@@ -128,25 +153,27 @@
 
                 <div class="card chart-card">
                     <div class="chart-card-header">
-                        <select>
-                            <optgroup label="온도">
-                                <option>온도센서1</option>
-                                <option>온도센서2</option>
-                                <option selected>온도센서3</option>
-                            </optgroup>
-                            <optgroup label="습도">
-                                <option>습도센서1</option>
-                                <option>습도센서2</option>
-                            </optgroup>
-                            <optgroup label="CO2">
-                                <option>CO2센서1</option>
-                                <option>CO2센서2</option>
-                            </optgroup>
-                            <optgroup label="조도">
-                                <option>조도센서1</option>
-                                <option>조도센서2</option>
-                            </optgroup>
-                        </select>
+                        <div class="msh-select msh-select--chart" data-value="온도센서3">
+                            <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                <span class="msh-select-value">온도센서3</span>
+                                <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                            </button>
+                            <div class="msh-select-menu">
+                                <div class="msh-select-group-label">온도</div>
+                                <div class="msh-select-option" onclick="selectMshOption(this)">온도센서1</div>
+                                <div class="msh-select-option" onclick="selectMshOption(this)">온도센서2</div>
+                                <div class="msh-select-option selected" onclick="selectMshOption(this)">온도센서3</div>
+                                <div class="msh-select-group-label">습도</div>
+                                <div class="msh-select-option" onclick="selectMshOption(this)">습도센서1</div>
+                                <div class="msh-select-option" onclick="selectMshOption(this)">습도센서2</div>
+                                <div class="msh-select-group-label">CO2</div>
+                                <div class="msh-select-option" onclick="selectMshOption(this)">CO2센서1</div>
+                                <div class="msh-select-option" onclick="selectMshOption(this)">CO2센서2</div>
+                                <div class="msh-select-group-label">조도</div>
+                                <div class="msh-select-option" onclick="selectMshOption(this)">조도센서1</div>
+                                <div class="msh-select-option" onclick="selectMshOption(this)">조도센서2</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="chart-placeholder">
                         <svg viewBox="0 0 260 110" class="chart-demo-svg" preserveAspectRatio="none">
@@ -328,25 +355,27 @@
             <div class="settings-sensor-list">
                 <div class="settings-sensor-row">
                     <span id="settings-sensor-icon-wrap"><i data-lucide="thermometer" style="width:20px;height:20px;"></i></span>
-                    <select id="settings-sensor-select" onchange="updateSettingsSensorIcon(this)">
-                        <optgroup label="온도">
-                            <option data-icon="thermometer">온도센서1</option>
-                            <option data-icon="thermometer">온도센서2</option>
-                            <option data-icon="thermometer" selected>온도센서3</option>
-                        </optgroup>
-                        <optgroup label="습도">
-                            <option data-icon="droplet">습도센서1</option>
-                            <option data-icon="droplet">습도센서2</option>
-                        </optgroup>
-                        <optgroup label="CO2">
-                            <option data-icon="cloudy">CO2센서1</option>
-                            <option data-icon="cloudy">CO2센서2</option>
-                        </optgroup>
-                        <optgroup label="조도">
-                            <option data-icon="sun">조도센서1</option>
-                            <option data-icon="sun">조도센서2</option>
-                        </optgroup>
-                    </select>
+                    <div class="msh-select msh-select--settings" data-value="온도센서3" data-onchange="updateSettingsSensorIcon">
+                        <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                            <span class="msh-select-value">온도센서3</span>
+                            <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                        </button>
+                        <div class="msh-select-menu">
+                            <div class="msh-select-group-label">온도</div>
+                            <div class="msh-select-option" data-icon="thermometer" onclick="selectMshOption(this)">온도센서1</div>
+                            <div class="msh-select-option" data-icon="thermometer" onclick="selectMshOption(this)">온도센서2</div>
+                            <div class="msh-select-option selected" data-icon="thermometer" onclick="selectMshOption(this)">온도센서3</div>
+                            <div class="msh-select-group-label">습도</div>
+                            <div class="msh-select-option" data-icon="droplet" onclick="selectMshOption(this)">습도센서1</div>
+                            <div class="msh-select-option" data-icon="droplet" onclick="selectMshOption(this)">습도센서2</div>
+                            <div class="msh-select-group-label">CO2</div>
+                            <div class="msh-select-option" data-icon="cloudy" onclick="selectMshOption(this)">CO2센서1</div>
+                            <div class="msh-select-option" data-icon="cloudy" onclick="selectMshOption(this)">CO2센서2</div>
+                            <div class="msh-select-group-label">조도</div>
+                            <div class="msh-select-option" data-icon="sun" onclick="selectMshOption(this)">조도센서1</div>
+                            <div class="msh-select-option" data-icon="sun" onclick="selectMshOption(this)">조도센서2</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -428,7 +457,13 @@
         <p class="modal-desc">비교하고 싶은 이전 재배를 선택해보세요.</p>
         <div class="modal-field">
             <label>비교할 재배 이력</label>
-            <select id="end-compare-select" onchange="renderEndCompare(endReportStats)"></select>
+            <div class="msh-select msh-select--modal-field" id="end-compare-select" data-onchange="handleCompareSelectChange">
+                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                    <span class="msh-select-value"></span>
+                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                </button>
+                <div class="msh-select-menu"></div>
+            </div>
         </div>
         <div class="compare-rows" id="end-compare-rows"></div>
         <div class="modal-actions">

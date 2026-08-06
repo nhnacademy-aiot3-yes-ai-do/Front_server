@@ -1,32 +1,18 @@
 <!-- templates/admin/members.html -->
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/images/favicon-192.png" />
     <title>회원 관리 | MushMush</title>
     <link rel="stylesheet" href="/css/admin.css" />
     <script src="/js/lucide.js"></script>
+    <script src="/js/admin-common.js"></script>
 </head>
 <body>
 
-<header class="topbar">
-    <div class="topbar-inner">
-        <div class="topbar-left">
-            <a href="/admin" class="topbar-logo-link">
-                <img src="/images/logo2.png" alt="MushMush 로고" class="topbar-logo" />
-            </a>
-        </div>
-        <div class="topbar-right">
-            <button class="topbar-link" type="button" onclick="handleLogout()">
-                <i data-lucide="log-out"></i>로그아웃
-            </button>
-            <span class="topbar-divider"></span>
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
-            <span class="topbar-nickname">관리자</span>
-        </div>
-    </div>
-</header>
+<header th:replace="~{fragments/admin-header :: adminHeader}"></header>
 
 <div class="page-container admin-list-page">
 
@@ -65,12 +51,6 @@
 
 <script>
     lucide.createIcons();
-
-    function handleLogout() {
-        fetch('/logout', { method: 'POST' }).finally(function () {
-            location.href = '/login';
-        });
-    }
 
     // ===== 회원 관리 (데모 데이터) =====
     var ACTIVE_MEMBERS = [

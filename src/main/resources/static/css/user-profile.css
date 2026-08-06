@@ -128,7 +128,7 @@ body {
     font-family: inherit;
     font-size: 0.8rem;
     color: var(--brown-500);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     text-decoration: underline;
     transition: color 0.15s ease;
 }
@@ -232,7 +232,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease;
 }
 

@@ -134,26 +134,26 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     align-items: stretch;
-    gap: 3rem;
+    gap: 2rem;
     width: 100%;
 }
 
 .admin-hub-tile {
-    width: 27rem;
-    min-height: 32rem;
+    width: 19rem;
+    min-height: 21rem;
     background: rgba(251, 246, 234, 0.72);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border: 2px solid rgba(139, 94, 60, 0.22);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.18);
-    border-radius: 28px;
-    padding: 3.6rem 2.2rem 2.6rem;
+    border-radius: 24px;
+    padding: 2.2rem 1.8rem;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1.6rem;
-    cursor: pointer;
+    gap: 1.1rem;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
@@ -164,10 +164,10 @@ body {
 }
 
 .admin-hub-icon {
-    width: 5.4rem;
-    height: 5.4rem;
+    width: 3.6rem;
+    height: 3.6rem;
     color: var(--sage-600);
-    padding: 1.6rem;
+    padding: 1.1rem;
     background: var(--cream-200);
     border: 2px solid rgba(124, 148, 115, 0.3);
     border-radius: 50%;
@@ -176,16 +176,16 @@ body {
 .admin-hub-label {
     font-family: "Gaegu", inherit;
     font-weight: 700;
-    font-size: 1.7rem;
+    font-size: 1.4rem;
     color: var(--brown-900);
 }
 
 .admin-hub-desc {
-    font-size: 0.92rem;
-    line-height: 1.6;
+    font-size: 0.85rem;
+    line-height: 1.55;
     color: var(--brown-500);
     text-align: center;
-    margin-top: -0.6rem;
+    margin-top: -0.4rem;
 }
 
 /* ===== 하위 페이지 공통: 상단 타이틀 + 뒤로가기 + 필터 ===== */
@@ -219,7 +219,7 @@ body {
     font-weight: 700;
     font-size: 1.35rem;
     color: var(--brown-900);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .admin-back-link svg { width: 1.3rem; height: 1.3rem; color: var(--sage-600); }
@@ -238,7 +238,7 @@ body {
     font-size: 0.92rem;
     padding: 0.5rem 2rem 0.5rem 0.9rem;
     border-radius: 999px;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .admin-select:focus { outline: none; border-color: var(--sage-500); }
@@ -268,7 +268,7 @@ body {
     border-top: 1px solid rgba(139, 94, 60, 0.16);
 }
 
-.list-table tbody tr { transition: background 0.15s ease; cursor: pointer; }
+.list-table tbody tr { transition: background 0.15s ease; cursor: url("/images/cursor-default.png") 3 2, pointer; }
 .list-table tbody tr:hover { background: rgba(124, 148, 115, 0.12); }
 .list-table tbody tr.readonly { cursor: default; }
 .list-table tbody tr.readonly:hover { background: none; }
@@ -297,7 +297,7 @@ body {
     background: none;
     border: none;
     color: var(--brown-500);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     padding: 0.3rem;
     border-radius: 8px;
     display: inline-flex;
@@ -326,7 +326,7 @@ body {
     color: var(--brown-700);
     background: var(--cream-100);
     border: 1px solid var(--brown-300);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -378,7 +378,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     box-shadow: 3px 3px 0 rgba(63, 42, 29, 0.12);
     transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
 }
@@ -433,7 +433,7 @@ body {
     right: 16px;
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     color: var(--brown-500);
 }
 
@@ -456,6 +456,59 @@ body {
     justify-content: flex-end;
     gap: 10px;
     margin-top: 18px;
+}
+
+/* ===== 버섯 등록/수정 폼 ===== */
+.modal-field { margin-bottom: 16px; }
+
+.modal-field label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brown-700);
+    margin-bottom: 6px;
+}
+
+.modal-field input {
+    width: 100%;
+    padding: 11px 13px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--ink);
+    border: 2px solid var(--brown-300);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.modal-field input:focus { outline: none; border-color: var(--sage-500); }
+
+.modal-field-hint {
+    display: block;
+    font-size: 0.78rem;
+    font-style: italic;
+    color: var(--brown-500);
+    margin-top: 5px;
+}
+
+.modal-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.modal-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-range input { width: 100%; }
+.modal-range span { color: var(--brown-500); font-size: 0.85rem; flex-shrink: 0; }
+
+.modal-form-error {
+    color: var(--danger);
+    font-size: 0.82rem;
+    margin: -6px 0 12px;
 }
 
 /* ===== 재배지 상세 팝업 (관리자용: 사진/센서/환경통계/일간추이/AI 리포트, 챗봇·재배종료·환경설정 없음) ===== */
@@ -522,7 +575,7 @@ body {
     color: var(--brown-500);
     padding: 0 1rem 0 0;
     margin-bottom: 0.15rem;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .cd-sensor-select:focus { outline: none; }
@@ -540,7 +593,7 @@ body {
     font-weight: 700;
     padding: 0.35rem 1.6rem 0.35rem 0.7rem;
     border-radius: 999px;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .cd-chart-select:focus { outline: none; border-color: var(--sage-500); }
@@ -562,7 +615,7 @@ body {
     font-size: 0.85rem;
     padding: 0.45rem 0.9rem;
     border-radius: 999px;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .cd-member-toggle-btn svg { width: 0.95rem; height: 0.95rem; color: var(--sage-600); }
@@ -641,7 +694,7 @@ body {
     font-size: 1rem;
     font-weight: 700;
     color: var(--brown-500);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     border-bottom: 3px solid transparent;
     margin-bottom: -2px;
     transition: color 0.15s ease, border-color 0.15s ease;
@@ -676,7 +729,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -695,7 +748,7 @@ body {
     border: 2px solid rgba(139, 94, 60, 0.28);
     border-radius: 10px;
     background: rgba(251, 246, 234, 0.7);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -838,7 +891,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     flex-shrink: 0;
 }
 
