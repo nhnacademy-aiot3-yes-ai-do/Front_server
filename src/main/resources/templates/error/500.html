@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>오류 발생 | MushMush</title>
+    <link rel="stylesheet" href="/css/error.css" />
+    <script src="/js/lucide.js"></script>
+</head>
+<body>
+<div class="error-wrap">
+    <div class="error-card">
+        <div class="error-icon-wrap">
+            <i data-lucide="triangle-alert"></i>
+        </div>
+
+        <div class="error-code" th:text="'ERROR ' + ${status}">ERROR 500</div>
+        <h1 class="error-title">앗, 잠시 문제가 생겼어요 🍄</h1>
+        <p class="error-subtitle">
+            요청을 처리하는 중에 오류가 발생했어요.<br />
+            잠시 후 다시 시도하거나 홈으로 돌아가 주세요.
+        </p>
+
+        <div class="error-actions">
+            <a href="/" class="btn btn-outline">홈으로</a>
+            <button type="button" class="btn btn-primary" onclick="location.reload()">다시 시도</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

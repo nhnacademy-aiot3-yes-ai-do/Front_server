@@ -938,3 +938,15 @@ body {
 .env-stat-icon { width: 1.2rem; height: 1.2rem; color: var(--sage-600); flex-shrink: 0; }
 .env-stat-label { flex: 1; font-size: 0.78rem; color: var(--brown-500); }
 .env-stat-value { font-size: 0.95rem; font-weight: 700; color: var(--brown-900); white-space: nowrap; }
+
+/* ===== 관리자 에러 페이지 (헤더 없이 배경 위에 카드 하나만 중앙 배치) =====
+   카드 자체 생김새(.error-wrap/.error-card/.error-icon-wrap 등)는 common.css에 공통으로 있고,
+   여기는 관리자 페이지 body가 기본적으로 위쪽 정렬(header + page-container)이라서
+   에러 페이지일 때만 화면 중앙으로 바꿔주는 오버라이드만 남김. */
+body.error-page {
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+}
+
+.error-actions .btn { flex: 1; justify-content: center; }
