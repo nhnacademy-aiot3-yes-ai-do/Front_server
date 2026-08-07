@@ -206,7 +206,7 @@ body {
 
 .support-page-btn.disabled {
     opacity: 0.4;
-    cursor: default;
+    cursor: url("/images/cursor-default.png") 3 2, default;
     pointer-events: none;
 }
 
@@ -572,7 +572,7 @@ body {
     width: 100%;
     border-radius: 12px;
     margin-bottom: 0.5rem;
-    cursor: zoom-in;
+    cursor: url("/images/cursor-default.png") 3 2, zoom-in;
 }
 
 .support-chat-time {

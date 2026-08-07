@@ -12,98 +12,7 @@ function updateSensor(wrapperEl, optionEl, type) {
     valueEl.textContent = SENSOR_DATA[type][wrapperEl.dataset.value];
 }
 
-// ===== 커스텀 드롭다운 (네이티브 select의 옵션 목록에는 커스텀 커서를 적용할 수 없어서 직접 구현) =====
-// 카드(.card)는 backdrop-filter 때문에, 모달(.modal-box)은 overflow-y:auto 때문에
-// 그 안에 있는 드롭다운 메뉴가 다른 카드에 가려지거나 모달 경계에서 잘려버림.
-// 그래서 열려있는 동안에는 메뉴를 body 바로 아래로 옮기고 position:fixed로 좌표를 직접 계산해서 붙여줌
-// (닫히면 원래 있던 자리로 다시 돌려놓음).
-(function initMshSelects() {
-    document.querySelectorAll('.msh-select').forEach(function (el, i) {
-        if (!el.id) el.id = 'msh-select-auto-' + i;
-        var menu = el.querySelector('.msh-select-menu');
-        if (menu) menu.dataset.owner = el.id;
-    });
-})();
-
-function closeMshSelect(wrapperEl) {
-    wrapperEl.classList.remove('open');
-    var host = wrapperEl.closest('.card') || wrapperEl.parentElement;
-    if (host) host.classList.remove('msh-dropdown-active');
-
-    var menu = document.querySelector('.msh-select-menu[data-owner="' + wrapperEl.id + '"]');
-    if (menu && menu.parentElement === document.body) {
-        menu.style.position = '';
-        menu.style.zIndex = '';
-        menu.style.top = '';
-        menu.style.left = '';
-        menu.style.right = '';
-        menu.style.minWidth = '';
-        menu.style.display = '';
-        wrapperEl.appendChild(menu);
-    }
-}
-
-function toggleMshSelect(wrapperEl) {
-    var isOpen = wrapperEl.classList.contains('open');
-    document.querySelectorAll('.msh-select.open').forEach(closeMshSelect);
-    if (isOpen) return;
-
-    wrapperEl.classList.add('open');
-    var host = wrapperEl.closest('.card') || wrapperEl.parentElement;
-    if (host) host.classList.add('msh-dropdown-active');
-
-    var trigger = wrapperEl.querySelector('.msh-select-trigger');
-    var menu = wrapperEl.querySelector('.msh-select-menu');
-    var rect = trigger.getBoundingClientRect();
-
-    document.body.appendChild(menu);
-    menu.style.display = 'block';
-    menu.style.position = 'fixed';
-    menu.style.zIndex = '200';
-    menu.style.top = (rect.bottom + 6) + 'px';
-    menu.style.minWidth = rect.width + 'px';
-
-    var menuWidth = menu.offsetWidth;
-    if (rect.left + menuWidth > window.innerWidth - 12) {
-        menu.style.left = '';
-        menu.style.right = (window.innerWidth - rect.right) + 'px';
-    } else {
-        menu.style.right = '';
-        menu.style.left = rect.left + 'px';
-    }
-}
-
-function selectMshOption(optionEl) {
-    var menuEl = optionEl.closest('.msh-select-menu');
-    var wrapperEl = document.getElementById(menuEl.dataset.owner);
-    var value = optionEl.dataset.value != null ? optionEl.dataset.value : optionEl.textContent.trim();
-
-    wrapperEl.dataset.value = value;
-    wrapperEl.querySelector('.msh-select-value').textContent = optionEl.textContent.trim();
-    menuEl.querySelectorAll('.msh-select-option').forEach(function (o) {
-        o.classList.remove('selected');
-    });
-    optionEl.classList.add('selected');
-    closeMshSelect(wrapperEl);
-
-    var handlerName = wrapperEl.dataset.onchange;
-    if (handlerName && typeof window[handlerName] === 'function') {
-        window[handlerName](wrapperEl, optionEl, wrapperEl.dataset.onchangeArg);
-    }
-}
-
-document.addEventListener('click', function (e) {
-    if (!e.target.closest('.msh-select') && !e.target.closest('.msh-select-menu')) {
-        document.querySelectorAll('.msh-select.open').forEach(closeMshSelect);
-    }
-});
-
-// 메뉴가 body로 옮겨진 상태로 고정 좌표를 쓰기 때문에, 모달/카드 내부가 스크롤되면
-// 트리거 위치와 어긋나 버림 -> 스크롤이 일어나면 그냥 닫아버림 (메뉴 자체 스크롤은 제외)
-document.addEventListener('scroll', function (e) {
-    if (e.target.closest && e.target.closest('.msh-select-menu')) return;
-    document.querySelectorAll('.msh-select.open').forEach(closeMshSelect);
-}, true);
+// 커스텀 드롭다운(.msh-select) 관련 공통 로직은 /js/msh-select.js로 옮겼음 (관리자 페이지랑 같이 씀).
 
 var CHATBOT_REPLIES = [
     '음... 조금 더 지켜봐야 할 것 같아요 🍄',
@@ -686,6 +595,18 @@ function renderMainPhoto() {
     img.src = PHOTOS[0].uri;
 }
 
+// 업로드 박스(네모 칸) 자체에 현재 대표 사진(가장 최근 사진)을 미리보기로 보여줌.
+// 사진이 없을 때만 업로드 아이콘을 보여주고, 있으면 그 안에 바로 사진이 뜨게 함.
+function renderPhotoUploadPreview() {
+    var box = document.getElementById('photo-upload-preview');
+    if (PHOTOS.length === 0) {
+        box.innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
+    } else {
+        box.innerHTML = '<img src="' + PHOTOS[0].uri + '" alt="재배 사진" />';
+    }
+    lucide.createIcons();
+}
+
 function renderPhotoThumbs() {
     var wrap = document.getElementById('settings-photo-thumbs');
     wrap.innerHTML = '';
@@ -729,8 +650,7 @@ function handlePhotoSelect(input) {
             PHOTOS.unshift(uploaded);
             renderMainPhoto();
             renderPhotoThumbs();
-            document.getElementById('photo-upload-preview').innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
-            lucide.createIcons();
+            renderPhotoUploadPreview();
             input.value = '';
         })
         .catch(function () {
@@ -747,8 +667,10 @@ function deletePhoto(photoId) {
             PHOTOS = PHOTOS.filter(function (p) { return p.photoId !== photoId; });
             renderMainPhoto();
             renderPhotoThumbs();
+            renderPhotoUploadPreview();
         })
         .catch(function () { alert('사진 삭제에 실패했습니다.'); });
 }
 
 renderPhotoThumbs();
+renderPhotoUploadPreview();
