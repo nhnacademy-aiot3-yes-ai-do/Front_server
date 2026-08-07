@@ -442,103 +442,7 @@ body {
     min-width: 0;
 }
 
-/* ===== 커스텀 드롭다운 (네이티브 select는 옵션 목록에 커스텀 커서를 적용할 수 없어서 직접 구현) ===== */
-.msh-select {
-    position: relative;
-}
-
-/* 드롭다운이 열려있는 동안, 그 드롭다운을 담고 있는 카드를 형제 카드들보다 앞으로 끌어올림
-   (카드들은 backdrop-filter 때문에 각자 stacking context를 가져서, 그냥 메뉴에만 z-index를 줘도
-   DOM상 다음에 오는 카드 밑에 깔려버리는 문제를 막기 위함) */
-.msh-dropdown-active {
-    position: relative;
-    z-index: 60;
-}
-
-.msh-select-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.4rem;
-    width: 100%;
-    background: none;
-    border: none;
-    font-family: inherit;
-    text-align: left;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
-}
-
-.msh-select-value {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.msh-select-chevron {
-    width: 0.85rem;
-    height: 0.85rem;
-    flex-shrink: 0;
-    color: var(--brown-500);
-    transition: transform 0.15s ease;
-}
-
-.msh-select.open .msh-select-chevron {
-    transform: rotate(180deg);
-}
-
-.msh-select-menu {
-    display: none;
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    min-width: 100%;
-    max-height: 14rem;
-    overflow-y: auto;
-    background: var(--cream-100);
-    border: 2px solid var(--brown-300);
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(63, 42, 29, 0.2);
-    padding: 6px;
-    z-index: 40;
-}
-
-.msh-select.open .msh-select-menu {
-    display: block;
-    animation: mshSelectPop 0.12s ease;
-}
-
-@keyframes mshSelectPop {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.msh-select-group-label {
-    padding: 6px 10px 2px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--brown-500);
-}
-
-.msh-select-option {
-    padding: 8px 10px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    color: var(--ink);
-    white-space: nowrap;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
-    transition: background 0.12s ease;
-}
-
-.msh-select-option:hover {
-    background: rgba(124, 148, 115, 0.14);
-}
-
-.msh-select-option.selected {
-    background: rgba(124, 148, 115, 0.22);
-    color: var(--sage-600);
-    font-weight: 700;
-}
-
+/* ===== 커스텀 드롭다운: 대시보드 전용 변형 (공통 부분은 common.css) ===== */
 /* 센서 카드 안의 작은 borderless 드롭다운 */
 .msh-select--sensor .msh-select-trigger {
     padding: 0;
@@ -560,6 +464,9 @@ body {
 .msh-select--chart .msh-select-menu {
     left: auto;
     right: 0;
+    /* JS가 열 때마다 트리거 폭에 맞춰 인라인 width를 넣어주는데, 이 드롭다운은 알약 트리거가
+       옵션 텍스트보다 좁아서 일부러 더 넓혀야 함 -> width를 도로 auto로 풀어줌 */
+    width: auto !important;
     min-width: 8rem;
 }
 
@@ -816,7 +723,7 @@ body {
 
 .report-date-chip.disabled {
     opacity: 0.4;
-    cursor: not-allowed;
+    cursor: url("/images/cursor-default.png") 3 2, not-allowed;
 }
 
 .chip-dow {
@@ -1113,7 +1020,7 @@ body {
 
 .panel-pagination button:disabled {
     color: var(--brown-300);
-    cursor: default;
+    cursor: url("/images/cursor-default.png") 3 2, default;
 }
 
 .panel-pagination span {
@@ -1184,7 +1091,7 @@ body {
 
 .member-search-add:disabled {
     background: var(--brown-300);
-    cursor: default;
+    cursor: url("/images/cursor-default.png") 3 2, default;
 }
 
 /* ===== Modal ===== */

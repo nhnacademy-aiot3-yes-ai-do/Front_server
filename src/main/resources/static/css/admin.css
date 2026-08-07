@@ -227,21 +227,19 @@ body {
 
 .admin-filters { display: flex; align-items: center; gap: 0.6rem; }
 
-.admin-select {
-    appearance: none;
-    -webkit-appearance: none;
-    background: var(--cream-200) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b4a30' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.7rem center;
+/* 페이지 상단 필터용 알약 모양 드롭다운 (커스텀 .msh-select 컴포넌트, 공통 스타일은 common.css) */
+.msh-select--admin-filter .msh-select-trigger {
+    background: var(--cream-200);
     border: 2px solid var(--brown-300);
     color: var(--brown-700);
     font-family: "Gaegu", inherit;
     font-weight: 700;
     font-size: 0.92rem;
-    padding: 0.5rem 2rem 0.5rem 0.9rem;
+    padding: 0.5rem 0.9rem;
     border-radius: 999px;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
-.admin-select:focus { outline: none; border-color: var(--sage-500); }
+.msh-select--admin-filter .msh-select-menu { min-width: 100%; }
 
 /* ===== table ===== */
 .list-table-wrap {
@@ -270,7 +268,7 @@ body {
 
 .list-table tbody tr { transition: background 0.15s ease; cursor: url("/images/cursor-default.png") 3 2, pointer; }
 .list-table tbody tr:hover { background: rgba(124, 148, 115, 0.12); }
-.list-table tbody tr.readonly { cursor: default; }
+.list-table tbody tr.readonly { cursor: url("/images/cursor-default.png") 3 2, default; }
 .list-table tbody tr.readonly:hover { background: none; }
 
 .member-row-name {
@@ -335,7 +333,7 @@ body {
 
 .admin-page-btn.disabled {
     opacity: 0.4;
-    cursor: default;
+    cursor: url("/images/cursor-default.png") 3 2, default;
     pointer-events: none;
 }
 
@@ -564,39 +562,39 @@ body {
 .cd-sensor-icon { width: 1.6rem; height: 1.6rem; color: var(--sage-600); flex-shrink: 0; }
 .cd-sensor-value { font-size: 1.15rem; font-weight: 700; color: var(--brown-900); }
 
-.cd-sensor-select {
-    appearance: none;
-    -webkit-appearance: none;
-    display: block;
-    border: none;
-    background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b5e3c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right center;
-    font-family: inherit;
-    font-size: 0.8rem;
-    color: var(--brown-500);
-    padding: 0 1rem 0 0;
-    margin-bottom: 0.15rem;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+/* 센서 값 옆 작은 borderless 드롭다운 (커스텀 .msh-select 컴포넌트 사용, 공통 스타일은 common.css) */
+.msh-select--cd-sensor {
+    display: inline-block;
 }
 
-.cd-sensor-select:focus { outline: none; }
+.msh-select--cd-sensor .msh-select-trigger {
+    padding: 0 1rem 0 0;
+    margin-bottom: 0.15rem;
+    font-size: 0.8rem;
+    color: var(--brown-500);
+}
 
 .cd-chart-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.9rem; }
 
-.cd-chart-select {
-    appearance: none;
-    -webkit-appearance: none;
-    background: var(--cream-200) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b4a30' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.6rem center;
+/* 일간 추이 그래프 헤더의 알약 모양 드롭다운 */
+.msh-select--cd-chart .msh-select-trigger {
+    background: var(--cream-200);
     border: 1px solid var(--brown-300);
     color: var(--brown-700);
-    font-family: inherit;
     font-size: 0.78rem;
     font-weight: 700;
-    padding: 0.35rem 1.6rem 0.35rem 0.7rem;
+    padding: 0.35rem 0.9rem;
     border-radius: 999px;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
-.cd-chart-select:focus { outline: none; border-color: var(--sage-500); }
+.msh-select--cd-chart .msh-select-menu {
+    left: auto;
+    right: 0;
+    /* JS가 열 때마다 트리거 폭에 맞춰 인라인 width를 넣어주는데, 이 드롭다운은 알약 트리거가
+       옵션 텍스트보다 좁아서 일부러 더 넓혀야 함 -> width를 도로 auto로 풀어줌 */
+    width: auto !important;
+    min-width: 8rem;
+}
 
 .cd-chart-placeholder { width: 100%; height: 5.5rem; }
 .cd-chart-svg { width: 100%; height: 100%; }
@@ -758,7 +756,7 @@ body {
 .cd-report-date-chip.active .cd-chip-dow,
 .cd-report-date-chip.active .cd-chip-day { color: #fff; }
 
-.cd-report-date-chip.disabled { opacity: 0.4; cursor: not-allowed; }
+.cd-report-date-chip.disabled { opacity: 0.4; cursor: url("/images/cursor-default.png") 3 2, not-allowed; }
 
 .cd-chip-dow { font-size: 0.65rem; color: var(--brown-500); }
 .cd-chip-day { font-family: "Gaegu", inherit; font-weight: 700; font-size: 0.85rem; color: var(--brown-900); }

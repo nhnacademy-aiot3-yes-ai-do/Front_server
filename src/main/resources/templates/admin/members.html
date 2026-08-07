@@ -4,7 +4,6 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="/images/favicon-192.png" />
     <title>회원 관리 | MushMush</title>
     <link rel="stylesheet" href="/css/admin.css" />
     <script src="/js/lucide.js"></script>
@@ -22,10 +21,16 @@
                 <i data-lucide="chevron-left"></i>회원 관리
             </button>
             <div class="admin-filters">
-                <select class="admin-select" id="member-sub-select" onchange="switchMemberSub(this.value)">
-                    <option value="active">활성 회원</option>
-                    <option value="withdrawn">탈퇴 회원</option>
-                </select>
+                <div class="msh-select msh-select--admin-filter" id="member-sub-select" data-value="active" data-onchange="switchMemberSub">
+                    <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                        <span class="msh-select-value">활성 회원</span>
+                        <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                    </button>
+                    <div class="msh-select-menu">
+                        <div class="msh-select-option selected" data-value="active" onclick="selectMshOption(this)">활성 회원</div>
+                        <div class="msh-select-option" data-value="withdrawn" onclick="selectMshOption(this)">탈퇴 회원</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -49,6 +54,7 @@
 
 </div>
 
+<script src="/js/msh-select.js"></script>
 <script>
     lucide.createIcons();
 
@@ -75,7 +81,8 @@
     var memberPage = 1;
     var MEMBER_PAGE_SIZE = 8;
 
-    function switchMemberSub(sub) {
+    function switchMemberSub(wrapperEl) {
+        var sub = wrapperEl.dataset.value;
         memberSub = sub;
         memberPage = 1;
         document.getElementById('member-last-col').textContent = sub === 'active' ? '마지막 로그인 일자' : '탈퇴 일자';

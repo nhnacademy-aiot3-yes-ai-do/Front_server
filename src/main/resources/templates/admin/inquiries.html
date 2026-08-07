@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" type="image/png" href="/images/favicon-192.png" />
     <title>회원 문의 | MushMush</title>
     <link rel="stylesheet" href="/css/admin.css" />
     <script src="/js/lucide.js"></script>
@@ -21,19 +20,31 @@
                 <i data-lucide="chevron-left"></i>회원 문의
             </button>
             <div class="admin-filters">
-                <select class="admin-select" id="inquiry-category-select" onchange="inquiryPage=1; renderInquiries()">
-                    <option value="all">전체 구분</option>
-                    <option value="계정/로그인">계정/로그인</option>
-                    <option value="재배">재배</option>
-                    <option value="센서/기기">센서/기기</option>
-                    <option value="버그 신고">버그 신고</option>
-                    <option value="기타">기타</option>
-                </select>
-                <select class="admin-select" id="inquiry-status-select" onchange="inquiryPage=1; renderInquiries()">
-                    <option value="all">전체 답변여부</option>
-                    <option value="답변완료">답변완료</option>
-                    <option value="답변대기">답변대기</option>
-                </select>
+                <div class="msh-select msh-select--admin-filter" id="inquiry-category-select" data-value="all" data-onchange="handleInquiryFilterChange">
+                    <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                        <span class="msh-select-value">전체 구분</span>
+                        <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                    </button>
+                    <div class="msh-select-menu">
+                        <div class="msh-select-option selected" data-value="all" onclick="selectMshOption(this)">전체 구분</div>
+                        <div class="msh-select-option" data-value="계정/로그인" onclick="selectMshOption(this)">계정/로그인</div>
+                        <div class="msh-select-option" data-value="재배" onclick="selectMshOption(this)">재배</div>
+                        <div class="msh-select-option" data-value="센서/기기" onclick="selectMshOption(this)">센서/기기</div>
+                        <div class="msh-select-option" data-value="버그 신고" onclick="selectMshOption(this)">버그 신고</div>
+                        <div class="msh-select-option" data-value="기타" onclick="selectMshOption(this)">기타</div>
+                    </div>
+                </div>
+                <div class="msh-select msh-select--admin-filter" id="inquiry-status-select" data-value="all" data-onchange="handleInquiryFilterChange">
+                    <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                        <span class="msh-select-value">전체 답변여부</span>
+                        <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                    </button>
+                    <div class="msh-select-menu">
+                        <div class="msh-select-option selected" data-value="all" onclick="selectMshOption(this)">전체 답변여부</div>
+                        <div class="msh-select-option" data-value="답변완료" onclick="selectMshOption(this)">답변완료</div>
+                        <div class="msh-select-option" data-value="답변대기" onclick="selectMshOption(this)">답변대기</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -87,6 +98,7 @@
     </div>
 </div>
 
+<script src="/js/msh-select.js"></script>
 <script>
     lucide.createIcons();
 
@@ -157,9 +169,14 @@
     var inquiryPage = 1;
     var INQUIRY_PAGE_SIZE = 8;
 
+    function handleInquiryFilterChange() {
+        inquiryPage = 1;
+        renderInquiries();
+    }
+
     function renderInquiries() {
-        var category = document.getElementById('inquiry-category-select').value;
-        var status = document.getElementById('inquiry-status-select').value;
+        var category = document.getElementById('inquiry-category-select').dataset.value;
+        var status = document.getElementById('inquiry-status-select').dataset.value;
 
         var data = INQUIRIES.filter(function (q) {
             var qStatus = getInquiryStatus(q.id);

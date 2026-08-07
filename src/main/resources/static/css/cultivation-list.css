@@ -79,7 +79,7 @@ body {
     transition: opacity 0.2s ease;
     /* 한 페이지 6개(헤더 1줄 + 데이터 6줄) + footer 기준으로 고정 :
        목록 개수와 상관없이 상자 크기가 항상 같도록 함 (넘치는 항목은 페이징 처리) */
-    height: 33rem;
+    height: 40rem;
     display: flex;
     flex-direction: column;
 }
@@ -94,7 +94,7 @@ body {
 /* 페이지마다 실제 행 개수가 달라져도(마지막 페이지 등) 높이가 항상 동일하도록 고정 :
    행이 적으면 남는 공간은 그냥 빈 공간으로 둠 (버튼/페이지네이션 위치가 흔들리지 않게) */
 .list-table-wrap {
-    height: 24rem;
+    height: 31rem;
     border: 2px solid rgba(139, 94, 60, 0.18);
     border-radius: 14px;
     overflow-y: auto;
@@ -137,7 +137,7 @@ body {
 }
 
 #tab-sensor .list-table tbody tr {
-    cursor: default;
+    cursor: url("/images/cursor-default.png") 3 2, default;
 }
 
 #tab-sensor .list-table tbody tr:hover {
