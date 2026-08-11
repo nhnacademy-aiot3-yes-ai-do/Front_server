@@ -17,6 +17,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import site.yesaido.frontserver.auth.RequestTokenHolder;
 import site.yesaido.frontserver.auth.TokenReissueErrorDecoder;
+import site.yesaido.frontserver.auth.TokenReissueOnlyRetryer;
 
 @Configuration
 @RequiredArgsConstructor
@@ -50,7 +51,7 @@ public class FeignConfig {
 
     @Bean
     public Retryer retryer() {
-        return new Retryer.Default(100, 100, 2);
+        return new TokenReissueOnlyRetryer();
     }
 
     @Bean

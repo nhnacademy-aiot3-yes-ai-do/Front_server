@@ -75,9 +75,9 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
             }
 
             log.info("accessToken 재발급 성공, 원요청 재시도: {}", methodKey);
-            return new RetryableException(
+            return new TokenReissueRetryableException(
                     response.status(), "accessToken 재발급 후 재시도",
-                    response.request().httpMethod(), (Date) null, response.request()
+                    response.request().httpMethod(), response.request()
             );
         } catch (Exception e) {
             log.warn("accessToken 재발급 실패, 로그인 필요: {}", e.getMessage());
