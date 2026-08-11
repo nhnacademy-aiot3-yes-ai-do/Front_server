@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>페이지 없음 | MushMush 관리자</title>
+    <link rel="stylesheet" href="/css/admin.css" />
+    <script src="/js/lucide.js"></script>
+</head>
+<body class="error-page">
+<div class="error-wrap">
+    <div class="error-card">
+        <div class="error-icon-wrap neutral">
+            <i data-lucide="search"></i>
+        </div>
+
+        <div class="error-code" th:text="'ERROR ' + ${status}">ERROR 404</div>
+        <h1 class="error-title">요청하신 페이지를 찾을 수 없어요</h1>
+        <p class="error-subtitle">
+            주소가 잘못되었거나 페이지가 삭제되었을 수 있어요.<br />
+            관리자 홈에서 다시 시도해 주세요.
+        </p>
+
+        <div class="error-actions">
+            <a href="/admin" class="btn btn-outline">관리자 홈으로</a>
+            <button type="button" class="btn btn-primary" onclick="location.reload()">다시 시도</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

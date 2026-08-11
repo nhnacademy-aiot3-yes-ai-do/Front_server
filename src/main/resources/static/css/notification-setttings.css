@@ -1,0 +1,211 @@
+@import url("common.css");
+
+html { font-size: clamp(14px, 0.65vw + 6px, 30px); }
+
+body {
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
+    color: var(--ink);
+    background: var(--cream-200) url("../images/workspaceback.jpg") center center / cover no-repeat fixed;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: min(94vw, 2100px);
+    margin: 0 auto;
+    padding: 1.2rem 0;
+}
+
+.settings-wrap {
+    width: 100%;
+    max-width: 42rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: rgba(251, 246, 234, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.18);
+    border-radius: 22px;
+    padding: 2rem 2.6rem;
+    overflow-y: auto;
+}
+
+.settings-head {
+    flex-shrink: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.8rem;
+}
+
+.settings-title {
+    font-family: "Gaegu", inherit;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin: 0;
+}
+
+.settings-save-status {
+    font-size: 0.8rem;
+    color: var(--sage-600);
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.settings-save-status.show {
+    opacity: 1;
+}
+
+.settings-desc {
+    flex-shrink: 0;
+    font-size: 0.9rem;
+    color: var(--brown-700);
+    margin: 0.4rem 0 1.8rem;
+    line-height: 1.6;
+}
+
+.settings-section {
+    flex-shrink: 0;
+}
+
+.settings-section + .settings-section {
+    margin-top: 1.6rem;
+    padding-top: 1.6rem;
+    border-top: 1px solid rgba(139, 94, 60, 0.18);
+}
+
+.settings-section-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-section-scroll .settings-section-title,
+.settings-section-scroll .settings-section-desc {
+    flex-shrink: 0;
+}
+
+.settings-section-title {
+    font-family: "Gaegu", inherit;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin: 0 0 0.3rem;
+}
+
+.settings-section-desc {
+    font-size: 0.85rem;
+    color: var(--brown-700);
+    margin: 0 0 1rem;
+    line-height: 1.6;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(139, 94, 60, 0.18);
+    border-radius: 14px;
+    padding: 0.9rem 1.1rem;
+}
+
+.settings-row + .settings-row {
+    margin-top: 0.7rem;
+}
+
+.settings-row-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: rgba(124, 148, 115, 0.15);
+    color: var(--sage-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-row-icon svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.settings-row-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.settings-row-title {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--brown-900);
+}
+
+.settings-row-desc {
+    font-size: 0.78rem;
+    color: var(--brown-500);
+    line-height: 1.5;
+}
+
+.settings-row-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--brown-900);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settings-empty {
+    font-size: 0.85rem;
+    color: var(--brown-500);
+    text-align: center;
+    padding: 1.2rem 0;
+}
+
+#cultivation-toggle-list {
+    flex: 1;
+    min-height: 4.5rem;
+    overflow-y: auto;
+    padding-right: 0.4rem;
+    margin-right: -0.4rem;
+}
+
+#cultivation-toggle-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+#cultivation-toggle-list::-webkit-scrollbar-thumb {
+    background: var(--brown-300);
+    border-radius: 8px;
+}
+
+#cultivation-toggle-list::-webkit-scrollbar-track {
+    background: transparent;
+}
