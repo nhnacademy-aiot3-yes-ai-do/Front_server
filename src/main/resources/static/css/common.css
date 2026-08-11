@@ -255,3 +255,122 @@ textarea,
     color: var(--sage-600);
     font-weight: 700;
 }
+
+/* ===== 에러 페이지 공통 카드 (사용자용 error.css / 관리자용 admin.css 둘 다 씀) =====
+   배경(workspaceback.jpg vs mainback.jpg)이나 body 중앙 정렬 방식만 각 페이지 CSS에 남기고,
+   카드 자체의 생김새는 여기서 한 번만 정의함. */
+.error-wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+}
+
+.error-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: rgba(251, 246, 234, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.28);
+    border-radius: 24px;
+    padding: 48px 40px;
+    box-shadow: 0 8px 24px rgba(63, 42, 29, 0.18);
+}
+
+.error-logo {
+    width: 96px;
+    margin-bottom: 4px;
+}
+
+.error-icon-wrap {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: rgba(198, 92, 74, 0.14);
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 22px;
+}
+
+.error-icon-wrap svg { width: 42px; height: 42px; }
+
+.error-icon-wrap.neutral {
+    background: rgba(124, 148, 115, 0.14);
+    color: var(--sage-600);
+}
+
+.error-code {
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    color: var(--brown-500);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.error-title {
+    font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin: 0 0 12px;
+}
+
+.error-subtitle {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--brown-700);
+    margin: 0 0 30px;
+}
+
+.error-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.error-actions .btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 16px;
+    font-family: "Gaegu", inherit;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
+    border: 2px solid var(--brown-900);
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    text-decoration: none;
+    box-shadow: 4px 4px 0 var(--shadow-color);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.error-actions .btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--shadow-color);
+}
+
+.error-actions .btn-primary {
+    background: var(--sage-500);
+    color: #fff;
+    border-color: var(--sage-600);
+}
+
+.error-actions .btn-primary:hover { background: var(--sage-600); }
+
+.error-actions .btn-outline {
+    background: transparent;
+    color: var(--brown-700);
+    border-color: var(--brown-300);
+    box-shadow: none;
+}
+
+.error-actions .btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
