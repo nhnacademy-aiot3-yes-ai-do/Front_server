@@ -19,22 +19,35 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        boolean required = handlerMethod.hasMethodAnnotation(LoginRequired.class)
-                || handlerMethod.getBeanType().isAnnotationPresent(LoginRequired.class);
-
-        if (!required) {
+        LoginRequired loginRequired = handlerMethod.getMethodAnnotation(LoginRequired.class);
+        if (loginRequired == null) {
+            loginRequired = handlerMethod.getBeanType().getAnnotation(LoginRequired.class);
+        }
+        if (loginRequired == null) {
             return true;
         }
 
-        Cookie[] cookies = request.getCookies();
-        boolean haToken = cookies != null && Arrays.stream(cookies)
-                .anyMatch(cookie -> cookie.getName().equals("accessToken") && StringUtils.hasText(cookie.getValue()));
-
-        if (!haToken) {
+        String accessToken = cookieValue(request, "accessToken");
+        if (!StringUtils.hasText(accessToken)) {
             response.sendRedirect("/login");
             return false;
         }
 
+        if (loginRequired.adminOnly() && !"ADMIN".equals(cookieValue(request, "role"))) {
+            response.sendRedirect("/");
+            return false;
+        }
+
         return true;
+    }
+
+    private String cookieValue(HttpServletRequest request, String name) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies == null) return null;
+        return Arrays.stream(cookies)
+                .filter(cookie -> cookie.getName().equals(name))
+                .map(Cookie::getValue)
+                .findFirst()
+                .orElse(null);
     }
 }
