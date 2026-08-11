@@ -74,21 +74,16 @@
 
                     <div class="support-field">
                         <label>문의 내용</label>
-                        <textarea id="new-content" rows="4" placeholder="문의하실 내용을 자세히 적어주세요" required></textarea>
-                    </div>
 
-                    <div class="support-field">
-                        <label>사진 첨부 (선택)</label>
-                        <div class="support-photo-upload">
-                            <div class="support-photo-preview" id="photo-preview">
+                        <div class="support-attach-chip-list" id="photo-chip-list"></div>
+
+                        <div class="support-content-composer">
+                            <textarea id="new-content" rows="3" placeholder="문의하실 내용을 자세히 적어주세요" required></textarea>
+                            <button type="button" class="support-attach-icon-btn" title="사진 첨부 (최대 5장)" onclick="document.getElementById('photo-input').click()">
                                 <i data-lucide="image"></i>
-                            </div>
-                            <button type="button" class="support-photo-pick-btn" onclick="document.getElementById('photo-input').click()">
-                                <i data-lucide="upload"></i>사진 선택
                             </button>
-                            <span class="support-photo-filename" id="photo-filename"></span>
                         </div>
-                        <input type="file" id="photo-input" accept="image/*" style="display:none;" onchange="previewPhoto(this)" />
+                        <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoInputChange(this, newInquiryPhotos)" />
                     </div>
 
                     <div class="support-actions">
@@ -121,12 +116,18 @@
 
                 <div class="support-chat" id="support-chat"></div>
 
-                <form class="support-composer" onsubmit="submitFollowUp(event)">
+                <div class="support-attach-chip-list" id="photo-chip-list-followup"></div>
+
+                <form class="support-composer" id="followup-composer" onsubmit="submitFollowUp(event)">
                     <textarea id="followup-input" rows="1" placeholder="답변으로 해결이 안 됐다면, 이어서 질문해보세요" required></textarea>
+                    <button type="button" class="support-attach-icon-btn" title="사진 첨부 (최대 5장)" onclick="document.getElementById('followup-photo-input').click()">
+                        <i data-lucide="image"></i>
+                    </button>
                     <button class="support-composer-send" type="submit" title="질문 추가하기">
                         <i data-lucide="send"></i>
                     </button>
                 </form>
+                <input type="file" id="followup-photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoInputChange(this, followupPhotos)" />
 
             </div>
         </section>
@@ -280,8 +281,7 @@
     // ===== 작성 =====
     function openNewForm() {
         document.getElementById('new-inquiry-form').reset();
-        document.getElementById('photo-preview').innerHTML = '<i data-lucide="image"></i>';
-        document.getElementById('photo-filename').textContent = '';
+        newInquiryPhotos.clear();
 
         var cultivationSelect = document.getElementById('new-cultivation');
         cultivationSelect.innerHTML = MY_CULTIVATIONS.map(function (c) {
@@ -302,24 +302,151 @@
         select.required = isCultivation;
     }
 
-    function previewPhoto(input) {
-        var filenameEl = document.getElementById('photo-filename');
-        var previewEl = document.getElementById('photo-preview');
+    // ===== 사진 첨부 (문의 작성 / 이어서 질문하기 둘 다 공용, 최대 5장) =====
+    var MAX_PHOTOS = 5;
 
-        if (!input.files || !input.files[0]) {
-            filenameEl.textContent = '';
-            previewEl.innerHTML = '<i data-lucide="image"></i>';
-            lucide.createIcons();
-            return;
+    // 문의 작성 폼과 채팅(이어서 질문하기)이 각자 독립된 첨부 목록을 가지도록 컨트롤러를 분리해서 생성
+    function createPhotoAttachController(listElId) {
+        var files = [];
+
+        function addFiles(fileList) {
+            if (!fileList || !fileList.length) return;
+
+            var hasNonImage = false;
+            var hitLimit = false;
+
+            for (var i = 0; i < fileList.length; i++) {
+                var file = fileList[i];
+
+                if (file.type.indexOf('image/') !== 0) {
+                    hasNonImage = true;
+                    continue;
+                }
+                if (files.length >= MAX_PHOTOS) {
+                    hitLimit = true;
+                    break;
+                }
+                files.push(file);
+            }
+
+            if (hasNonImage) alert('이미지 파일만 첨부할 수 있어요.');
+            if (hitLimit) alert('사진은 최대 ' + MAX_PHOTOS + '장까지 첨부할 수 있어요.');
+
+            render();
         }
 
-        filenameEl.textContent = input.files[0].name;
+        function removeAt(index) {
+            files.splice(index, 1);
+            render();
+        }
 
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            previewEl.innerHTML = '<img src="' + e.target.result + '" alt="첨부 사진 미리보기" />';
+        function clear() {
+            files = [];
+            render();
+        }
+
+        function render() {
+            var listEl = document.getElementById(listElId);
+            listEl.innerHTML = '';
+
+            files.forEach(function (file, index) {
+                var chip = document.createElement('div');
+                chip.className = 'support-attach-chip';
+
+                var img = document.createElement('img');
+                img.alt = '첨부 사진 미리보기';
+                // 외부 CSS 로딩 여부와 상관없이 항상 작은 원형 썸네일로 보이도록 인라인으로도 크기 고정
+                img.width = 28;
+                img.height = 28;
+                img.style.width = '1.8rem';
+                img.style.height = '1.8rem';
+                img.style.maxWidth = '1.8rem';
+                img.style.maxHeight = '1.8rem';
+                img.style.objectFit = 'cover';
+                img.style.borderRadius = '50%';
+                img.style.flexShrink = '0';
+
+                var reader = new FileReader();
+                reader.onload = function (e) { img.src = e.target.result; };
+                reader.readAsDataURL(file);
+
+                var nameEl = document.createElement('span');
+                nameEl.className = 'support-attach-filename';
+                nameEl.textContent = file.name;
+
+                var removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'support-attach-remove';
+                removeBtn.title = '첨부 취소';
+                removeBtn.innerHTML = '<i data-lucide="x"></i>';
+                removeBtn.onclick = function () { removeAt(index); };
+
+                chip.appendChild(img);
+                chip.appendChild(nameEl);
+                chip.appendChild(removeBtn);
+                listEl.appendChild(chip);
+            });
+
+            lucide.createIcons();
+        }
+
+        return {
+            addFiles: addFiles,
+            removeAt: removeAt,
+            clear: clear,
+            getFiles: function () { return files.slice(); }
         };
-        reader.readAsDataURL(input.files[0]);
+    }
+
+    var newInquiryPhotos = createPhotoAttachController('photo-chip-list');
+    var followupPhotos = createPhotoAttachController('photo-chip-list-followup');
+
+    function handlePhotoInputChange(input, controller) {
+        controller.addFiles(input.files);
+        input.value = ''; // 같은 파일을 다시 골라도 change 이벤트가 또 발생하도록 초기화
+    }
+
+    // 여러 개의 File을 data URL로 변환 (채팅에 사진을 실제로 표시하기 위함)
+    function filesToDataUrls(files, callback) {
+        if (!files.length) { callback([]); return; }
+        var results = new Array(files.length);
+        var remaining = files.length;
+        files.forEach(function (file, i) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                results[i] = e.target.result;
+                remaining--;
+                if (remaining === 0) callback(results);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // 입력창에 이미지를 드래그&드롭으로도 첨부할 수 있게 함 (여러 장 동시 드롭 가능)
+    function initPhotoDropZone(composer, controller) {
+        if (!composer) return;
+
+        ['dragenter', 'dragover'].forEach(function (evt) {
+            composer.addEventListener(evt, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                composer.classList.add('drag-over');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(function (evt) {
+            composer.addEventListener(evt, function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                composer.classList.remove('drag-over');
+            });
+        });
+
+        composer.addEventListener('drop', function (e) {
+            var files = e.dataTransfer && e.dataTransfer.files;
+            if (!files || !files.length) return;
+            controller.addFiles(files);
+        });
     }
 
     // 데모: 실제로는 관리자 서버에 문의를 접수해야 함
@@ -343,13 +470,16 @@
         var today = new Date();
         var dateLabel = today.getFullYear() + '.' + String(today.getMonth() + 1).padStart(2, '0') + '.' + String(today.getDate()).padStart(2, '0');
 
-        var inquiry = { id: id, category: category, title: title, date: dateLabel };
-        if (cultivation) inquiry.cultivation = cultivation;
-        INQUIRIES.unshift(inquiry);
-        THREADS[id] = [{ sender: 'USER', name: '나', content: content, time: dateLabel + ' 12:00' }];
+        filesToDataUrls(newInquiryPhotos.getFiles(), function (photoUrls) {
+            var inquiry = { id: id, category: category, title: title, date: dateLabel };
+            if (cultivation) inquiry.cultivation = cultivation;
+            INQUIRIES.unshift(inquiry);
+            THREADS[id] = [{ sender: 'USER', name: '나', content: content, photos: photoUrls, time: dateLabel + ' 12:00' }];
 
-        renderList();
-        openDetail(id);
+            newInquiryPhotos.clear();
+            renderList();
+            openDetail(id);
+        });
     }
 
     // ===== 상세 =====
@@ -357,6 +487,7 @@
 
     function openDetail(id) {
         currentDetailId = id;
+        followupPhotos.clear();
         renderThread();
         showPanel('detail');
     }
@@ -396,7 +527,20 @@
                 '<div class="support-chat-time"></div>' +
                 '</div>';
             row.querySelector('.support-chat-name').textContent = m.name;
-            row.querySelector('.support-chat-bubble span').textContent = m.content;
+
+            var bubble = row.querySelector('.support-chat-bubble');
+            var textEl = bubble.querySelector('span');
+            if (m.photos && m.photos.length) {
+                m.photos.forEach(function (src) {
+                    var img = document.createElement('img');
+                    img.className = 'support-chat-photo';
+                    img.src = src;
+                    img.alt = '첨부 사진';
+                    bubble.insertBefore(img, textEl);
+                });
+            }
+            textEl.textContent = m.content;
+
             row.querySelector('.support-chat-time').textContent = m.time;
             chat.appendChild(row);
         });
@@ -409,16 +553,31 @@
         if (!text || currentDetailId == null) return;
 
         var now = new Date();
-        THREADS[currentDetailId].push({
-            sender: 'USER',
-            name: '나',
-            content: text,
-            time: now.getFullYear() + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + String(now.getDate()).padStart(2, '0') +
-                ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
+        filesToDataUrls(followupPhotos.getFiles(), function (photoUrls) {
+            THREADS[currentDetailId].push({
+                sender: 'USER',
+                name: '나',
+                content: text,
+                photos: photoUrls,
+                time: now.getFullYear() + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + String(now.getDate()).padStart(2, '0') +
+                    ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
+            });
+            input.value = '';
+            followupPhotos.clear();
+            renderThread();
         });
-        input.value = '';
-        renderThread();
     }
+
+    // 드롭 지점이 조금만 빗나가도(버튼 위, 여백 등) 브라우저가 파일을 페이지 전체에
+    // 열어버리는 기본 동작이 발동하므로, 문서 전체에서 기본 동작을 막아둠
+    ['dragover', 'drop'].forEach(function (evt) {
+        document.addEventListener(evt, function (e) {
+            e.preventDefault();
+        });
+    });
+
+    initPhotoDropZone(document.querySelector('.support-content-composer'), newInquiryPhotos);
+    initPhotoDropZone(document.getElementById('followup-composer'), followupPhotos);
 
     renderList();
 </script>

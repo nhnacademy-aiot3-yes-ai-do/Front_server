@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>알림 설정 | MushMush</title>
+    <link rel="stylesheet" href="/css/notification-settings.css" />
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="page-container">
+    <div class="settings-wrap">
+        <div class="settings-card">
+            <div class="settings-head">
+                <h2 class="settings-title">알림 설정</h2>
+                <span class="settings-save-status" id="save-status">저장됨</span>
+            </div>
+            <p class="settings-desc">받고 싶은 알림 종류를 선택해주세요. 등록하신 이메일로 발송돼요.</p>
+
+            <div class="settings-section">
+                <h3 class="settings-section-title">알림 유형</h3>
+
+                <div class="settings-row">
+                    <div class="settings-row-icon"><i data-lucide="thermometer"></i></div>
+                    <div class="settings-row-text">
+                        <span class="settings-row-title">센서 임계치 초과 알림</span>
+                        <span class="settings-row-desc">온도·습도 등 센서 값이 설정 범위를 벗어나면 알려드려요.</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-sensor" onchange="handleCategoryToggle('sensor', this.checked)" />
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-row-icon"><i data-lucide="sprout"></i></div>
+                    <div class="settings-row-text">
+                        <span class="settings-row-title">수확·재배 완료 알림</span>
+                        <span class="settings-row-desc">재배가 종료되거나 수확이 등록되면 알려드려요.</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-harvest" onchange="handleCategoryToggle('harvest', this.checked)" />
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-row-icon"><i data-lucide="sparkles"></i></div>
+                    <div class="settings-row-text">
+                        <span class="settings-row-title">AI 리포트 완료 알림</span>
+                        <span class="settings-row-desc">AI 버섯 정보 요약이 준비되면 알려드려요.</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-ai" onchange="handleCategoryToggle('ai', this.checked)" />
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section settings-section-scroll">
+                <h3 class="settings-section-title">재배지별 센서 알림</h3>
+                <p class="settings-section-desc">재배지마다 센서 임계치 알림을 따로 켜고 끌 수 있어요.</p>
+                <div id="cultivation-toggle-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/notification-settings.js"></script>
+</body>
+</html>

@@ -13,6 +13,11 @@ public class UserViewController {
         return "user/profile";
     }
 
+    @GetMapping("/mypage/notifications")
+    public String notificationSettingsPage() {
+        return "user/notification-settings";
+    }
+
     @GetMapping("/signup")
     public String signupPage() {
         return "auth/signup";
