@@ -33,7 +33,7 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        if (loginRequired.adminOnly() && !cookieValue(request, "role").equals("ADMIN")) {
+        if (loginRequired.adminOnly() && !"ADMIN".equals(cookieValue(request, "role"))) {
             response.sendRedirect("/");
             return false;
         }

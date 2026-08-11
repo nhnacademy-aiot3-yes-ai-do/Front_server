@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.support.RequestContextUtils;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.EmailVerifyRequest;
@@ -67,6 +69,7 @@ public class UserController {
     @PostMapping("/login")
     public void login(@RequestParam String email,
                       @RequestParam String password,
+                      HttpServletRequest request,
                       HttpServletResponse response,
                       RedirectAttributes redirectAttributes) throws IOException {
 
@@ -82,9 +85,9 @@ public class UserController {
         } catch (Exception e){
             log.warn("로그인 실패 (미가입 또는 비밀번호 불일치): {}", e.getMessage());
             redirectAttributes.addFlashAttribute("loginError", "아이디 또는 비밀번호가 일치하지 않습니다.");
-            response.sendRedirect("/");
+            RequestContextUtils.saveOutputFlashMap("/login", request, response);
+            response.sendRedirect("/login");
         }
-
     }
 
     @PostMapping("/logout")

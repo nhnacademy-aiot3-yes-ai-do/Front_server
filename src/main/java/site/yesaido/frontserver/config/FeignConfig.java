@@ -37,6 +37,7 @@ public class FeignConfig {
             HttpServletRequest request = attrs.getRequest();
             String token = requestTokenHolder.resolveAccessToken(request);
             if (token != null) {
+                requestTemplate.removeHeader("Authorization");
                 requestTemplate.header("Authorization", "Bearer " + token);
             }
         };
