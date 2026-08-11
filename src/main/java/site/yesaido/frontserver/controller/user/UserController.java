@@ -15,6 +15,7 @@ import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
+import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.io.IOException;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class UserController {
     private final UserClient userClient;
+    private final AuthCookieProvider authCookieProvider;
 
     @GetMapping("/users/check-email")
     public Boolean checkEmail(@RequestParam String email){
@@ -62,50 +64,22 @@ public class UserController {
         response.sendRedirect("/login");
     }
 
-    private static final String ADMIN_ID = "admin@admin";
-    private static final String ADMIN_PASSWORD = "admin123!";
-
     @PostMapping("/login")
     public void login(@RequestParam String email,
-                        @RequestParam String password,
-                        HttpServletResponse response, RedirectAttributes redirectAttributes) throws IOException {
-
-        if (ADMIN_ID.equals(email) && ADMIN_PASSWORD.equals(password)) {
-            ResponseCookie adminCookie = ResponseCookie.from("isAdmin", "true")
-                    .path("/")
-                    .httpOnly(true)
-                    .sameSite("Lax")
-                    .build();
-            response.addHeader(HttpHeaders.SET_COOKIE, adminCookie.toString());
-            response.sendRedirect("/admin");
-            return;
-        }
+                      @RequestParam String password,
+                      HttpServletResponse response,
+                      RedirectAttributes redirectAttributes) throws IOException {
 
         try{
-            LoginRequest request = new LoginRequest(email, password);
-            ApiResponse<TokenResponse> apiResponse = userClient.login(request);
+            ApiResponse<TokenResponse> apiResponse = userClient.login(new LoginRequest(email, password));
             TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
             if (tokenResponse == null) {
                 throw new IllegalStateException("Token response is null");
             }
 
-            ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.accessToken())
-                    .path("/")
-                    .httpOnly(true)
-                    .sameSite("Lax")
-                    .build();
-            response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-
-            if(tokenResponse.refreshToken() != null) {
-                ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", tokenResponse.refreshToken())
-                        .path("/")
-                        .httpOnly(true)
-                        .sameSite("Lax")
-                        .build();
-                response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-            }
-            response.sendRedirect("/");
-        }catch (Exception e){
+            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role());
+            response.sendRedirect("ADMIN".equals(tokenResponse.role()) ? "/admin" : "/");
+        } catch (Exception e){
             log.warn("로그인 실패 (미가입 또는 비밀번호 불일치): {}", e.getMessage());
             redirectAttributes.addFlashAttribute("loginError", "아이디 또는 비밀번호가 일치하지 않습니다.");
             response.sendRedirect("/");
@@ -123,31 +97,7 @@ public class UserController {
             }
         }
 
-        ResponseCookie deletedAccessCookie = ResponseCookie.from("accessToken", "")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
-                .sameSite("Lax")
-                .build();
-
-        ResponseCookie deletedRefreshCookie = ResponseCookie.from("refreshToken", "")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
-                .sameSite("Lax")
-                .build();
-
-        ResponseCookie deletedAdminCookie = ResponseCookie.from("isAdmin", "")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
-                .sameSite("Lax")
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, deletedAccessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, deletedRefreshCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, deletedAdminCookie.toString());
-
+        authCookieProvider.clearAuthCookies(response);
         response.sendRedirect("/login");
     }
 
