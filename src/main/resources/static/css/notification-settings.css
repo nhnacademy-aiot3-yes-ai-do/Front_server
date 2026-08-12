@@ -47,12 +47,26 @@ body {
     overflow-y: auto;
 }
 
+.settings-card::-webkit-scrollbar {
+    width: 8px;
+}
+
+.settings-card::-webkit-scrollbar-thumb {
+    background: var(--brown-300);
+    border-radius: 8px;
+}
+
+.settings-card::-webkit-scrollbar-track {
+    background: transparent;
+}
+
 .settings-head {
     flex-shrink: 0;
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 0.8rem;
+    margin-bottom: 1.4rem;
 }
 
 .settings-title {
@@ -91,18 +105,6 @@ body {
     margin-top: 1.6rem;
     padding-top: 1.6rem;
     border-top: 1px solid rgba(139, 94, 60, 0.18);
-}
-
-.settings-section-scroll {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.settings-section-scroll .settings-section-title,
-.settings-section-scroll .settings-section-desc {
-    flex-shrink: 0;
 }
 
 .settings-section-title {
@@ -189,23 +191,50 @@ body {
     padding: 1.2rem 0;
 }
 
-#cultivation-toggle-list {
+/* ===== 버튼 (연동 카드, 연동 모달에서 씀) ===== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.75rem 1.4rem;
+    font-family: "Gaegu", inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    border: 2px solid var(--brown-900);
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    text-decoration: none;
+    box-shadow: 3px 3px 0 rgba(63, 42, 29, 0.12);
+    transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
+}
+
+.btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }
+
+.btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
+.btn-primary:hover { background: var(--sage-600); }
+
+.btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); box-shadow: none; }
+.btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
+
+/* ===== 텔레그램/디스코드 연동 카드 ===== */
+.integration-list .settings-row + .settings-row {
+    margin-top: 0.7rem;
+}
+
+.settings-row-info {
     flex: 1;
-    min-height: 4.5rem;
-    overflow-y: auto;
-    padding-right: 0.4rem;
-    margin-right: -0.4rem;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
 }
 
-#cultivation-toggle-list::-webkit-scrollbar {
-    width: 8px;
+.help-text {
+    font-size: 0.8rem;
+    color: var(--brown-500);
+    padding-left: 4px;
 }
 
-#cultivation-toggle-list::-webkit-scrollbar-thumb {
-    background: var(--brown-300);
-    border-radius: 8px;
-}
-
-#cultivation-toggle-list::-webkit-scrollbar-track {
-    background: transparent;
-}
+.help-text.ok { color: var(--sage-600); }
+.help-text.error { color: var(--danger); }
