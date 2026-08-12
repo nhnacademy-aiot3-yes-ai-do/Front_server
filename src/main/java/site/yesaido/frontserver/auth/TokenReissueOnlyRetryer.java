@@ -1,7 +1,7 @@
 package site.yesaido.frontserver.auth;
 
-import feign.Retryer;
 import feign.RetryableException;
+import feign.Retryer;
 
 public class TokenReissueOnlyRetryer implements Retryer {
     // 실제 재시도 로직은 직접 구현하는게 아니라 Feign이 제공하는 재시도 로직을 사용함

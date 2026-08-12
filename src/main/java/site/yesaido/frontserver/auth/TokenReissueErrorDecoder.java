@@ -1,12 +1,10 @@
 package site.yesaido.frontserver.auth;
 
 import feign.Response;
-import feign.RetryableException;
 import feign.codec.ErrorDecoder;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -18,7 +16,6 @@ import site.yesaido.frontserver.dto.user.request.ReissueRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
-import java.util.Date;
 /*
 * Feign 호출이 401을 받으면 그걸 예외로 던지는 대신 refreshToken으로 조용히 재발급 받고 원래 요청을 재시도 시킴
 * RequestTokenHolder가 만들어 둔 통로에 새로운 토큰을 채워 넣어주는 주체
@@ -47,6 +44,18 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
     @Override
     public Exception decode(String methodKey, Response response) {
         if (response.status() != 401 || methodKey.contains("#reissue")) {
+            if (response.body() != null) {
+                try {
+                    String body = feign.Util.toString(response.body().asReader(java.nio.charset.StandardCharsets.UTF_8));
+                    if (body != null && (body.contains("휴면") || body.contains("DORMANT"))) {
+                        ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                        String email = attr != null ? attr.getRequest().getParameter("email") : "";
+                        return new site.yesaido.frontserver.exception.DormantUserException(email != null ? email : "", "휴면 계정입니다. 이메일 인증을 진행해 주세요.");
+                    }
+                } catch (Exception ignored) {
+                    // Ignore parse error
+                }
+            }
             return defaultDecoder.decode(methodKey, response);
         }
 

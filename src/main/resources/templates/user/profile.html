@@ -25,7 +25,7 @@
                 <div class="info-rows">
                     <div class="info-row">
                         <span class="info-label"><i data-lucide="mail"></i>이메일</span>
-                        <span class="info-value">user@example.com</span>
+                        <span class="info-value" id="profile-view-email">user@example.com</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label"><i data-lucide="user"></i>닉네임</span>
@@ -56,7 +56,7 @@
                 <h3 class="modal-title">비밀번호 확인</h3>
                 <p class="modal-desc">회원정보를 수정하려면 현재 비밀번호를 입력해주세요.</p>
                 <div class="modal-field">
-                    <label>비밀번호</label>
+                    <label for="profile-verify-password">비밀번호</label>
                     <input type="password" id="profile-verify-password" placeholder="비밀번호 입력" />
                 </div>
                 <p class="profile-error" id="profile-verify-error" style="display:none;">비밀번호가 일치하지 않습니다.</p>
@@ -72,15 +72,15 @@
             <div class="profile-card">
                 <h3 class="modal-title">회원정보 수정</h3>
                 <div class="modal-field">
-                    <label>닉네임</label>
+                    <label for="profile-edit-nickname">닉네임</label>
                     <input type="text" id="profile-edit-nickname" placeholder="닉네임을 입력하세요" />
                 </div>
                 <div class="modal-field">
-                    <label>새 비밀번호 (변경할 때만 입력)</label>
+                    <label for="profile-edit-password">새 비밀번호 (변경할 때만 입력)</label>
                     <input type="password" id="profile-edit-password" placeholder="새 비밀번호" />
                 </div>
                 <div class="modal-field">
-                    <label>새 비밀번호 확인</label>
+                    <label for="profile-edit-password-confirm">새 비밀번호 확인</label>
                     <input type="password" id="profile-edit-password-confirm" placeholder="새 비밀번호 확인" />
                 </div>
                 <p class="profile-error" id="profile-edit-error" style="display:none;"></p>
@@ -102,7 +102,7 @@
                     탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며 복구할 수 없어요.
                 </div>
                 <div class="modal-field">
-                    <label>비밀번호 확인</label>
+                    <label for="profile-delete-password">비밀번호 확인</label>
                     <input type="password" id="profile-delete-password" placeholder="비밀번호 입력" />
                 </div>
                 <p class="profile-error" id="profile-delete-error" style="display:none;">비밀번호가 일치하지 않습니다.</p>
@@ -119,113 +119,167 @@
 <script>
     lucide.createIcons();
 
-    // 데모 데이터 (실제로는 서버에서 조회/검증해야 함)
-    var DEMO_PASSWORD = 'password1!';
-
-    function formatDemoDate(date) {
-        var y = date.getFullYear();
-        var m = String(date.getMonth() + 1).padStart(2, '0');
-        var d = String(date.getDate()).padStart(2, '0');
-        return y + '.' + m + '.' + d;
-    }
-
-    function addDaysDemo(date, days) {
-        var result = new Date(date);
-        result.setDate(result.getDate() + days);
-        return result;
-    }
-
-    // 가입일 < 최종 수정일 <= 오늘 순서가 항상 유지되도록 오늘 날짜 기준 상대값으로 계산
-    var demoToday = new Date();
-    var profileState = {
-        nickname: '오인택',
-        joinedAt: formatDemoDate(addDaysDemo(demoToday, -200)),
-        updatedAt: formatDemoDate(addDaysDemo(demoToday, -30))
+    const showError = (el, msg) => {
+        if (!el) return;
+        el.textContent = msg;
+        el.style.display = 'block';
     };
 
-    document.getElementById('profile-view-joined-at').textContent = profileState.joinedAt;
-    document.getElementById('profile-view-updated-at').textContent = profileState.updatedAt;
+    const hideError = (el) => {
+        if (!el) return;
+        el.style.display = 'none';
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const res = await fetch('/users/mypage');
+            const result = await res.json();
+            if (!res.ok || !result.success) {
+                alert('로그인이 필요한 서비스입니다.');
+                location.href = '/login';
+                return;
+            }
+            const user = result.data;
+            document.getElementById('profile-view-nickname').textContent = user.nickname || '';
+            document.getElementById('profile-view-nickname-row').textContent = user.nickname || '';
+            document.getElementById('profile-view-email').textContent = user.email || '';
+            document.getElementById('profile-view-joined-at').textContent = user.createdAt ? user.createdAt.substring(0, 10) : '';
+            document.getElementById('profile-view-updated-at').textContent = user.updatedAt ? user.updatedAt.substring(0, 10) : '';
+        } catch {
+            location.href = '/login';
+        }
+    });
 
     function showProfilePanel(id) {
-        document.querySelectorAll('.profile-panel').forEach(function (p) { p.classList.remove('active'); });
+        document.querySelectorAll('.profile-panel').forEach(p => p.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
     function startProfileEdit() {
         document.getElementById('profile-verify-password').value = '';
-        document.getElementById('profile-verify-error').style.display = 'none';
+        hideError(document.getElementById('profile-verify-error'));
         showProfilePanel('profile-verify');
     }
 
-    function confirmProfilePassword() {
-        var input = document.getElementById('profile-verify-password');
-        var errorEl = document.getElementById('profile-verify-error');
+    async function confirmProfilePassword() {
+        const input = document.getElementById('profile-verify-password').value;
+        const errorEl = document.getElementById('profile-verify-error');
 
-        if (input.value !== DEMO_PASSWORD) {
-            errorEl.style.display = 'block';
+        if (!input) {
+            showError(errorEl, '비밀번호를 입력해주세요.');
             return;
         }
 
-        document.getElementById('profile-edit-nickname').value = profileState.nickname;
-        document.getElementById('profile-edit-password').value = '';
-        document.getElementById('profile-edit-password-confirm').value = '';
-        document.getElementById('profile-edit-error').style.display = 'none';
-        showProfilePanel('profile-edit');
+        try {
+            const res = await fetch('/users/verify-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: input })
+            });
+            const result = await res.json();
+
+            if (!res.ok || !result.success || result.data !== true) {
+                showError(errorEl, result.message || '비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            document.getElementById('profile-edit-nickname').value = document.getElementById('profile-view-nickname').textContent;
+            document.getElementById('profile-edit-password').value = '';
+            document.getElementById('profile-edit-password-confirm').value = '';
+            hideError(document.getElementById('profile-edit-error'));
+            showProfilePanel('profile-edit');
+        } catch {
+            showError(errorEl, '비밀번호 확인 중 오류가 발생했습니다.');
+        }
     }
 
     function cancelProfileEdit() {
         showProfilePanel('profile-view');
     }
 
-    function saveProfileEdit() {
-        var nickname = document.getElementById('profile-edit-nickname').value.trim();
-        var password = document.getElementById('profile-edit-password').value;
-        var passwordConfirm = document.getElementById('profile-edit-password-confirm').value;
-        var errorEl = document.getElementById('profile-edit-error');
+    async function saveProfileEdit() {
+        const nickname = document.getElementById('profile-edit-nickname').value.trim();
+        const currentPassword = document.getElementById('profile-verify-password').value;
+        const newPassword = document.getElementById('profile-edit-password').value;
+        const passwordConfirm = document.getElementById('profile-edit-password-confirm').value;
+        const errorEl = document.getElementById('profile-edit-error');
 
         if (!nickname) {
-            errorEl.textContent = '닉네임을 입력해주세요.';
-            errorEl.style.display = 'block';
+            showError(errorEl, '닉네임을 입력해주세요.');
             return;
         }
 
-        if (password || passwordConfirm) {
-            if (password !== passwordConfirm) {
-                errorEl.textContent = '새 비밀번호가 일치하지 않습니다.';
-                errorEl.style.display = 'block';
+        if (newPassword || passwordConfirm) {
+            if (newPassword !== passwordConfirm) {
+                showError(errorEl, '새 비밀번호가 일치하지 않습니다.');
                 return;
             }
         }
 
-        errorEl.style.display = 'none';
-        profileState.nickname = nickname;
-        profileState.updatedAt = formatDemoDate(new Date());
+        try {
+            const res = await fetch('/users/mypage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nickname, currentPassword, newPassword })
+            });
+            const result = await res.json();
+            if (!res.ok || !result.success) {
+                if (res.status === 401 || result.message?.includes('로그인')) {
+                    alert('세션이 만료되었습니다. 다시 로그인해 주세요.');
+                    location.href = '/login';
+                    return;
+                }
+                showError(errorEl, result.message || '수정에 실패했습니다.');
+                return;
+            }
+            sessionStorage.setItem('mm_user_nickname', nickname);
+            const nicknameLabel = document.getElementById('topbar-nickname-label');
+            if (nicknameLabel) nicknameLabel.textContent = nickname;
 
-        document.getElementById('profile-view-nickname').textContent = nickname;
-        document.getElementById('profile-view-nickname-row').textContent = nickname;
-        document.getElementById('topbar-nickname-label').textContent = nickname;
-        document.getElementById('profile-view-updated-at').textContent = profileState.updatedAt;
+            alert('프로필이 성공적으로 수정되었습니다!');
+            location.reload();
+        } catch {
+            showError(errorEl, '서버 통신 중 오류가 발생했습니다.');
+        }
 
-        showProfilePanel('profile-view');
     }
 
     function startProfileDelete() {
         document.getElementById('profile-delete-password').value = '';
-        document.getElementById('profile-delete-error').style.display = 'none';
+        hideError(document.getElementById('profile-delete-error'));
         showProfilePanel('profile-delete-confirm');
     }
 
-    function confirmProfileDelete() {
-        var input = document.getElementById('profile-delete-password');
-        var errorEl = document.getElementById('profile-delete-error');
+    async function confirmProfileDelete() {
+        const input = document.getElementById('profile-delete-password').value;
+        const errorEl = document.getElementById('profile-delete-error');
 
-        if (input.value !== DEMO_PASSWORD) {
-            errorEl.style.display = 'block';
+        if (!input) {
+            showError(errorEl, '비밀번호를 입력해주세요.');
             return;
         }
+        try {
+            const res = await fetch('/users/verify-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: input })
+            });
+            const result = await res.json();
 
-        // 데모: 실제로는 서버에 탈퇴 요청을 보내고 세션을 종료해야 함
-        location.href = '/login';
+            if (!res.ok || !result.success || result.data !== true) {
+                showError(errorEl, result.message || '비밀번호가 일치하지 않습니다.');
+                return;
+            }
+
+            document.getElementById('profile-edit-nickname').value = document.getElementById('profile-view-nickname').textContent;
+            document.getElementById('profile-edit-password').value = '';
+            document.getElementById('profile-edit-password-confirm').value = '';
+            hideError(document.getElementById('profile-edit-error'));
+            showProfilePanel('profile-edit');
+        } catch {
+            showError(errorEl, '비밀번호 확인 중 오류가 발생했습니다.');
+        }
+
     }
 </script>
 
