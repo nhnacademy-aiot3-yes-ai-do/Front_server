@@ -2,9 +2,11 @@ package site.yesaido.frontserver.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import site.yesaido.frontserver.util.LoginRequired;
 
 @Controller
-public class AdminController {
+@LoginRequired(adminOnly = true)
+public class             AdminController {
 
     @GetMapping("/admin")
     public String admin() {
