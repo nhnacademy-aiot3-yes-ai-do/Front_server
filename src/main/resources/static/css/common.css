@@ -588,3 +588,269 @@ textarea,
 }
 
 .error-actions .btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
+
+/* ===== 팝업 공용 컴포넌트 (휴면 계정 안내, 메신저 연동 등에서 재사용) ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(63, 42, 29, 0.45);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+}
+
+.modal-overlay.is-open {
+    display: flex;
+}
+
+.modal-box {
+    background: rgba(251, 246, 234, 0.94);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    border-radius: 20px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 86vh;
+    overflow-y: auto;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 30px rgba(63, 42, 29, 0.25);
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    color: var(--brown-500);
+}
+
+.modal-title {
+    font-family: "Gaegu", inherit;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin: 0 0 6px;
+}
+
+.modal-desc {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--brown-700);
+    margin: 0 0 20px;
+}
+
+.modal-field {
+    margin-bottom: 16px;
+}
+
+.modal-field label {
+    display: block;
+    font-size: 13px;
+    color: var(--brown-700);
+    margin-bottom: 6px;
+    padding-left: 4px;
+}
+
+.modal-field input[readonly] {
+    background: var(--cream-200);
+    color: var(--brown-700);
+    box-shadow: none;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.modal-actions .btn {
+    width: auto;
+}
+
+.modal-success {
+    text-align: center;
+    padding: 8px 0 4px;
+}
+
+.modal-success .modal-success-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: rgba(124, 148, 115, 0.15);
+    color: var(--sage-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-success .modal-success-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+/* ===== 텔레그램/디스코드 연동 카드 (알림 설정 페이지) ===== */
+.integration-icon.telegram { background: rgba(43, 130, 210, 0.15); color: #2b82d2; }
+.integration-icon.discord { background: rgba(88, 101, 242, 0.15); color: #5865f2; }
+
+.settings-row-status {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--brown-500);
+}
+
+.settings-row-status.connected {
+    color: var(--sage-600);
+}
+
+.settings-row-action .btn {
+    width: auto;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+}
+
+/* --- 연동 팝업 안 내용 --- */
+.integration-modal-icon {
+    width: 3.4rem;
+    height: 3.4rem;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(139, 94, 60, 0.12);
+    color: var(--brown-700);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.integration-modal-icon svg {
+    width: 1.6rem;
+    height: 1.6rem;
+}
+
+.integration-modal-icon.telegram { background: rgba(43, 130, 210, 0.15); color: #2b82d2; }
+.integration-modal-icon.discord { background: rgba(88, 101, 242, 0.15); color: #5865f2; }
+
+.integration-modal-title {
+    text-align: center;
+}
+
+.modal-desc.integration-modal-desc,
+.integration-step ~ .modal-desc {
+    text-align: center;
+}
+
+.integration-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 18px 0 6px;
+    position: relative;
+}
+
+.integration-step {
+    display: flex;
+    gap: 12px;
+    padding: 14px 4px;
+}
+
+.integration-step + .integration-step {
+    border-top: 1px dashed rgba(139, 94, 60, 0.2);
+}
+
+.integration-step-num {
+    flex-shrink: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: var(--cream-200);
+    border: 1.5px solid var(--brown-300);
+    color: var(--brown-700);
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.integration-step-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.integration-step-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--brown-900);
+}
+
+.integration-connect-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: fit-content;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    border: none;
+    background: var(--brown-700);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.integration-connect-link:hover {
+    filter: brightness(1.08);
+}
+
+.integration-connect-link:active {
+    transform: translateY(1px);
+}
+
+.integration-connect-link svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.integration-connect-link.telegram { background: #2b82d2; }
+.integration-connect-link.discord { background: #5865f2; }
+
+.integration-code-input {
+    width: 100%;
+    max-width: 11rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    border: 1.5px solid var(--brown-300);
+    background: #fff;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--brown-900);
+}
+
+.integration-code-input:focus {
+    outline: none;
+    border-color: var(--sage-500);
+}
+
+.integration-code-input::placeholder {
+    letter-spacing: 0.25em;
+    color: var(--brown-300);
+}
