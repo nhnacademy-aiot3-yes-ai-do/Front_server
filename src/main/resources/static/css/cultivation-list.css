@@ -289,6 +289,15 @@ body {
     background: #fff;
 }
 
+.modal-field .msh-select-trigger {
+    padding: 10px 12px;
+    border: 2px solid var(--brown-300);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    color: var(--ink);
+}
+
 .modal-actions {
     display: flex;
     justify-content: flex-end;
