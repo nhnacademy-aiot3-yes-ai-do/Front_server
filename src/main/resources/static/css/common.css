@@ -229,6 +229,70 @@
     background: rgba(192, 87, 74, 0.1);
 }
 
+/* ===== 로그인 세션 남은시간 + 연장 버튼 (JS가 로그인 상태일 때만 보여줌) ===== */
+.topbar-session {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--sage-600);
+    border: 1px solid var(--sage-600);
+    border-radius: 999px;
+}
+
+.topbar-session svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.topbar-session-timer {
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    min-width: 2.4em;
+}
+
+.topbar-session-extend {
+    display: none;
+    flex-shrink: 0;
+    padding: 0.3rem 0.65rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--brown-700);
+    background: #fff;
+    border: 1px solid var(--brown-300);
+    border-radius: 999px;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: background 0.15s ease;
+}
+
+/* 만료 10분 이하로 남았을 때만 JS가 이 클래스를 붙여서 연장 버튼을 보여줌 */
+.topbar-session.session-extend-visible .topbar-session-extend {
+    display: inline-block;
+}
+
+.topbar-session-extend:hover { background: rgba(139, 94, 60, 0.06); }
+
+.topbar-session-extend:disabled {
+    opacity: 0.6;
+    cursor: url("/images/cursor-default.png") 3 2, default;
+}
+
+/* 5분 이하로 남으면 경고 톤으로 전환 */
+.topbar-session.session-warning {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.topbar-session.session-warning svg,
+.topbar-session.session-warning .topbar-session-timer {
+    color: #fff;
+}
+
 /* ===== 토글 스위치 (알림 설정 등 on/off 항목에서 공용으로 씀) ===== */
 .toggle-switch {
     position: relative;

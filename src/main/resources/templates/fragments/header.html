@@ -16,6 +16,13 @@
             <button class="topbar-link" type="button" onclick="location.href='/support'">
                 <i data-lucide="message-square"></i>회원문의
             </button>
+
+            <div class="topbar-session" id="topbar-session">
+                <i data-lucide="calendar-clock"></i>
+                <span class="topbar-session-timer" id="topbar-session-timer">30:00</span>
+                <button type="button" class="topbar-session-extend" id="topbar-session-extend" onclick="extendLoginSession()">로그인 연장하기</button>
+            </div>
+
             <span class="topbar-divider"></span>
 
             <div class="topbar-profile" id="topbar-profile">
