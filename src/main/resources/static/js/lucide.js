@@ -50,7 +50,8 @@
         'chevron-down': '<path d="m6 9 6 6 6-6"/>',
         'square-chevron-down': '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="m8 10 4 4 4-4"/>',
         'headset': '<path d="M3 11h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H3v-5a9 9 0 0 1 18 0v5h-3a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/><path d="M21 16v2a4 4 0 0 1-4 4h-5"/>',
-        'user-round-cog': '<circle cx="9" cy="8" r="4"/><path d="M2.5 20c0-3.5 3-6.3 6.5-6.3"/><circle cx="18" cy="17" r="2.8"/><path d="M18 12.7v1"/><path d="M18 20.3v1"/><path d="m15.5 14.6.87.5"/><path d="m19.63 17.9.87.5"/><path d="m15.5 19.4.87-.5"/><path d="m19.63 16.1.87-.5"/>'
+        'user-round-cog': '<circle cx="9" cy="8" r="4"/><path d="M2.5 20c0-3.5 3-6.3 6.5-6.3"/><circle cx="18" cy="17" r="2.8"/><path d="M18 12.7v1"/><path d="M18 20.3v1"/><path d="m15.5 14.6.87.5"/><path d="m19.63 17.9.87.5"/><path d="m15.5 19.4.87-.5"/><path d="m19.63 16.1.87-.5"/>',
+        'search': '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>'
     };
 
     function toAttrObject(el) {

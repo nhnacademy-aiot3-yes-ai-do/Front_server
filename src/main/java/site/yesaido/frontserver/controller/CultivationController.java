@@ -12,7 +12,9 @@ import site.yesaido.frontserver.dto.cultivation.request.*;
 import site.yesaido.frontserver.dto.cultivation.response.*;
 import site.yesaido.frontserver.util.LoginRequired;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @LoginRequired
 @Controller
@@ -26,7 +28,27 @@ public class CultivationController {
     @GetMapping
     public String list(Model model) {
         List<CultivationSummaryResponse> cultivations = cultivationClient.getCultivations().getBody();
-        model.addAttribute("cultivations", cultivations);
+
+        // list.html에서 이 목록을 th:inline="javascript"로 그대로 직렬화하는데,
+        // Thymeleaf가 내부적으로 쓰는 Jackson ObjectMapper엔 JSR-310(LocalDateTime) 모듈이 없어서
+        // createdAt(LocalDateTime) 필드가 있으면 직렬화 중 예외가 남. JS로 넘기기 전에 문자열로 미리 변환.
+        List<Map<String, Object>> cultivationsForView = cultivations == null ? List.of() : cultivations.stream()
+                .map(c -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("cultivationId", c.cultivationId());
+                    m.put("name", c.name());
+                    m.put("mushroomId", c.mushroomId());
+                    m.put("status", c.status());
+                    m.put("mode", c.mode());
+                    m.put("memberCount", c.memberCount());
+                    m.put("ownerNickname", c.ownerNickname());
+                    String createdAt = c.createdAt() != null ? c.createdAt().toString() : null;
+                    m.put("createdAt", createdAt);
+                    return m;
+                })
+                .toList();
+
+        model.addAttribute("cultivations", cultivationsForView);
         return "cultivation/list";
     }
 
@@ -40,7 +62,35 @@ public class CultivationController {
                                      @RequestParam(defaultValue = "20") int size,
                                      Model model) {
         CultivationHistoryPageResponse history = cultivationClient.getHistory(page, size).getBody();
-        model.addAttribute("history", history);
+
+        // list()와 동일한 이유: history.content[].finishedAt(LocalDateTime)이 있으면
+        // Thymeleaf JS 인라인(/*[[${history}]]*/) 직렬화 중 JSR-310 미등록 예외가 남 -> 문자열로 미리 변환.
+        Map<String, Object> historyForView = new LinkedHashMap<>();
+        if (history != null) {
+            List<Map<String, Object>> contentForView = history.content() == null ? List.of() : history.content().stream()
+                    .map(c -> {
+                        Map<String, Object> m = new LinkedHashMap<>();
+                        m.put("cultivationId", c.cultivationId());
+                        m.put("name", c.name());
+                        m.put("mushroomId", c.mushroomId());
+                        m.put("status", c.status());
+                        m.put("harvestWeight", c.harvestWeight());
+                        m.put("productGrade", c.productGrade());
+                        String finishedAt = c.finishedAt() != null ? c.finishedAt().toString() : null;
+                        m.put("finishedAt", finishedAt);
+                        return m;
+                    })
+                    .toList();
+            historyForView.put("content", contentForView);
+            historyForView.put("totalPages", history.totalPages());
+            historyForView.put("totalElements", history.totalElements());
+            historyForView.put("number", history.number());
+            historyForView.put("size", history.size());
+        } else {
+            historyForView.put("content", List.of());
+        }
+
+        model.addAttribute("history", historyForView);
         return "cultivation/history";
     }
   
@@ -55,9 +105,38 @@ public class CultivationController {
         CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
         List<MemberResponse> members = cultivationClient.getMembers(cultivationId).getBody();
         List<PhotoResponse> photos = cultivationClient.getPhoto(cultivationId).getBody();
+
+        // dashboard/main.html도 members/photos를 th:inline="javascript"로 통째로 직렬화함.
+        // MemberResponse.joinedAt / PhotoResponse.updatedAt이 LocalDateTime이라 위와 같은 이유로 문자열 변환 필요.
+        List<Map<String, Object>> membersForView = members == null ? List.of() : members.stream()
+                .map(m -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("memberId", m.memberId());
+                    map.put("userId", m.userId());
+                    map.put("nickname", m.nickname());
+                    map.put("role", m.role());
+                    String joinedAt = m.joinedAt() != null ? m.joinedAt().toString() : null;
+                    map.put("joinedAt", joinedAt);
+                    return map;
+                })
+                .toList();
+
+        List<Map<String, Object>> photosForView = photos == null ? List.of() : photos.stream()
+                .map(p -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    map.put("photoId", p.photoId());
+                    map.put("objectKey", p.objectKey());
+                    map.put("uri", p.uri());
+                    map.put("storageType", p.storageType());
+                    String updatedAt = p.updatedAt() != null ? p.updatedAt().toString() : null;
+                    map.put("updatedAt", updatedAt);
+                    return map;
+                })
+                .toList();
+
         model.addAttribute("cultivation", cultivation);
-        model.addAttribute("members", members);
-        model.addAttribute("photos", photos);
+        model.addAttribute("members", membersForView);
+        model.addAttribute("photos", photosForView);
         return "dashboard/main";
     }
 

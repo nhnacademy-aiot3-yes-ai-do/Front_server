@@ -1,7 +1,3 @@
-/* static/css/common.css */
-/* 여러 페이지(대시보드/회원문의/재배이력/내정보/재배지 목록·생성/관리자)에서
-   똑같이 쓰이던 폰트, 색상 변수, 리셋, 상단 헤더(topbar)를 한 곳으로 모은 공통 스타일.
-   각 페이지 CSS는 맨 위에서 이 파일을 @import 하고, 페이지마다 다른 부분만 자기 파일에 남긴다. */
 @import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
 
 :root {
@@ -52,6 +48,7 @@
 .topbar-logo-link {
     display: block;
     line-height: 0;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: opacity 0.15s ease;
 }
 
@@ -138,6 +135,223 @@
 .avatar-circle svg {
     width: 65%;
     height: 65%;
+}
+
+/* ===== 헤더 닉네임 드롭다운 (내 정보 보기 / 로그아웃) ===== */
+.topbar-profile {
+    position: relative;
+}
+
+.topbar-profile-trigger {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    padding: 0.3rem 0.6rem 0.3rem 0.3rem;
+    border-radius: 999px;
+    font-family: inherit;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: background 0.15s ease;
+}
+
+.topbar-profile-trigger:hover {
+    background: rgba(139, 94, 60, 0.08);
+}
+
+.topbar-profile-chevron {
+    width: 0.85rem;
+    height: 0.85rem;
+    color: var(--brown-500);
+    transition: transform 0.15s ease;
+}
+
+.topbar-profile.open .topbar-profile-chevron {
+    transform: rotate(180deg);
+}
+
+.topbar-profile-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 168px;
+    background: var(--cream-100);
+    border: 2px solid var(--brown-300);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(63, 42, 29, 0.2);
+    padding: 6px;
+    z-index: 40;
+}
+
+.topbar-profile.open .topbar-profile-menu {
+    display: block;
+    animation: mshSelectPop 0.12s ease;
+}
+
+.topbar-profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 8px 10px;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brown-700);
+    text-align: left;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: background 0.12s ease;
+}
+
+.topbar-profile-menu-item svg {
+    width: 1rem;
+    height: 1rem;
+    color: var(--sage-600);
+}
+
+.topbar-profile-menu-item:hover {
+    background: rgba(124, 148, 115, 0.14);
+}
+
+.topbar-profile-menu-item-danger {
+    color: var(--danger);
+}
+
+.topbar-profile-menu-item-danger svg {
+    color: var(--danger);
+}
+
+.topbar-profile-menu-item-danger:hover {
+    background: rgba(192, 87, 74, 0.1);
+}
+
+/* ===== 로그인 세션 남은시간 + 연장 버튼 (JS가 로그인 상태일 때만 보여줌) ===== */
+.topbar-session {
+    display: none;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--sage-600);
+    border: 1px solid var(--sage-600);
+    border-radius: 999px;
+}
+
+.topbar-session svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.topbar-session-timer {
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #fff;
+    min-width: 2.4em;
+}
+
+.topbar-session-extend {
+    display: none;
+    flex-shrink: 0;
+    padding: 0.3rem 0.65rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--brown-700);
+    background: #fff;
+    border: 1px solid var(--brown-300);
+    border-radius: 999px;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: background 0.15s ease;
+}
+
+/* 만료 10분 이하로 남았을 때만 JS가 이 클래스를 붙여서 연장 버튼을 보여줌 */
+.topbar-session.session-extend-visible .topbar-session-extend {
+    display: inline-block;
+}
+
+.topbar-session-extend:hover { background: rgba(139, 94, 60, 0.06); }
+
+.topbar-session-extend:disabled {
+    opacity: 0.6;
+    cursor: url("/images/cursor-default.png") 3 2, default;
+}
+
+/* 5분 이하로 남으면 경고 톤으로 전환 */
+.topbar-session.session-warning {
+    background: var(--danger);
+    border-color: var(--danger);
+}
+
+.topbar-session.session-warning svg,
+.topbar-session.session-warning .topbar-session-timer {
+    color: #fff;
+}
+
+/* ===== 토글 스위치 (알림 설정 등 on/off 항목에서 공용으로 씀) ===== */
+.toggle-switch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+}
+
+.toggle-switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+}
+
+.toggle-track {
+    width: 46px;
+    height: 26px;
+    flex-shrink: 0;
+    background: var(--brown-300);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px;
+    transition: background 0.15s ease;
+}
+
+.toggle-thumb {
+    width: 20px;
+    height: 20px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(63, 42, 29, 0.35);
+    transition: transform 0.15s ease;
+}
+
+.toggle-switch input:checked ~ .toggle-track {
+    background: var(--sage-500);
+}
+
+.toggle-switch input:checked ~ .toggle-track .toggle-thumb {
+    transform: translateX(20px);
+}
+
+.toggle-switch input:focus-visible ~ .toggle-track {
+    outline: 2px solid var(--sage-600);
+    outline-offset: 2px;
+}
+
+.toggle-switch input:disabled ~ .toggle-track {
+    opacity: 0.5;
+}
+
+.toggle-switch input:disabled {
+    cursor: default;
 }
 
 /* ===== MushMush 커스텀 커서 ===== */
@@ -254,4 +468,389 @@ textarea,
     background: rgba(124, 148, 115, 0.22);
     color: var(--sage-600);
     font-weight: 700;
+}
+
+/* ===== 에러 페이지 공통 카드 (사용자용 error.css / 관리자용 admin.css 둘 다 씀) =====
+   배경(workspaceback.jpg vs mainback.jpg)이나 body 중앙 정렬 방식만 각 페이지 CSS에 남기고,
+   카드 자체의 생김새는 여기서 한 번만 정의함. */
+.error-wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 480px;
+}
+
+.error-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: rgba(251, 246, 234, 0.72);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.28);
+    border-radius: 24px;
+    padding: 48px 40px;
+    box-shadow: 0 8px 24px rgba(63, 42, 29, 0.18);
+}
+
+.error-logo {
+    width: 96px;
+    margin-bottom: 4px;
+}
+
+.error-icon-wrap {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: rgba(198, 92, 74, 0.14);
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 22px;
+}
+
+.error-icon-wrap svg { width: 42px; height: 42px; }
+
+.error-icon-wrap.neutral {
+    background: rgba(124, 148, 115, 0.14);
+    color: var(--sage-600);
+}
+
+.error-code {
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.06em;
+    color: var(--brown-500);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+}
+
+.error-title {
+    font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin: 0 0 12px;
+}
+
+.error-subtitle {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: var(--brown-700);
+    margin: 0 0 30px;
+}
+
+.error-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.error-actions .btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 16px;
+    font-family: "Gaegu", inherit;
+    font-size: 16px;
+    font-weight: 700;
+    border-radius: 12px;
+    border: 2px solid var(--brown-900);
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    text-decoration: none;
+    box-shadow: 4px 4px 0 var(--shadow-color);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.error-actions .btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 var(--shadow-color);
+}
+
+.error-actions .btn-primary {
+    background: var(--sage-500);
+    color: #fff;
+    border-color: var(--sage-600);
+}
+
+.error-actions .btn-primary:hover { background: var(--sage-600); }
+
+.error-actions .btn-outline {
+    background: transparent;
+    color: var(--brown-700);
+    border-color: var(--brown-300);
+    box-shadow: none;
+}
+
+.error-actions .btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
+
+/* ===== 팝업 공용 컴포넌트 (휴면 계정 안내, 메신저 연동 등에서 재사용) ===== */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(63, 42, 29, 0.45);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 16px;
+}
+
+.modal-overlay.is-open {
+    display: flex;
+}
+
+.modal-box {
+    background: rgba(251, 246, 234, 0.94);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    border-radius: 20px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    max-height: 86vh;
+    overflow-y: auto;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 30px rgba(63, 42, 29, 0.25);
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    color: var(--brown-500);
+}
+
+.modal-title {
+    font-family: "Gaegu", inherit;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin: 0 0 6px;
+}
+
+.modal-desc {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--brown-700);
+    margin: 0 0 20px;
+}
+
+.modal-field {
+    margin-bottom: 16px;
+}
+
+.modal-field label {
+    display: block;
+    font-size: 13px;
+    color: var(--brown-700);
+    margin-bottom: 6px;
+    padding-left: 4px;
+}
+
+.modal-field input[readonly] {
+    background: var(--cream-200);
+    color: var(--brown-700);
+    box-shadow: none;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.modal-actions .btn {
+    width: auto;
+}
+
+.modal-success {
+    text-align: center;
+    padding: 8px 0 4px;
+}
+
+.modal-success .modal-success-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: rgba(124, 148, 115, 0.15);
+    color: var(--sage-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-success .modal-success-icon svg {
+    width: 28px;
+    height: 28px;
+}
+
+/* ===== 텔레그램/디스코드 연동 카드 (알림 설정 페이지) ===== */
+.integration-icon.telegram { background: rgba(43, 130, 210, 0.15); color: #2b82d2; }
+.integration-icon.discord { background: rgba(88, 101, 242, 0.15); color: #5865f2; }
+
+.settings-row-status {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--brown-500);
+}
+
+.settings-row-status.connected {
+    color: var(--sage-600);
+}
+
+.settings-row-action .btn {
+    width: auto;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.82rem;
+}
+
+/* --- 연동 팝업 안 내용 --- */
+.integration-modal-icon {
+    width: 3.4rem;
+    height: 3.4rem;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(139, 94, 60, 0.12);
+    color: var(--brown-700);
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.integration-modal-icon svg {
+    width: 1.6rem;
+    height: 1.6rem;
+}
+
+.integration-modal-icon.telegram { background: rgba(43, 130, 210, 0.15); color: #2b82d2; }
+.integration-modal-icon.discord { background: rgba(88, 101, 242, 0.15); color: #5865f2; }
+
+.integration-modal-title {
+    text-align: center;
+}
+
+.modal-desc.integration-modal-desc,
+.integration-step ~ .modal-desc {
+    text-align: center;
+}
+
+.integration-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 18px 0 6px;
+    position: relative;
+}
+
+.integration-step {
+    display: flex;
+    gap: 12px;
+    padding: 14px 4px;
+}
+
+.integration-step + .integration-step {
+    border-top: 1px dashed rgba(139, 94, 60, 0.2);
+}
+
+.integration-step-num {
+    flex-shrink: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 50%;
+    background: var(--cream-200);
+    border: 1.5px solid var(--brown-300);
+    color: var(--brown-700);
+    font-size: 0.78rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.integration-step-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.integration-step-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--brown-900);
+}
+
+.integration-connect-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: fit-content;
+    padding: 0.55rem 1rem;
+    border-radius: 999px;
+    border: none;
+    background: var(--brown-700);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-decoration: none;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: filter 0.15s ease, transform 0.1s ease;
+}
+
+.integration-connect-link:hover {
+    filter: brightness(1.08);
+}
+
+.integration-connect-link:active {
+    transform: translateY(1px);
+}
+
+.integration-connect-link svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.integration-connect-link.telegram { background: #2b82d2; }
+.integration-connect-link.discord { background: #5865f2; }
+
+.integration-code-input {
+    width: 100%;
+    max-width: 11rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 10px;
+    border: 1.5px solid var(--brown-300);
+    background: #fff;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.25em;
+    text-align: center;
+    text-transform: uppercase;
+    color: var(--brown-900);
+}
+
+.integration-code-input:focus {
+    outline: none;
+    border-color: var(--sage-500);
+}
+
+.integration-code-input::placeholder {
+    letter-spacing: 0.25em;
+    color: var(--brown-300);
 }

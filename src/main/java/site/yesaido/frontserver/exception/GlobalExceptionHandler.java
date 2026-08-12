@@ -2,33 +2,23 @@ package site.yesaido.frontserver.exception;
 
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.io.IOException;
 
 @ControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+    private final AuthCookieProvider authCookieProvider;
 
     @ExceptionHandler(FeignException.Unauthorized.class)
-    public void handleUnauthorized(HttpServletResponse response) throws IOException{
-        ResponseCookie deleteAccessCookie = ResponseCookie.from("accessToken", "")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
-                .build();
-
-        ResponseCookie deleteRefreshCookie = ResponseCookie.from("refreshToken", "")
-                .path("/")
-                .maxAge(0)
-                .httpOnly(true)
-                .build();
-
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteAccessCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, deleteRefreshCookie.toString());
-
+    public void handleUnauthorized(HttpServletResponse response) throws IOException {
+        authCookieProvider.clearAuthCookies(response);
         response.sendRedirect("/login");
     }
 }
