@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -274,7 +275,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Google OAuth2 로그인")
     void loginWithGoogleSuccess() throws Exception {
-        GoogleLoginRequest request = new GoogleLoginRequest("googleIdToken", "google@gmail.com");
+        GoogleLoginRequest request = new GoogleLoginRequest("googleIdToken", "google@gmail.com", "구글유저");
         TokenResponse tokenResponse = TokenResponse.builder().accessToken("access").refreshToken("refresh").role("USER").build();
         given(userClient.loginWithGoogle(any())).willReturn(new ApiResponse<>(true, "구글로그인 성공", tokenResponse));
 

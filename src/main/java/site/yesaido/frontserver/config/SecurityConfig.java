@@ -9,12 +9,17 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.GoogleLoginRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
+
+import java.time.Duration;
 
 @Slf4j
 @Configuration
@@ -28,40 +33,78 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                        .anyRequest().permitAll()
+                )
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
-                        .successHandler((request, response, authentication) -> {
-                            OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
-                            String email = oAuth2User.getAttribute("email");
-                            String name = oAuth2User.getAttribute("name");
-                            if (name == null || name.isBlank()) {
-                                name = "구글사용자";
-                            }
-
-                            log.info("[구글 OAuth2 로그인 성공] 이메일: {}, 이름: {}", email, name);
-
-                            // 1. Auth_server 로 소셜 회원가입/로그인 요청!
-                            ApiResponse<TokenResponse> tokenResponse = userClient.loginWithGoogle(
-                                    new GoogleLoginRequest(email, name)
-                            );
-
-                            // 2. ResponseCookie 로 현대적 보안 쿠키 생성 (SameSite Lax + HttpOnly)
-                            ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.data().accessToken())
-                                    .path("/")
-                                    .httpOnly(true)
-                                    .sameSite("Lax")
-                                    .build();
-
-                            response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
-
-                            // 3. 메인 화면(/)으로 이동!
-                            response.sendRedirect("/");
-                        })
+                        .successHandler(oAuth2SuccessHandler())
+                        .failureHandler(oAuth2FailureHandler())
                 );
 
         return http.build();
+    }
+
+    /**
+     * Google OAuth2 로그인 성공 핸들러
+     */
+    private AuthenticationSuccessHandler oAuth2SuccessHandler() {
+        return (request, response, authentication) -> {
+            try {
+                OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
+                String email = oAuth2User.getAttribute("email");
+                String name = oAuth2User.getAttribute("name");
+                if (name == null || name.isBlank()) {
+                    name = "구글사용자";
+                }
+
+                String idToken = "";
+                if (oAuth2User instanceof OidcUser oidcUser) {
+                    idToken = oidcUser.getIdToken().getTokenValue();
+                }
+
+                if (idToken.isBlank()) {
+                    log.error("[OAuth2 핸들러] Google ID Token 획득 실패. (scope openid 확인 필요)");
+                    response.sendRedirect("/login?error=no_id_token");
+                    return;
+                }
+
+                log.info("[구글 OAuth2 로그인 성공] 이메일: {}, 이름: {}", email, name);
+
+                // 1. Auth_server 로 소셜 회원가입/로그인 요청
+                ApiResponse<TokenResponse> tokenResponse = userClient.loginWithGoogle(
+                        new GoogleLoginRequest(idToken, email, name)
+                );
+
+                // 2. AccessToken 보안 쿠키 설정 (HttpOnly, SameSite=Lax, MaxAge=30분)
+                ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.data().accessToken())
+                        .path("/")
+                        .httpOnly(true)
+                        .sameSite("Lax")
+                        .maxAge(Duration.ofMinutes(30))
+                        .build();
+
+                response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+
+                // 3. 메인 페이지로 이동
+                response.sendRedirect("/");
+            } catch (Exception e) {
+                log.error("[OAuth2 성공 핸들러 예외 발생] {}", e.getMessage(), e);
+                response.sendRedirect("/login?error=oauth_process_failed");
+            }
+        };
+    }
+
+    /**
+     * Google OAuth2 로그인 실패 핸들러
+     */
+    private AuthenticationFailureHandler oAuth2FailureHandler() {
+        return (request, response, exception) -> {
+            log.warn("[구글 OAuth2 로그인 실패] 원인: {}", exception.getMessage());
+            response.sendRedirect("/login?error=oauth_failed");
+        };
     }
 }
