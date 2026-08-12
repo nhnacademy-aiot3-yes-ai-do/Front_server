@@ -86,42 +86,97 @@ function togglePanel(id) {
     }
 }
 
-// 알림 목록 (데모 데이터, 실제로는 서버에서 받아와야 함)
-var notifData = [
-    '알림 1', '알림 2', '알림 3', '알림 4', '알림 5',
-    '알림 6', '알림 7', '알림 8', '알림 9', '알림 10',
-    '알림 11', '알림 12'
-];
+// 알림 목록 — Front BFF(/notifications) → Gateway → notification-server
 var NOTIF_PAGE_SIZE = 5;
-var notifState = { page: 0 };
+var notifState = { page: 0, totalPages: 1, hasNext: false, loading: false };
 
 function renderNotifPanel() {
-    var totalPages = Math.max(1, Math.ceil(notifData.length / NOTIF_PAGE_SIZE));
-    notifState.page = Math.max(0, Math.min(notifState.page, totalPages - 1));
+    loadNotifPage(notifState.page);
+}
+
+function loadNotifPage(page) {
+    if (notifState.loading) return;
+    notifState.loading = true;
 
     var list = document.getElementById('notif-list');
+    if (list) {
+        list.innerHTML = '<div class="notif-row">불러오는 중...</div>';
+    }
+
+    fetch('/notifications?page=' + page + '&size=' + NOTIF_PAGE_SIZE, {
+        credentials: 'same-origin'
+    })
+        .then(function (res) {
+            if (res.redirected || res.status === 401 || res.status === 403) {
+                throw new Error('unauthorized');
+            }
+            if (!res.ok) {
+                throw new Error('http_' + res.status);
+            }
+            return res.json();
+        })
+        .then(function (data) {
+            notifState.page = typeof data.page === 'number' ? data.page : page;
+            notifState.totalPages = Math.max(1, data.totalPages || 1);
+            notifState.hasNext = !!data.hasNext;
+            renderNotifRows(data.content || []);
+            updateNotifPagination();
+        })
+        .catch(function () {
+            if (list) {
+                list.innerHTML = '<div class="notif-row">알림을 불러오지 못했습니다.</div>';
+            }
+            notifState.totalPages = 1;
+            notifState.hasNext = false;
+            updateNotifPagination();
+        })
+        .finally(function () {
+            notifState.loading = false;
+        });
+}
+
+function renderNotifRows(items) {
+    var list = document.getElementById('notif-list');
+    if (!list) return;
     list.innerHTML = '';
-    var start = notifState.page * NOTIF_PAGE_SIZE;
-    notifData.slice(start, start + NOTIF_PAGE_SIZE).forEach(function (text) {
+
+    if (!items.length) {
+        var empty = document.createElement('div');
+        empty.className = 'notif-row';
+        empty.textContent = '알림이 없습니다.';
+        list.appendChild(empty);
+        return;
+    }
+
+    items.forEach(function (item) {
         var row = document.createElement('div');
         row.className = 'notif-row';
-        row.textContent = text;
+        row.textContent = item.message || '(메시지 없음)';
         list.appendChild(row);
     });
+}
 
-    document.getElementById('notif-page-label').textContent =
-        (notifState.page + 1) + ' / ' + totalPages;
+function updateNotifPagination() {
+    var totalPages = Math.max(1, notifState.totalPages || 1);
+    var pageLabel = document.getElementById('notif-page-label');
+    if (pageLabel) {
+        pageLabel.textContent = (notifState.page + 1) + ' / ' + totalPages;
+    }
 
     var pagination = document.getElementById('notif-pagination');
-    pagination.style.display = totalPages <= 1 ? 'none' : 'flex';
-    document.getElementById('notif-prev').disabled = notifState.page === 0;
-    document.getElementById('notif-next').disabled = notifState.page >= totalPages - 1;
+    if (pagination) {
+        pagination.style.display = totalPages <= 1 ? 'none' : 'flex';
+    }
+    var prev = document.getElementById('notif-prev');
+    var next = document.getElementById('notif-next');
+    if (prev) prev.disabled = notifState.page === 0 || notifState.loading;
+    if (next) next.disabled = notifState.page >= totalPages - 1 || notifState.loading;
 }
 
 function changeNotifPage(delta) {
-    var totalPages = Math.max(1, Math.ceil(notifData.length / NOTIF_PAGE_SIZE));
-    notifState.page = Math.max(0, Math.min(totalPages - 1, notifState.page + delta));
-    renderNotifPanel();
+    var nextPage = notifState.page + delta;
+    if (nextPage < 0 || nextPage >= Math.max(1, notifState.totalPages)) return;
+    loadNotifPage(nextPage);
 }
 
 var MEMBER_PAGE_SIZE = 4;
