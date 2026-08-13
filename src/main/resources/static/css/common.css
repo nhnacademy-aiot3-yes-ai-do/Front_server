@@ -19,19 +19,28 @@
     box-sizing: border-box;
 }
 
-/* ===== Topbar (일반 사용자 페이지 + 관리자 페이지 공통) ===== */
+/* ===== Topbar (일반 사용자 페이지 + 관리자 페이지 공통) =====
+   헤더는 페이지 본문과 달리 화면 크기에 따라 커지거나 작아지지 않도록
+   rem(화면 너비에 비례) 대신 고정 px 단위를 씀 — 모니터/창 크기가 달라도
+   로고와 메뉴가 항상 같은 크기·위치로 보이게 하기 위함. */
 .topbar {
     flex-shrink: 0;
-    height: 5.5rem;
+    height: 88px;
     background: rgba(251, 246, 234, 0.5);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-bottom: 2px solid rgba(139, 94, 60, 0.25);
     color: var(--brown-900);
+    /* 헤더도 backdrop-filter 때문에 독립된 stacking context를 가져서, DOM상 뒤에 오는
+       페이지 카드들(마찬가지로 backdrop-filter를 쓰는 .card 등)이 z-index 없이도
+       헤더보다 위에 그려져 드롭다운(닉네임 메뉴)의 클릭을 가로채는 문제가 있었음.
+       헤더는 항상 페이지 콘텐츠보다 위에 있어야 하므로 z-index를 명시적으로 높여둠. */
+    position: relative;
+    z-index: 70;
 }
 
 .topbar-inner {
-    width: min(96vw, 2100px);
+    width: min(96vw, 2800px);
     height: 100%;
     margin: 0 auto;
     display: flex;
@@ -57,7 +66,7 @@
 }
 
 .topbar-logo {
-    height: 5.6rem;
+    height: 90px;
     width: auto;
     display: block;
 }
@@ -69,19 +78,19 @@
 }
 
 .topbar-nickname {
-    font-size: 1rem;
+    font-size: 16px;
     color: var(--brown-900);
 }
 
 .topbar-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 6px;
     background: none;
     border: none;
-    padding: 0.5rem 0.6rem;
+    padding: 8px 10px;
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 14px;
     font-weight: 700;
     color: var(--brown-700);
     cursor: url("/images/cursor-default.png") 3 2, pointer;
@@ -90,8 +99,8 @@
 }
 
 .topbar-link svg {
-    width: 1rem;
-    height: 1rem;
+    width: 16px;
+    height: 16px;
     color: var(--sage-600);
 }
 
@@ -114,14 +123,14 @@
 
 .topbar-divider {
     width: 2px;
-    height: 1.6rem;
+    height: 26px;
     background: rgba(139, 94, 60, 0.2);
-    margin: 0 0.4rem;
+    margin: 0 6px;
 }
 
 .avatar-circle {
-    width: 3rem;
-    height: 3rem;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: var(--sage-500);
     display: flex;
@@ -145,10 +154,10 @@
 .topbar-profile-trigger {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     background: none;
     border: none;
-    padding: 0.3rem 0.6rem 0.3rem 0.3rem;
+    padding: 5px 10px 5px 5px;
     border-radius: 999px;
     font-family: inherit;
     cursor: url("/images/cursor-default.png") 3 2, pointer;
@@ -160,8 +169,8 @@
 }
 
 .topbar-profile-chevron {
-    width: 0.85rem;
-    height: 0.85rem;
+    width: 14px;
+    height: 14px;
     color: var(--brown-500);
     transition: transform 0.15s ease;
 }
@@ -192,14 +201,14 @@
 .topbar-profile-menu-item {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     width: 100%;
     padding: 8px 10px;
     background: none;
     border: none;
     border-radius: 8px;
     font-family: inherit;
-    font-size: 0.85rem;
+    font-size: 14px;
     font-weight: 700;
     color: var(--brown-700);
     text-align: left;
@@ -208,8 +217,8 @@
 }
 
 .topbar-profile-menu-item svg {
-    width: 1rem;
-    height: 1rem;
+    width: 16px;
+    height: 16px;
     color: var(--sage-600);
 }
 
@@ -233,22 +242,22 @@
 .topbar-session {
     display: none;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.7rem;
+    gap: 8px;
+    padding: 6px 11px;
     background: var(--sage-600);
     border: 1px solid var(--sage-600);
     border-radius: 999px;
 }
 
 .topbar-session svg {
-    width: 0.95rem;
-    height: 0.95rem;
+    width: 15px;
+    height: 15px;
     color: #fff;
     flex-shrink: 0;
 }
 
 .topbar-session-timer {
-    font-size: 0.9rem;
+    font-size: 14px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: #fff;
@@ -258,9 +267,9 @@
 .topbar-session-extend {
     display: none;
     flex-shrink: 0;
-    padding: 0.3rem 0.65rem;
+    padding: 5px 10px;
     font-family: inherit;
-    font-size: 0.75rem;
+    font-size: 12px;
     font-weight: 700;
     color: var(--brown-700);
     background: #fff;
@@ -471,7 +480,7 @@ textarea,
 }
 
 /* ===== 에러 페이지 공통 카드 (사용자용 error.css / 관리자용 admin.css 둘 다 씀) =====
-   배경(workspaceback.jpg vs mainback.jpg)이나 body 중앙 정렬 방식만 각 페이지 CSS에 남기고,
+   배경(mainback.jpg vs mainback.jpg)이나 body 중앙 정렬 방식만 각 페이지 CSS에 남기고,
    카드 자체의 생김새는 여기서 한 번만 정의함. */
 .error-wrap {
     position: relative;

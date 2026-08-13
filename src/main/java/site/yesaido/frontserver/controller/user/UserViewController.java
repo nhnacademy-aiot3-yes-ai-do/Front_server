@@ -19,6 +19,11 @@ public class UserViewController {
         return "auth/login";
     }
 
+    @GetMapping("/admin/login")
+    public String adminLoginPage() {
+        return "auth/admin-login";
+    }
+
     @GetMapping("/signup")
     public String signupPage() {
         return "auth/signup";

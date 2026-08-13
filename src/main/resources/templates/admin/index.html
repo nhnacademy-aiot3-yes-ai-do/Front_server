@@ -10,14 +10,25 @@
 </head>
 <body>
 
-<header th:replace="~{fragments/admin-header :: adminHeader}"></header>
+<div class="admin-body-row">
+<aside th:replace="~{fragments/admin-sidebar :: adminSidebar('dashboard')}"></aside>
 
 <div class="page-container admin-hub-page">
     <div class="admin-hub-content">
 
         <div class="admin-welcome">
-            <div class="admin-welcome-title">안녕하세요, 관리자님 🍄</div>
+            <div class="admin-welcome-title">안녕하세요, 관리자님</div>
             <div class="admin-welcome-date" id="admin-today-date"></div>
+        </div>
+
+        <div class="admin-hero-panel">
+            <div class="admin-hero-title">오늘 확인할 항목이 있어요</div>
+            <p class="admin-hero-desc">미답변 문의 5건을 확인해 보세요.<br />회원·문의·버섯 정보는 왼쪽 메뉴에서 바로 이동할 수 있어요.</p>
+            <div class="admin-hero-actions">
+                <button class="btn btn-primary btn-sm" type="button" onclick="location.href='/admin/inquiries'">
+                    <i data-lucide="message-square" style="width:14px;height:14px;"></i>미답변 문의 보기
+                </button>
+            </div>
         </div>
 
         <div class="admin-stat-row">
@@ -26,13 +37,6 @@
                 <div>
                     <div class="admin-stat-value">12</div>
                     <div class="admin-stat-label">전체 회원</div>
-                </div>
-            </div>
-            <div class="admin-stat-card">
-                <span class="admin-stat-icon-wrap"><i data-lucide="sprout"></i></span>
-                <div>
-                    <div class="admin-stat-value">12</div>
-                    <div class="admin-stat-label">운영 중인 재배지</div>
                 </div>
             </div>
             <div class="admin-stat-card">
@@ -51,30 +55,88 @@
             </div>
         </div>
 
-        <div class="admin-hub-grid">
-            <div class="admin-hub-tile" onclick="location.href='/admin/members'">
-                <i data-lucide="users" class="admin-hub-icon"></i>
-                <span class="admin-hub-label">회원 관리</span>
-                <span class="admin-hub-desc">가입한 회원 목록을 확인하고<br />활성/탈퇴 상태를 관리해요</span>
+        <div class="admin-activity-row">
+            <div class="admin-activity-panel">
+                <div class="admin-activity-head">
+                    <span class="admin-activity-title">최근 미답변 문의</span>
+                    <a href="/admin/inquiries" class="admin-activity-more">전체보기<i data-lucide="chevron-right"></i></a>
+                </div>
+                <div class="admin-activity-list">
+                    <a class="admin-activity-item" href="/admin/inquiries">
+                        <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
+                        <div class="admin-activity-item-body">
+                            <div class="admin-activity-item-title">중간 재배 기록이 사라졌어요</div>
+                            <div class="admin-activity-item-meta">nickname2 · 2026.07.28</div>
+                        </div>
+                        <span class="status-badge pending">답변대기</span>
+                    </a>
+                    <a class="admin-activity-item" href="/admin/inquiries">
+                        <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
+                        <div class="admin-activity-item-body">
+                            <div class="admin-activity-item-title">재배 이력 페이지에서 사진이 안 보여요</div>
+                            <div class="admin-activity-item-meta">nickname · 2026.07.24</div>
+                        </div>
+                        <span class="status-badge pending">답변대기</span>
+                    </a>
+                    <a class="admin-activity-item" href="/admin/inquiries">
+                        <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
+                        <div class="admin-activity-item-body">
+                            <div class="admin-activity-item-title">수확량 입력이 저장되지 않아요</div>
+                            <div class="admin-activity-item-meta">nickname4 · 2026.07.18</div>
+                        </div>
+                        <span class="status-badge pending">답변대기</span>
+                    </a>
+                    <a class="admin-activity-item" href="/admin/inquiries">
+                        <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
+                        <div class="admin-activity-item-body">
+                            <div class="admin-activity-item-title">탈퇴 후 재가입이 안 돼요</div>
+                            <div class="admin-activity-item-meta">nickname6 · 2026.07.09</div>
+                        </div>
+                        <span class="status-badge pending">답변대기</span>
+                    </a>
+                </div>
             </div>
-            <div class="admin-hub-tile" onclick="location.href='/admin/cultivations'">
-                <i data-lucide="sprout" class="admin-hub-icon"></i>
-                <span class="admin-hub-label">재배지 관리</span>
-                <span class="admin-hub-desc">등록된 재배지와 환경 통계를<br />확인하고 필요 시 삭제해요</span>
-            </div>
-            <div class="admin-hub-tile" onclick="location.href='/admin/inquiries'">
-                <i data-lucide="message-square" class="admin-hub-icon"></i>
-                <span class="admin-hub-label">회원 문의</span>
-                <span class="admin-hub-desc">회원이 남긴 문의 내역을<br />구분별로 확인해요</span>
-            </div>
-            <div class="admin-hub-tile" onclick="location.href='/admin/mushrooms'">
-                <i data-lucide="package" class="admin-hub-icon"></i>
-                <span class="admin-hub-label">버섯 등록</span>
-                <span class="admin-hub-desc">재배 가능한 버섯 종류와<br />적정 생육 환경을 등록·관리해요</span>
+
+            <div class="admin-activity-panel">
+                <div class="admin-activity-head">
+                    <span class="admin-activity-title">최근 가입 회원</span>
+                    <a href="/admin/members" class="admin-activity-more">전체보기<i data-lucide="chevron-right"></i></a>
+                </div>
+                <div class="admin-activity-list">
+                    <div class="admin-activity-item">
+                        <span class="admin-activity-item-icon"><i data-lucide="circle-user-round"></i></span>
+                        <div class="admin-activity-item-body">
+                            <div class="admin-activity-item-title">nickname11</div>
+                            <div class="admin-activity-item-meta">nickname11@gmail.com · 2026.07.03 가입</div>
+                        </div>
+                    </div>
+                    <div class="admin-activity-item">
+                        <span class="admin-activity-item-icon"><i data-lucide="circle-user-round"></i></span>
+                        <div class="admin-activity-item-body">
+                            <div class="admin-activity-item-title">nickname10</div>
+                            <div class="admin-activity-item-meta">nickname10@gmail.com · 2026.07.01 가입</div>
+                        </div>
+                    </div>
+                    <div class="admin-activity-item">
+                        <span class="admin-activity-item-icon"><i data-lucide="circle-user-round"></i></span>
+                        <div class="admin-activity-item-body">
+                            <div class="admin-activity-item-title">nickname8</div>
+                            <div class="admin-activity-item-meta">nickname8@gmail.com · 2026.06.29 가입</div>
+                        </div>
+                    </div>
+                    <div class="admin-activity-item">
+                        <span class="admin-activity-item-icon"><i data-lucide="circle-user-round"></i></span>
+                        <div class="admin-activity-item-body">
+                            <div class="admin-activity-item-title">nickname7</div>
+                            <div class="admin-activity-item-meta">nickname7@gmail.com · 2026.06.27 가입</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
     </div>
+</div>
 </div>
 
 <script>

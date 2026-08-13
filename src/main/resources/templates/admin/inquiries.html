@@ -10,7 +10,8 @@
 </head>
 <body>
 
-<header th:replace="~{fragments/admin-header :: adminHeader}"></header>
+<div class="admin-body-row">
+<aside th:replace="~{fragments/admin-sidebar :: adminSidebar('inquiries')}"></aside>
 
 <div class="page-container admin-list-page">
 
@@ -66,6 +67,7 @@
         <div class="admin-pagination" id="inquiry-pagination"></div>
     </div>
 
+</div>
 </div>
 
 <!-- 문의 상세 + 답변 작성 -->

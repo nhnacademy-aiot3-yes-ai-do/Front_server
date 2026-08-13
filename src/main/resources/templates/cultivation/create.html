@@ -106,38 +106,16 @@
                 <h2 class="wizard-title">
                     AI가 추천한 <span id="result-mushroom">양송이버섯</span> 재배 최적의 환경입니다
                 </h2>
-                <p class="wizard-desc">필요하다면 값을 직접 수정할 수 있어요.</p>
+                <p class="wizard-desc">필요하다면 값을 직접 수정할 수 있어요. 같은 종류의 센서를 여러 개 골랐다면 센서마다 따로 설정할 수 있어요.</p>
 
-                <div class="recommend-grid">
-                    <div class="recommend-card">
-                        <div class="recommend-title"><i data-lucide="thermometer"></i>온도</div>
-                        <div class="recommend-inputs">
-                            <label>최고값<input type="number" value="22" />°C</label>
-                            <label>최저값<input type="number" value="16" />°C</label>
-                        </div>
+                <div class="mushroom-info-card" id="mushroom-info-card">
+                    <div class="mushroom-info-title">
+                        <i data-lucide="sparkles"></i><span id="mushroom-info-name">양송이버섯</span>의 효능
                     </div>
-                    <div class="recommend-card">
-                        <div class="recommend-title"><i data-lucide="droplet"></i>습도</div>
-                        <div class="recommend-inputs">
-                            <label>최고값<input type="number" value="70" />%</label>
-                            <label>최저값<input type="number" value="55" />%</label>
-                        </div>
-                    </div>
-                    <div class="recommend-card">
-                        <div class="recommend-title"><i data-lucide="cloudy"></i>CO2</div>
-                        <div class="recommend-inputs">
-                            <label>최고값<input type="number" value="600" />ppm</label>
-                            <label>최저값<input type="number" value="400" />ppm</label>
-                        </div>
-                    </div>
-                    <div class="recommend-card">
-                        <div class="recommend-title"><i data-lucide="sun"></i>조도</div>
-                        <div class="recommend-inputs">
-                            <label>최고값<input type="number" value="450" />lux</label>
-                            <label>최저값<input type="number" value="250" />lux</label>
-                        </div>
-                    </div>
+                    <ul class="mushroom-info-list" id="mushroom-info-list"></ul>
                 </div>
+
+                <div class="recommend-grid" id="recommend-grid"></div>
 
                 <div class="wizard-actions wizard-actions-split">
                     <button class="step-next" type="button" onclick="goToStep(2)" title="이전">
@@ -166,6 +144,37 @@
     ];
     var selectedSensorIds = [];
 
+    // 센서 타입별 AI 추천 기본값 (실제로는 서버에서 버섯/센서별로 내려줘야 함)
+    var SENSOR_TYPE_DEFAULTS = {
+        '온도': { max: 22, min: 16, unit: '°C', icon: 'thermometer' },
+        '습도': { max: 70, min: 55, unit: '%', icon: 'droplet' },
+        'CO2': { max: 600, min: 400, unit: 'ppm', icon: 'cloudy' },
+        '조도': { max: 450, min: 250, unit: 'lux', icon: 'sun' }
+    };
+
+    // 버섯별 효능 정보 (데모 데이터) - 실제로는 서버에서 버섯 정보와 함께 내려줘야 함
+    var MUSHROOM_INFO = {
+        '양송이버섯': ['항산화 성분이 풍부해 노화 방지에 도움', '비타민 D 함량이 높아 뼈 건강에 좋음', '저칼로리라 체중 관리에 부담이 적음'],
+        '느타리버섯': ['베타글루칸이 풍부해 면역력 강화에 도움', '콜레스테롤 수치 관리에 도움', '식이섬유가 풍부해 장 건강에 좋음'],
+        '표고버섯': ['렌티난 성분이 면역력 증진에 도움', '혈중 콜레스테롤 개선 효과', '비타민 B군이 풍부해 피로 회복에 도움'],
+        '새송이버섯': ['식이섬유가 풍부해 소화와 배변 활동에 도움', '저칼로리·고단백이라 다이어트에 좋음', '칼륨이 풍부해 나트륨 배출에 도움'],
+        '팽이버섯': ['저칼로리·고식이섬유로 체중 관리에 도움', '아미노산이 풍부해 성장기 영양 보충에 좋음', '항산화 성분이 함유되어 있음']
+    };
+
+    function renderMushroomInfo() {
+        var mushroomName = document.getElementById('f-mushroom').value;
+        document.getElementById('mushroom-info-name').textContent = mushroomName;
+
+        var list = document.getElementById('mushroom-info-list');
+        list.innerHTML = '';
+        var benefits = MUSHROOM_INFO[mushroomName] || [];
+        benefits.forEach(function (text) {
+            var li = document.createElement('li');
+            li.textContent = text;
+            list.appendChild(li);
+        });
+    }
+
     function renderSensorSelectList() {
         var wrap = document.getElementById('sensor-select-list');
         wrap.innerHTML = '';
@@ -191,6 +200,45 @@
 
     renderSensorSelectList();
 
+    // 선택된 센서 하나하나마다 카드를 따로 만들어줌 (같은 타입이어도 센서별로 독립 설정)
+    function renderRecommendGrid() {
+        var grid = document.getElementById('recommend-grid');
+        grid.innerHTML = '';
+
+        var selectedSensors = REGISTERED_SENSORS.filter(function (s) {
+            return selectedSensorIds.indexOf(s.id) !== -1;
+        });
+
+        if (selectedSensors.length === 0) {
+            grid.innerHTML = '<p class="recommend-empty">선택된 센서가 없어요. 이전 단계에서 센서를 선택해주세요.</p>';
+            return;
+        }
+
+        // 같은 타입 센서가 여러 개면 카드 제목에 순번을 붙여 구분함
+        var typeCount = {};
+        selectedSensors.forEach(function (s) { typeCount[s.type] = (typeCount[s.type] || 0) + 1; });
+        var typeSeen = {};
+
+        selectedSensors.forEach(function (s) {
+            var defaults = SENSOR_TYPE_DEFAULTS[s.type] || { max: 0, min: 0, unit: '', icon: 'cpu' };
+            typeSeen[s.type] = (typeSeen[s.type] || 0) + 1;
+            var title = s.type + ' 센서' + (typeCount[s.type] > 1 ? ' ' + typeSeen[s.type] : '');
+
+            var card = document.createElement('div');
+            card.className = 'recommend-card';
+            card.innerHTML =
+                '<div class="recommend-title"><i data-lucide="' + defaults.icon + '"></i>' + title + '</div>' +
+                '<div class="recommend-subtitle">' + s.place + ' · ' + s.model + '</div>' +
+                '<div class="recommend-inputs">' +
+                    '<label>최고값<input type="number" id="rec-max-' + s.id + '" value="' + defaults.max + '" />' + defaults.unit + '</label>' +
+                    '<label>최저값<input type="number" id="rec-min-' + s.id + '" value="' + defaults.min + '" />' + defaults.unit + '</label>' +
+                '</div>';
+            grid.appendChild(card);
+        });
+
+        lucide.createIcons();
+    }
+
     function goToStep(n) {
         document.querySelectorAll('.wizard-panel').forEach(function (p) { p.classList.remove('active'); });
         document.querySelectorAll('.wizard-step').forEach(function (s) { s.classList.remove('active'); });
@@ -204,7 +252,11 @@
             var mushroom = document.getElementById('f-mushroom').value;
             document.getElementById('loading-mushroom').textContent = mushroom;
             document.getElementById('result-mushroom').textContent = mushroom;
-            window.setTimeout(function () { goToStep(4); }, 2200);
+            window.setTimeout(function () {
+                renderMushroomInfo();
+                renderRecommendGrid();
+                goToStep(4);
+            }, 2200);
         }
     }
 

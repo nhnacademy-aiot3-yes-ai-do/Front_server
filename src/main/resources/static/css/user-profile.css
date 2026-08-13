@@ -8,7 +8,7 @@ body {
     min-height: 100vh;
     font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
     color: var(--ink);
-    background: var(--cream-200) url("../images/workspaceback.jpg") center center / cover no-repeat fixed;
+    background: var(--cream-200) url("../images/mainback.jpg") center center / cover no-repeat fixed;
     display: flex;
     flex-direction: column;
 }
@@ -19,7 +19,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: min(94vw, 2100px);
+    width: min(94vw, 2800px);
     margin: 1.6rem auto;
 }
 
