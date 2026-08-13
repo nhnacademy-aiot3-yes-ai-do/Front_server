@@ -8,6 +8,7 @@ public record CultivationDetailResponse(
         Long mushroomId,
         String status,
         String mode,
+        String myRole,
         LocalDateTime startedAt,
         LocalDateTime finishedAt,
         LocalDateTime createdAt,

@@ -6,10 +6,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import site.yesaido.frontserver.dto.cultivation.request.CultivationCreateRequest;
-import site.yesaido.frontserver.dto.cultivation.request.HarvestCreateRequest;
-import site.yesaido.frontserver.dto.cultivation.request.MemberAddRequest;
-import site.yesaido.frontserver.dto.cultivation.request.OwnerTransferRequest;
+import site.yesaido.frontserver.dto.cultivation.request.*;
 import site.yesaido.frontserver.dto.cultivation.response.*;
 
 import java.util.List;
@@ -29,6 +26,10 @@ public interface CultivationClient {
     @PutMapping("/api/cultivations/{cultivation-id}/finish")
     ResponseEntity<CultivationFinishResponse> finishCultivation(@PathVariable("cultivation-id") Long cultivationId);
 
+    @DeleteMapping("/api/cultivations/{cultivation-id}")
+    ResponseEntity<Void> deleteCultivation(@PathVariable("cultivation-id") Long cultivationId);
+
+
     @GetMapping("/api/cultivations/history")
     ResponseEntity<CultivationHistoryPageResponse> getHistory(@RequestParam("page") int page, @RequestParam("size") int size);
 
@@ -42,6 +43,11 @@ public interface CultivationClient {
 
     @DeleteMapping("/api/cultivations/{cultivation-id}/members/{user-id}")
     ResponseEntity<Void> removeMember(@PathVariable("cultivation-id") Long cultivationId, @PathVariable("user-id") Long userId);
+
+    @PutMapping("/api/cultivations/{cultivation-id}/members/{user-id}")
+    ResponseEntity<Void> updateMember(@PathVariable("cultivation-id") Long cultivationId,
+                                      @PathVariable("user-id") Long userId,
+                                      @RequestBody MemberRoleUpdateRequest request);
 
     // 소유권 이전
     @PutMapping("/api/cultivations/{cultivation-id}/owner")
