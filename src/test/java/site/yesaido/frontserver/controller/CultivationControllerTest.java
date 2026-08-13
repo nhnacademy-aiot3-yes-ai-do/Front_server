@@ -149,7 +149,7 @@ class CultivationControllerTest {
     void detailReturnsDashboardViewWithNulls() throws Exception {
         Long cultivationId = 1L;
         CultivationDetailResponse detail = new CultivationDetailResponse(
-                cultivationId, "테스트 재배", 10L, "GROWTH", "GROWTH",
+                cultivationId, "테스트 재배", 10L, "GROWTH", "GROWTH", "MEMBER",
                 LocalDateTime.now(), null, LocalDateTime.now(), null);
 
         when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(detail));
