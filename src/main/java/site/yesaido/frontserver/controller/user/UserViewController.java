@@ -1,21 +1,22 @@
 package site.yesaido.frontserver.controller.user;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+@Slf4j
 @Controller
+@RequiredArgsConstructor
 public class UserViewController {
 
-    @GetMapping("/mypage")
-    public String myPage() {
-        return "user/profile";
-    }
+    // ===== 인증 (Auth) 관련 뷰 =====
 
-    @GetMapping("/mypage/notifications")
-    public String notificationSettingsPage() {
-        return "user/notification-settings";
+    @GetMapping("/login")
+    public String loginPage() {
+        return "auth/login";
     }
 
     @GetMapping("/signup")
@@ -23,24 +24,41 @@ public class UserViewController {
         return "auth/signup";
     }
 
-    @GetMapping("/login")
-    public String loginPage() {
-        return "auth/login";
-    }
-
-    @GetMapping("/signup-nickname")
-    public String signupNicknamePage(@RequestParam String email,
-                                     @RequestParam String password,
+    @GetMapping({"/signup/nickname", "/signup-nickname"})
+    public String signupNicknamePage(@RequestParam(required = false) String email,
+                                     @RequestParam(required = false) String password,
                                      Model model) {
-        model.addAttribute("email", email);
-        model.addAttribute("password", password);
+        if (email != null) model.addAttribute("email", email);
+        if (password != null) model.addAttribute("password", password);
         return "auth/signup-nickname";
     }
 
+    @GetMapping("/find-password")
+    public String findPasswordPage() {
+        return "auth/find-password";
+    }
+
     @GetMapping("/verify-code")
-    public String verifyCodePage(@RequestParam String email, Model model) {
-        model.addAttribute("email", email);
+    public String verifyCodePage(@RequestParam(required = false) String email,
+                                 Model model) {
+        if (email != null) model.addAttribute("email", email);
         return "auth/verify-code";
     }
 
+    @GetMapping("/reset-password")
+    public String resetPasswordPage() {
+        return "auth/reset-password";
+    }
+
+    // ===== 마이페이지 (User) 관련 뷰 =====
+
+    @GetMapping("/mypage")
+    public String mypage() {
+        return "user/profile";
+    }
+
+    @GetMapping("/mypage/notifications")
+    public String notificationSettingsPage() {
+        return "user/notification-settings";
+    }
 }
