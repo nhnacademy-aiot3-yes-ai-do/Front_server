@@ -4,10 +4,14 @@ import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientAutoConfiguration;
+import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.CultivationClient;
@@ -30,7 +34,14 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(CultivationController.class)
+@WebMvcTest(
+        value = CultivationController.class,
+        excludeAutoConfiguration = {
+                OAuth2ClientAutoConfiguration.class,
+                OAuth2ClientWebSecurityAutoConfiguration.class
+        }
+)
+@AutoConfigureMockMvc(addFilters = false)
 @Import(AuthCookieProvider.class)
 class CultivationControllerTest {
 
@@ -57,7 +68,7 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("내 재배지 목록 조회 성공")
+    @DisplayName("내 재배지 목록 조회 성공 - 일반 데이터 분기")
     void listReturnsCultivationListView() throws Exception {
         // 컨트롤러는 Thymeleaf JS 인라인 직렬화를 위해 record를 Map(+ createdAt 문자열)으로 변환한다.
         LocalDateTime createdAt = LocalDateTime.of(2026, 8, 12, 10, 0, 0);
@@ -65,20 +76,31 @@ class CultivationControllerTest {
                 1L, "테스트 재배", 10L, "GROWTH", "GROWTH", 3, "오너닉네임", createdAt);
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(List.of(summary)));
 
-        Map<String, Object> expected = new LinkedHashMap<>();
-        expected.put("cultivationId", 1L);
-        expected.put("name", "테스트 재배");
-        expected.put("mushroomId", 10L);
-        expected.put("status", "GROWTH");
-        expected.put("mode", "GROWTH");
-        expected.put("memberCount", 3);
-        expected.put("ownerNickname", "오너닉네임");
-        expected.put("createdAt", createdAt.toString());
+        Map<String, Object> expectedMap = new LinkedHashMap<>();
+        expectedMap.put("cultivationId", 1L);
+        expectedMap.put("name", "테스트 재배");
+        expectedMap.put("mushroomId", 10L);
+        expectedMap.put("status", "GROWTH");
+        expectedMap.put("mode", "GROWTH");
+        expectedMap.put("memberCount", 3);
+        expectedMap.put("ownerNickname", "오너닉네임");
+        expectedMap.put("createdAt", createdAt.toString());
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivations", List.of(expected)));
+                .andExpect(model().attribute("cultivations", List.of(expectedMap)));
+    }
+
+    @Test
+    @DisplayName("내 재배지 목록 조회 성공 - null 리턴 분기")
+    void listReturnsNullCultivations() throws Exception {
+        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(null));
+
+        mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(view().name("cultivation/list"))
+                .andExpect(model().attribute("cultivations", List.of()));
     }
 
     @Test
@@ -90,16 +112,29 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("재배 이력 조회 성공")
+    @DisplayName("재배 이력 조회 성공 - 일반 데이터 분기")
     void cultivationHistoryReturnsHistoryView() throws Exception {
         // 컨트롤러는 history를 record 대신 Map 뷰 모델로 넣는다 (content 항목의 finishedAt 문자열 변환).
-        CultivationHistoryPageResponse history = new CultivationHistoryPageResponse(List.of(), 0, 0L, 0, 20);
+        LocalDateTime finishedAt = LocalDateTime.of(2026, 8, 12, 15, 0, 0);
+        CultivationHistoryResponse contentItem = new CultivationHistoryResponse(
+                1L, "재배명", 10L, "FINISHED", new BigDecimal("5.0"), "A", finishedAt);
+        CultivationHistoryPageResponse history = new CultivationHistoryPageResponse(
+                List.of(contentItem), 1, 1L, 0, 20);
         when(cultivationClient.getHistory(0, 20)).thenReturn(ResponseEntity.ok(history));
 
+        Map<String, Object> contentMap = new LinkedHashMap<>();
+        contentMap.put("cultivationId", 1L);
+        contentMap.put("name", "재배명");
+        contentMap.put("mushroomId", 10L);
+        contentMap.put("status", "FINISHED");
+        contentMap.put("harvestWeight", new BigDecimal("5.0"));
+        contentMap.put("productGrade", "A");
+        contentMap.put("finishedAt", finishedAt.toString());
+
         Map<String, Object> expected = new LinkedHashMap<>();
-        expected.put("content", List.of());
-        expected.put("totalPages", 0);
-        expected.put("totalElements", 0L);
+        expected.put("content", List.of(contentMap));
+        expected.put("totalPages", 1);
+        expected.put("totalElements", 1L);
         expected.put("number", 0);
         expected.put("size", 20);
 
@@ -107,6 +142,16 @@ class CultivationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/history"))
                 .andExpect(model().attribute("history", expected));
+    }
+
+    @Test
+    @DisplayName("재배 이력 조회 성공 - null 응답 분기")
+    void cultivationHistoryReturnsNullView() throws Exception {
+        when(cultivationClient.getHistory(0, 20)).thenReturn(ResponseEntity.ok(null));
+
+        mockMvc.perform(get("/cultivations/history").cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(view().name("cultivation/history"));
     }
 
     @Test
@@ -123,34 +168,26 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("재배 상세 조회 성공")
-    void detailReturnsDashboardView() throws Exception {
+    @DisplayName("재배 상세 조회 성공 - null 리스트 분기 처리 포함")
+    void detailReturnsDashboardViewWithNulls() throws Exception {
         Long cultivationId = 1L;
         LocalDateTime startedAt = LocalDateTime.of(2026, 8, 1, 9, 0, 0);
         LocalDateTime createdAt = LocalDateTime.of(2026, 8, 1, 9, 0, 0);
-        LocalDateTime joinedAt = LocalDateTime.of(2026, 8, 12, 11, 0, 0);
         CultivationDetailResponse detail = new CultivationDetailResponse(
                 cultivationId, "테스트 재배", 10L, "GROWTH", "GROWTH",
                 startedAt, null, createdAt, null);
-        MemberResponse member = new MemberResponse(1L, 100L, "닉네임", "OWNER", joinedAt);
 
         when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(detail));
-        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(List.of(member)));
-        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(List.of()));
+        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(null));
 
-        // members/photos만 Map 변환. cultivation 상세는 record 그대로 model에 넣는다.
-        Map<String, Object> expectedMember = new LinkedHashMap<>();
-        expectedMember.put("memberId", 1L);
-        expectedMember.put("userId", 100L);
-        expectedMember.put("nickname", "닉네임");
-        expectedMember.put("role", "OWNER");
-        expectedMember.put("joinedAt", joinedAt.toString());
-
+        // members/photos null → 빈 List. cultivation 상세는 record 그대로 model에 넣는다.
         mockMvc.perform(get("/cultivations/{cultivation-id}", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("dashboard/main"))
                 .andExpect(model().attribute("cultivation", detail))
-                .andExpect(model().attribute("members", List.of(expectedMember)));
+                .andExpect(model().attribute("members", List.of()))
+                .andExpect(model().attribute("photos", List.of()));
     }
 
     @Test
@@ -251,5 +288,28 @@ class CultivationControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.harvestId").value(500L));
+    }
+
+    @Test
+    @DisplayName("사진 업로드 및 조회/삭제 테스트 분기")
+    void photoOperationsTest() throws Exception {
+        Long cultivationId = 1L;
+        MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test data".getBytes());
+        PhotoResponse photo = new PhotoResponse(100L, "key", "uri", "S3", LocalDateTime.now());
+
+        when(cultivationClient.uploadPhoto(eq(cultivationId), any())).thenReturn(ResponseEntity.ok(photo));
+        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(List.of(photo)));
+        when(cultivationClient.deletePhoto(cultivationId, 100L)).thenReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(multipart("/cultivations/{cultivation-id}/photos", cultivationId)
+                        .file(file)
+                        .cookie(LOGGED_IN))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/cultivations/{cultivation-id}/photos", cultivationId).cookie(LOGGED_IN))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(delete("/cultivations/{cultivation-id}/photos/100", cultivationId).cookie(LOGGED_IN))
+                .andExpect(status().isOk());
     }
 }

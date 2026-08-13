@@ -1,12 +1,10 @@
 package site.yesaido.frontserver.auth;
 
 import feign.Response;
-import feign.RetryableException;
 import feign.codec.ErrorDecoder;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -16,9 +14,11 @@ import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.ReissueRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
+import site.yesaido.frontserver.exception.DormantUserException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
-import java.util.Date;
+import java.nio.charset.StandardCharsets;
+
 /*
 * Feign 호출이 401을 받으면 그걸 예외로 던지는 대신 refreshToken으로 조용히 재발급 받고 원래 요청을 재시도 시킴
 * RequestTokenHolder가 만들어 둔 통로에 새로운 토큰을 채워 넣어주는 주체
@@ -46,10 +46,49 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
 
     @Override
     public Exception decode(String methodKey, Response response) {
+
+        DormantUserException dormantUserException = checkDormantUser(response);
+        if(dormantUserException != null){
+            return dormantUserException;
+        }
+
         if (response.status() != 401 || methodKey.contains("#reissue")) {
             return defaultDecoder.decode(methodKey, response);
         }
 
+        return handleReissue(methodKey, response);
+    }
+
+    /**
+     *
+     * 1. 휴면 계정 감지 메서드
+     *
+     */
+    private DormantUserException checkDormantUser(Response response){
+        if(response.body() == null) return null;
+
+        try {
+            byte[] bytes = feign.Util.toByteArray(response.body().asInputStream());
+            String body = new String(bytes, StandardCharsets.UTF_8);
+
+            if ((body.contains("휴면") || body.contains("DORMANT"))) {
+                ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                String email = attr != null ? attr.getRequest().getParameter("email") : "";
+                return new DormantUserException(email != null ? email : "", "휴면 계정입니다. 이메일 인증을 진행해 주세요.");
+            }
+
+            response.toBuilder().body(bytes).build();
+        } catch (Exception ignored) {
+            // Ignore parse error
+        }
+        return null;
+    }
+
+    /**
+     * 2. 401 토큰 재발급 처리 메서드
+     *
+     */
+    private Exception handleReissue(String methodKey, Response response) {
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attr == null) {
             return defaultDecoder.decode(methodKey, response);
@@ -87,6 +126,8 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
             return defaultDecoder.decode(methodKey, response);
         }
     }
+
+
 
     private String cookieValue(HttpServletRequest request, String name) {
         if (request.getCookies() == null) return null;
