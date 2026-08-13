@@ -15,10 +15,11 @@
         <img src="/images/logo1.png" alt="MushMush 로고" class="auth-logo" />
 
         <div class="auth-body">
-            <p class="help-text error" id="login-error-text" th:if="${loginError}" th:text="${loginError}"></p>
             <p class="help-text error" th:if="${loginError}">
                 <span th:text="${loginError}"></span>
-                <a href="/find-password?type-dormant" style="color: #d9534f; font-weight: bold; text-decoration: underline; margin-left: 6px;">[이메일 인증하기]</a>
+                <a th:if="${loginError.contains('5회') || loginError.contains('인증')}"
+                   href="/find-password?type=dormant"
+                   style="color: #d9534f; font-weight: bold; text-decoration: underline; margin-left: 6px;">[이메일 인증하기]</a>
             </p>
 
             <form id="login-form" action="/login" method="post">
