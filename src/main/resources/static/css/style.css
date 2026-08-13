@@ -317,22 +317,6 @@ body.admin-login-body .auth-links {
     margin-top: 22px;
 }
 
-.admin-login-corner-link {
-    position: fixed;
-    right: 20px;
-    bottom: 16px;
-    z-index: 2;
-    font-size: 13px;
-    color: var(--brown-700);
-    text-decoration: underline;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
-    transition: color 0.15s ease;
-}
-
-.admin-login-corner-link:hover {
-    color: var(--brown-900);
-}
-
 .help-text {
     font-size: 13px;
     color: var(--brown-500);
