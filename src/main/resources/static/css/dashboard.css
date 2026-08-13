@@ -988,6 +988,13 @@ body {
     color: var(--danger);
 }
 
+.member-role-toggle {
+    background: none;
+    border: none;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    color: var(--ink);
+}
+
 .notif-row {
     padding: 12px 6px;
     font-size: 14px;

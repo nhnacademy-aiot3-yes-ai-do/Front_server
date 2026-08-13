@@ -101,7 +101,8 @@ public class CultivationController {
     }
 
     @GetMapping("/{cultivation-id}")
-    public String detail(@PathVariable("cultivation-id") Long cultivationId, Model model) {
+    public String detail(@PathVariable("cultivation-id") Long cultivationId,
+                         Model model) {
         CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
         List<MemberResponse> members = cultivationClient.getMembers(cultivationId).getBody();
         List<PhotoResponse> photos = cultivationClient.getPhoto(cultivationId).getBody();
@@ -137,6 +138,7 @@ public class CultivationController {
         model.addAttribute("cultivation", cultivation);
         model.addAttribute("members", membersForView);
         model.addAttribute("photos", photosForView);
+        model.addAttribute("myRole", cultivation != null ? cultivation.myRole() : null);
         return "dashboard/main";
     }
 
@@ -144,6 +146,12 @@ public class CultivationController {
     public String finish(@PathVariable("cultivation-id") Long cultivationId) {
         cultivationClient.finishCultivation(cultivationId);
         return "redirect:/cultivations/" + cultivationId;
+    }
+
+    @DeleteMapping("/{cultivation-id}")
+    public ResponseEntity<Void> deleteCultivation(@PathVariable("cultivation-id") Long cultivationId) {
+        cultivationClient.deleteCultivation(cultivationId);
+        return ResponseEntity.noContent().build();
     }
 
     // CultivationMember
@@ -170,6 +178,14 @@ public class CultivationController {
                                              @PathVariable("user-id") Long userId) {
         cultivationClient.removeMember(cultivationId, userId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{cultivation-id}/members/{user-id}")
+    public ResponseEntity<Void> updateMember(@PathVariable("cultivation-id") Long cultivationId,
+                                             @PathVariable("user-id") Long userId,
+                                             @RequestBody MemberRoleUpdateRequest request) {
+        cultivationClient.updateMember(cultivationId, userId, request);
+        return ResponseEntity.ok().build();
     }
 
     // 소유권 이전

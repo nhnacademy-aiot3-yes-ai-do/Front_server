@@ -202,7 +202,16 @@ function renderMemberRow(m) {
     row.className = 'member-row';
 
     var actionBtns = '';
-    if (m.role !== 'OWNER') {
+    if (MY_ROLE === 'OWNER' && m.role !== 'OWNER') {
+        if (m.role === 'MEMBER') {
+            actionBtns +=
+                '<button class="member-role-toggle" type="button" title="매니저로 승격" onclick="changeMemberRole(' + m.userId + ', \'MANAGER\')">' +
+                '<i data-lucide="shield-check" style="width:18px;height:18px;"></i></button>';
+        } else if (m.role === 'MANAGER') {
+            actionBtns +=
+                '<button class="member-role-toggle" type="button" title="멤버로 강등" onclick="changeMemberRole(' + m.userId + ', \'MEMBER\')">' +
+                '<i data-lucide="shield-alert" style="width:18px;height:18px;"></i></button>';
+        }
         actionBtns +=
             '<button class="member-transfer" type="button" title="방장 위임" onclick="transferOwnership(' + m.userId + ')">' +
             '<i data-lucide="crown" style="width:18px;height:18px;"></i></button>' +
@@ -329,6 +338,21 @@ function transferOwnership(userId) {
             refreshMembers();
         })
         .catch(function () { alert('방장 위임에 실패했습니다.'); });
+}
+
+function changeMemberRole(userId, newRole) {
+    var label = newRole === 'MANAGER' ? '매니저로 승격' : '멤버로 강등';
+    if (!confirm('이 멤버를 ' + label + '하시겠어요?')) return;
+    fetch('/cultivations/' + CULTIVATION_ID + '/members/' + userId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole })
+    })
+        .then(function (res) {
+            if (!res.ok) throw new Error('role update failed');
+            refreshMembers();
+        })
+        .catch(function () { alert('역할 변경에 실패했습니다.'); });
 }
 
 // ===== AI report 탭: 일자별 리포트 =====
@@ -634,6 +658,15 @@ function renderEndCompare(stats) {
 function finishCultivation() {
     closeModal('modal-end-compare');
     location.href = '/';
+}
+
+function deleteCultivation() {
+    fetch('/cultivations/' + CULTIVATION_ID, { method: 'DELETE' })
+        .then(function (res) {
+            if (!res.ok) throw new Error('delete failed');
+            location.href = '/cultivations';
+        })
+        .catch(function () { alert('재배지 삭제에 실패했습니다.'); });
 }
 
 function renderMainPhoto() {

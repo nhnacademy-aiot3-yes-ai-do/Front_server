@@ -234,13 +234,13 @@
 
             <div class="action-bar">
 
-            <div class="dropdown-panel" id="member-panel">
-                <div class="dropdown-panel-title">
-                    담당자 관리
-                    <button type="button" title="추가" onclick="openMemberAddModal()">
-                        <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
-                    </button>
-                </div>
+                <div class="dropdown-panel" id="member-panel">
+                    <div class="dropdown-panel-title">
+                        담당자 관리
+                        <button type="button" title="추가" th:if="${myRole == 'OWNER'}" onclick="openMemberAddModal()">
+                            <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
+                        </button>
+                    </div>
                 <div id="member-list"></div>
                 <div class="panel-pagination" id="member-pagination">
                     <button type="button" onclick="changeMemberPage(-1)" id="member-prev">
@@ -267,15 +267,18 @@
                 </div>
             </div>
 
-            <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
-                <i data-lucide="users"></i>
-            </button>
-            <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
-                <i data-lucide="bell"></i>
-            </button>
-            <button class="icon-btn danger" type="button" title="종료하기" onclick="openModal('modal-end')">
-                <i data-lucide="power"></i>
-            </button>
+                <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
+                    <i data-lucide="users"></i>
+                </button>
+                <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
+                    <i data-lucide="bell"></i>
+                </button>
+                <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openModal('modal-end')">
+                    <i data-lucide="power"></i>
+                </button>
+                <button class="icon-btn danger" type="button" title="삭제하기" th:if="${myRole == 'OWNER'}" onclick="openModal('modal-delete')">
+                    <i data-lucide="trash-2"></i>
+                </button>
             </div>
         </div>
     </section>
@@ -392,16 +395,17 @@
 </div>
 
 <!-- 종료 확인 다이얼로그 -->
-<div class="modal-overlay" id="modal-end">
+<!-- 삭제 확인 다이얼로그 -->
+<div class="modal-overlay" id="modal-delete">
     <div class="modal-box">
-        <button class="modal-close" type="button" onclick="closeModal('modal-end')">
+        <button class="modal-close" type="button" onclick="closeModal('modal-delete')">
             <i data-lucide="x"></i>
         </button>
-        <h3 class="modal-title">종료하기</h3>
-        <p class="modal-desc">정말 재배를 종료하시겠습니까?</p>
+        <h3 class="modal-title">재배지 삭제</h3>
+        <p class="modal-desc">정말 이 재배지를 삭제하시겠습니까? 삭제 후에는 재배 이력에서만 확인할 수 있어요.</p>
         <div class="modal-actions">
-            <button class="btn btn-outline" type="button" onclick="closeModal('modal-end')">Cancel</button>
-            <button class="btn btn-primary" type="button" onclick="closeModal('modal-end'); openEndAmountModal()">OK</button>
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-delete')">Cancel</button>
+            <button class="btn btn-primary" type="button" onclick="deleteCultivation()">삭제</button>
         </div>
     </div>
 </div>
@@ -492,6 +496,7 @@
     var CULTIVATION_ID = /*[[${cultivation?.cultivationId}]]*/ 0;
     var PHOTOS = /*[[${photos}]]*/ [];
     var memberData = /*[[${members}]]*/ [];
+    var MY_ROLE = /*[[${myRole}]]*/ null;
 </script>
 <script src="/js/msh-select.js"></script>
 <script src="/js/dashboard.js"></script>
