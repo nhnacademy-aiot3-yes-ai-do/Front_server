@@ -106,7 +106,7 @@ public class UserController {
         }
     }
 
-    @RequestMapping(value = "/logout", method = {RequestMethod.GET, RequestMethod.POST})
+    @PostMapping("/logout")
     public String logout(HttpServletResponse response,
                          @RequestHeader(value = "X-User-Id", required = false) Long userId) {
         if (userId != null) {

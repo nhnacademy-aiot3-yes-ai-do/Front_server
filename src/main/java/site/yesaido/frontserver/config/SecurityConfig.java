@@ -18,6 +18,7 @@ import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.GoogleLoginRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
+import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.time.Duration;
 
@@ -28,6 +29,7 @@ import java.time.Duration;
 public class SecurityConfig {
 
     private final UserClient userClient;
+    private final AuthCookieProvider authCookieProvider;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -67,29 +69,22 @@ public class SecurityConfig {
                 }
 
                 if (idToken.isBlank()) {
-                    log.error("[OAuth2 핸들러] Google ID Token 획득 실패. (scope openid 확인 필요)");
+                    log.error("[OAuth2 핸들러] Google ID Token 획득 실패");
                     response.sendRedirect("/login?error=no_id_token");
                     return;
                 }
 
-                log.info("[구글 OAuth2 로그인 성공] 이메일: {}, 이름: {}", email, name);
+                log.info("[구글 OAuth2 로그인 성공]");
 
                 // 1. Auth_server 로 소셜 회원가입/로그인 요청
                 ApiResponse<TokenResponse> tokenResponse = userClient.loginWithGoogle(
                         new GoogleLoginRequest(idToken, email, name)
                 );
 
-                // 2. AccessToken 보안 쿠키 설정 (HttpOnly, SameSite=Lax, MaxAge=30분)
-                ResponseCookie accessCookie = ResponseCookie.from("accessToken", tokenResponse.data().accessToken())
-                        .path("/")
-                        .httpOnly(true)
-                        .sameSite("Lax")
-                        .maxAge(Duration.ofMinutes(30))
-                        .build();
+                TokenResponse data = tokenResponse.data();
 
-                response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
+                authCookieProvider.setAuthCookies(response, data.accessToken(), data.refreshToken(), data.role());
 
-                // 3. 메인 페이지로 이동
                 response.sendRedirect("/");
             } catch (Exception e) {
                 log.error("[OAuth2 성공 핸들러 예외 발생] {}", e.getMessage(), e);

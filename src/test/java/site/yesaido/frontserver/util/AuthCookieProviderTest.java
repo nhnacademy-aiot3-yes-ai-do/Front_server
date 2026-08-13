@@ -4,7 +4,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AuthCookieProviderTest {
 
@@ -16,7 +19,12 @@ class AuthCookieProviderTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         authCookieProvider.setAuthCookies(response, "accessVal", "refreshVal", "USER");
 
-        assertEquals(3, response.getHeaders("Set-Cookie").size());
+        List<String> cookies = response.getHeaders("Set-Cookie");
+        assertEquals(3, cookies.size());
+
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("accessToken=accessVal") && c.contains("HttpOnly") && c.contains("SameSite=Lax")));
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=refreshVal")));
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("role=USER")));
     }
 
     @Test
@@ -25,7 +33,9 @@ class AuthCookieProviderTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         authCookieProvider.setAuthCookies(response, "accessVal", null, null);
 
-        assertEquals(1, response.getHeaders("Set-Cookie").size());
+        List<String> cookies = response.getHeaders("Set-Cookie");
+        assertEquals(1, cookies.size());
+        assertTrue(cookies.getFirst().contains("accessToken=accessVal"));
     }
 
     @Test
@@ -34,6 +44,8 @@ class AuthCookieProviderTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         authCookieProvider.clearAuthCookies(response);
 
-        assertEquals(3, response.getHeaders("Set-Cookie").size());
+        List<String> cookies = response.getHeaders("Set-Cookie");
+        assertEquals(3, cookies.size());
+        assertTrue(cookies.stream().allMatch(c -> c.contains("Max-Age=0")));
     }
 }

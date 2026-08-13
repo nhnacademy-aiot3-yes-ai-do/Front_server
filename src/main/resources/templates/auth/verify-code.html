@@ -37,10 +37,7 @@
         event.preventDefault();
 
         const email = document.getElementById('verify-email').value;
-        const type = document.getElementById('verify-type').value;
         const code = document.getElementById('code').value;
-
-        console.log('인증 시작 -> 이메일:', email, '타입:', type, '인증코드:', code);
 
         if (!email) {
             alert('이메일 정보가 누락되었습니다. 이메일 입력 화면으로 이동합니다.');
@@ -53,18 +50,14 @@
                 method: 'POST'
             });
             const isVerified = await verifyRes.json();
-            console.log('검증 응답 결과:', isVerified);
 
             const isSuccess = (isVerified === true || isVerified === "true" || (isVerified && isVerified.data === true));
 
             if (isSuccess) {
-                console.log('인증 성공! 백엔드 휴면 해제 API 호출 시작...');
 
                 const releaseRes = await fetch(`/users/dormant/release?email=${encodeURIComponent(email)}`, {
                     method: 'POST'
                 });
-
-                console.log('휴면 해제 응답 상태:', releaseRes.status);
 
                 if (releaseRes.ok) {
                     alert('휴면 계정이 성공적으로 해제되었습니다! 다시 로그인해 주세요.');
@@ -77,7 +70,7 @@
             }
         } catch (error) {
             console.error('인증 예외 발생:', error);
-            alert('인증 처리 중 오류가 발생했습니다: ' + error.message);
+            alert('인증 처리 중 오류가 발생했습니다.');
         }
     }
 </script>

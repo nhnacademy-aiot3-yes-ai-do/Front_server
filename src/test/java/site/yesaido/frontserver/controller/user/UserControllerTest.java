@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -128,8 +129,10 @@ class UserControllerTest {
                 .build();
         given(userClient.reissue(any())).willReturn(new ApiResponse<>(true, "재발급 성공", tokenResponse));
 
-        mockMvc.perform(post("/users/reissue").cookie(new jakarta.servlet.http.Cookie("refreshToken", "validRefresh")))
+        mockMvc.perform(post("/users/reissue").cookie(new Cookie("refreshToken", "validRefresh")))
                 .andExpect(status().isOk());
+
+        verify(authCookieProvider).setAuthCookies(any(), eq("newAccess"), eq("newRefresh"), eq("USER"));
     }
 
     @Test
@@ -166,6 +169,8 @@ class UserControllerTest {
                         .param("password", "password123"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"));
+
+        verify(authCookieProvider).setAuthCookies(any(), eq("mockAccess"), eq("mockRefresh"), eq("USER"));
     }
 
     @Test
@@ -183,6 +188,8 @@ class UserControllerTest {
                         .param("password", "password123"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin"));
+
+        verify(authCookieProvider).setAuthCookies(any(), eq("mockAccess"), eq("mockRefresh"), eq("ADMIN"));
     }
 
     @Test
@@ -283,5 +290,7 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+
+        verify(authCookieProvider).setAuthCookies(any(), eq("access"), eq("refresh"), eq("USER"));
     }
 }
