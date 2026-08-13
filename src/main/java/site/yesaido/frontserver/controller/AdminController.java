@@ -18,11 +18,6 @@ public class             AdminController {
         return "admin/members";
     }
 
-    @GetMapping("/admin/cultivations")
-    public String cultivations() {
-        return "admin/cultivations";
-    }
-
     @GetMapping("/admin/inquiries")
     public String inquiries() {
         return "admin/inquiries";

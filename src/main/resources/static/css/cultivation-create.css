@@ -8,7 +8,7 @@ body {
     min-height: 100vh;
     font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
     color: var(--ink);
-    background: var(--cream-200) url("../images/workspaceback.jpg") center center / cover no-repeat fixed;
+    background: var(--cream-200) url("../images/mainback.jpg") center center / cover no-repeat fixed;
     display: flex;
     flex-direction: column;
 }
@@ -23,12 +23,27 @@ body {
 
 .wizard-box {
     width: min(90vw, 56rem);
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
     background: rgba(251, 246, 234, 0.6);
     backdrop-filter: blur(10px);
     border: 2px solid rgba(139, 94, 60, 0.28);
     border-radius: 24px;
     box-shadow: 0 8px 24px rgba(63, 42, 29, 0.15);
-    padding: 2.2rem 2.6rem;
+    padding: 1.5rem 2.2rem;
+}
+
+.wizard-box::-webkit-scrollbar {
+    width: 8px;
+}
+
+.wizard-box::-webkit-scrollbar-thumb {
+    background: var(--brown-300);
+    border-radius: 8px;
+}
+
+.wizard-box::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 /* ---- step indicator ---- */
@@ -37,7 +52,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.6rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.1rem;
 }
 
 .wizard-step {
@@ -103,9 +118,9 @@ body {
 
 .wizard-desc {
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--brown-500);
-    margin: 0 0 1.8rem;
+    margin: 0 0 1rem;
 }
 
 .form-grid {
@@ -138,7 +153,7 @@ body {
 .wizard-actions {
     display: flex;
     justify-content: flex-end;
-    margin-top: 1.6rem;
+    margin-top: 1rem;
 }
 
 .wizard-actions-split { justify-content: space-between; align-items: center; }
@@ -277,18 +292,54 @@ body {
     line-height: 1.6;
 }
 
+/* ---- 버섯 효능 안내 ---- */
+.mushroom-info-card {
+    border: 2px solid rgba(124, 148, 115, 0.35);
+    border-radius: 14px;
+    padding: 0.7rem 1.1rem;
+    background: rgba(124, 148, 115, 0.1);
+    margin-bottom: 0.9rem;
+}
+
+.mushroom-info-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--brown-900);
+    margin-bottom: 4px;
+}
+
+.mushroom-info-title svg { width: 1rem; height: 1rem; color: var(--sage-600); }
+
+.mushroom-info-list {
+    margin: 0;
+    padding-left: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.mushroom-info-list li {
+    font-size: 0.76rem;
+    color: var(--brown-700);
+    line-height: 1.4;
+}
+
 /* ---- recommend step ---- */
 .recommend-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    margin-bottom: 1.6rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.7rem;
+    margin-bottom: 1rem;
 }
 
 .recommend-card {
     border: 2px solid rgba(139, 94, 60, 0.2);
-    border-radius: 14px;
-    padding: 1rem;
+    border-radius: 12px;
+    padding: 0.7rem 0.8rem;
     background: rgba(255, 255, 255, 0.5);
 }
 
@@ -297,30 +348,46 @@ body {
     align-items: center;
     gap: 6px;
     font-family: "Gaegu", inherit;
+    font-size: 0.92rem;
     font-weight: 700;
     color: var(--brown-900);
-    margin-bottom: 10px;
+    margin-bottom: 4px;
 }
 
-.recommend-title svg { width: 1.1rem; height: 1.1rem; color: var(--sage-600); }
+.recommend-title svg { width: 1rem; height: 1rem; color: var(--sage-600); }
+
+.recommend-subtitle {
+    font-size: 0.68rem;
+    color: var(--brown-500);
+    margin: -2px 0 8px;
+}
+
+.recommend-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--brown-500);
+    padding: 1.4rem 0;
+}
 
 .recommend-inputs {
     display: flex;
-    gap: 0.7rem;
+    gap: 0.5rem;
 }
 
 .recommend-inputs label {
     flex: 1;
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     color: var(--brown-500);
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
 }
 
 .recommend-inputs input {
-    padding: 0.5rem 0.6rem;
+    padding: 0.4rem 0.5rem;
     border: 2px solid var(--brown-300);
     border-radius: 8px;
     font-family: inherit;
-}ㄹ
+    width: 100%;
+}

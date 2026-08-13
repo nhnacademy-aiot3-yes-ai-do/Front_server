@@ -13,7 +13,7 @@ body {
     min-height: 100vh;
     font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
     color: var(--ink);
-    background: var(--cream-200) url("../images/workspaceback.jpg") center center / cover no-repeat fixed;
+    background: var(--cream-200) url("../images/mainback.jpg") center center / cover no-repeat fixed;
     display: flex;
     flex-direction: column;
 }
@@ -25,7 +25,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: min(94vw, 2100px);
+    width: min(94vw, 2800px);
     margin: 1.6rem auto;
 }
 
@@ -285,7 +285,9 @@ body {
     grid-template-columns: 1fr 0.7fr 1.1fr 1fr;
     gap: 1.3rem;
     align-items: stretch;
-    height: 34rem;
+    /* 고정 height 대신 aspect-ratio를 써서, page-container 너비가 화면 크기에 맞춰
+       커질 때 세로 높이도 같은 비율로 같이 커지도록 함 */
+    aspect-ratio: 3.01 / 1;
 }
 
 .chatbot-card {
@@ -763,7 +765,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1.4fr 0.9fr;
     gap: 1.3rem;
-    height: 16rem;
+    aspect-ratio: 6.4 / 1;
 }
 
 .report-row .photo-card {

@@ -20,6 +20,44 @@ body::before {
     z-index: 0;
 }
 
+.admin-login-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 26px;
+}
+
+.admin-login-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(124, 148, 115, 0.14);
+    color: var(--sage-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-login-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.admin-login-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.admin-login-brand span {
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 19px;
+    color: var(--brown-900);
+}
+
 .auth-wrap {
     position: relative;
     z-index: 1;
@@ -30,7 +68,7 @@ body::before {
 .auth-card {
     display: flex;
     flex-direction: column;
-    height: min(820px, calc(100vh - 80px));
+    max-height: min(820px, calc(100vh - 80px));
     background: rgba(251, 246, 234, 0.55);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
@@ -38,7 +76,20 @@ body::before {
     border-radius: 24px;
     padding: 40px 48px;
     box-shadow: 0 8px 24px rgba(63, 42, 29, 0.15);
-    overflow: hidden;
+    overflow-y: auto;
+}
+
+.auth-card::-webkit-scrollbar {
+    width: 8px;
+}
+
+.auth-card::-webkit-scrollbar-thumb {
+    background: var(--brown-300);
+    border-radius: 8px;
+}
+
+.auth-card::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .auth-body {
@@ -260,6 +311,26 @@ input:focus {
 
 .auth-links span {
     color: var(--brown-700);
+}
+
+body.admin-login-body .auth-links {
+    margin-top: 22px;
+}
+
+.admin-login-corner-link {
+    position: fixed;
+    right: 20px;
+    bottom: 16px;
+    z-index: 2;
+    font-size: 13px;
+    color: var(--brown-700);
+    text-decoration: underline;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: color 0.15s ease;
+}
+
+.admin-login-corner-link:hover {
+    color: var(--brown-900);
 }
 
 .help-text {

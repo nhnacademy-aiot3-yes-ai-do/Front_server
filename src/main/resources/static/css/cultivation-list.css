@@ -8,7 +8,7 @@ body {
     min-height: 100vh;
     font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
     color: var(--ink);
-    background: var(--cream-200) url("../images/workspaceback.jpg") center center / cover no-repeat fixed;
+    background: var(--cream-200) url("../images/mainback.jpg") center center / cover no-repeat fixed;
     display: flex;
     flex-direction: column;
 }
@@ -19,7 +19,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: min(94vw, 2100px);
+    width: min(94vw, 2800px);
     margin: 1.6rem auto;
 }
 
@@ -77,9 +77,10 @@ body {
     border-radius: 0 20px 20px 20px;
     padding: 1.8rem;
     transition: opacity 0.2s ease;
-    /* 한 페이지 6개(헤더 1줄 + 데이터 6줄) + footer 기준으로 고정 :
-       목록 개수와 상관없이 상자 크기가 항상 같도록 함 (넘치는 항목은 페이징 처리) */
-    height: 40rem;
+    /* 목록 개수와 상관없이 상자 크기가 항상 같도록 고정하되(넘치는 항목은 페이징 처리),
+       화면 너비(page-container와 동일한 min(94vw, 2800px))에 맞춰 세로도 같은 비율로 커지도록
+       고정 height 대신 aspect-ratio를 씀 — 가로만 늘어나고 세로는 그대로인 문제 방지 */
+    aspect-ratio: 2.56 / 1;
     display: flex;
     flex-direction: column;
 }
@@ -94,12 +95,12 @@ body {
 /* 페이지마다 실제 행 개수가 달라져도(마지막 페이지 등) 높이가 항상 동일하도록 고정 :
    행이 적으면 남는 공간은 그냥 빈 공간으로 둠 (버튼/페이지네이션 위치가 흔들리지 않게) */
 .list-table-wrap {
-    height: 31rem;
+    flex: 1;
+    min-height: 0;
     border: 2px solid rgba(139, 94, 60, 0.18);
     border-radius: 14px;
     overflow-y: auto;
     overflow-x: hidden;
-    flex-shrink: 0;
 }
 
 .list-table-wrap::-webkit-scrollbar { width: 8px; }

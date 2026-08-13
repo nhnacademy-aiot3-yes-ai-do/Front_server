@@ -11,7 +11,8 @@
 </head>
 <body>
 
-<header th:replace="~{fragments/admin-header :: adminHeader}"></header>
+<div class="admin-body-row">
+<aside th:replace="~{fragments/admin-sidebar :: adminSidebar('members')}"></aside>
 
 <div class="page-container admin-list-page">
 
@@ -52,6 +53,7 @@
         <div class="admin-pagination" id="member-pagination"></div>
     </div>
 
+</div>
 </div>
 
 <script src="/js/msh-select.js"></script>

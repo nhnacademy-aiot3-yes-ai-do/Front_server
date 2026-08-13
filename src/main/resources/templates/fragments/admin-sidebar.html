@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside class="admin-sidebar" th:fragment="adminSidebar(active)">
+    <a href="/admin" class="admin-sidebar-brand">
+        <img src="/images/logo2.png" alt="MushMush 로고" class="admin-sidebar-logo" />
+    </a>
+
+    <nav class="admin-sidebar-nav">
+        <div class="admin-sidebar-group">
+            <span class="admin-sidebar-group-label">메인</span>
+            <a href="/admin" class="admin-sidebar-link" th:classappend="${active == 'dashboard'} ? ' is-active'">
+                <i data-lucide="layout-dashboard"></i>대시보드
+            </a>
+        </div>
+        <div class="admin-sidebar-group">
+            <span class="admin-sidebar-group-label">관리</span>
+            <a href="/admin/members" class="admin-sidebar-link" th:classappend="${active == 'members'} ? ' is-active'">
+                <i data-lucide="users"></i>회원 관리
+            </a>
+            <a href="/admin/inquiries" class="admin-sidebar-link" th:classappend="${active == 'inquiries'} ? ' is-active'">
+                <i data-lucide="message-square"></i>회원 문의
+            </a>
+            <a href="/admin/mushrooms" class="admin-sidebar-link" th:classappend="${active == 'mushrooms'} ? ' is-active'">
+                <i data-lucide="package"></i>버섯 등록
+            </a>
+        </div>
+    </nav>
+
+    <div class="admin-sidebar-footer">
+        <div class="admin-sidebar-profile">
+            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+            <span class="admin-sidebar-profile-name">관리자</span>
+        </div>
+        <button class="admin-sidebar-logout" type="button" onclick="handleLogout()">
+            <i data-lucide="log-out"></i>로그아웃
+        </button>
+    </div>
+</aside>
+
+</body>
+</html>
