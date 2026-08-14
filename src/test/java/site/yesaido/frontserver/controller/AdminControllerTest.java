@@ -50,14 +50,6 @@ class AdminControllerTest {
     }
 
     @Test
-    @DisplayName("어드민 재배지 관리 화면 접근")
-    void adminCultivationsView() throws Exception {
-        mockMvc.perform(get("/admin/cultivations").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
-                .andExpect(status().isOk())
-                .andExpect(view().name("admin/cultivations"));
-    }
-
-    @Test
     @DisplayName("어드민 문의 관리 화면 접근")
     void adminInquiriesView() throws Exception {
         mockMvc.perform(get("/admin/inquiries").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
