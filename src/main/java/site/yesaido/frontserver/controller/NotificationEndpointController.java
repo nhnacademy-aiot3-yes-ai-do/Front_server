@@ -18,10 +18,8 @@ import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.dto.notification.request.DiscordEndpointFormRequest;
 import site.yesaido.frontserver.dto.notification.request.EndpointCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.EndpointUpdateRequest;
-import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
-import java.util.List;
 import java.util.Map;
 
 @LoginRequired
@@ -36,8 +34,12 @@ public class NotificationEndpointController {
     private long discordChannelTypeId;
 
     @GetMapping
-    public ResponseEntity<List<EndpointResponse>> listEndpoints() {
-        return notificationClient.getEndpoints();
+    public ResponseEntity<?> listEndpoints() {
+        try {
+            return notificationClient.getEndpoints();
+        } catch (FeignException exception) {
+            return feignError(exception);
+        }
     }
 
     @PostMapping
@@ -76,6 +78,9 @@ public class NotificationEndpointController {
     }
 
     private static ResponseEntity<Object> feignError(FeignException exception) {
+        if (exception instanceof FeignException.Unauthorized unauthorized) {
+            throw unauthorized;
+        }
         int status = exception.status() > 0 ? exception.status() : 502;
         String body = exception.contentUTF8();
         if (body == null || body.isBlank()) {

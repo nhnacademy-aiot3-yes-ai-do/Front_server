@@ -1,5 +1,8 @@
 package site.yesaido.frontserver.controller;
 
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,8 @@ import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.LoginCheckInterceptor;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -75,6 +80,16 @@ class NotificationEndpointControllerTest {
     }
 
     @Test
+    @DisplayName("Endpoint 목록 조회 중 알림 서버 오류를 그대로 전달")
+    void listEndpointsPropagatesNotificationServerError() throws Exception {
+        given(notificationClient.getEndpoints()).willThrow(feignException(503));
+
+        mockMvc.perform(get("/notifications/endpoints").cookie(LOGGED_IN))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.detail").value("알림 서버를 사용할 수 없습니다."));
+    }
+
+    @Test
     @DisplayName("Discord Endpoint 생성 시 설정된 channelTypeId를 붙인다")
     void createDiscordEndpointUsesConfiguredChannelTypeId() throws Exception {
         given(notificationClient.createEndpoint(any(EndpointCreateRequest.class)))
@@ -98,6 +113,18 @@ class NotificationEndpointControllerTest {
     }
 
     @Test
+    @DisplayName("Discord가 아닌 Webhook URL은 Endpoint 생성 요청 전에 거부")
+    void createDiscordEndpointRejectsNonDiscordUrl() throws Exception {
+        mockMvc.perform(post("/notifications/endpoints")
+                        .cookie(LOGGED_IN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"destination":"https://example.com/api/webhooks/1/token","displayName":"우리 농장 알림"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     @DisplayName("Discord Endpoint 삭제")
     void deleteEndpoint() throws Exception {
         given(notificationClient.deleteEndpoint(11L)).willReturn(ResponseEntity.noContent().build());
@@ -106,5 +133,24 @@ class NotificationEndpointControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(notificationClient).deleteEndpoint(11L);
+    }
+
+    private static FeignException feignException(int status) {
+        Request request = Request.create(
+                Request.HttpMethod.GET,
+                "/api/v1/notification-endpoints",
+                Collections.emptyMap(),
+                null,
+                StandardCharsets.UTF_8,
+                null
+        );
+        Response response = Response.builder()
+                .status(status)
+                .reason("Service Unavailable")
+                .request(request)
+                .headers(Collections.emptyMap())
+                .body("{\"detail\":\"알림 서버를 사용할 수 없습니다.\"}", StandardCharsets.UTF_8)
+                .build();
+        return FeignException.errorStatus("getEndpoints", response);
     }
 }
