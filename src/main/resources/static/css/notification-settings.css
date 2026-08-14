@@ -238,3 +238,43 @@ body {
 
 .help-text.ok { color: var(--sage-600); }
 .help-text.error { color: var(--danger); }
+
+.settings-field-label {
+    display: block;
+    margin: 0.85rem 0 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brown-700);
+}
+
+.integration-code-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.8rem;
+    border: 2px solid rgba(139, 94, 60, 0.25);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.btn:disabled,
+.btn[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.integration-modal-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.6rem;
+}
+
+.integration-modal-icon.discord {
+    background: #5865f2;
+    color: #fff;
+}

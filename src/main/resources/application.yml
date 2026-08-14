@@ -20,3 +20,8 @@ feign:
   client:
     gateway:
       url: ${GATEWAY_URL:http://localhost:8080}
+
+# seed 순서(TELEGRAM, DISCORD) 기준 기본값. 채널 타입 목록 API가 생기면 교체.
+notification:
+  discord:
+    channel-type-id: ${NOTIFICATION_DISCORD_CHANNEL_TYPE_ID:2}

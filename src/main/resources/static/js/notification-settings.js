@@ -7,11 +7,14 @@ var DEFAULT_CATEGORY_STATE = {
     ai: true
 };
 
-// 데모 데이터 (실제로는 /cultivations 목록을 서버에서 받아와야 함)
+// 데모 데이터 (구독 API 연동 전. 재배 목록 Feign은 다음 Subscription PR)
 var DEMO_CULTIVATIONS = [
     { id: 1, name: 'd' },
     { id: 2, name: 'werfwwe' }
 ];
+
+var discordEndpoint = null;
+var discordModalMode = 'create';
 
 function loadCategoryState() {
     try {
@@ -29,113 +32,6 @@ function loadCultivationState() {
         if (saved && typeof saved === 'object') return saved;
     } catch (e) { /* ignore */ }
     return {};
-}
-
-// ===== 텔레그램/디스코드 연동 (프론트 목업: 실제 봇/OAuth 연동 없음) =====
-var NOTIF_INTEGRATION_KEY = 'mm_notif_integrations';
-
-var INTEGRATION_LABELS = { telegram: '텔레그램', discord: '디스코드' };
-var INTEGRATION_ICONS = { telegram: 'send', discord: 'hash' };
-
-// 실제 봇이 아직 없어서 임시로 넣어둔 링크. 봇 준비되면 이 값만 교체하면 됨.
-var INTEGRATION_BOT_LINKS = {
-    telegram: 'https://t.me/mushmush_bot',
-    discord: 'https://discord.com/invite/mushmush'
-};
-
-var currentIntegrationPlatform = null;
-
-function loadIntegrationState() {
-    try {
-        var saved = JSON.parse(localStorage.getItem(NOTIF_INTEGRATION_KEY));
-        if (saved && typeof saved === 'object') return saved;
-    } catch (e) { /* ignore */ }
-    return { telegram: false, discord: false };
-}
-
-function saveIntegrationState(state) {
-    localStorage.setItem(NOTIF_INTEGRATION_KEY, JSON.stringify(state));
-}
-
-function renderIntegrationStatus() {
-    var state = loadIntegrationState();
-
-    ['telegram', 'discord'].forEach(function (platform) {
-        var statusEl = document.getElementById(platform + '-status');
-        var btnEl = document.getElementById(platform + '-action-btn');
-        if (!statusEl || !btnEl) return;
-
-        var connected = !!state[platform];
-        statusEl.textContent = connected ? '연결됨' : '연결 안 됨';
-        statusEl.classList.toggle('connected', connected);
-        btnEl.textContent = connected ? '연결 해제' : '연결하기';
-
-        btnEl.onclick = connected
-            ? function () { handleIntegrationDisconnect(platform); }
-            : function () { openIntegrationModal(platform); };
-    });
-}
-
-function openIntegrationModal(platform) {
-    currentIntegrationPlatform = platform;
-
-    var iconEl = document.getElementById('integration-modal-icon');
-    iconEl.classList.remove('telegram', 'discord');
-    iconEl.classList.add(platform);
-    iconEl.innerHTML = '<i data-lucide="' + INTEGRATION_ICONS[platform] + '"></i>';
-
-    var linkEl = document.getElementById('integration-bot-link');
-    linkEl.classList.remove('telegram', 'discord');
-    linkEl.classList.add(platform);
-    linkEl.href = INTEGRATION_BOT_LINKS[platform];
-
-    document.getElementById('integration-modal-title').textContent = INTEGRATION_LABELS[platform] + ' 연동하기';
-    document.getElementById('integration-bot-link-text').textContent = INTEGRATION_LABELS[platform] + '에서 열기';
-    document.getElementById('integration-code').value = '';
-
-    var statusText = document.getElementById('integration-code-status');
-    statusText.textContent = '';
-    statusText.classList.remove('error');
-
-    document.getElementById('integration-step-connect').style.display = 'block';
-    document.getElementById('integration-step-success').style.display = 'none';
-
-    openModal('modal-integration');
-    lucide.createIcons();
-}
-
-function closeIntegrationModal() {
-    closeModal('modal-integration');
-    currentIntegrationPlatform = null;
-}
-
-function handleIntegrationConfirm() {
-    var code = document.getElementById('integration-code').value.trim();
-    var statusText = document.getElementById('integration-code-status');
-
-    if (!code) {
-        statusText.textContent = '봇이 알려준 인증코드를 입력해주세요.';
-        statusText.classList.add('error');
-        return;
-    }
-
-    // 목업: 백엔드 검증 없이 코드만 입력하면 연결 성공 처리
-    var state = loadIntegrationState();
-    state[currentIntegrationPlatform] = true;
-    saveIntegrationState(state);
-    renderIntegrationStatus();
-
-    document.getElementById('integration-success-title').textContent = INTEGRATION_LABELS[currentIntegrationPlatform] + ' 연결 완료';
-    document.getElementById('integration-step-connect').style.display = 'none';
-    document.getElementById('integration-step-success').style.display = 'block';
-}
-
-function handleIntegrationDisconnect(platform) {
-    var state = loadIntegrationState();
-    state[platform] = false;
-    saveIntegrationState(state);
-    renderIntegrationStatus();
-    showSaveStatus();
 }
 
 function showSaveStatus() {
@@ -191,13 +87,221 @@ function renderCultivationList() {
     lucide.createIcons();
 }
 
+function pickDiscordEndpoint(endpoints) {
+    if (!Array.isArray(endpoints)) return null;
+    var discords = endpoints.filter(function (item) {
+        return item && item.channelCode === 'DISCORD';
+    });
+    if (discords.length === 0) return null;
+    var enabled = discords.find(function (item) { return item.enabled; });
+    return enabled || discords[0];
+}
+
+function setDiscordStatus(text, connected) {
+    var statusEl = document.getElementById('discord-status');
+    var btnEl = document.getElementById('discord-action-btn');
+    if (!statusEl || !btnEl) return;
+
+    statusEl.textContent = text;
+    statusEl.classList.toggle('connected', !!connected);
+    btnEl.disabled = false;
+    btnEl.textContent = connected ? '연결 해제' : '연결하기';
+    btnEl.onclick = connected ? handleDiscordDisconnect : openDiscordModal;
+}
+
+function renderDiscordStatus() {
+    if (!discordEndpoint) {
+        setDiscordStatus('연결 안 됨', false);
+        return;
+    }
+    var name = discordEndpoint.displayName || '디스코드';
+    var dest = discordEndpoint.destination ? ' · ' + discordEndpoint.destination : '';
+    setDiscordStatus('연결됨 · ' + name + dest, true);
+}
+
+function loadDiscordEndpoint() {
+    return fetch('/notifications/endpoints', { credentials: 'same-origin' })
+        .then(function (response) {
+            if (response.redirected && response.url && response.url.indexOf('/login') !== -1) {
+                window.location.href = '/login';
+                return null;
+            }
+            if (response.status === 401 || response.status === 403) {
+                window.location.href = '/login';
+                return null;
+            }
+            if (!response.ok) {
+                throw new Error('목록을 불러오지 못했습니다.');
+            }
+            return response.json();
+        })
+        .then(function (endpoints) {
+            if (!endpoints) return;
+            discordEndpoint = pickDiscordEndpoint(endpoints);
+            renderDiscordStatus();
+        })
+        .catch(function () {
+            discordEndpoint = null;
+            setDiscordStatus('연결 상태를 불러오지 못했습니다', false);
+            var btnEl = document.getElementById('discord-action-btn');
+            if (btnEl) {
+                btnEl.textContent = '다시 시도';
+                btnEl.onclick = function () { loadDiscordEndpoint(); };
+            }
+        });
+}
+
+function isDiscordWebhookUrl(url) {
+    try {
+        var parsed = new URL(url);
+        var host = (parsed.hostname || '').toLowerCase();
+        return parsed.protocol === 'https:'
+            && (host === 'discord.com' || host === 'discordapp.com' || host.endsWith('.discord.com'))
+            && parsed.pathname.indexOf('/api/webhooks/') === 0
+            && !parsed.username;
+    } catch (e) {
+        return false;
+    }
+}
+
+function setDiscordFormStatus(message, isError) {
+    var statusText = document.getElementById('discord-form-status');
+    if (!statusText) return;
+    statusText.textContent = message || '';
+    statusText.classList.toggle('error', !!isError);
+}
+
+function openDiscordModal() {
+    discordModalMode = discordEndpoint ? 'update' : 'create';
+    document.getElementById('discord-modal-title').textContent =
+        discordModalMode === 'update' ? '디스코드 웹후크 수정' : '디스코드 연동하기';
+    document.getElementById('discord-display-name').value =
+        discordEndpoint && discordEndpoint.displayName ? discordEndpoint.displayName : '디스코드 알림';
+    document.getElementById('discord-webhook-url').value = '';
+    setDiscordFormStatus('', false);
+    document.getElementById('discord-step-connect').style.display = 'block';
+    document.getElementById('discord-step-success').style.display = 'none';
+    document.getElementById('discord-submit-btn').disabled = false;
+    openModal('modal-discord');
+    lucide.createIcons();
+}
+
+function closeDiscordModal() {
+    closeModal('modal-discord');
+}
+
+function parseErrorDetail(text) {
+    if (!text) return '요청에 실패했습니다.';
+    try {
+        var body = JSON.parse(text);
+        return body.detail || body.message || text;
+    } catch (e) {
+        return text;
+    }
+}
+
+function handleDiscordConnect() {
+    var displayName = document.getElementById('discord-display-name').value.trim();
+    var destination = document.getElementById('discord-webhook-url').value.trim();
+    var submitBtn = document.getElementById('discord-submit-btn');
+
+    if (!displayName) {
+        setDiscordFormStatus('이름을 입력해주세요.', true);
+        return;
+    }
+    if (!destination) {
+        setDiscordFormStatus('Webhook URL을 입력해주세요.', true);
+        return;
+    }
+    if (!isDiscordWebhookUrl(destination)) {
+        setDiscordFormStatus('https://discord.com/api/webhooks/ 형식의 URL만 사용할 수 있어요.', true);
+        return;
+    }
+
+    var method = 'POST';
+    var url = '/notifications/endpoints';
+    if (discordModalMode === 'update' && discordEndpoint && discordEndpoint.id) {
+        method = 'PATCH';
+        url = '/notifications/endpoints/' + discordEndpoint.id;
+    }
+
+    submitBtn.disabled = true;
+    setDiscordFormStatus('연결 중...', false);
+
+    fetch(url, {
+        method: method,
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destination: destination, displayName: displayName })
+    })
+        .then(function (response) {
+            return response.text().then(function (text) {
+                return { response: response, text: text };
+            });
+        })
+        .then(function (result) {
+            if (result.response.redirected && result.response.url && result.response.url.indexOf('/login') !== -1) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!result.response.ok) {
+                setDiscordFormStatus(parseErrorDetail(result.text), true);
+                submitBtn.disabled = false;
+                return;
+            }
+            if (result.text) {
+                try {
+                    discordEndpoint = JSON.parse(result.text);
+                } catch (e) { /* keep previous */ }
+            }
+            renderDiscordStatus();
+            showSaveStatus();
+            document.getElementById('discord-step-connect').style.display = 'none';
+            document.getElementById('discord-step-success').style.display = 'block';
+            lucide.createIcons();
+        })
+        .catch(function () {
+            setDiscordFormStatus('네트워크 오류로 연결하지 못했습니다.', true);
+            submitBtn.disabled = false;
+        });
+}
+
+function handleDiscordDisconnect() {
+    if (!discordEndpoint || !discordEndpoint.id) {
+        return;
+    }
+    if (!window.confirm('디스코드 연결을 해제할까요? 이 경로로 가던 구독도 함께 비활성화됩니다.')) {
+        return;
+    }
+
+    fetch('/notifications/endpoints/' + discordEndpoint.id, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+    })
+        .then(function (response) {
+            if (response.redirected && response.url && response.url.indexOf('/login') !== -1) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!response.ok && response.status !== 204) {
+                throw new Error('disconnect failed');
+            }
+            discordEndpoint = null;
+            renderDiscordStatus();
+            showSaveStatus();
+        })
+        .catch(function () {
+            setDiscordStatus('연결 해제에 실패했습니다', true);
+        });
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     var categoryState = loadCategoryState();
     document.getElementById('toggle-sensor').checked = categoryState.sensor;
     document.getElementById('toggle-harvest').checked = categoryState.harvest;
     document.getElementById('toggle-ai').checked = categoryState.ai;
 
-    renderIntegrationStatus();
+    loadDiscordEndpoint();
     renderCultivationList();
     lucide.createIcons();
 });
