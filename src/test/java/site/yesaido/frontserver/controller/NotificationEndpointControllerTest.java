@@ -20,6 +20,7 @@ import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.config.WebConfig;
 import site.yesaido.frontserver.dto.notification.request.EndpointCreateRequest;
 import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
+import site.yesaido.frontserver.exception.GlobalExceptionHandler;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.LoginCheckInterceptor;
 
@@ -46,7 +47,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         }
 )
 @AutoConfigureMockMvc(addFilters = false)
-@Import({AuthCookieProvider.class, WebConfig.class, LoginCheckInterceptor.class})
+@Import({
+        AuthCookieProvider.class,
+        GlobalExceptionHandler.class,
+        WebConfig.class,
+        LoginCheckInterceptor.class
+})
 class NotificationEndpointControllerTest {
 
     private static final Cookie LOGGED_IN = new Cookie("accessToken", "demo-access-token");
@@ -87,6 +93,16 @@ class NotificationEndpointControllerTest {
         mockMvc.perform(get("/notifications/endpoints").cookie(LOGGED_IN))
                 .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.detail").value("알림 서버를 사용할 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("Endpoint 목록 조회 중 인증 오류가 발생하면 로그인으로 이동")
+    void listEndpointsUnauthorizedRedirectsToLogin() throws Exception {
+        given(notificationClient.getEndpoints()).willThrow(feignException(401));
+
+        mockMvc.perform(get("/notifications/endpoints").cookie(LOGGED_IN))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
     }
 
     @Test

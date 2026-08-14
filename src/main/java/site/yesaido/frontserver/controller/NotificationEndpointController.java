@@ -1,10 +1,8 @@
 package site.yesaido.frontserver.controller;
 
-import feign.FeignException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,9 +16,10 @@ import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.dto.notification.request.DiscordEndpointFormRequest;
 import site.yesaido.frontserver.dto.notification.request.EndpointCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.EndpointUpdateRequest;
+import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
-import java.util.Map;
+import java.util.List;
 
 @LoginRequired
 @RestController
@@ -34,62 +33,32 @@ public class NotificationEndpointController {
     private long discordChannelTypeId;
 
     @GetMapping
-    public ResponseEntity<?> listEndpoints() {
-        try {
-            return notificationClient.getEndpoints();
-        } catch (FeignException exception) {
-            return feignError(exception);
-        }
+    public ResponseEntity<List<EndpointResponse>> listEndpoints() {
+        return notificationClient.getEndpoints();
     }
 
     @PostMapping
-    public ResponseEntity<?> createDiscordEndpoint(@Valid @RequestBody DiscordEndpointFormRequest form) {
+    public ResponseEntity<EndpointResponse> createDiscordEndpoint(
+            @Valid @RequestBody DiscordEndpointFormRequest form
+    ) {
         EndpointCreateRequest request = new EndpointCreateRequest(
                 discordChannelTypeId, form.destination().trim(), form.displayName().trim());
-        try {
-            return notificationClient.createEndpoint(request);
-        } catch (FeignException exception) {
-            return feignError(exception);
-        }
+        return notificationClient.createEndpoint(request);
     }
 
     @PatchMapping("/{endpointId}")
-    public ResponseEntity<?> updateDiscordEndpoint(
+    public ResponseEntity<EndpointResponse> updateDiscordEndpoint(
             @PathVariable Long endpointId,
             @Valid @RequestBody DiscordEndpointFormRequest form
     ) {
         EndpointUpdateRequest request = new EndpointUpdateRequest(
                 form.destination().trim(), form.displayName().trim());
-        try {
-            return notificationClient.updateEndpoint(endpointId, request);
-        } catch (FeignException exception) {
-            return feignError(exception);
-        }
+        return notificationClient.updateEndpoint(endpointId, request);
     }
 
     @DeleteMapping("/{endpointId}")
-    public ResponseEntity<?> deleteEndpoint(@PathVariable Long endpointId) {
-        try {
-            notificationClient.deleteEndpoint(endpointId);
-            return ResponseEntity.noContent().build();
-        } catch (FeignException exception) {
-            return feignError(exception);
-        }
-    }
-
-    private static ResponseEntity<Object> feignError(FeignException exception) {
-        if (exception instanceof FeignException.Unauthorized unauthorized) {
-            throw unauthorized;
-        }
-        int status = exception.status() > 0 ? exception.status() : 502;
-        String body = exception.contentUTF8();
-        if (body == null || body.isBlank()) {
-            return ResponseEntity.status(status)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(Map.of("detail", "알림 서버 요청에 실패했습니다."));
-        }
-        return ResponseEntity.status(status)
-                .contentType(MediaType.APPLICATION_PROBLEM_JSON)
-                .body(body);
+    public ResponseEntity<Void> deleteEndpoint(@PathVariable Long endpointId) {
+        notificationClient.deleteEndpoint(endpointId);
+        return ResponseEntity.noContent().build();
     }
 }
