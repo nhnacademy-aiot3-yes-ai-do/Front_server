@@ -3,7 +3,7 @@ package site.yesaido.frontserver.client;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.common.ApiResponse;
-import site.yesaido.frontserver.dto.cultivation.response.UserSearchResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;

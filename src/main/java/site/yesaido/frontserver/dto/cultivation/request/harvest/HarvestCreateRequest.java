@@ -1,4 +1,4 @@
-package site.yesaido.frontserver.dto.cultivation.request;
+package site.yesaido.frontserver.dto.cultivation.request.harvest;
 
 import java.math.BigDecimal;
 

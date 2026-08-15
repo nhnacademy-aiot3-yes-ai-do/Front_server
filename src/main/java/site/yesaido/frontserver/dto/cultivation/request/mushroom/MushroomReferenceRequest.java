@@ -1,4 +1,4 @@
-package site.yesaido.frontserver.dto.cultivation.request;
+package site.yesaido.frontserver.dto.cultivation.request.mushroom;
 
 import java.util.List;
 

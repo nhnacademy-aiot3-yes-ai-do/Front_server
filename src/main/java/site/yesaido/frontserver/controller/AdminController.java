@@ -5,9 +5,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.CultivationClient;
-import site.yesaido.frontserver.dto.cultivation.request.MushroomReferenceRequest;
-import site.yesaido.frontserver.dto.cultivation.response.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.SensorTypeInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
+import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
 @Controller

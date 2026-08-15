@@ -1,4 +1,6 @@
-package site.yesaido.frontserver.dto.cultivation.response;
+package site.yesaido.frontserver.dto.cultivation.response.mushroom;
+
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoResponse;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
