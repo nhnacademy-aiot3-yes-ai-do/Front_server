@@ -23,17 +23,12 @@
             <span class="step-line"></span>
             <div class="wizard-step" id="stepnav-2">
                 <span class="step-num">2</span>
-                <span class="step-label">센서 선택</span>
+                <span class="step-label">AI 분석</span>
             </div>
             <span class="step-line"></span>
             <div class="wizard-step" id="stepnav-3">
                 <span class="step-num">3</span>
-                <span class="step-label">환경 분석</span>
-            </div>
-            <span class="step-line"></span>
-            <div class="wizard-step" id="stepnav-4">
-                <span class="step-num">4</span>
-                <span class="step-label">추천 환경</span>
+                <span class="step-label">확인</span>
             </div>
         </div>
 
@@ -42,7 +37,7 @@
             <!-- STEP 1 : 재배지 정보 입력 -->
             <section class="wizard-panel active" id="step-1">
                 <h2 class="wizard-title">재배지 정보를 입력해주세요</h2>
-                <p class="wizard-desc">새로 시작할 재배지의 기본 정보를 알려주세요.</p>
+                <p class="wizard-desc">새로 시작할 재배지의 기본 정보를 알려주세요. 센서는 생성 후 '내 센서'에서 등록할 수 있어요.</p>
 
                 <div class="form-grid">
                     <div class="form-field">
@@ -53,14 +48,6 @@
                         <label>버섯 종류</label>
                         <select id="f-mushroom"></select>
                     </div>
-                    <div class="form-field">
-                        <label>재배 시작일</label>
-                        <input type="date" id="f-start" />
-                    </div>
-                    <div class="form-field">
-                        <label>재배 장소</label>
-                        <input type="text" id="f-place" placeholder="예: 우리 집 재배실" />
-                    </div>
                 </div>
 
                 <div class="wizard-actions">
@@ -70,54 +57,30 @@
                 </div>
             </section>
 
-            <!-- STEP 2 : 센서 선택 -->
+            <!-- STEP 2 : 로딩 (AI 분석) -->
             <section class="wizard-panel" id="step-2">
-                <h2 class="wizard-title">사용할 센서를 선택해주세요</h2>
-                <p class="wizard-desc">이미 등록해두신 센서 중, 이 재배지에서 사용할 센서를 골라주세요.</p>
+                <div class="loading-wrap">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">AI가 <span id="loading-mushroom">양송이버섯</span> 재배 정보를<br />준비하고 있어요...</p>
+                </div>
+            </section>
 
-                <div class="sensor-select-list" id="sensor-select-list"></div>
+            <!-- STEP 3 : 버섯 효능 확인 -->
+            <section class="wizard-panel" id="step-3">
+                <h2 class="wizard-title">
+                    <span id="result-mushroom">양송이버섯</span> 재배를 시작해볼까요?
+                </h2>
+                <p class="wizard-desc">센서와 환경 임계값은 생성 후 '내 센서'에서 등록할 수 있어요.</p>
+
+                <div class="mushroom-info-card" id="mushroom-info-card">
+                    <div class="mushroom-info-title">
+                        <i data-lucide="sparkles"></i><span id="mushroom-info-name">양송이버섯</span>의 효능
+                    </div>
+                    <ul class="mushroom-info-list" id="mushroom-info-list"></ul>
+                </div>
 
                 <div class="wizard-actions wizard-actions-split">
                     <button class="step-next" type="button" onclick="goToStep(1)" title="이전">
-                        <i data-lucide="circle-arrow-left"></i>
-                    </button>
-                    <button class="step-next" type="button" onclick="goToStep(3)" title="다음">
-                        <i data-lucide="circle-arrow-right"></i>
-                    </button>
-                </div>
-            </section>
-
-            <!-- STEP 3 : 로딩 (AI 환경 분석) -->
-            <section class="wizard-panel" id="step-3">
-                <div class="loading-wrap">
-                    <div class="loading-spinner"></div>
-                    <p class="loading-text">AI가 <span id="loading-mushroom">양송이버섯</span> 재배에<br />최적인 환경을 분석하고 있어요...</p>
-                </div>
-            </section>
-
-            <!-- STEP 4 : AI 추천 환경 -->
-            <section class="wizard-panel" id="step-4">
-                <h2 class="wizard-title">
-                    AI가 추천한 <span id="result-mushroom">양송이버섯</span> 재배 최적의 환경입니다
-                </h2>
-                <p class="wizard-desc">필요하다면 값을 직접 수정할 수 있어요. 같은 종류의 센서를 여러 개 골랐다면 센서마다 따로 설정할 수 있어요.</p>
-
-                <div class="step4-columns">
-                    <div class="step4-col-left">
-                        <div class="mushroom-info-card" id="mushroom-info-card">
-                            <div class="mushroom-info-title">
-                                <i data-lucide="sparkles"></i><span id="mushroom-info-name">양송이버섯</span>의 효능
-                            </div>
-                            <ul class="mushroom-info-list" id="mushroom-info-list"></ul>
-                        </div>
-                    </div>
-                    <div class="step4-col-right">
-                        <div class="recommend-grid" id="recommend-grid"></div>
-                    </div>
-                </div>
-
-                <div class="wizard-actions wizard-actions-split">
-                    <button class="step-next" type="button" onclick="goToStep(2)" title="이전">
                         <i data-lucide="circle-arrow-left"></i>
                     </button>
                     <button class="btn btn-primary" type="button" onclick="finishCultivation()">
@@ -133,34 +96,7 @@
 <script>
     lucide.createIcons();
 
-    var MUSHROOMS = []; // 서버에서 조회한 mushroom_reference 목록 (thresholdInfoResponses 포함)
-
-    // 프론트 표시용 한글 라벨 ↔ 백엔드 SensorType.type 매핑
-    // (센서 등록 화면은 아직 더미라 한글 라벨을 그대로 쓰고 있어서 여기서 변환)
-    var KOREAN_TO_SENSOR_TYPE = {
-        '온도': 'TEMPERATURE',
-        '습도': 'HUMIDITY',
-        'CO2': 'CO2',
-        '조도': 'LIGHT'
-    };
-
-    // 이미 등록된 센서 목록 (데모 데이터) - 실제로는 서버에서 조회
-    var REGISTERED_SENSORS = [
-        { id: 1, type: '온도', icon: 'thermometer', place: '1번 선반', model: 'TH-1001' },
-        { id: 2, type: '습도', icon: 'droplet', place: '1번 선반', model: 'HD-2002' },
-        { id: 3, type: 'CO2', icon: 'cloudy', place: '2번 선반', model: 'CO-3003' },
-        { id: 4, type: '조도', icon: 'sun', place: '2번 선반', model: 'LX-4004' },
-        { id: 5, type: '온도', icon: 'thermometer', place: '3번 선반', model: 'TH-1005' }
-    ];
-    var selectedSensorIds = [];
-
-    // 등록된 버섯에 값이 없는 센서타입일 때 쓰는 폴백 기본값
-    var SENSOR_TYPE_FALLBACK = {
-        '온도': { max: 22, min: 16, unit: '°C', icon: 'thermometer' },
-        '습도': { max: 70, min: 55, unit: '%', icon: 'droplet' },
-        'CO2': { max: 600, min: 400, unit: 'ppm', icon: 'cloudy' },
-        '조도': { max: 450, min: 250, unit: 'lux', icon: 'sun' }
-    };
+    var MUSHROOMS = [];
 
     // 버섯별 효능 정보 (데모 데이터) - mushroom_reference에 효능 컬럼이 없어서 당장은 유지
     var MUSHROOM_INFO = {
@@ -199,23 +135,13 @@
         });
     }
 
-    function currentMushroom() {
-        var id = document.getElementById('f-mushroom').value;
-        return MUSHROOMS.filter(function (m) { return String(m.id) === String(id); })[0] || null;
-    }
-
-    function mushroomThresholdOf(mushroom, backendType) {
-        if (!mushroom) return null;
-        var t = (mushroom.thresholdInfoResponses || []).filter(function (x) {
-            return x.sensorType && x.sensorType.type === backendType;
-        })[0];
-        return t ? { min: t.thresholdMin, max: t.thresholdMax } : null;
-    }
+    loadMushrooms();
 
     function renderMushroomInfo() {
         var selected = document.getElementById('f-mushroom');
         var mushroomName = selected.selectedOptions[0] ? selected.selectedOptions[0].textContent : '';
         document.getElementById('mushroom-info-name').textContent = mushroomName;
+        document.getElementById('result-mushroom').textContent = mushroomName;
 
         var list = document.getElementById('mushroom-info-list');
         list.innerHTML = '';
@@ -227,98 +153,27 @@
         });
     }
 
-    function renderSensorSelectList() {
-        var wrap = document.getElementById('sensor-select-list');
-        wrap.innerHTML = '';
-        REGISTERED_SENSORS.forEach(function (s) {
-            var row = document.createElement('label');
-            row.className = 'sensor-select-row';
-            row.innerHTML =
-                '<input type="checkbox" onchange="toggleSensor(' + s.id + ', this.checked)" />' +
-                '<i data-lucide="' + s.icon + '" class="sensor-select-icon"></i>' +
-                '<span class="sensor-select-info"><strong>' + s.type + ' 센서</strong><small>' + s.place + ' · ' + s.model + '</small></span>';
-            wrap.appendChild(row);
-        });
-        lucide.createIcons();
-    }
-
-    function toggleSensor(id, checked) {
-        if (checked) {
-            if (selectedSensorIds.indexOf(id) === -1) selectedSensorIds.push(id);
-        } else {
-            selectedSensorIds = selectedSensorIds.filter(function (x) { return x !== id; });
-        }
-    }
-
-    loadMushrooms();
-    renderSensorSelectList();
-
-    // 선택된 센서 하나하나마다 카드를 따로 만들어줌 (같은 타입이어도 센서별로 독립 설정)
-    function renderRecommendGrid() {
-        var grid = document.getElementById('recommend-grid');
-        grid.innerHTML = '';
-
-        var selectedSensors = REGISTERED_SENSORS.filter(function (s) {
-            return selectedSensorIds.indexOf(s.id) !== -1;
-        });
-
-        if (selectedSensors.length === 0) {
-            grid.innerHTML = '<p class="recommend-empty">선택된 센서가 없어요. 이전 단계에서 센서를 선택해주세요.</p>';
-            return;
-        }
-
-        var mushroom = currentMushroom();
-
-        // 같은 타입 센서가 여러 개면 카드 제목에 순번을 붙여 구분함
-        var typeCount = {};
-        selectedSensors.forEach(function (s) { typeCount[s.type] = (typeCount[s.type] || 0) + 1; });
-        var typeSeen = {};
-
-        selectedSensors.forEach(function (s) {
-            var fallback = SENSOR_TYPE_FALLBACK[s.type] || { max: 0, min: 0, unit: '', icon: 'cpu' };
-            var backendType = KOREAN_TO_SENSOR_TYPE[s.type];
-            var registered = mushroom ? mushroomThresholdOf(mushroom, backendType) : null;
-            var defaults = registered
-                ? { max: registered.max, min: registered.min, unit: fallback.unit, icon: fallback.icon }
-                : fallback;
-
-            typeSeen[s.type] = (typeSeen[s.type] || 0) + 1;
-            var title = s.type + ' 센서' + (typeCount[s.type] > 1 ? ' ' + typeSeen[s.type] : '');
-
-            var card = document.createElement('div');
-            card.className = 'recommend-card';
-            card.innerHTML =
-                '<div class="recommend-title"><i data-lucide="' + defaults.icon + '"></i>' + title + '</div>' +
-                '<div class="recommend-subtitle">' + s.place + ' · ' + s.model + '</div>' +
-                '<div class="recommend-inputs">' +
-                '<label>최고값<input type="number" id="rec-max-' + s.id + '" value="' + defaults.max + '" />' + defaults.unit + '</label>' +
-                '<label>최저값<input type="number" id="rec-min-' + s.id + '" value="' + defaults.min + '" />' + defaults.unit + '</label>' +
-                '</div>';
-            grid.appendChild(card);
-        });
-
-        lucide.createIcons();
-    }
-
     function goToStep(n) {
         document.querySelectorAll('.wizard-panel').forEach(function (p) { p.classList.remove('active'); });
-        document.querySelectorAll('.wizard-step').forEach(function (s) { s.classList.remove('active'); });
+        document.querySelectorAll('.wizard-step').forEach(function (s) { s.classList.remove('active', 'done'); });
         document.getElementById('step-' + n).classList.add('active');
         document.getElementById('stepnav-' + n).classList.add('active');
         for (var i = 1; i < n; i++) {
             document.getElementById('stepnav-' + i).classList.add('done');
         }
 
-        if (n === 3) {
+        if (n === 2) {
             var selected = document.getElementById('f-mushroom');
-            var mushroomName = selected.selectedOptions[0] ? selected.selectedOptions[0].textContent : '';
-            document.getElementById('loading-mushroom').textContent = mushroomName;
-            document.getElementById('result-mushroom').textContent = mushroomName;
+            if (!selected.value) {
+                alert('버섯 종류를 확인해주세요.');
+                goToStep(1);
+                return;
+            }
+            document.getElementById('loading-mushroom').textContent = selected.selectedOptions[0].textContent;
             window.setTimeout(function () {
                 renderMushroomInfo();
-                renderRecommendGrid();
-                goToStep(4);
-            }, 2200);
+                goToStep(3);
+            }, 1500);
         }
     }
 
@@ -328,10 +183,12 @@
 
         if (!name) {
             alert('재배지 이름을 입력해주세요.');
+            goToStep(1);
             return;
         }
         if (!mushroomId) {
             alert('버섯 종류를 확인해주세요.');
+            goToStep(1);
             return;
         }
 

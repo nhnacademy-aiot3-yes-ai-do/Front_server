@@ -12,10 +12,13 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.Member
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
+import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.*;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 
 import java.util.List;
@@ -97,4 +100,18 @@ public interface CultivationClient {
     @GetMapping("/api/v1/sensor-types")
     ResponseEntity<SensorTypeInfoListResponse> getSensorTypes();
 
+    // Sensor (재배지별 센서)
+    @GetMapping("/api/cultivations/{cultivation-id}/sensors")
+    ResponseEntity<CultivationSensorListResponse> getSensors(@PathVariable("cultivation-id") Long cultivationId);
+
+    @PostMapping("/api/cultivations/{cultivation-id}/sensors")
+    ResponseEntity<Void> registerSensor(@PathVariable("cultivation-id") Long cultivationId,
+                                        @RequestBody CreateCultivationSensorRequest request);
+
+    @DeleteMapping("/api/cultivations/{cultivation-id}/sensors/{sensor-id}")
+    ResponseEntity<Void> deleteSensor(@PathVariable("cultivation-id") Long cultivationId,
+                                      @PathVariable("sensor-id") Long sensorId);
+
+    @GetMapping("/api/cultivations/{cultivation-id}/sensor-values")
+    ResponseEntity<List<LatestSensorValueResponse>> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId);
 }

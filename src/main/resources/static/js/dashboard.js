@@ -1,15 +1,74 @@
 lucide.createIcons();
 
-var SENSOR_DATA = {
-    temp: { '온도센서1': '18°C', '온도센서2': '19°C', '온도센서3': '20°C' },
-    humidity: { '습도센서1': '61%', '습도센서2': '58%' },
-    co2: { 'CO2센서1': '480ppm', 'CO2센서2': '530ppm' },
-    light: { '조도센서1': '350lux', '조도센서2': '410lux' }
-};
+var CANONICAL_SENSOR_TYPES = ['TEMPERATURE', 'HUMIDITY', 'CO2', 'LIGHT'];
+var SENSOR_DEVICES_BY_TYPE = {};
+var LATEST_VALUES = {};
 
-function updateSensor(wrapperEl, optionEl, type) {
+function loadSensorPanel() {
+    return Promise.all([
+        fetch('/cultivations/' + CULTIVATION_ID + '/sensors').then(function (res) { return res.ok ? res.json() : { sensors: [] }; }),
+        fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values').then(function (res) { return res.ok ? res.json() : []; })
+    ]).then(function (results) {
+        var sensorsRes = results[0];
+        var latestList = results[1];
+
+        SENSOR_DEVICES_BY_TYPE = {};
+        CANONICAL_SENSOR_TYPES.forEach(function (t) { SENSOR_DEVICES_BY_TYPE[t] = []; });
+        (sensorsRes.sensors || []).forEach(function (s) {
+            (s.sensorTypes || []).forEach(function (t) {
+                if (!SENSOR_DEVICES_BY_TYPE[t.type]) SENSOR_DEVICES_BY_TYPE[t.type] = [];
+                SENSOR_DEVICES_BY_TYPE[t.type].push({ deviceEui: s.deviceEui, deviceName: s.deviceName });
+            });
+        });
+
+        LATEST_VALUES = {};
+        (latestList || []).forEach(function (v) {
+            LATEST_VALUES[v.sensorType + '|' + v.deviceEui] = { value: v.value, unit: v.unit };
+        });
+
+        renderSensorPanel();
+    }).catch(function () {
+        // 실패해도 카드가 '등록된 센서 없음' 상태로 남으므로 조용히 무시
+    });
+}
+
+function formatSensorValue(entry) {
+    if (!entry || entry.value == null) return '-';
+    return entry.value + (entry.unit || '');
+}
+
+function renderSensorPanel() {
+    document.querySelectorAll('.sensor-row[data-sensor-type]').forEach(function (row) {
+        var type = row.dataset.sensorType;
+        var devices = SENSOR_DEVICES_BY_TYPE[type] || [];
+        var wrapperEl = row.querySelector('.msh-select--sensor');
+        var menu = wrapperEl.querySelector('.msh-select-menu');
+        var valueEl = row.querySelector('.sensor-value');
+
+        if (devices.length === 0) {
+            menu.innerHTML = '';
+            wrapperEl.dataset.value = '';
+            wrapperEl.querySelector('.msh-select-value').textContent = '등록된 센서 없음';
+            valueEl.textContent = '-';
+            return;
+        }
+
+        menu.innerHTML = devices.map(function (d) {
+            return '<div class="msh-select-option" data-value="' + d.deviceEui + '" onclick="selectMshOption(this)">' + d.deviceName + '</div>';
+        }).join('');
+
+        var first = devices[0];
+        wrapperEl.dataset.value = first.deviceEui;
+        wrapperEl.querySelector('.msh-select-value').textContent = first.deviceName;
+        menu.querySelector('.msh-select-option').classList.add('selected');
+        valueEl.textContent = formatSensorValue(LATEST_VALUES[type + '|' + first.deviceEui]);
+    });
+}
+
+function updateSensor(wrapperEl, optionEl, sensorType) {
     var valueEl = wrapperEl.closest('.sensor-main').querySelector('.sensor-value');
-    valueEl.textContent = SENSOR_DATA[type][wrapperEl.dataset.value];
+    var deviceEui = wrapperEl.dataset.value;
+    valueEl.textContent = formatSensorValue(LATEST_VALUES[sensorType + '|' + deviceEui]);
 }
 
 // 커스텀 드롭다운(.msh-select) 관련 공통 로직은 /js/msh-select.js로 옮겼음 (관리자 페이지랑 같이 씀).
@@ -762,3 +821,4 @@ function deletePhoto(photoId) {
 
 renderPhotoThumbs();
 renderPhotoUploadPreview();
+loadSensorPanel();
