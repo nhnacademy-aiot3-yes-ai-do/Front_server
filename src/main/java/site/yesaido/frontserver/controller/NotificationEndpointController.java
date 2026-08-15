@@ -42,7 +42,7 @@ public class NotificationEndpointController {
             @Valid @RequestBody DiscordEndpointFormRequest form
     ) {
         EndpointCreateRequest request = new EndpointCreateRequest(
-                discordChannelTypeId, form.destination().trim(), form.displayName().trim());
+                discordChannelTypeId, form.destination(), form.displayName());
         return notificationClient.createEndpoint(request);
     }
 
@@ -52,7 +52,7 @@ public class NotificationEndpointController {
             @Valid @RequestBody DiscordEndpointFormRequest form
     ) {
         EndpointUpdateRequest request = new EndpointUpdateRequest(
-                form.destination().trim(), form.displayName().trim());
+                form.destination(), form.displayName());
         return notificationClient.updateEndpoint(endpointId, request);
     }
 
