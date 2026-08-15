@@ -64,11 +64,14 @@
                 <table class="list-table">
                     <thead>
                     <tr>
+                        <th>재배지</th>
                         <th>위치</th>
-                        <th>장소</th>
+                        <th>상세 위치</th>
                         <th>모델명</th>
                         <th>고유번호</th>
                         <th>타입</th>
+                        <th>상태</th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody id="sensor-tbody"></tbody>
@@ -85,7 +88,7 @@
                         <i data-lucide="chevron-right"></i>
                     </button>
                 </div>
-                <button class="btn btn-primary" type="button" onclick="openModal('modal-sensor')">
+                <button class="btn btn-primary" type="button" onclick="openSensorModal()">
                     <i data-lucide="plus"></i>센서 등록
                 </button>
             </div>
@@ -96,56 +99,53 @@
 
 <!-- 센서 등록 다이얼로그 -->
 <div class="modal-overlay" id="modal-sensor">
-    <div class="modal-box">
+    <div class="modal-box modal-box-wide">
         <button class="modal-close" type="button" onclick="closeModal('modal-sensor')">
             <i data-lucide="x"></i>
         </button>
         <h3 class="modal-title">센서 등록</h3>
 
         <div class="modal-field">
-            <label>위치</label>
-            <input type="text" id="ms-location" placeholder="예: 광주광역시" />
+            <label>재배지</label>
+            <div class="msh-select" id="ms-cultivation" data-value="">
+                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                    <span class="msh-select-value">재배지를 선택하세요</span>
+                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                </button>
+                <div class="msh-select-menu" id="ms-cultivation-menu"></div>
+            </div>
         </div>
-        <div class="modal-field">
-            <label>장소</label>
-            <input type="text" id="ms-place" placeholder="예: 우리 집" />
+
+        <div class="modal-field-row">
+            <div class="modal-field">
+                <label>센서 이름</label>
+                <input type="text" id="ms-name" placeholder="예: 1번 선반 온습도센서" />
+            </div>
+            <div class="modal-field">
+                <label>모델명</label>
+                <input type="text" id="ms-model" placeholder="모델명을 입력하세요" />
+            </div>
         </div>
-        <div class="modal-field">
-            <label>모델명</label>
-            <input type="text" id="ms-model" placeholder="모델명을 입력하세요" />
+
+        <div class="modal-field-row">
+            <div class="modal-field">
+                <label>위치 (최대 10자)</label>
+                <input type="text" id="ms-location" maxlength="10" placeholder="예: 광주광역시" />
+            </div>
+            <div class="modal-field">
+                <label>상세 위치</label>
+                <input type="text" id="ms-location-detail" placeholder="예: 1번 선반" />
+            </div>
         </div>
+
         <div class="modal-field">
             <label>고유번호</label>
             <input type="text" id="ms-serial" placeholder="예: 1000090909090" />
         </div>
-        <div class="modal-field">
-            <label>타입</label>
-            <div class="msh-select" id="ms-type" data-value="온도센서" data-onchange="onSensorTypeChange">
-                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                    <span class="msh-select-value">온도센서</span>
-                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                </button>
-                <div class="msh-select-menu">
-                    <div class="msh-select-option selected" onclick="selectMshOption(this)">온도센서</div>
-                    <div class="msh-select-option" onclick="selectMshOption(this)">습도센서</div>
-                    <div class="msh-select-option" onclick="selectMshOption(this)">CO2센서</div>
-                    <div class="msh-select-option" onclick="selectMshOption(this)">조도센서</div>
-                </div>
-            </div>
-        </div>
 
-        <div class="modal-field" id="ms-unit-field">
-            <label>온도 단위</label>
-            <div class="msh-select" id="ms-unit" data-value="C">
-                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                    <span class="msh-select-value">섭씨 (°C)</span>
-                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                </button>
-                <div class="msh-select-menu">
-                    <div class="msh-select-option selected" data-value="C" onclick="selectMshOption(this)">섭씨 (°C)</div>
-                    <div class="msh-select-option" data-value="F" onclick="selectMshOption(this)">화씨 (°F)</div>
-                </div>
-            </div>
+        <div class="modal-field">
+            <label>측정 타입 및 임계값</label>
+            <div class="sensor-type-check-list" id="ms-type-list"></div>
         </div>
 
         <div class="modal-actions">
@@ -163,25 +163,12 @@
     // 서버에서 내려준 실제 재배 목록 (CultivationSummaryResponse 리스트)
     var cultivationData = /*[[${cultivations}]]*/ [];
 
-    // 센서는 아직 백엔드 연동 전이라 데모 데이터 유지
-    var sensorData = [
-        { location: '광주광역시', place: '우리 집', serial: '1000090909090', model: 'kljsdlkafjkl', type: '온도센서', unit: 'C' },
-        { location: '광주광역시', place: '우리 집', serial: '1000090909091', model: 'kljsdlkafjkm', type: '습도센서' },
-        { location: '서울특별시', place: '옥상 재배실', serial: '2000012345678', model: 'ab-cd-1234', type: 'CO2센서' }
-    ];
-
-    // 센서 타입별 표시 단위 (온도센서만 등록 시 선택한 값을 따르고, 나머지는 고정 단위)
-    function getSensorUnitLabel(s) {
-        if (s.type === '온도센서') return s.unit === 'F' ? '°F' : '°C';
-        if (s.type === '습도센서') return '%';
-        if (s.type === 'CO2센서') return 'ppm';
-        if (s.type === '조도센서') return 'lux';
-        return '';
-    }
+    var SENSOR_LIST = [];
+    var SENSOR_TYPES = [];
 
     var listState = {
         cultivation: { page: 0, data: cultivationData },
-        sensor: { page: 0, data: sensorData }
+        sensor: { page: 0, data: SENSOR_LIST }
     };
 
     function formatDate(value) {
@@ -206,15 +193,35 @@
         return tr;
     }
 
+    function statusLabel(status) {
+        if (status === 'ONLINE') return '온라인';
+        if (status === 'ERROR') return '오류';
+        return '오프라인';
+    }
+
     function renderSensorRow(s) {
         var tr = document.createElement('tr');
-        var unitLabel = getSensorUnitLabel(s);
+        var typesLabel = (s.sensorTypes || []).map(function (t) { return t.type + '(' + t.valueUnit + ')'; }).join(', ') || '-';
         tr.innerHTML =
+            '<td>' + s.cultivationName + '</td>' +
             '<td>' + s.location + '</td>' +
-            '<td>' + s.place + '</td>' +
-            '<td>' + s.model + '</td>' +
-            '<td>' + s.serial + '</td>' +
-            '<td>' + s.type + (unitLabel ? ' (' + unitLabel + ')' : '') + '</td>';
+            '<td>' + s.locationDetail + '</td>' +
+            '<td>' + s.deviceModel + '</td>' +
+            '<td>' + s.deviceEui + '</td>' +
+            '<td>' + typesLabel + '</td>' +
+            '<td>' + statusLabel(s.sensorStatus) + '</td>' +
+            '<td></td>';
+        var actionTd = tr.lastElementChild;
+        var btn = document.createElement('button');
+        btn.className = 'row-action-btn';
+        btn.type = 'button';
+        btn.title = '삭제';
+        btn.innerHTML = '<i data-lucide="trash-2"></i>';
+        btn.onclick = function (event) {
+            event.stopPropagation();
+            deleteSensor(s.cultivationId, s.sensorId);
+        };
+        actionTd.appendChild(btn);
         return tr;
     }
 
@@ -254,9 +261,6 @@
         renderList(key);
     }
 
-    renderList('cultivation');
-    renderList('sensor');
-
     function switchTab(name) {
         document.querySelectorAll('.tab-btn').forEach(function (btn) { btn.classList.remove('active'); });
         document.querySelectorAll('.list-panel').forEach(function (panel) { panel.classList.remove('active'); });
@@ -264,38 +268,165 @@
         document.getElementById('tab-' + name).classList.add('active');
     }
 
-    // 타입을 '온도센서'로 선택했을 때만 온도 단위(섭씨/화씨) 필드를 보여줌
-    function onSensorTypeChange(wrapperEl) {
-        var unitField = document.getElementById('ms-unit-field');
-        unitField.style.display = wrapperEl.dataset.value === '온도센서' ? 'block' : 'none';
+    function loadSensorTypes() {
+        return fetch('/cultivations/sensor-types')
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                SENSOR_TYPES = data.sensorTypeInfoResponses || [];
+            });
+    }
+
+    // 센서는 재배지 단위 API라, 내가 가진 재배지마다 조회해서 합침
+    function loadAllSensors() {
+        if (cultivationData.length === 0) {
+            SENSOR_LIST = [];
+            listState.sensor.data = SENSOR_LIST;
+            renderList('sensor');
+            return Promise.resolve();
+        }
+        var requests = cultivationData.map(function (c) {
+            return fetch('/cultivations/' + c.cultivationId + '/sensors')
+                .then(function (res) { return res.ok ? res.json() : { sensors: [] }; })
+                .then(function (data) {
+                    return (data.sensors || []).map(function (s) {
+                        return {
+                            cultivationId: c.cultivationId,
+                            cultivationName: c.name,
+                            sensorId: s.sensorId,
+                            deviceEui: s.deviceEui,
+                            deviceModel: s.deviceModel,
+                            deviceName: s.deviceName,
+                            location: s.location,
+                            locationDetail: s.locationDetail,
+                            sensorStatus: s.sensorStatus,
+                            sensorTypes: s.sensorTypes || []
+                        };
+                    });
+                })
+                .catch(function () { return []; });
+        });
+        return Promise.all(requests).then(function (lists) {
+            SENSOR_LIST = lists.reduce(function (acc, l) { return acc.concat(l); }, []);
+            listState.sensor.data = SENSOR_LIST;
+            renderList('sensor');
+        });
+    }
+
+    function deleteSensor(cultivationId, sensorId) {
+        if (!confirm('이 센서를 삭제하시겠어요?')) return;
+        fetch('/cultivations/' + cultivationId + '/sensors/' + sensorId, { method: 'DELETE' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('delete failed');
+                return loadAllSensors();
+            })
+            .then(function () { lucide.createIcons(); })
+            .catch(function () { alert('센서 삭제에 실패했습니다.'); });
+    }
+
+    function populateCultivationSelect() {
+        var wrapperEl = document.getElementById('ms-cultivation');
+        var menu = document.getElementById('ms-cultivation-menu');
+        menu.innerHTML = cultivationData.map(function (c) {
+            return '<div class="msh-select-option" data-value="' + c.cultivationId + '" onclick="selectMshOption(this)">' + c.name + '</div>';
+        }).join('');
+        wrapperEl.dataset.value = '';
+        wrapperEl.querySelector('.msh-select-value').textContent = '재배지를 선택하세요';
+    }
+
+    function renderSensorTypeCheckList() {
+        var wrap = document.getElementById('ms-type-list');
+        wrap.innerHTML = '';
+        SENSOR_TYPES.forEach(function (t) {
+            var row = document.createElement('label');
+            row.className = 'sensor-type-check-row';
+            row.innerHTML =
+                '<input type="checkbox" data-sensor-type-id="' + t.id + '" onchange="toggleSensorTypeRow(this)" />' +
+                '<span>' + t.type + ' (' + t.valueUnit + ')</span>' +
+                '<input type="number" class="st-min" placeholder="최소" disabled />' +
+                '<input type="number" class="st-max" placeholder="최대" disabled />';
+            wrap.appendChild(row);
+        });
+    }
+
+    function toggleSensorTypeRow(checkbox) {
+        var row = checkbox.closest('.sensor-type-check-row');
+        var disabled = !checkbox.checked;
+        row.querySelector('.st-min').disabled = disabled;
+        row.querySelector('.st-max').disabled = disabled;
+        if (disabled) {
+            row.querySelector('.st-min').value = '';
+            row.querySelector('.st-max').value = '';
+        }
+    }
+
+    function openSensorModal() {
+        populateCultivationSelect();
+        renderSensorTypeCheckList();
+        ['ms-name', 'ms-model', 'ms-location', 'ms-location-detail', 'ms-serial'].forEach(function (id) {
+            document.getElementById(id).value = '';
+        });
+        openModal('modal-sensor');
     }
 
     function registerSensor() {
+        var cultivationId = document.getElementById('ms-cultivation').dataset.value;
+        var deviceName = document.getElementById('ms-name').value.trim();
+        var deviceModel = document.getElementById('ms-model').value.trim();
         var location = document.getElementById('ms-location').value.trim();
-        var place = document.getElementById('ms-place').value.trim();
-        var serial = document.getElementById('ms-serial').value.trim();
-        var model = document.getElementById('ms-model').value.trim();
-        var type = document.getElementById('ms-type').dataset.value;
-        var unit = document.getElementById('ms-unit').dataset.value;
+        var locationDetail = document.getElementById('ms-location-detail').value.trim();
+        var deviceEui = document.getElementById('ms-serial').value.trim();
 
-        if (!location || !place || !serial || !model) return;
-
-        var sensor = { location: location, place: place, serial: serial, model: model, type: type };
-        if (type === '온도센서') {
-            sensor.unit = unit;
+        if (!cultivationId) { alert('재배지를 선택해주세요.'); return; }
+        if (!deviceName || !deviceModel || !location || !locationDetail || !deviceEui) {
+            alert('모든 항목을 입력해주세요.');
+            return;
         }
-        sensorData.push(sensor);
-        listState.sensor.page = Math.max(0, Math.ceil(sensorData.length / PAGE_SIZE) - 1);
-        renderList('sensor');
 
-        ['ms-location', 'ms-place', 'ms-serial', 'ms-model'].forEach(function (id) {
-            document.getElementById(id).value = '';
+        var sensorSettings = [];
+        document.querySelectorAll('#ms-type-list .sensor-type-check-row').forEach(function (row) {
+            var checkbox = row.querySelector('input[type="checkbox"]');
+            if (!checkbox.checked) return;
+            var min = row.querySelector('.st-min').value;
+            var max = row.querySelector('.st-max').value;
+            if (min === '' || max === '') return;
+            sensorSettings.push({
+                sensorTypeId: Number(checkbox.dataset.sensorTypeId),
+                thresholdMin: Number(min),
+                thresholdMax: Number(max)
+            });
         });
-        setMshSelectValue(document.getElementById('ms-type'), '온도센서');
-        setMshSelectValue(document.getElementById('ms-unit'), 'C');
-        onSensorTypeChange(document.getElementById('ms-type'));
-        closeModal('modal-sensor');
+
+        if (sensorSettings.length === 0) {
+            alert('측정 타입을 하나 이상 선택하고 임계값을 입력해주세요.');
+            return;
+        }
+
+        fetch('/cultivations/' + cultivationId + '/sensors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                deviceEui: deviceEui,
+                deviceModel: deviceModel,
+                deviceName: deviceName,
+                location: location,
+                locationDetail: locationDetail,
+                sensorSettings: sensorSettings
+            })
+        })
+            .then(function (res) {
+                if (!res.ok) throw new Error('register failed');
+                return loadAllSensors();
+            })
+            .then(function () {
+                closeModal('modal-sensor');
+            })
+            .catch(function () { alert('센서 등록에 실패했습니다.'); });
     }
+
+    renderList('cultivation');
+    Promise.all([loadSensorTypes(), loadAllSensors()]).then(function () {
+        lucide.createIcons();
+    });
 </script>
 <script src="/js/msh-select.js"></script>
 

@@ -305,3 +305,75 @@ body {
     gap: 10px;
     margin-top: 8px;
 }
+
+.modal-box-wide { max-width: 560px; }
+
+.modal-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 14px;
+}
+
+.row-action-btn {
+    background: none;
+    border: none;
+    color: var(--brown-500);
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.row-action-btn:hover {
+    background: rgba(139, 94, 60, 0.1);
+    color: #b3453a;
+}
+
+.row-action-btn svg { width: 16px; height: 16px; }
+
+.sensor-type-check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 14rem;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+#ms-type-list .sensor-type-check-row {
+    display: grid;
+    grid-template-columns: 18px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 2px solid rgba(139, 94, 60, 0.18);
+    border-radius: 10px;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+}
+
+#ms-type-list .sensor-type-check-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--sage-500);
+}
+
+#ms-type-list .sensor-type-check-row span {
+    font-size: 13px;
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+#ms-type-list .sensor-type-check-row .st-min,
+#ms-type-list .sensor-type-check-row .st-max {
+    width: 4.5rem;
+    padding: 6px 8px;
+    border: 2px solid var(--brown-300);
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+.sensor-type-check-row .st-min:disabled,
+.sensor-type-check-row .st-max:disabled {
+    background: rgba(139, 94, 60, 0.06);
+}

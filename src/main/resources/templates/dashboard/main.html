@@ -45,69 +45,56 @@
             <!-- 센서 컬럼 -->
             <div class="sensor-col">
                 <div class="sensor-rows">
-                    <div class="card sensor-row">
+                    <div class="card sensor-row" data-sensor-type="TEMPERATURE">
                         <i data-lucide="thermometer" class="sensor-icon"></i>
                         <div class="sensor-main">
-                            <div class="msh-select msh-select--sensor" data-value="온도센서3" data-onchange="updateSensor" data-onchange-arg="temp">
+                            <div class="msh-select msh-select--sensor" data-value="" data-onchange="updateSensor" data-onchange-arg="TEMPERATURE">
                                 <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                    <span class="msh-select-value">온도센서3</span>
+                                    <span class="msh-select-value">등록된 센서 없음</span>
                                     <i data-lucide="chevron-down" class="msh-select-chevron"></i>
                                 </button>
-                                <div class="msh-select-menu">
-                                    <div class="msh-select-option" onclick="selectMshOption(this)">온도센서1</div>
-                                    <div class="msh-select-option" onclick="selectMshOption(this)">온도센서2</div>
-                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">온도센서3</div>
-                                </div>
+                                <div class="msh-select-menu"></div>
                             </div>
-                            <div class="sensor-value">20°C</div>
+                            <div class="sensor-value">-</div>
                         </div>
                     </div>
-                    <div class="card sensor-row">
+                    <div class="card sensor-row" data-sensor-type="HUMIDITY">
                         <i data-lucide="droplet" class="sensor-icon"></i>
                         <div class="sensor-main">
-                            <div class="msh-select msh-select--sensor" data-value="습도센서1" data-onchange="updateSensor" data-onchange-arg="humidity">
+                            <div class="msh-select msh-select--sensor" data-value="" data-onchange="updateSensor" data-onchange-arg="HUMIDITY">
                                 <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                    <span class="msh-select-value">습도센서1</span>
+                                    <span class="msh-select-value">등록된 센서 없음</span>
                                     <i data-lucide="chevron-down" class="msh-select-chevron"></i>
                                 </button>
-                                <div class="msh-select-menu">
-                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">습도센서1</div>
-                                    <div class="msh-select-option" onclick="selectMshOption(this)">습도센서2</div>
-                                </div>
+                                <div class="msh-select-menu"></div>
                             </div>
-                            <div class="sensor-value">61%</div>
+                            <div class="sensor-value">-</div>
                         </div>
                     </div>
-                    <div class="card sensor-row">
+                    <div class="card sensor-row" data-sensor-type="CO2">
                         <i data-lucide="cloudy" class="sensor-icon"></i>
                         <div class="sensor-main">
-                            <div class="msh-select msh-select--sensor" data-value="CO2센서2" data-onchange="updateSensor" data-onchange-arg="co2">
+                            <div class="msh-select msh-select--sensor" data-value="" data-onchange="updateSensor" data-onchange-arg="CO2">
                                 <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                    <span class="msh-select-value">CO2센서2</span>
+                                    <span class="msh-select-value">등록된 센서 없음</span>
                                     <i data-lucide="chevron-down" class="msh-select-chevron"></i>
                                 </button>
-                                <div class="msh-select-menu">
-                                    <div class="msh-select-option" onclick="selectMshOption(this)">CO2센서1</div>
-                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">CO2센서2</div>
-                                </div>
+                                <div class="msh-select-menu"></div>
                             </div>
-                            <div class="sensor-value">530ppm</div>
+                            <div class="sensor-value">-</div>
                         </div>
                     </div>
-                    <div class="card sensor-row">
+                    <div class="card sensor-row" data-sensor-type="LIGHT">
                         <i data-lucide="sun" class="sensor-icon"></i>
                         <div class="sensor-main">
-                            <div class="msh-select msh-select--sensor" data-value="조도센서1" data-onchange="updateSensor" data-onchange-arg="light">
+                            <div class="msh-select msh-select--sensor" data-value="" data-onchange="updateSensor" data-onchange-arg="LIGHT">
                                 <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                    <span class="msh-select-value">조도센서1</span>
+                                    <span class="msh-select-value">등록된 센서 없음</span>
                                     <i data-lucide="chevron-down" class="msh-select-chevron"></i>
                                 </button>
-                                <div class="msh-select-menu">
-                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">조도센서1</div>
-                                    <div class="msh-select-option" onclick="selectMshOption(this)">조도센서2</div>
-                                </div>
+                                <div class="msh-select-menu"></div>
                             </div>
-                            <div class="sensor-value">350lux</div>
+                            <div class="sensor-value">-</div>
                         </div>
                     </div>
                 </div>

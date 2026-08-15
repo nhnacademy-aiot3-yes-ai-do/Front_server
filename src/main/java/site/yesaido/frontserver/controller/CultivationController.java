@@ -14,6 +14,7 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.Member
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberRoleUpdateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationDetailResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryPageResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
@@ -22,6 +23,9 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.Membe
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
 import java.util.LinkedHashMap;
@@ -236,5 +240,32 @@ public class CultivationController {
     @GetMapping("/mushroom-references")
     public ResponseEntity<MushroomReferenceInfoListResponse> getMushroomReferences() {
         return cultivationClient.getAllMushroomReferences();
+    }
+
+    @GetMapping("/sensor-types")
+    public ResponseEntity<SensorTypeInfoListResponse> getSensorTypes() {
+        return cultivationClient.getSensorTypes();
+    }
+
+    @GetMapping("/{cultivation-id}/sensors")
+    public ResponseEntity<CultivationSensorListResponse> getSensors(@PathVariable("cultivation-id") Long cultivationId) {
+        return cultivationClient.getSensors(cultivationId);
+    }
+
+    @PostMapping("/{cultivation-id}/sensors")
+    public ResponseEntity<Void> registerSensor(@PathVariable("cultivation-id") Long cultivationId,
+                                               @RequestBody CreateCultivationSensorRequest request) {
+        return cultivationClient.registerSensor(cultivationId, request);
+    }
+
+    @DeleteMapping("/{cultivation-id}/sensors/{sensor-id}")
+    public ResponseEntity<Void> deleteSensor(@PathVariable("cultivation-id") Long cultivationId,
+                                             @PathVariable("sensor-id") Long sensorId) {
+        return cultivationClient.deleteSensor(cultivationId, sensorId);
+    }
+
+    @GetMapping("/{cultivation-id}/sensor-values")
+    public ResponseEntity<List<LatestSensorValueResponse>> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId) {
+        return cultivationClient.getLatestSensorValues(cultivationId);
     }
 }
