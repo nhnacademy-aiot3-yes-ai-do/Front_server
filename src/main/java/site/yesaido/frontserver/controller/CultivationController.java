@@ -220,4 +220,9 @@ public class CultivationController {
                                             @PathVariable("photo-id") Long photoId) {
         return cultivationClient.deletePhoto(cultivationId, photoId);
     }
+
+    @GetMapping("/mushroom-references")
+    public ResponseEntity<MushroomReferenceInfoListResponse> getMushroomReferences() {
+        return cultivationClient.getAllMushroomReferences();
+    }
 }

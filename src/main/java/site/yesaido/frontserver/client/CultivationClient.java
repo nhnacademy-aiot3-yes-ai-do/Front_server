@@ -69,4 +69,23 @@ public interface CultivationClient {
     @DeleteMapping("/api/cultivations/{cultivation-id}/photos/{photo-id}")
     ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                      @PathVariable("photo-id") Long photoId);
+
+    // MushroomReference (관리자)
+    @PostMapping("/api/v1/mushroom-references")
+    ResponseEntity<Void> registerMushroomReference(@RequestBody MushroomReferenceRequest request);
+
+    @PutMapping("/api/v1/mushroom-references/{mushroom-reference-id}")
+    ResponseEntity<Void> updateMushroomReference(@PathVariable("mushroom-reference-id") Long id,
+                                                 @RequestBody MushroomReferenceRequest request);
+
+    @DeleteMapping("/api/v1/mushroom-references/{mushroom-reference-id}")
+    ResponseEntity<Void> deleteMushroomReference(@PathVariable("mushroom-reference-id") Long id);
+
+    @GetMapping("/api/v1/mushroom-references")
+    ResponseEntity<MushroomReferenceInfoListResponse> getAllMushroomReferences();
+
+    // SensorType (조회용)
+    @GetMapping("/api/v1/sensor-types")
+    ResponseEntity<SensorTypeInfoListResponse> getSensorTypes();
+
 }
