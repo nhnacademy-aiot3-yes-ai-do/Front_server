@@ -9,7 +9,9 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAu
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -29,6 +31,9 @@ class AdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private CultivationClient cultivationClient;
 
     private static final Cookie ADMIN_COOKIE = new Cookie("role", "ADMIN");
     private static final Cookie ACCESS_COOKIE = new Cookie("accessToken", "adminToken");

@@ -8,8 +8,20 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.UserClient;
-import site.yesaido.frontserver.dto.cultivation.request.*;
-import site.yesaido.frontserver.dto.cultivation.response.*;
+import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddFormRequest;
+import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddRequest;
+import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberRoleUpdateRequest;
+import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
+import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationDetailResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryPageResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
+import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
+import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
 import java.util.LinkedHashMap;
@@ -219,5 +231,10 @@ public class CultivationController {
     public ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                             @PathVariable("photo-id") Long photoId) {
         return cultivationClient.deletePhoto(cultivationId, photoId);
+    }
+
+    @GetMapping("/mushroom-references")
+    public ResponseEntity<MushroomReferenceInfoListResponse> getMushroomReferences() {
+        return cultivationClient.getAllMushroomReferences();
     }
 }

@@ -6,8 +6,17 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import site.yesaido.frontserver.dto.cultivation.request.*;
-import site.yesaido.frontserver.dto.cultivation.response.*;
+import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddRequest;
+import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberRoleUpdateRequest;
+import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
+import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.*;
+import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
+import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
+import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 
 import java.util.List;
 
@@ -69,4 +78,23 @@ public interface CultivationClient {
     @DeleteMapping("/api/cultivations/{cultivation-id}/photos/{photo-id}")
     ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                      @PathVariable("photo-id") Long photoId);
+
+    // MushroomReference (관리자)
+    @PostMapping("/api/v1/mushroom-references")
+    ResponseEntity<Void> registerMushroomReference(@RequestBody MushroomReferenceRequest request);
+
+    @PutMapping("/api/v1/mushroom-references/{mushroom-reference-id}")
+    ResponseEntity<Void> updateMushroomReference(@PathVariable("mushroom-reference-id") Long id,
+                                                 @RequestBody MushroomReferenceRequest request);
+
+    @DeleteMapping("/api/v1/mushroom-references/{mushroom-reference-id}")
+    ResponseEntity<Void> deleteMushroomReference(@PathVariable("mushroom-reference-id") Long id);
+
+    @GetMapping("/api/v1/mushroom-references")
+    ResponseEntity<MushroomReferenceInfoListResponse> getAllMushroomReferences();
+
+    // SensorType (조회용)
+    @GetMapping("/api/v1/sensor-types")
+    ResponseEntity<SensorTypeInfoListResponse> getSensorTypes();
+
 }

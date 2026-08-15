@@ -1,4 +1,4 @@
-package site.yesaido.frontserver.dto.cultivation.response;
+package site.yesaido.frontserver.dto.cultivation.response.harvest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

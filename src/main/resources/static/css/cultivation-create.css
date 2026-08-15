@@ -328,6 +328,43 @@ body {
     line-height: 1.4;
 }
 
+/* ---- step4 2단 레이아웃 ---- */
+.step4-columns {
+    display: flex;
+    gap: 1.4rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.step4-col-left {
+    flex: 0 0 34%;
+}
+
+.step4-col-right {
+    flex: 1;
+    min-width: 0;
+}
+
+.step4-col-left .mushroom-info-card {
+    margin-bottom: 0;
+    height: 100%;
+}
+
+.step4-col-right .recommend-grid {
+    grid-template-columns: repeat(2, 1fr);
+    margin-bottom: 0;
+}
+
+@media (max-width: 640px) {
+    .step4-columns {
+        flex-direction: column;
+    }
+    .step4-col-left {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+}
+
 /* ---- recommend step ---- */
 .recommend-grid {
     display: grid;
