@@ -18,16 +18,24 @@ class LoginCheckInterceptorTest {
     @LoginRequired
     static class TestUserClass {
         @LoginRequired
-        public void requiredMethod() {}
+        public void requiredMethod() {
+            // 리플렉션으로 어노테이션만 확인하는 테스트용 메서드라 실제로 호출되지 않음
+        }
 
         @LoginRequired(adminOnly = true)
-        public void adminOnlyMethod() {}
+        public void adminOnlyMethod() {
+            // 리플렉션으로 어노테이션만 확인하는 테스트용 메서드라 실제로 호출되지 않음
+        }
 
-        public void normalMethod() {}
+        public void normalMethod() {
+            // 리플렉션으로 어노테이션만 확인하는 테스트용 메서드라 실제로 호출되지 않음
+        }
     }
 
     static class TestNormalClass {
-        public void normalMethod() {}
+        public void normalMethod() {
+            // 리플렉션으로 어노테이션만 확인하는 테스트용 메서드라 실제로 호출되지 않음
+        }
     }
 
     @Test

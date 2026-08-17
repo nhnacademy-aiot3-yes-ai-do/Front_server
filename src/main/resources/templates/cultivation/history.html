@@ -48,7 +48,7 @@
 <script th:inline="javascript">
     var historyState = { selectedId: null };
 
-    var pageData = /*[[${history}]]*/ { content: [] };
+    var pageData = [(${historyJson})];
     var CULTIVATION_HISTORY = pageData.content.map(function (c) {
         return {
             id: c.cultivationId,

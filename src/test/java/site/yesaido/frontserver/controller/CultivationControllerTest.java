@@ -26,6 +26,7 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.Membe
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
+import site.yesaido.frontserver.util.ViewJsonWriter;
 import tools.jackson.databind.ObjectMapper;
 
 import java.math.BigDecimal;
@@ -49,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         }
 )
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AuthCookieProvider.class)
+@Import({AuthCookieProvider.class, ViewJsonWriter.class})
 class CultivationControllerTest {
 
     private static final Cookie LOGGED_IN = new Cookie("accessToken", "demo-access-token");
@@ -81,20 +82,12 @@ class CultivationControllerTest {
                 1L, "테스트 재배", 10L, "GROWTH", "GROWTH", 3, "오너닉네임", LocalDateTime.now());
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(List.of(summary)));
 
-        Map<String, Object> expectedMap = new LinkedHashMap<>();
-        expectedMap.put("cultivationId", 1L);
-        expectedMap.put("name", "테스트 재배");
-        expectedMap.put("mushroomId", 10L);
-        expectedMap.put("status", "GROWTH");
-        expectedMap.put("mode", "GROWTH");
-        expectedMap.put("memberCount", 3);
-        expectedMap.put("ownerNickname", "오너닉네임");
-        expectedMap.put("createdAt", summary.createdAt().toString());
+        String expectedJson = objectMapper.writeValueAsString(List.of(summary));
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivations", List.of(expectedMap)));
+                .andExpect(model().attribute("cultivationsJson", expectedJson));
     }
 
     @Test
@@ -105,7 +98,7 @@ class CultivationControllerTest {
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivations", List.of()));
+                .andExpect(model().attribute("cultivationsJson", "[]"));
     }
 
     @Test
@@ -167,8 +160,8 @@ class CultivationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("dashboard/main"))
                 .andExpect(model().attribute("cultivation", detail))
-                .andExpect(model().attribute("members", List.of()))
-                .andExpect(model().attribute("photos", List.of()));
+                .andExpect(model().attribute("membersJson", "[]"))
+                .andExpect(model().attribute("photosJson", "[]"));
     }
 
     @Test

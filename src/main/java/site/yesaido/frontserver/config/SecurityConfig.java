@@ -16,6 +16,7 @@ import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.GoogleLoginRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
+import site.yesaido.frontserver.exception.SecurityFilterChainConfigurationException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 @Slf4j
@@ -28,22 +29,26 @@ public class SecurityConfig {
     private final AuthCookieProvider authCookieProvider;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
-                        .anyRequest().permitAll()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
-                        .successHandler(oAuth2SuccessHandler())
-                        .failureHandler(oAuth2FailureHandler())
-                );
+    public SecurityFilterChain securityFilterChain(HttpSecurity http){
+        try {
+            http
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .formLogin(AbstractHttpConfigurer::disable)
+                    .httpBasic(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                            .anyRequest().permitAll()
+                    )
+                    .oauth2Login(oauth2 -> oauth2
+                            .loginPage("/login")
+                            .successHandler(oAuth2SuccessHandler())
+                            .failureHandler(oAuth2FailureHandler())
+                    );
 
-        return http.build();
+            return http.build();
+        } catch (Exception e) {
+            throw new SecurityFilterChainConfigurationException("SecurityFilterChain 구성에 실패했습니다.", e);
+        }
     }
 
     /**
