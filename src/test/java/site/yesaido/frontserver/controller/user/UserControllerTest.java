@@ -293,9 +293,21 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("이메일 인증번호 검증 - null 또는 false 분기")
-    void verifyEmailFailure() throws Exception {
+    @DisplayName("이메일 인증번호 검증 - response가 null인 분기")
+    void verifyEmailReturnsFalseWhenResponseIsNull() throws Exception {
         given(userClient.verifyEmail(any())).willReturn(null);
+
+        mockMvc.perform(post("/users/email/verify")
+                        .param("email", "test@naver.com")
+                        .param("code", "000000"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("이메일 인증번호 검증 - response는 있지만 data가 false인 분기")
+    void verifyEmailReturnsFalseWhenDataIsFalse() throws Exception {
+        given(userClient.verifyEmail(any())).willReturn(new ApiResponse<>(true, "검증 실패", false));
 
         mockMvc.perform(post("/users/email/verify")
                         .param("email", "test@naver.com")
