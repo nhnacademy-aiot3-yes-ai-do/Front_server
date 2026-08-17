@@ -139,43 +139,17 @@
 
                 <div class="card chart-card">
                     <div class="chart-card-header">
-                        <div class="msh-select msh-select--chart" data-value="온도센서3">
+                        <div class="msh-select msh-select--chart" id="chart-sensor-select" data-onchange="handleChartSensorChange">
                             <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                <span class="msh-select-value">온도센서3</span>
+                                <span class="msh-select-value">등록된 센서 없음</span>
                                 <i data-lucide="chevron-down" class="msh-select-chevron"></i>
                             </button>
-                            <div class="msh-select-menu">
-                                <div class="msh-select-group-label">온도</div>
-                                <div class="msh-select-option" onclick="selectMshOption(this)">온도센서1</div>
-                                <div class="msh-select-option" onclick="selectMshOption(this)">온도센서2</div>
-                                <div class="msh-select-option selected" onclick="selectMshOption(this)">온도센서3</div>
-                                <div class="msh-select-group-label">습도</div>
-                                <div class="msh-select-option" onclick="selectMshOption(this)">습도센서1</div>
-                                <div class="msh-select-option" onclick="selectMshOption(this)">습도센서2</div>
-                                <div class="msh-select-group-label">CO2</div>
-                                <div class="msh-select-option" onclick="selectMshOption(this)">CO2센서1</div>
-                                <div class="msh-select-option" onclick="selectMshOption(this)">CO2센서2</div>
-                                <div class="msh-select-group-label">조도</div>
-                                <div class="msh-select-option" onclick="selectMshOption(this)">조도센서1</div>
-                                <div class="msh-select-option" onclick="selectMshOption(this)">조도센서2</div>
-                            </div>
+                            <div class="msh-select-menu"></div>
                         </div>
                     </div>
-                    <div class="chart-placeholder">
-                        <svg viewBox="0 0 260 110" class="chart-demo-svg" preserveAspectRatio="none">
-                            <defs>
-                                <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stop-color="var(--sage-500)" stop-opacity="0.35" />
-                                    <stop offset="100%" stop-color="var(--sage-500)" stop-opacity="0" />
-                                </linearGradient>
-                            </defs>
-                            <polyline class="chart-grid-line" points="0,20 260,20" />
-                            <polyline class="chart-grid-line" points="0,55 260,55" />
-                            <polyline class="chart-grid-line" points="0,90 260,90" />
-                            <polygon fill="url(#chartFill)" points="0,80 32,62 65,70 98,40 130,50 163,25 195,35 228,18 260,28 260,110 0,110" />
-                            <polyline class="chart-demo-line" fill="none" points="0,80 32,62 65,70 98,40 130,50 163,25 195,35 228,18 260,28" />
-                            <circle class="chart-demo-dot" cx="228" cy="18" r="4.5" />
-                        </svg>
+                    <div class="chart-placeholder" style="position:relative;">
+                        <svg viewBox="0 0 260 110" class="chart-demo-svg" preserveAspectRatio="none" id="chart-svg"></svg>
+                        <div id="chart-empty-msg" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; color:#94a3b8; font-size:0.85rem; text-align:center; padding:0 12px;"></div>
                     </div>
                 </div>
             </div>

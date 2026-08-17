@@ -5,9 +5,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.CultivationClient;
+import site.yesaido.frontserver.client.InquiryClient;
+import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
+import site.yesaido.frontserver.dto.inquiry.InquiryStatus;
+import site.yesaido.frontserver.dto.inquiry.request.InquiryMessageRequest;
+import site.yesaido.frontserver.dto.inquiry.response.InquiryDetailResponse;
+import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryPageResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
 @Controller
@@ -15,6 +21,7 @@ import site.yesaido.frontserver.util.LoginRequired;
 @RequiredArgsConstructor
 public class AdminController {
     private final CultivationClient cultivationClient;
+    private final InquiryClient inquiryClient;
 
     @GetMapping("/admin")
     public String admin() {
@@ -26,11 +33,35 @@ public class AdminController {
         return "admin/members";
     }
 
+    // 문의사항 용
     @GetMapping("/admin/inquiries")
     public String inquiries() {
         return "admin/inquiries";
     }
 
+    @ResponseBody
+    @GetMapping("/admin/inquiries/list")
+    public ApiResponse<InquirySummaryPageResponse> getAllInquiries(
+            @RequestParam(required = false) InquiryStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return inquiryClient.getAllInquiries(status, page, size);
+    }
+
+    @ResponseBody
+    @GetMapping("/admin/inquiries/{inquiry-id}")
+    public ApiResponse<InquiryDetailResponse> getInquiryDetail(@PathVariable("inquiry-id") Long inquiryId) {
+        return inquiryClient.getInquiryDetailForAdmin(inquiryId);
+    }
+
+    @ResponseBody
+    @PutMapping("/admin/inquiries/messages/{answer-id}")
+    public ApiResponse<InquiryDetailResponse> answerMessage(@PathVariable("answer-id") Long answerId,
+                                                            @RequestBody InquiryMessageRequest request) {
+        return inquiryClient.answerMessage(answerId, request);
+    }
+
+    // 버섯 등록
     @GetMapping("/admin/mushrooms")
     public String mushrooms() {
         return "admin/mushrooms";
