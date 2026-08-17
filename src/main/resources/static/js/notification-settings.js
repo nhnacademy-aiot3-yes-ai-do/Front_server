@@ -172,6 +172,9 @@ function ensureDiscordReady() {
 }
 
 function ensureSubscription(typeId, cultivationId) {
+    if (!discordEndpoint || !discordEndpoint.id) {
+        return Promise.reject(new Error('디스코드 연결이 필요합니다.'));
+    }
     var existing = findSubscription(typeId, cultivationId, discordEndpoint.id);
     if (existing && existing.enabled) {
         return Promise.resolve(existing);

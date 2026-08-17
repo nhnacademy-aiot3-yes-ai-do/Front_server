@@ -171,4 +171,14 @@ class NotificationSubscriptionControllerTest {
                 .andExpect(jsonPath("$[0].cultivationId").value(3))
                 .andExpect(jsonPath("$[0].name").value("느타리 1번"));
     }
+
+    @Test
+    @DisplayName("재배지 응답 본문이 없으면 빈 목록")
+    void listCultivationsWithEmptyBody() throws Exception {
+        given(cultivationClient.getCultivations()).willReturn(ResponseEntity.ok().build());
+
+        mockMvc.perform(get("/notifications/cultivations").cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
 }
