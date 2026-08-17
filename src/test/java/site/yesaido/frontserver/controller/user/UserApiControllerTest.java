@@ -1,0 +1,221 @@
+package site.yesaido.frontserver.controller.user;
+
+import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientAutoConfiguration;
+import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.common.ApiResponse;
+import site.yesaido.frontserver.dto.user.request.*;
+import site.yesaido.frontserver.dto.user.response.TokenResponse;
+import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
+import site.yesaido.frontserver.util.AuthCookieProvider;
+import tools.jackson.databind.ObjectMapper;
+
+import java.time.LocalDateTime;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@WebMvcTest(
+        value = UserApiController.class,
+        excludeAutoConfiguration = {
+                OAuth2ClientAutoConfiguration.class,
+                OAuth2ClientWebSecurityAutoConfiguration.class
+        }
+)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(AuthCookieProvider.class)
+class UserApiControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private UserClient userClient;
+
+    @MockitoBean
+    private AuthCookieProvider authCookieProvider;
+
+    @Test
+    @DisplayName("이메일 중복 확인 - 성공 (true)")
+    void checkEmailSuccess() throws Exception {
+        given(userClient.checkEmail("test@naver.com")).willReturn(new ApiResponse<>(true, "조회 성공", true));
+
+        mockMvc.perform(get("/users/check-email").param("email", "test@naver.com"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+    }
+
+    @Test
+    @DisplayName("이메일 중복 확인 - null 또는 false 분기")
+    void checkEmailFailedOrNull() throws Exception {
+        given(userClient.checkEmail("fail@naver.com")).willReturn(null);
+
+        mockMvc.perform(get("/users/check-email").param("email", "fail@naver.com"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("닉네임 중복 확인 - 성공 (true)")
+    void checkNicknameSuccess() throws Exception {
+        given(userClient.checkNickname("nickTest")).willReturn(new ApiResponse<>(true, "조회 성공", true));
+
+        mockMvc.perform(get("/users/check-nickname").param("nickname", "nickTest"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+    }
+
+    @Test
+    @DisplayName("닉네임 중복 확인 - null 응답 분기")
+    void checkNicknameNull() throws Exception {
+        given(userClient.checkNickname("nickTest")).willReturn(null);
+
+        mockMvc.perform(get("/users/check-nickname").param("nickname", "nickTest"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("이메일 인증번호 발송 요청")
+    void sendEmailSuccess() throws Exception {
+        given(userClient.sendEmail(any())).willReturn(new ApiResponse<>(true, "발송 성공", null));
+
+        mockMvc.perform(post("/users/email/send").param("email", "test@naver.com"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("이메일 인증번호 검증 - 성공 및 실패 분기")
+    void verifyEmailSuccessAndFail() throws Exception {
+        given(userClient.verifyEmail(any())).willReturn(new ApiResponse<>(true, "검증 성공", true));
+
+        mockMvc.perform(post("/users/email/verify")
+                        .param("email", "test@naver.com")
+                        .param("code", "123456"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
+    }
+
+    @Test
+    @DisplayName("이메일 인증번호 검증 - response가 null인 분기")
+    void verifyEmailReturnsFalseWhenResponseIsNull() throws Exception {
+        given(userClient.verifyEmail(any())).willReturn(null);
+
+        mockMvc.perform(post("/users/email/verify")
+                        .param("email", "test@naver.com")
+                        .param("code", "000000"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("이메일 인증번호 검증 - response는 있지만 data가 false인 분기")
+    void verifyEmailReturnsFalseWhenDataIsFalse() throws Exception {
+        given(userClient.verifyEmail(any())).willReturn(new ApiResponse<>(true, "검증 실패", false));
+
+        mockMvc.perform(post("/users/email/verify")
+                        .param("email", "test@naver.com")
+                        .param("code", "000000"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("토큰 시간 연장 (reissue) - 정상 쿠키 분기")
+    void reissueSuccess() throws Exception {
+        TokenResponse tokenResponse = TokenResponse.builder()
+                .accessToken("newAccess")
+                .refreshToken("newRefresh")
+                .role("USER")
+                .build();
+        given(userClient.reissue(any())).willReturn(new ApiResponse<>(true, "재발급 성공", tokenResponse));
+
+        mockMvc.perform(post("/users/reissue").cookie(new Cookie("refreshToken", "validRefresh")))
+                .andExpect(status().isOk());
+
+        verify(authCookieProvider).setAuthCookies(any(), eq("newAccess"), eq("newRefresh"), eq("USER"));
+    }
+
+    @Test
+    @DisplayName("토큰 시간 연장 (reissue) - refreshToken 없을 때 예외 분기")
+    void reissueWithoutTokenThrowsException() {
+        assertThrows(Exception.class, () -> mockMvc.perform(post("/users/reissue")));
+    }
+
+    @Test
+    @DisplayName("프로필 마이페이지 조회")
+    void getMyPageSuccess() throws Exception {
+        UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "이름", "닉네임", "USER", LocalDateTime.now(), LocalDateTime.now());
+        given(userClient.getMyPage(null)).willReturn(new ApiResponse<>(true, "조회 성공", profileResponse));
+
+        mockMvc.perform(get("/users/mypage"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("프로필 수정")
+    void updateMyPageSuccess() throws Exception {
+        ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임", "oldPass", "newPass");
+        given(userClient.updateMyPage(eq(null), any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
+
+        mockMvc.perform(post("/users/mypage")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("비밀번호 검증")
+    void verifyPasswordSuccess() throws Exception {
+        PasswordVerifyRequest request = new PasswordVerifyRequest("password123");
+        given(userClient.verifyPassword(eq(null), any())).willReturn(new ApiResponse<>(true, "검증 성공", true));
+
+        mockMvc.perform(post("/users/verify-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("휴면 해제")
+    void releaseDormantSuccess() throws Exception {
+        given(userClient.releaseDormant("dormant@naver.com")).willReturn(new ApiResponse<>(true, "해제 성공", null));
+
+        mockMvc.perform(post("/users/dormant/release").param("email", "dormant@naver.com"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("Google OAuth2 로그인")
+    void loginWithGoogleSuccess() throws Exception {
+        GoogleLoginRequest request = new GoogleLoginRequest("googleIdToken", "google@gmail.com", "구글유저");
+        TokenResponse tokenResponse = TokenResponse.builder().accessToken("access").refreshToken("refresh").role("USER").build();
+        given(userClient.loginWithGoogle(any())).willReturn(new ApiResponse<>(true, "구글로그인 성공", tokenResponse));
+
+        mockMvc.perform(post("/users/oauth2/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(authCookieProvider).setAuthCookies(any(), eq("access"), eq("refresh"), eq("USER"));
+    }
+}
