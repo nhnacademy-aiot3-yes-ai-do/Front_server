@@ -14,7 +14,7 @@ var discordModalMode = 'create';
 var subscriptionTypes = [];
 var subscriptions = [];
 var cultivations = [];
-var pendingCultivationIds = {};
+var pendingGroups = {};
 var saveQueue = Promise.resolve();
 
 function showSaveStatus(message, isError) {
@@ -119,14 +119,22 @@ function isCultivationOn(cultivationId) {
     });
 }
 
-function isCultivationChecked(cultivationId) {
-    return isCultivationOn(cultivationId) || !!pendingCultivationIds[cultivationId];
+function isCategoryChecked(groupKey) {
+    return isCategoryOn(groupKey) || !!pendingGroups[groupKey];
+}
+
+function selectedGroups() {
+    return ['sensor', 'harvest', 'ai'].filter(isCategoryChecked);
+}
+
+function hasSelectedType() {
+    return selectedGroups().length > 0;
 }
 
 function checkedCultivationIds() {
     var ids = [];
     cultivations.forEach(function (item) {
-        if (isCultivationChecked(item.cultivationId)) {
+        if (isCultivationOn(item.cultivationId)) {
             ids.push(Number(item.cultivationId));
         }
     });
@@ -219,8 +227,6 @@ function ensureGroupForTargets(groupKey, targetIds) {
                 return ensureSubscription(type.id, targetId);
             });
         });
-        pendingCultivationIds[targetId] = false;
-        delete pendingCultivationIds[targetId];
     });
     return runSequentially(tasks);
 }
@@ -257,8 +263,9 @@ function setTogglesBusy(busy) {
         var el = document.getElementById(id);
         if (el) el.disabled = busy || !discordEndpoint;
     });
+    var lockCultivations = busy || !discordEndpoint || !hasSelectedType();
     document.querySelectorAll('#cultivation-toggle-list input[type="checkbox"]').forEach(function (el) {
-        el.disabled = busy || !discordEndpoint;
+        el.disabled = lockCultivations;
     });
 }
 
@@ -266,9 +273,9 @@ function renderCategoryToggles() {
     var sensor = document.getElementById('toggle-sensor');
     var harvest = document.getElementById('toggle-harvest');
     var ai = document.getElementById('toggle-ai');
-    if (sensor) sensor.checked = isCategoryOn('sensor');
-    if (harvest) harvest.checked = isCategoryOn('harvest');
-    if (ai) ai.checked = isCategoryOn('ai');
+    if (sensor) sensor.checked = isCategoryChecked('sensor');
+    if (harvest) harvest.checked = isCategoryChecked('harvest');
+    if (ai) ai.checked = isCategoryChecked('ai');
 }
 
 function renderCultivationList() {
@@ -281,7 +288,7 @@ function renderCultivationList() {
     }
 
     listEl.innerHTML = cultivations.map(function (item) {
-        var checked = isCultivationChecked(item.cultivationId);
+        var checked = isCultivationOn(item.cultivationId);
         var name = escapeHtml(item.name || ('재배지 ' + item.cultivationId));
         return (
             '<div class="settings-row">' +
@@ -318,6 +325,14 @@ function refreshSubscriptionUi() {
         setSubscriptionHint('참여 중인 재배지가 있으면 재배지별로 알림을 켤 수 있어요.');
         return;
     }
+    if (!hasSelectedType()) {
+        setSubscriptionHint('알림 유형을 먼저 켠 다음, 받을 재배지를 선택하세요.');
+        return;
+    }
+    if (Object.keys(pendingGroups).length > 0 && checkedCultivationIds().length === 0) {
+        setSubscriptionHint('받을 재배지를 켜면 서버에 저장됩니다.');
+        return;
+    }
     setSubscriptionHint('켠 유형의 알림을 선택한 재배지로 받아요.');
 }
 
@@ -343,19 +358,26 @@ function handleCategoryToggle(key, checked) {
         refreshSubscriptionUi();
         return;
     }
-    enqueueSave(function () {
-        if (checked) {
-            var targets = checkedCultivationIds();
-            if (targets.length === 0) {
-                targets = cultivations.map(function (item) {
-                    return Number(item.cultivationId);
-                });
-            }
-            if (targets.length === 0) {
-                throw new Error('참여 중인 재배지가 없어요.');
-            }
-            return ensureGroupForTargets(key, targets);
+    if (checked) {
+        var targets = checkedCultivationIds();
+        if (targets.length === 0) {
+            pendingGroups[key] = true;
+            refreshSubscriptionUi();
+            return;
         }
+        enqueueSave(function () {
+            return ensureGroupForTargets(key, targets).then(function () {
+                delete pendingGroups[key];
+            });
+        });
+        return;
+    }
+    delete pendingGroups[key];
+    if (!isCategoryOn(key)) {
+        refreshSubscriptionUi();
+        return;
+    }
+    enqueueSave(function () {
         return disableGroup(key);
     });
 }
@@ -365,21 +387,28 @@ function handleCultivationToggle(id, checked) {
         refreshSubscriptionUi();
         return;
     }
+    var groups = selectedGroups();
+    if (checked && groups.length === 0) {
+        showSaveStatus('알림 유형을 먼저 켜주세요.', true);
+        refreshSubscriptionUi();
+        return;
+    }
+    if (!checked) {
+        enqueueSave(function () {
+            return disableTarget(id);
+        });
+        return;
+    }
     enqueueSave(function () {
-        if (checked) {
-            var activeGroups = ['sensor', 'harvest', 'ai'].filter(isCategoryOn);
-            if (activeGroups.length === 0) {
-                pendingCultivationIds[id] = true;
-                return Promise.resolve();
-            }
-            return runSequentially(activeGroups.map(function (key) {
-                return function () {
-                    return ensureGroupForTargets(key, [id]);
-                };
-            }));
-        }
-        delete pendingCultivationIds[id];
-        return disableTarget(id);
+        return runSequentially(groups.map(function (key) {
+            return function () {
+                return ensureGroupForTargets(key, [id]);
+            };
+        })).then(function () {
+            groups.forEach(function (key) {
+                delete pendingGroups[key];
+            });
+        });
     });
 }
 
@@ -514,7 +543,7 @@ function handleDiscordDisconnect() {
     apiRequest('/notifications/endpoints/' + discordEndpoint.id, { method: 'DELETE' })
         .then(function () {
             discordEndpoint = null;
-            pendingCultivationIds = {};
+            pendingGroups = {};
             renderDiscordStatus();
             showSaveStatus('저장됨', false);
             return loadSubscriptionState();
@@ -550,7 +579,7 @@ function loadDiscordEndpoint() {
 }
 
 function loadSubscriptionState() {
-    pendingCultivationIds = {};
+    pendingGroups = {};
     return Promise.all([
         loadJson('/notifications/subscription-types'),
         loadJson('/notifications/subscriptions'),
