@@ -53,13 +53,7 @@
                 <form id="new-inquiry-form" onsubmit="submitNewInquiry(event)">
                     <div class="support-field">
                         <label>문의 유형</label>
-                        <select id="new-category" onchange="toggleCultivationField()" required>
-                            <option value="계정/로그인">계정/로그인</option>
-                            <option value="재배">재배</option>
-                            <option value="센서/기기">센서/기기</option>
-                            <option value="버그 신고">버그 신고</option>
-                            <option value="기타">기타</option>
-                        </select>
+                        <select id="new-category" onchange="toggleCultivationField()" required></select>
                     </div>
 
                     <div class="support-field" id="new-cultivation-field" style="display:none;">
@@ -74,16 +68,7 @@
 
                     <div class="support-field">
                         <label>문의 내용</label>
-
-                        <div class="support-attach-chip-list" id="photo-chip-list"></div>
-
-                        <div class="support-content-composer">
-                            <textarea id="new-content" rows="3" placeholder="문의하실 내용을 자세히 적어주세요" required></textarea>
-                            <button type="button" class="support-attach-icon-btn" title="사진 첨부 (최대 5장)" onclick="document.getElementById('photo-input').click()">
-                                <i data-lucide="image"></i>
-                            </button>
-                        </div>
-                        <input type="file" id="photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoInputChange(this, newInquiryPhotos)" />
+                        <textarea id="new-content" rows="3" placeholder="문의하실 내용을 자세히 적어주세요" required></textarea>
                     </div>
 
                     <div class="support-actions">
@@ -116,18 +101,12 @@
 
                 <div class="support-chat" id="support-chat"></div>
 
-                <div class="support-attach-chip-list" id="photo-chip-list-followup"></div>
-
                 <form class="support-composer" id="followup-composer" onsubmit="submitFollowUp(event)">
                     <textarea id="followup-input" rows="1" placeholder="답변으로 해결이 안 됐다면, 이어서 질문해보세요" required></textarea>
-                    <button type="button" class="support-attach-icon-btn" title="사진 첨부 (최대 5장)" onclick="document.getElementById('followup-photo-input').click()">
-                        <i data-lucide="image"></i>
-                    </button>
                     <button class="support-composer-send" type="submit" title="질문 추가하기">
                         <i data-lucide="send"></i>
                     </button>
                 </form>
-                <input type="file" id="followup-photo-input" accept="image/*" multiple style="display:none;" onchange="handlePhotoInputChange(this, followupPhotos)" />
 
             </div>
         </section>
@@ -143,137 +122,115 @@
         document.getElementById('support-panel-' + name).classList.add('active');
     }
 
-    // 내가 속해있는 Cultivation 목록 (데모 데이터. 실제로는 CultivationController가 내려주는 목록을 재사용해야 함)
-    var MY_CULTIVATIONS = [
-        { id: 1, name: 'Cultivation1', type: '느타리버섯' },
-        { id: 2, name: 'Cultivation2', type: '양송이버섯' },
-        { id: 3, name: 'Cultivation3', type: '표고버섯' }
-    ];
-
-    // ===== 목록 (데모 데이터, 실제로는 관리자 서버에서 조회해야 함) =====
-    // 답변 상태는 별도로 저장하지 않고 THREADS의 마지막 메시지 작성자로만 판단함 (목록/상세 상태 불일치 방지)
-    var INQUIRIES = [
-        { id: 1, category: '계정/로그인', title: '비밀번호를 변경했는데 로그인이 안 돼요', date: '2026.07.29' },
-        { id: 2, category: '재배', cultivation: 'Cultivation1 · 느타리버섯', title: '중간 재배 기록이 사라졌어요', date: '2026.07.28' },
-        { id: 3, category: '센서/기기', title: '온도센서 값이 이상하게 나와요', date: '2026.07.26' },
-        { id: 4, category: '버그 신고', title: '재배 이력 페이지에서 사진이 안 보여요', date: '2026.07.24' },
-        { id: 5, category: '기타', title: '재배지를 여러 명이 같이 관리할 수 있나요?', date: '2026.07.22' },
-        { id: 6, category: '계정/로그인', title: '닉네임 변경이 반영이 안 돼요', date: '2026.07.20' },
-        { id: 7, category: '재배', cultivation: 'Cultivation3 · 표고버섯', title: 'AI 리포트가 하루 늦게 생성돼요', date: '2026.07.18' },
-        { id: 8, category: '센서/기기', title: '센서 등록은 어떻게 하나요?', date: '2026.07.15' }
-    ];
-    var nextInquiryId = 9;
-
-    var THREADS = {
-        1: [
-            { sender: 'USER', name: '나', content: '비밀번호를 방금 바꿨는데 새 비밀번호로 로그인이 안 돼요. 어떻게 해야 하나요?', time: '2026.07.29 09:12' },
-            { sender: 'ADMIN', name: '관리자', content: '안녕하세요! 브라우저 캐시나 자동완성 때문일 수 있어요. 시크릿 창에서 다시 시도해보시겠어요?', time: '2026.07.29 14:30' }
-        ],
-        2: [
-            { sender: 'USER', name: '나', content: '어제 입력한 중간 재배 기록이 오늘 보니까 없어졌어요.', time: '2026.07.28 11:02' }
-        ],
-        3: [
-            { sender: 'USER', name: '나', content: '온도센서 값이 실제보다 5도 정도 높게 나와요.', time: '2026.07.26 10:20' },
-            { sender: 'ADMIN', name: '관리자', content: '센서 설치 위치가 직사광선을 받는 곳은 아닌지 확인해주세요. 그늘로 옮기면 대부분 해결돼요!', time: '2026.07.26 16:05' }
-        ],
-        4: [
-            { sender: 'USER', name: '나', content: '재배 이력 페이지에서 예전에 올린 사진이 하나도 안 보여요.', time: '2026.07.24 20:41' }
-        ],
-        5: [
-            { sender: 'USER', name: '나', content: '가족이랑 같이 재배지 하나를 관리하고 싶은데 계정 공유가 되나요?', time: '2026.07.22 08:55' },
-            { sender: 'ADMIN', name: '관리자', content: '현재는 계정당 1개 재배지만 지원돼요. 공동 관리 기능은 다음 업데이트로 준비 중입니다!', time: '2026.07.22 13:12' }
-        ],
-        6: [
-            { sender: 'USER', name: '나', content: '닉네임을 바꿨는데 대시보드에는 예전 닉네임이 계속 떠요.', time: '2026.07.20 09:30' },
-            { sender: 'ADMIN', name: '관리자', content: '로그아웃 후 다시 로그인하면 새 닉네임으로 반영돼요. 확인 부탁드려요!', time: '2026.07.20 11:47' }
-        ],
-        7: [
-            { sender: 'USER', name: '나', content: 'AI 리포트가 항상 하루 늦게 생성되는 것 같아요. 정상인가요?', time: '2026.07.18 19:03' }
-        ],
-        8: [
-            { sender: 'USER', name: '나', content: '새 센서를 샀는데 앱에서 등록하는 방법을 모르겠어요.', time: '2026.07.15 15:12' },
-            { sender: 'ADMIN', name: '관리자', content: '설정 > 센서 관리 > 센서 추가에서 센서 뒷면의 QR코드를 스캔하면 자동으로 등록돼요!', time: '2026.07.15 17:38' }
-        ]
-    };
-
+    var MY_CULTIVATIONS = [];
     var PAGE_SIZE = 6;
-    var listState = { page: 0 };
+    var listState = { page: 0, totalPages: 1 };
+    var currentDetailId = null;
 
-    function getStatus(id) {
-        var messages = THREADS[id] || [];
-        var lastSender = messages.length ? messages[messages.length - 1].sender : 'USER';
-        return lastSender === 'ADMIN' ? '답변완료' : '답변대기';
+    function statusLabel(status) {
+        return status === 'RESOLVED' ? '답변완료' : '답변대기';
     }
 
     function statusBadgeClass(status) {
-        return status === '답변완료' ? 'answered' : 'pending';
+        return status === 'RESOLVED' ? 'answered' : 'pending';
     }
 
-    function renderList() {
+    function formatDate(iso) {
+        if (!iso) return '';
+        var d = new Date(iso);
+        return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+    }
+
+    function formatDateTime(iso) {
+        if (!iso) return '';
+        var d = new Date(iso);
+        return formatDate(iso) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    async function fetchJson(url, options) {
+        var response = await fetch(url, Object.assign({ headers: { 'Content-Type': 'application/json' } }, options));
+        var body = await response.json().catch(function () { return null; });
+        if (!response.ok || !body || body.success === false) {
+            throw new Error((body && body.message) || '요청 처리 중 오류가 발생했어요.');
+        }
+        return body.data;
+    }
+
+    // ===== 초기 데이터 로드 =====
+    async function loadCategories() {
+        var categories = (await fetchJson('/support/inquiries/categories')) || [];
+        var select = document.getElementById('new-category');
+        select.innerHTML = categories.map(function (c) {
+            return '<option value="' + c.id + '">' + c.categoryName + '</option>';
+        }).join('');
+    }
+
+    async function loadMyCultivations() {
+        MY_CULTIVATIONS = (await fetchJson('/support/inquiries/my-cultivations')) || [];
+    }
+
+    // ===== 목록 =====
+    async function loadList(page) {
         var grid = document.getElementById('support-grid');
         var emptyEl = document.getElementById('support-empty');
         var pagination = document.getElementById('support-pagination');
 
-        if (INQUIRIES.length === 0) {
+        try {
+            var data = await fetchJson('/support/inquiries?page=' + page + '&size=' + PAGE_SIZE);
+            listState.page = data.number;
+            listState.totalPages = Math.max(1, data.totalPages);
+
+            if (!data.content || data.content.length === 0) {
+                grid.innerHTML = '';
+                emptyEl.style.display = 'block';
+                pagination.innerHTML = '';
+                return;
+            }
+            emptyEl.style.display = 'none';
+
             grid.innerHTML = '';
-            emptyEl.style.display = 'block';
-            pagination.innerHTML = '';
-            return;
-        }
-        emptyEl.style.display = 'none';
-
-        var totalPages = Math.max(1, Math.ceil(INQUIRIES.length / PAGE_SIZE));
-        listState.page = Math.max(0, Math.min(listState.page, totalPages - 1));
-
-        var start = listState.page * PAGE_SIZE;
-        var pageItems = INQUIRIES.slice(start, start + PAGE_SIZE);
-
-        grid.innerHTML = '';
-        pageItems.forEach(function (q) {
-            var card = document.createElement('a');
-            card.className = 'support-card-item';
-            card.href = 'javascript:void(0)';
-            card.onclick = function () { openDetail(q.id); };
-            var status = getStatus(q.id);
-            card.innerHTML =
-                '<div class="support-card-top">' +
-                '<span class="support-item-category"></span>' +
-                '<span class="support-status-badge ' + statusBadgeClass(status) + '"></span>' +
-                '</div>' +
-                (q.cultivation ? '<div class="support-item-cultivation"></div>' : '') +
-                '<div class="support-card-title"></div>' +
-                '<div class="support-card-foot"><i data-lucide="calendar-days"></i><span></span></div>';
-            card.querySelector('.support-item-category').textContent = q.category;
-            card.querySelector('.support-status-badge').textContent = status;
-            if (q.cultivation) card.querySelector('.support-item-cultivation').textContent = q.cultivation;
-            card.querySelector('.support-card-title').textContent = q.title;
-            card.querySelector('.support-card-foot span').textContent = q.date;
-            grid.appendChild(card);
-        });
-        lucide.createIcons();
-
-        pagination.innerHTML = '';
-        if (totalPages > 1) {
-            pagination.appendChild(buildPageBtn('chevron-left', listState.page > 0, -1));
-            var label = document.createElement('span');
-            label.className = 'support-page-label';
-            label.textContent = (listState.page + 1) + ' / ' + totalPages;
-            pagination.appendChild(label);
-            pagination.appendChild(buildPageBtn('chevron-right', listState.page < totalPages - 1, 1));
+            data.content.forEach(function (q) {
+                var card = document.createElement('a');
+                card.className = 'support-card-item';
+                card.href = 'javascript:void(0)';
+                card.onclick = function () { openDetail(q.id); };
+                card.innerHTML =
+                    '<div class="support-card-top">' +
+                    '<span class="support-item-category"></span>' +
+                    '<span class="support-status-badge ' + statusBadgeClass(q.status) + '"></span>' +
+                    '</div>' +
+                    '<div class="support-card-title"></div>' +
+                    '<div class="support-card-foot"><i data-lucide="calendar-days"></i><span></span></div>';
+                card.querySelector('.support-item-category').textContent = q.categoryName;
+                card.querySelector('.support-status-badge').textContent = statusLabel(q.status);
+                card.querySelector('.support-card-title').textContent = q.title;
+                card.querySelector('.support-card-foot span').textContent = formatDate(q.createdAt);
+                grid.appendChild(card);
+            });
             lucide.createIcons();
+
+            pagination.innerHTML = '';
+            if (listState.totalPages > 1) {
+                pagination.appendChild(buildPageBtn('chevron-left', listState.page > 0, listState.page - 1));
+                var label = document.createElement('span');
+                label.className = 'support-page-label';
+                label.textContent = (listState.page + 1) + ' / ' + listState.totalPages;
+                pagination.appendChild(label);
+                pagination.appendChild(buildPageBtn('chevron-right', listState.page < listState.totalPages - 1, listState.page + 1));
+                lucide.createIcons();
+            }
+        } catch (e) {
+            alert(e.message);
         }
     }
 
-    function buildPageBtn(icon, enabled, delta) {
+    function buildPageBtn(icon, enabled, targetPage) {
         var el = document.createElement(enabled ? 'a' : 'span');
         el.className = 'support-page-btn' + (enabled ? '' : ' disabled');
         el.innerHTML = '<i data-lucide="' + icon + '"></i>';
         if (enabled) {
             el.href = 'javascript:void(0)';
-            el.onclick = function () {
-                listState.page += delta;
-                renderList();
-            };
+            el.onclick = function () { loadList(targetPage); };
         }
         return el;
     }
@@ -281,11 +238,10 @@
     // ===== 작성 =====
     function openNewForm() {
         document.getElementById('new-inquiry-form').reset();
-        newInquiryPhotos.clear();
 
         var cultivationSelect = document.getElementById('new-cultivation');
         cultivationSelect.innerHTML = MY_CULTIVATIONS.map(function (c) {
-            return '<option value="' + c.id + '">' + c.name + ' · ' + c.type + '</option>';
+            return '<option value="' + c.cultivationId + '">' + c.name + '</option>';
         }).join('');
         toggleCultivationField();
 
@@ -294,292 +250,118 @@
     }
 
     function toggleCultivationField() {
-        var category = document.getElementById('new-category').value;
+        var select = document.getElementById('new-category');
+        var selectedOption = select.options[select.selectedIndex];
+        var categoryName = selectedOption ? selectedOption.textContent : '';
         var field = document.getElementById('new-cultivation-field');
-        var select = document.getElementById('new-cultivation');
-        var isCultivation = category === '재배';
+        var cultivationSelect = document.getElementById('new-cultivation');
+        var isCultivation = categoryName === '재배 관련';
         field.style.display = isCultivation ? 'block' : 'none';
-        select.required = isCultivation;
+        cultivationSelect.required = isCultivation;
     }
 
-    // ===== 사진 첨부 (문의 작성 / 이어서 질문하기 둘 다 공용, 최대 5장) =====
-    var MAX_PHOTOS = 5;
-
-    // 문의 작성 폼과 채팅(이어서 질문하기)이 각자 독립된 첨부 목록을 가지도록 컨트롤러를 분리해서 생성
-    function createPhotoAttachController(listElId) {
-        var files = [];
-
-        function addFiles(fileList) {
-            if (!fileList || !fileList.length) return;
-
-            var hasNonImage = false;
-            var hitLimit = false;
-
-            for (var i = 0; i < fileList.length; i++) {
-                var file = fileList[i];
-
-                if (file.type.indexOf('image/') !== 0) {
-                    hasNonImage = true;
-                    continue;
-                }
-                if (files.length >= MAX_PHOTOS) {
-                    hitLimit = true;
-                    break;
-                }
-                files.push(file);
-            }
-
-            if (hasNonImage) alert('이미지 파일만 첨부할 수 있어요.');
-            if (hitLimit) alert('사진은 최대 ' + MAX_PHOTOS + '장까지 첨부할 수 있어요.');
-
-            render();
-        }
-
-        function removeAt(index) {
-            files.splice(index, 1);
-            render();
-        }
-
-        function clear() {
-            files = [];
-            render();
-        }
-
-        function render() {
-            var listEl = document.getElementById(listElId);
-            listEl.innerHTML = '';
-
-            files.forEach(function (file, index) {
-                var chip = document.createElement('div');
-                chip.className = 'support-attach-chip';
-
-                var img = document.createElement('img');
-                img.alt = '첨부 사진 미리보기';
-                // 외부 CSS 로딩 여부와 상관없이 항상 작은 원형 썸네일로 보이도록 인라인으로도 크기 고정
-                img.width = 28;
-                img.height = 28;
-                img.style.width = '1.8rem';
-                img.style.height = '1.8rem';
-                img.style.maxWidth = '1.8rem';
-                img.style.maxHeight = '1.8rem';
-                img.style.objectFit = 'cover';
-                img.style.borderRadius = '50%';
-                img.style.flexShrink = '0';
-
-                var reader = new FileReader();
-                reader.onload = function (e) { img.src = e.target.result; };
-                reader.readAsDataURL(file);
-
-                var nameEl = document.createElement('span');
-                nameEl.className = 'support-attach-filename';
-                nameEl.textContent = file.name;
-
-                var removeBtn = document.createElement('button');
-                removeBtn.type = 'button';
-                removeBtn.className = 'support-attach-remove';
-                removeBtn.title = '첨부 취소';
-                removeBtn.innerHTML = '<i data-lucide="x"></i>';
-                removeBtn.onclick = function () { removeAt(index); };
-
-                chip.appendChild(img);
-                chip.appendChild(nameEl);
-                chip.appendChild(removeBtn);
-                listEl.appendChild(chip);
-            });
-
-            lucide.createIcons();
-        }
-
-        return {
-            addFiles: addFiles,
-            removeAt: removeAt,
-            clear: clear,
-            getFiles: function () { return files.slice(); }
-        };
-    }
-
-    var newInquiryPhotos = createPhotoAttachController('photo-chip-list');
-    var followupPhotos = createPhotoAttachController('photo-chip-list-followup');
-
-    function handlePhotoInputChange(input, controller) {
-        controller.addFiles(input.files);
-        input.value = ''; // 같은 파일을 다시 골라도 change 이벤트가 또 발생하도록 초기화
-    }
-
-    // 여러 개의 File을 data URL로 변환 (채팅에 사진을 실제로 표시하기 위함)
-    function filesToDataUrls(files, callback) {
-        if (!files.length) { callback([]); return; }
-        var results = new Array(files.length);
-        var remaining = files.length;
-        files.forEach(function (file, i) {
-            var reader = new FileReader();
-            reader.onload = function (e) {
-                results[i] = e.target.result;
-                remaining--;
-                if (remaining === 0) callback(results);
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-
-    // 입력창에 이미지를 드래그&드롭으로도 첨부할 수 있게 함 (여러 장 동시 드롭 가능)
-    function initPhotoDropZone(composer, controller) {
-        if (!composer) return;
-
-        ['dragenter', 'dragover'].forEach(function (evt) {
-            composer.addEventListener(evt, function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                composer.classList.add('drag-over');
-            });
-        });
-
-        ['dragleave', 'drop'].forEach(function (evt) {
-            composer.addEventListener(evt, function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                composer.classList.remove('drag-over');
-            });
-        });
-
-        composer.addEventListener('drop', function (e) {
-            var files = e.dataTransfer && e.dataTransfer.files;
-            if (!files || !files.length) return;
-            controller.addFiles(files);
-        });
-    }
-
-    // 데모: 실제로는 관리자 서버에 문의를 접수해야 함
-    function submitNewInquiry(event) {
+    async function submitNewInquiry(event) {
         event.preventDefault();
 
-        var category = document.getElementById('new-category').value;
+        var categoryId = Number(document.getElementById('new-category').value);
         var title = document.getElementById('new-title').value.trim();
         var content = document.getElementById('new-content').value.trim();
-        if (!title || !content) return;
+        if (!categoryId || !title || !content) return;
 
-        var cultivation = null;
-        if (category === '재배') {
-            var cultivationId = Number(document.getElementById('new-cultivation').value);
-            var picked = MY_CULTIVATIONS.filter(function (c) { return c.id === cultivationId; })[0];
-            if (!picked) return;
-            cultivation = picked.name + ' · ' + picked.type;
+        var cultivationId = null;
+        if (document.getElementById('new-cultivation-field').style.display !== 'none') {
+            cultivationId = Number(document.getElementById('new-cultivation').value) || null;
         }
 
-        var id = nextInquiryId++;
-        var today = new Date();
-        var dateLabel = today.getFullYear() + '.' + String(today.getMonth() + 1).padStart(2, '0') + '.' + String(today.getDate()).padStart(2, '0');
-
-        filesToDataUrls(newInquiryPhotos.getFiles(), function (photoUrls) {
-            var inquiry = { id: id, category: category, title: title, date: dateLabel };
-            if (cultivation) inquiry.cultivation = cultivation;
-            INQUIRIES.unshift(inquiry);
-            THREADS[id] = [{ sender: 'USER', name: '나', content: content, photos: photoUrls, time: dateLabel + ' 12:00' }];
-
-            newInquiryPhotos.clear();
-            renderList();
-            openDetail(id);
-        });
+        try {
+            var detail = await fetchJson('/support/inquiries', {
+                method: 'POST',
+                body: JSON.stringify({ categoryId: categoryId, title: title, content: content, cultivationId: cultivationId })
+            });
+            await loadList(0);
+            openDetail(detail.id);
+        } catch (e) {
+            alert(e.message);
+        }
     }
 
     // ===== 상세 =====
-    var currentDetailId = null;
-
-    function openDetail(id) {
+    async function openDetail(id) {
         currentDetailId = id;
-        followupPhotos.clear();
-        renderThread();
-        showPanel('detail');
+        try {
+            var detail = await fetchJson('/support/inquiries/' + id);
+            renderDetail(detail);
+            showPanel('detail');
+        } catch (e) {
+            alert(e.message);
+        }
     }
 
-    function renderThread() {
-        var inquiry = INQUIRIES.filter(function (q) { return q.id === currentDetailId; })[0];
-        var messages = THREADS[currentDetailId] || [];
-        if (!inquiry) return;
-
-        document.getElementById('detail-category').textContent = inquiry.category;
+    function renderDetail(inquiry) {
+        document.getElementById('detail-category').textContent = inquiry.categoryName;
         var cultivationEl = document.getElementById('detail-cultivation');
-        if (inquiry.cultivation) {
-            cultivationEl.textContent = inquiry.cultivation;
+        if (inquiry.cultivationName) {
+            cultivationEl.textContent = inquiry.cultivationName;
             cultivationEl.style.display = 'inline-flex';
         } else {
             cultivationEl.style.display = 'none';
         }
         document.getElementById('detail-title').textContent = inquiry.title;
-        document.getElementById('detail-date').textContent = inquiry.date + ' 작성';
+        document.getElementById('detail-date').textContent = formatDate(inquiry.createdAt) + ' 작성';
 
-        var lastSender = messages.length ? messages[messages.length - 1].sender : 'USER';
-        var answered = lastSender === 'ADMIN';
         var statusEl = document.getElementById('detail-status');
-        statusEl.textContent = answered ? '답변완료' : '답변대기';
-        statusEl.className = 'support-status-badge ' + (answered ? 'answered' : 'pending');
+        statusEl.textContent = statusLabel(inquiry.status);
+        statusEl.className = 'support-status-badge ' + statusBadgeClass(inquiry.status);
 
         var chat = document.getElementById('support-chat');
         chat.innerHTML = '';
-        messages.forEach(function (m) {
-            var row = document.createElement('div');
-            row.className = 'support-chat-msg ' + (m.sender === 'ADMIN' ? 'from-admin' : 'from-user');
-            row.innerHTML =
-                '<div class="support-chat-avatar">' + (m.sender === 'ADMIN' ? '관' : '나') + '</div>' +
-                '<div class="support-chat-col">' +
-                '<div class="support-chat-name"></div>' +
-                '<div class="support-chat-bubble"><span></span></div>' +
-                '<div class="support-chat-time"></div>' +
-                '</div>';
-            row.querySelector('.support-chat-name').textContent = m.name;
-
-            var bubble = row.querySelector('.support-chat-bubble');
-            var textEl = bubble.querySelector('span');
-            if (m.photos && m.photos.length) {
-                m.photos.forEach(function (src) {
-                    var img = document.createElement('img');
-                    img.className = 'support-chat-photo';
-                    img.src = src;
-                    img.alt = '첨부 사진';
-                    bubble.insertBefore(img, textEl);
-                });
+        (inquiry.messages || []).forEach(function (m) {
+            appendChatBubble(chat, '나', m.content, formatDateTime(m.createdAt), false);
+            if (m.answerContent) {
+                appendChatBubble(chat, '관리자', m.answerContent, formatDateTime(m.createdAt), true);
             }
-            textEl.textContent = m.content;
-
-            row.querySelector('.support-chat-time').textContent = m.time;
-            chat.appendChild(row);
         });
     }
 
-    function submitFollowUp(event) {
+    function appendChatBubble(chat, name, content, time, fromAdmin) {
+        var row = document.createElement('div');
+        row.className = 'support-chat-msg ' + (fromAdmin ? 'from-admin' : 'from-user');
+        row.innerHTML =
+            '<div class="support-chat-avatar">' + (fromAdmin ? '관' : '나') + '</div>' +
+            '<div class="support-chat-col">' +
+            '<div class="support-chat-name"></div>' +
+            '<div class="support-chat-bubble"><span></span></div>' +
+            '<div class="support-chat-time"></div>' +
+            '</div>';
+        row.querySelector('.support-chat-name').textContent = name;
+        row.querySelector('.support-chat-bubble span').textContent = content;
+        row.querySelector('.support-chat-time').textContent = time;
+        chat.appendChild(row);
+    }
+
+    async function submitFollowUp(event) {
         event.preventDefault();
         var input = document.getElementById('followup-input');
         var text = input.value.trim();
         if (!text || currentDetailId == null) return;
 
-        var now = new Date();
-        filesToDataUrls(followupPhotos.getFiles(), function (photoUrls) {
-            THREADS[currentDetailId].push({
-                sender: 'USER',
-                name: '나',
-                content: text,
-                photos: photoUrls,
-                time: now.getFullYear() + '.' + String(now.getMonth() + 1).padStart(2, '0') + '.' + String(now.getDate()).padStart(2, '0') +
-                    ' ' + String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
+        try {
+            var detail = await fetchJson('/support/inquiries/' + currentDetailId + '/messages', {
+                method: 'POST',
+                body: JSON.stringify({ content: text })
             });
             input.value = '';
-            followupPhotos.clear();
-            renderThread();
-        });
+            renderDetail(detail);
+        } catch (e) {
+            alert(e.message);
+        }
     }
 
-    // 드롭 지점이 조금만 빗나가도(버튼 위, 여백 등) 브라우저가 파일을 페이지 전체에
-    // 열어버리는 기본 동작이 발동하므로, 문서 전체에서 기본 동작을 막아둠
-    ['dragover', 'drop'].forEach(function (evt) {
-        document.addEventListener(evt, function (e) {
-            e.preventDefault();
-        });
-    });
-
-    initPhotoDropZone(document.querySelector('.support-content-composer'), newInquiryPhotos);
-    initPhotoDropZone(document.getElementById('followup-composer'), followupPhotos);
-
-    renderList();
+    // ===== 초기 진입 =====
+    (async function init() {
+        await Promise.all([loadCategories(), loadMyCultivations()]);
+        await loadList(0);
+    })();
 </script>
 
 </body>

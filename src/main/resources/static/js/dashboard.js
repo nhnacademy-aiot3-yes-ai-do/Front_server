@@ -27,6 +27,7 @@ function loadSensorPanel() {
         });
 
         renderSensorPanel();
+        populateChartSensorSelect();
     }).catch(function () {
         // 실패해도 카드가 '등록된 센서 없음' 상태로 남으므로 조용히 무시
     });
@@ -70,7 +71,171 @@ function updateSensor(wrapperEl, optionEl, sensorType) {
     var deviceEui = wrapperEl.dataset.value;
     valueEl.textContent = formatSensorValue(LATEST_VALUES[sensorType + '|' + deviceEui]);
 }
+var SENSOR_TYPE_LABELS = { TEMPERATURE: '온도', HUMIDITY: '습도', CO2: 'CO2', LIGHT: '조도' };
+var CHART_SELECTED = null;      // { sensorType, deviceEui }
+var CHART_HISTORY = [];
+var CHART_MAX_POINTS = 30;      // 최근 30개 샘플만 유지
+var CHART_POLL_INTERVAL_MS = 3000; // 3초마다 최신값 폴링
+var chartPollTimer = null;
 
+function populateChartSensorSelect() {
+    var wrapperEl = document.getElementById('chart-sensor-select');
+    var menu = wrapperEl.querySelector('.msh-select-menu');
+    var valueLabel = wrapperEl.querySelector('.msh-select-value');
+
+    var groupsHtml = '';
+    var firstOption = null;
+    CANONICAL_SENSOR_TYPES.forEach(function (type) {
+        var devices = SENSOR_DEVICES_BY_TYPE[type] || [];
+        if (devices.length === 0) return;
+        groupsHtml += '<div class="msh-select-group-label">' + (SENSOR_TYPE_LABELS[type] || type) + '</div>';
+        devices.forEach(function (d) {
+            var optValue = type + '|' + d.deviceEui;
+            groupsHtml += '<div class="msh-select-option" data-value="' + optValue + '" onclick="selectMshOption(this)">' + d.deviceName + '</div>';
+            if (!firstOption) firstOption = { type: type, deviceEui: d.deviceEui, deviceName: d.deviceName };
+        });
+    });
+
+    menu.innerHTML = groupsHtml;
+
+    if (!firstOption) {
+        wrapperEl.dataset.value = '';
+        valueLabel.textContent = '등록된 센서 없음';
+        stopChartPolling();
+        renderChartEmpty('등록된 센서가 없습니다');
+        return;
+    }
+
+    var optValue = firstOption.type + '|' + firstOption.deviceEui;
+    wrapperEl.dataset.value = optValue;
+    valueLabel.textContent = firstOption.deviceName;
+    var firstOptionEl = menu.querySelector('.msh-select-option[data-value="' + optValue + '"]');
+    if (firstOptionEl) firstOptionEl.classList.add('selected');
+
+    selectChartSensor(firstOption.type, firstOption.deviceEui);
+}
+
+function handleChartSensorChange(wrapperEl) {
+    var parts = (wrapperEl.dataset.value || '').split('|');
+    if (parts.length !== 2) return;
+    selectChartSensor(parts[0], parts[1]);
+}
+
+function selectChartSensor(sensorType, deviceEui) {
+    CHART_SELECTED = { sensorType: sensorType, deviceEui: deviceEui };
+    CHART_HISTORY = [];
+
+    var entry = LATEST_VALUES[sensorType + '|' + deviceEui];
+    if (entry && entry.value != null) {
+        CHART_HISTORY.push(entry.value);
+        renderChartTrend(CHART_HISTORY);
+    } else {
+        renderChartEmpty('아직 수신된 값이 없습니다');
+    }
+
+    startChartPolling();
+}
+
+function startChartPolling() {
+    if (chartPollTimer) return;
+    chartPollTimer = window.setInterval(pollChartValue, CHART_POLL_INTERVAL_MS);
+}
+
+function stopChartPolling() {
+    if (chartPollTimer) {
+        window.clearInterval(chartPollTimer);
+        chartPollTimer = null;
+    }
+}
+
+function pollChartValue() {
+    if (!CHART_SELECTED) return;
+    fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values')
+        .then(function (res) { return res.ok ? res.json() : []; })
+        .then(function (latestList) {
+            if (!CHART_SELECTED) return;
+
+            (latestList || []).forEach(function (v) {
+                LATEST_VALUES[v.sensorType + '|' + v.deviceEui] = { value: v.value, unit: v.unit };
+            });
+            updateVisibleSensorValues();
+
+            var key = CHART_SELECTED.sensorType + '|' + CHART_SELECTED.deviceEui;
+            var entry = LATEST_VALUES[key];
+            if (!entry || entry.value == null) return;
+
+            CHART_HISTORY.push(entry.value);
+            if (CHART_HISTORY.length > CHART_MAX_POINTS) {
+                CHART_HISTORY = CHART_HISTORY.slice(CHART_HISTORY.length - CHART_MAX_POINTS);
+            }
+            renderChartTrend(CHART_HISTORY);
+        })
+        .catch(function () {
+            // 폴링 실패는 조용히 무시하고 다음 주기에 재시도
+        });
+}
+
+// 상단 센서 카드 값도 같은 폴링 결과로 같이 갱신 (덤)
+function updateVisibleSensorValues() {
+    document.querySelectorAll('.sensor-row[data-sensor-type]').forEach(function (row) {
+        var type = row.dataset.sensorType;
+        var wrapperEl = row.querySelector('.msh-select--sensor');
+        var valueEl = row.querySelector('.sensor-value');
+        var deviceEui = wrapperEl.dataset.value;
+        if (!deviceEui) return;
+        valueEl.textContent = formatSensorValue(LATEST_VALUES[type + '|' + deviceEui]);
+    });
+}
+
+function renderChartEmpty(message) {
+    var svg = document.getElementById('chart-svg');
+    if (svg) svg.innerHTML = '';
+    var emptyEl = document.getElementById('chart-empty-msg');
+    if (emptyEl) {
+        emptyEl.textContent = message;
+        emptyEl.style.display = 'flex';
+    }
+}
+
+function renderChartTrend(values) {
+    var emptyEl = document.getElementById('chart-empty-msg');
+    if (!values || values.length === 0) {
+        renderChartEmpty('아직 수신된 값이 없습니다');
+        return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    var minVal = Math.min.apply(null, values);
+    var maxVal = Math.max.apply(null, values);
+    var range = maxVal - minVal;
+
+    function scaleY(v) {
+        if (range === 0) return 55;
+        return 95 - ((v - minVal) / range) * 80;
+    }
+
+    var n = values.length;
+    var coords = values.map(function (v, i) {
+        var x = n === 1 ? 0 : (i * (260 / (n - 1)));
+        return { x: x, y: scaleY(v) };
+    });
+
+    var linePoints = coords.map(function (c) { return c.x + ',' + c.y; }).join(' ');
+    var polygonPoints = linePoints + ' ' + coords[coords.length - 1].x + ',110 ' + coords[0].x + ',110';
+    var last = coords[coords.length - 1];
+
+    var svg = document.getElementById('chart-svg');
+    svg.innerHTML =
+        '<defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="var(--sage-500)" stop-opacity="0.35" />' +
+        '<stop offset="100%" stop-color="var(--sage-500)" stop-opacity="0" /></linearGradient></defs>' +
+        '<polyline class="chart-grid-line" points="0,20 260,20" />' +
+        '<polyline class="chart-grid-line" points="0,55 260,55" />' +
+        '<polyline class="chart-grid-line" points="0,90 260,90" />' +
+        '<polygon fill="url(#chartFill)" points="' + polygonPoints + '" />' +
+        '<polyline class="chart-demo-line" fill="none" points="' + linePoints + '" />' +
+        '<circle class="chart-demo-dot" cx="' + last.x + '" cy="' + last.y + '" r="4.5" />';
+}
 // 커스텀 드롭다운(.msh-select) 관련 공통 로직은 /js/msh-select.js로 옮겼음 (관리자 페이지랑 같이 씀).
 
 var CHATBOT_REPLIES = [
