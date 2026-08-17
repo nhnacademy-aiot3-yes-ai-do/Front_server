@@ -1,20 +1,5 @@
 /* static/css/cultivation-list.css */
-@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
-
-:root {
-    --brown-900: #3f2a1d;
-    --brown-700: #6b4a30;
-    --brown-500: #8b5e3c;
-    --brown-300: #c9a97c;
-    --cream-100: #fbf6ea;
-    --cream-200: #f3ead4;
-    --sage-500: #7c9473;
-    --sage-600: #66805c;
-    --ink: #4a3b2e;
-    --danger: #c0574a;
-}
-
-* { box-sizing: border-box; }
+@import url("common.css");
 
 html { font-size: clamp(14px, 0.65vw + 6px, 30px); }
 
@@ -23,116 +8,10 @@ body {
     min-height: 100vh;
     font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
     color: var(--ink);
-    background: var(--cream-200) url("../images/workspaceback.jpg") center center / cover no-repeat fixed;
+    background: var(--cream-200) url("../images/mainback.jpg") center center / cover no-repeat fixed;
     display: flex;
     flex-direction: column;
 }
-
-/* ===== Topbar (dashboard.css / cultivation-create.css 와 동일) ===== */
-.topbar {
-    flex-shrink: 0;
-    height: 5.5rem;
-    background: rgba(251, 246, 234, 0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border-bottom: 2px solid rgba(139, 94, 60, 0.25);
-    color: var(--brown-900);
-}
-
-.topbar-inner {
-    width: min(96vw, 2100px);
-    height: 100%;
-    margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.topbar-logo-link {
-    display: block;
-    line-height: 0;
-    transition: opacity 0.15s ease;
-}
-
-.topbar-logo-link:hover {
-    opacity: 0.85;
-}
-
-.topbar-logo {
-    height: 5.6rem;
-    width: auto;
-    display: block;
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.topbar-nickname {
-    font-size: 1rem;
-    color: var(--brown-900);
-}
-
-.topbar-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: none;
-    border: none;
-    padding: 0.5rem 0.6rem;
-    font-family: inherit;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--brown-700);
-    cursor: pointer;
-    border-radius: 10px;
-    transition: background 0.15s ease, color 0.15s ease;
-}
-
-.topbar-link svg {
-    width: 1rem;
-    height: 1rem;
-    color: var(--sage-600);
-}
-
-.topbar-link:hover {
-    background: rgba(139, 94, 60, 0.08);
-    color: var(--brown-900);
-}
-
-.topbar-link-danger { color: var(--danger); }
-.topbar-link-danger svg { color: var(--danger); }
-.topbar-link-danger:hover { background: rgba(192, 87, 74, 0.1); }
-
-.topbar-divider {
-    width: 2px;
-    height: 1.6rem;
-    background: rgba(139, 94, 60, 0.2);
-    margin: 0 0.4rem;
-}
-
-.avatar-circle {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 50%;
-    background: var(--sage-500);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 3px rgba(251, 246, 234, 0.35);
-}
-
-.avatar-circle svg { width: 65%; height: 65%; }
 
 /* ===== page container ===== */
 .page-container {
@@ -140,7 +19,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    width: min(94vw, 2100px);
+    width: min(94vw, 2800px);
     margin: 1.6rem auto;
 }
 
@@ -161,7 +40,7 @@ body {
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--brown-700);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     border-radius: 14px 14px 0 0;
     transition: background 0.15s ease, color 0.15s ease;
 }
@@ -198,9 +77,10 @@ body {
     border-radius: 0 20px 20px 20px;
     padding: 1.8rem;
     transition: opacity 0.2s ease;
-    /* 한 페이지 6개(헤더 1줄 + 데이터 6줄) + footer 기준으로 고정 :
-       목록 개수와 상관없이 상자 크기가 항상 같도록 함 (넘치는 항목은 페이징 처리) */
-    height: 33rem;
+    /* 목록 개수와 상관없이 상자 크기가 항상 같도록 고정하되(넘치는 항목은 페이징 처리),
+       화면 너비(page-container와 동일한 min(94vw, 2800px))에 맞춰 세로도 같은 비율로 커지도록
+       고정 height 대신 aspect-ratio를 씀 — 가로만 늘어나고 세로는 그대로인 문제 방지 */
+    aspect-ratio: 2.56 / 1;
     display: flex;
     flex-direction: column;
 }
@@ -215,12 +95,12 @@ body {
 /* 페이지마다 실제 행 개수가 달라져도(마지막 페이지 등) 높이가 항상 동일하도록 고정 :
    행이 적으면 남는 공간은 그냥 빈 공간으로 둠 (버튼/페이지네이션 위치가 흔들리지 않게) */
 .list-table-wrap {
-    height: 24rem;
+    flex: 1;
+    min-height: 0;
     border: 2px solid rgba(139, 94, 60, 0.18);
     border-radius: 14px;
     overflow-y: auto;
     overflow-x: hidden;
-    flex-shrink: 0;
 }
 
 .list-table-wrap::-webkit-scrollbar { width: 8px; }
@@ -250,7 +130,7 @@ body {
 
 .list-table tbody tr {
     transition: background 0.15s ease;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 .list-table tbody tr:hover {
@@ -258,7 +138,7 @@ body {
 }
 
 #tab-sensor .list-table tbody tr {
-    cursor: default;
+    cursor: url("/images/cursor-default.png") 3 2, default;
 }
 
 #tab-sensor .list-table tbody tr:hover {
@@ -297,7 +177,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -319,7 +199,7 @@ body {
     height: 8px;
     border-radius: 50%;
     background: var(--brown-300);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -337,7 +217,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     transition: background 0.15s ease;
 }
 
@@ -379,7 +259,7 @@ body {
     right: 16px;
     background: none;
     border: none;
-    cursor: pointer;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
     color: var(--brown-500);
 }
 
@@ -410,9 +290,90 @@ body {
     background: #fff;
 }
 
+.modal-field .msh-select-trigger {
+    padding: 10px 12px;
+    border: 2px solid var(--brown-300);
+    border-radius: 10px;
+    background: #fff;
+    font-size: 14px;
+    color: var(--ink);
+}
+
 .modal-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     margin-top: 8px;
+}
+
+.modal-box-wide { max-width: 560px; }
+
+.modal-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 14px;
+}
+
+.row-action-btn {
+    background: none;
+    border: none;
+    color: var(--brown-500);
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    padding: 4px;
+    border-radius: 8px;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.row-action-btn:hover {
+    background: rgba(139, 94, 60, 0.1);
+    color: #b3453a;
+}
+
+.row-action-btn svg { width: 16px; height: 16px; }
+
+.sensor-type-check-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 14rem;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+#ms-type-list .sensor-type-check-row {
+    display: grid;
+    grid-template-columns: 18px 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 2px solid rgba(139, 94, 60, 0.18);
+    border-radius: 10px;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+}
+
+#ms-type-list .sensor-type-check-row input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--sage-500);
+}
+
+#ms-type-list .sensor-type-check-row span {
+    font-size: 13px;
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+#ms-type-list .sensor-type-check-row .st-min,
+#ms-type-list .sensor-type-check-row .st-max {
+    width: 4.5rem;
+    padding: 6px 8px;
+    border: 2px solid var(--brown-300);
+    border-radius: 8px;
+    font-family: inherit;
+}
+
+.sensor-type-check-row .st-min:disabled,
+.sensor-type-check-row .st-max:disabled {
+    background: rgba(139, 94, 60, 0.06);
 }

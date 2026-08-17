@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>관리자 로그인 | MushMush</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
+</head>
+<body class="admin-login-body">
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div class="auth-body">
+            <div class="admin-login-brand">
+                <div class="admin-login-icon"><img src="/images/chatbot.png" alt="관리자" /></div>
+                <span>MushMush Admin</span>
+            </div>
+
+            <p class="help-text error" id="login-error-text" th:if="${loginError}" th:text="${loginError}"></p>
+
+            <form id="admin-login-form" action="/admin/login" method="post">
+                <div class="field">
+                    <input type="email" id="email" name="email" placeholder="관리자 이메일" required />
+                </div>
+
+                <div class="field">
+                    <input type="password" id="password" name="password" placeholder="비밀번호" required />
+                </div>
+
+                <button type="submit" class="btn btn-primary">로그인</button>
+            </form>
+
+            <div class="auth-links">
+                <a href="/login">일반 로그인으로 돌아가기</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    lucide.createIcons();
+</script>
+</body>
+</html>

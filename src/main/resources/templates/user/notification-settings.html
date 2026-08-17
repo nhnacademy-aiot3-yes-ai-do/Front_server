@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>알림 설정 | MushMush</title>
+    <link rel="stylesheet" href="/css/notification-settings.css" />
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<div class="page-container">
+    <div class="settings-wrap">
+        <div class="settings-card">
+            <div class="settings-head">
+                <h2 class="settings-title">알림 설정</h2>
+                <span class="settings-save-status" id="save-status">저장됨</span>
+            </div>
+            <div class="settings-section">
+                <h3 class="settings-section-title">연동 채널</h3>
+
+                <div class="integration-list">
+                    <div class="settings-row">
+                        <div class="settings-row-icon integration-icon telegram"><i data-lucide="send"></i></div>
+                        <div class="settings-row-info">
+                            <span class="settings-row-title">텔레그램</span>
+                            <span class="settings-row-status" id="telegram-status">봇 연동 준비 중</span>
+                        </div>
+                        <div class="settings-row-action">
+                            <button class="btn btn-outline" type="button" id="telegram-action-btn" disabled>준비 중</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-row">
+                        <div class="settings-row-icon integration-icon discord"><i data-lucide="hash"></i></div>
+                        <div class="settings-row-info">
+                            <span class="settings-row-title">디스코드</span>
+                            <span class="settings-row-status" id="discord-status">연결 안 됨</span>
+                        </div>
+                        <div class="settings-row-action">
+                            <button class="btn btn-outline" type="button" id="discord-action-btn" disabled>불러오는 중</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <h3 class="settings-section-title">알림 유형</h3>
+
+                <div class="settings-row">
+                    <div class="settings-row-icon"><i data-lucide="thermometer"></i></div>
+                    <div class="settings-row-text">
+                        <span class="settings-row-title">센서 임계치 초과 알림</span>
+                        <span class="settings-row-desc">온도·습도 등 센서 값이 설정 범위를 벗어나면 알려드려요.</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-sensor" onchange="handleCategoryToggle('sensor', this.checked)" />
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-row-icon"><i data-lucide="sprout"></i></div>
+                    <div class="settings-row-text">
+                        <span class="settings-row-title">수확·재배 완료 알림</span>
+                        <span class="settings-row-desc">재배가 종료되거나 수확이 등록되면 알려드려요.</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-harvest" onchange="handleCategoryToggle('harvest', this.checked)" />
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </div>
+
+                <div class="settings-row">
+                    <div class="settings-row-icon"><i data-lucide="sparkles"></i></div>
+                    <div class="settings-row-text">
+                        <span class="settings-row-title">AI 리포트 완료 알림</span>
+                        <span class="settings-row-desc">AI 버섯 정보 요약이 준비되면 알려드려요.</span>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="toggle-ai" onchange="handleCategoryToggle('ai', this.checked)" />
+                        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-section settings-section-scroll">
+                <h3 class="settings-section-title">재배지별 센서 알림</h3>
+                <p class="settings-section-desc">재배지마다 센서 임계치 알림을 따로 켜고 끌 수 있어요.</p>
+                <div id="cultivation-toggle-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Discord Webhook 연동 (Telegram 봇 연동은 후속) -->
+<div class="modal-overlay" id="modal-discord">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeDiscordModal()">
+            <i data-lucide="x"></i>
+        </button>
+
+        <div class="modal-step" id="discord-step-connect">
+            <div class="integration-modal-icon discord"><i data-lucide="hash"></i></div>
+            <h3 class="modal-title integration-modal-title" id="discord-modal-title">디스코드 연동하기</h3>
+            <p class="modal-desc">채널 설정 → 연동 → 웹후크에서 URL을 복사해 붙여넣으면 알림을 받을 수 있어요.</p>
+
+            <label class="settings-field-label" for="discord-display-name">이름</label>
+            <input class="integration-code-input" type="text" id="discord-display-name"
+                   maxlength="100" placeholder="우리 농장 알림" autocomplete="off" />
+
+            <label class="settings-field-label" for="discord-webhook-url">Webhook URL</label>
+            <input class="integration-code-input" type="password" id="discord-webhook-url"
+                   maxlength="500" placeholder="https://discord.com/api/webhooks/..." autocomplete="off" />
+
+            <p class="help-text" id="discord-form-status" style="min-height:16px; margin-top:10px; margin-bottom:0; text-align:center;"></p>
+
+            <div class="modal-actions">
+                <button class="btn btn-outline" type="button" onclick="closeDiscordModal()">취소</button>
+                <button class="btn btn-primary" type="button" id="discord-submit-btn" onclick="handleDiscordConnect()">연결하기</button>
+            </div>
+        </div>
+
+        <div class="modal-step" id="discord-step-success" style="display:none;">
+            <div class="modal-success">
+                <div class="modal-success-icon"><i data-lucide="check"></i></div>
+                <h3 class="modal-title">디스코드 연결 완료</h3>
+                <p class="modal-desc">이제부터 이 웹후크로 알림을 보낼 수 있어요. 알림 종류 구독은 다음 단계에서 연결됩니다.</p>
+                <div class="modal-actions" style="justify-content:center;">
+                    <button class="btn btn-primary" type="button" onclick="closeDiscordModal()">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/notification-settings.js"></script>
+</body>
+</html>

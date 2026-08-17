@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원 문의 | MushMush</title>
+    <link rel="stylesheet" href="/css/admin.css" />
+    <script src="/js/lucide.js"></script>
+    <script src="/js/admin-common.js"></script>
+</head>
+<body>
+
+<div class="admin-body-row">
+<aside th:replace="~{fragments/admin-sidebar :: adminSidebar('inquiries')}"></aside>
+
+<div class="page-container admin-list-page">
+
+    <div class="admin-panel">
+        <div class="admin-page-head">
+            <button class="admin-back-link" type="button" onclick="location.href='/admin'">
+                <i data-lucide="chevron-left"></i>회원 문의
+            </button>
+            <div class="admin-filters">
+                <div class="msh-select msh-select--admin-filter" id="inquiry-status-select" data-value="all" data-onchange="handleInquiryFilterChange">
+                    <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                        <span class="msh-select-value">전체 답변여부</span>
+                        <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                    </button>
+                    <div class="msh-select-menu">
+                        <div class="msh-select-option selected" data-value="all" onclick="selectMshOption(this)">전체 답변여부</div>
+                        <div class="msh-select-option" data-value="답변완료" onclick="selectMshOption(this)">답변완료</div>
+                        <div class="msh-select-option" data-value="답변대기" onclick="selectMshOption(this)">답변대기</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-table-wrap">
+            <table class="list-table">
+                <thead>
+                <tr>
+                    <th>구분</th>
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>작성일</th>
+                    <th>답변여부</th>
+                </tr>
+                </thead>
+                <tbody id="inquiry-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="admin-pagination" id="inquiry-pagination"></div>
+    </div>
+
+</div>
+</div>
+
+<!-- 문의 상세 + 답변 작성 -->
+<div class="modal-overlay" id="modal-inquiry-detail">
+    <div class="modal-box modal-box-xl">
+        <button class="modal-close" type="button" onclick="closeModal('modal-inquiry-detail')">
+            <i data-lucide="x"></i>
+        </button>
+
+        <div class="iq-detail-head">
+            <div>
+                <div class="iq-detail-meta">
+                    <span class="iq-category-badge" id="iq-category">계정/로그인</span>
+                    <span class="iq-cultivation-tag" id="iq-cultivation" style="display:none;">
+                        <span id="iq-cultivation-label"></span>
+                    </span>
+                </div>
+                <div class="iq-detail-title" id="iq-title">문의 제목</div>
+                <div class="iq-detail-date" id="iq-date">2026.07.29 작성 · nickname</div>
+            </div>
+            <span class="status-badge" id="iq-status-badge">답변대기</span>
+        </div>
+
+        <div class="iq-chat" id="iq-chat"></div>
+
+        <form class="iq-composer" onsubmit="submitAdminReply(event)">
+            <textarea id="iq-reply-input" rows="1" placeholder="답변을 입력하세요" required></textarea>
+            <button class="iq-composer-send" type="submit" title="답변 보내기">
+                <i data-lucide="send"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- 문의 상세 안에서 재배지 이름 클릭 시 뜨는 재배지 상세 팝업 (예전 재배지 관리 상세팝업과 동일한 구성, 삭제 기능만 제외) -->
+<div class="modal-overlay" id="modal-cultivation-mini">
+    <div class="modal-box modal-box-xl">
+        <button class="modal-close" type="button" onclick="closeModal('modal-cultivation-mini')">
+            <i data-lucide="x"></i>
+        </button>
+
+        <div class="cultivation-detail-head">
+            <div>
+                <div class="cultivation-detail-title" id="cd-title">Cultivation1 · 느타리버섯</div>
+                <div class="cultivation-detail-sub" id="cd-sub">관리자 nickname · 2027.07.29 생성 · 인원 3명</div>
+            </div>
+            <div class="cd-member-toggle-wrap">
+                <button class="cd-member-toggle-btn" type="button" onclick="toggleCdMembers()">
+                    <i data-lucide="users"></i>참여 인원
+                </button>
+                <div class="cd-member-dropdown" id="cd-member-dropdown">
+                    <div class="cd-member-chip-list" id="cd-member-chip-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <nav class="cd-modal-tabs">
+            <button class="cd-modal-tab-btn active" type="button" onclick="switchCdTab('main')">
+                <i data-lucide="layout-dashboard"></i>메인
+            </button>
+            <button class="cd-modal-tab-btn" type="button" onclick="switchCdTab('report')">
+                <i data-lucide="sparkles"></i>AI 리포트
+            </button>
+        </nav>
+
+        <!-- 메인: 사진 / 센서현황 / 환경통계 / 일간추이 -->
+        <div class="cd-modal-panel active" id="cd-panel-main">
+            <div class="cd-main-row">
+                <div class="cd-card cd-photo-card">
+                    <div class="cd-photo-placeholder">
+                        <i data-lucide="image"></i>
+                        <span>등록된 사진이 없습니다</span>
+                    </div>
+                </div>
+
+                <div class="cd-card cd-sensor-col">
+                    <div class="cd-card-title">센서 현황</div>
+                    <div class="cd-sensor-row">
+                        <i data-lucide="thermometer" class="cd-sensor-icon"></i>
+                        <div>
+                            <div class="msh-select msh-select--cd-sensor" data-value="온도센서3" data-onchange="updateCdSensor" data-onchange-arg="temp">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">온도센서3</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu">
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">온도센서1</div>
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">온도센서2</div>
+                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">온도센서3</div>
+                                </div>
+                            </div>
+                            <div class="cd-sensor-value" data-sensor="temp">20°C</div>
+                        </div>
+                    </div>
+                    <div class="cd-sensor-row">
+                        <i data-lucide="droplet" class="cd-sensor-icon"></i>
+                        <div>
+                            <div class="msh-select msh-select--cd-sensor" data-value="습도센서1" data-onchange="updateCdSensor" data-onchange-arg="humidity">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">습도센서1</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu">
+                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">습도센서1</div>
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">습도센서2</div>
+                                </div>
+                            </div>
+                            <div class="cd-sensor-value" data-sensor="humidity">61%</div>
+                        </div>
+                    </div>
+                    <div class="cd-sensor-row">
+                        <i data-lucide="cloudy" class="cd-sensor-icon"></i>
+                        <div>
+                            <div class="msh-select msh-select--cd-sensor" data-value="CO2센서2" data-onchange="updateCdSensor" data-onchange-arg="co2">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">CO2센서2</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu">
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">CO2센서1</div>
+                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">CO2센서2</div>
+                                </div>
+                            </div>
+                            <div class="cd-sensor-value" data-sensor="co2">530ppm</div>
+                        </div>
+                    </div>
+                    <div class="cd-sensor-row">
+                        <i data-lucide="sun" class="cd-sensor-icon"></i>
+                        <div>
+                            <div class="msh-select msh-select--cd-sensor" data-value="조도센서1" data-onchange="updateCdSensor" data-onchange-arg="light">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">조도센서1</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu">
+                                    <div class="msh-select-option selected" onclick="selectMshOption(this)">조도센서1</div>
+                                    <div class="msh-select-option" onclick="selectMshOption(this)">조도센서2</div>
+                                </div>
+                            </div>
+                            <div class="cd-sensor-value" data-sensor="light">350lux</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cd-main-row">
+                <div class="cd-card">
+                    <div class="cd-card-title">환경 통계 <span style="font-weight:400;font-size:0.78rem;color:var(--brown-500);">최근 24시간 평균</span></div>
+                    <div class="env-stat-grid">
+                        <div class="env-stat-item">
+                            <i data-lucide="thermometer" class="env-stat-icon"></i>
+                            <span class="env-stat-label">평균 온도</span>
+                            <span class="env-stat-value">19°C</span>
+                        </div>
+                        <div class="env-stat-item">
+                            <i data-lucide="droplet" class="env-stat-icon"></i>
+                            <span class="env-stat-label">평균 습도</span>
+                            <span class="env-stat-value">60%</span>
+                        </div>
+                        <div class="env-stat-item">
+                            <i data-lucide="cloudy" class="env-stat-icon"></i>
+                            <span class="env-stat-label">평균 CO2</span>
+                            <span class="env-stat-value">505ppm</span>
+                        </div>
+                        <div class="env-stat-item">
+                            <i data-lucide="sun" class="env-stat-icon"></i>
+                            <span class="env-stat-label">평균 조도</span>
+                            <span class="env-stat-value">380lux</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cd-card">
+                    <div class="cd-chart-card-header">
+                        <div class="cd-card-title" style="margin-bottom:0;">일간 추이</div>
+                        <div class="msh-select msh-select--cd-chart" id="cd-chart-select" data-value="temp3" data-onchange="handleCdChartChange">
+                            <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                <span class="msh-select-value">온도센서3</span>
+                                <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                            </button>
+                            <div class="msh-select-menu">
+                                <div class="msh-select-group-label">온도</div>
+                                <div class="msh-select-option" data-value="temp1" onclick="selectMshOption(this)">온도센서1</div>
+                                <div class="msh-select-option" data-value="temp2" onclick="selectMshOption(this)">온도센서2</div>
+                                <div class="msh-select-option selected" data-value="temp3" onclick="selectMshOption(this)">온도센서3</div>
+                                <div class="msh-select-group-label">습도</div>
+                                <div class="msh-select-option" data-value="humidity1" onclick="selectMshOption(this)">습도센서1</div>
+                                <div class="msh-select-option" data-value="humidity2" onclick="selectMshOption(this)">습도센서2</div>
+                                <div class="msh-select-group-label">CO2</div>
+                                <div class="msh-select-option" data-value="co21" onclick="selectMshOption(this)">CO2센서1</div>
+                                <div class="msh-select-option" data-value="co22" onclick="selectMshOption(this)">CO2센서2</div>
+                                <div class="msh-select-group-label">조도</div>
+                                <div class="msh-select-option" data-value="light1" onclick="selectMshOption(this)">조도센서1</div>
+                                <div class="msh-select-option" data-value="light2" onclick="selectMshOption(this)">조도센서2</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cd-chart-placeholder">
+                        <svg viewBox="0 0 260 110" class="cd-chart-svg" preserveAspectRatio="none" id="cd-chart-svg">
+                            <defs>
+                                <linearGradient id="cdChartFill" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="var(--sage-500)" stop-opacity="0.35" />
+                                    <stop offset="100%" stop-color="var(--sage-500)" stop-opacity="0" />
+                                </linearGradient>
+                            </defs>
+                            <polyline points="0,20 260,20" style="stroke:rgba(139,94,60,0.15);stroke-width:1;" />
+                            <polyline points="0,55 260,55" style="stroke:rgba(139,94,60,0.15);stroke-width:1;" />
+                            <polyline points="0,90 260,90" style="stroke:rgba(139,94,60,0.15);stroke-width:1;" />
+                            <polygon id="cd-chart-fill" fill="url(#cdChartFill)" points="0,80 32,62 65,70 98,40 130,50 163,25 195,35 228,18 260,28 260,110 0,110" />
+                            <polyline id="cd-chart-line" fill="none" style="stroke:var(--sage-600);stroke-width:2;" points="0,80 32,62 65,70 98,40 130,50 163,25 195,35 228,18 260,28" />
+                            <circle id="cd-chart-dot" style="fill:var(--sage-600);" cx="228" cy="18" r="4.5" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI 리포트 (사용자쪽과 동일하게 이전 날짜도 조회 가능) -->
+        <div class="cd-modal-panel" id="cd-panel-report">
+            <div class="cd-report-date-nav">
+                <button class="cd-report-nav-btn" type="button" title="이전 주" onclick="shiftCdReportWeek(-1)">
+                    <i data-lucide="chevron-left"></i>
+                </button>
+                <div class="cd-report-date-strip" id="cd-report-date-strip"></div>
+                <button class="cd-report-nav-btn" type="button" title="다음 주" onclick="shiftCdReportWeek(1)">
+                    <i data-lucide="chevron-right"></i>
+                </button>
+            </div>
+
+            <div class="cd-report-date-label" id="cd-report-date-label"></div>
+
+            <div class="cd-ai-summary" id="cd-ai-summary-text"></div>
+
+            <div class="env-stat-grid" id="cd-report-stat-grid"></div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-danger btn-sm" type="button" onclick="openDeleteConfirm()">
+                <i data-lucide="shield-alert" style="width:14px;height:14px;"></i>재배 삭제
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 재배 삭제 확인 -->
+<div class="modal-overlay" id="modal-delete-confirm">
+    <div class="modal-box">
+        <h3 class="modal-title">재배를 삭제하겠습니까?</h3>
+        <p class="modal-sub">삭제한 재배지 정보는 되돌릴 수 없어요.</p>
+        <div class="modal-actions">
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-delete-confirm')">취소</button>
+            <button class="btn btn-danger" type="button" onclick="confirmDeleteCultivation()">삭제</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/msh-select.js"></script>
+<script>
+    var INQUIRY_PAGE_SIZE = 8;
+    var inquiryState = { page: 0, totalPages: 1 };
+    var currentInquiryId = null;
+    var currentInquiryDetail = null;
+
+    function statusLabel(status) {
+        return status === 'RESOLVED' ? '답변완료' : '답변대기';
+    }
+    function statusBadgeClass(status) {
+        return status === 'RESOLVED' ? 'answered' : 'pending';
+    }
+    function formatDate(iso) {
+        if (!iso) return '';
+        var d = new Date(iso);
+        return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
+    }
+    function formatDateTime(iso) {
+        if (!iso) return '';
+        var d = new Date(iso);
+        return formatDate(iso) + ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    }
+
+    async function fetchJson(url, options) {
+        var response = await fetch(url, Object.assign({ headers: { 'Content-Type': 'application/json' } }, options));
+        var body = await response.json().catch(function () { return null; });
+        if (!response.ok || !body || body.success === false) {
+            throw new Error((body && body.message) || '요청 처리 중 오류가 발생했어요.');
+        }
+        return body.data;
+    }
+
+    function handleInquiryFilterChange() {
+        loadInquiries(0);
+    }
+
+    async function loadInquiries(page) {
+        var statusValue = document.getElementById('inquiry-status-select').dataset.value;
+        var status = statusValue === 'all' ? null : statusValue;
+
+        try {
+            var url = '/admin/inquiries/list?page=' + page + '&size=' + INQUIRY_PAGE_SIZE + (status ? '&status=' + status : '');
+            var data = await fetchJson(url);
+            inquiryState.page = data.number;
+            inquiryState.totalPages = Math.max(1, data.totalPages);
+
+            var tbody = document.getElementById('inquiry-tbody');
+            tbody.innerHTML = '';
+            (data.content || []).forEach(function (q) {
+                var tr = document.createElement('tr');
+                tr.onclick = function () { openInquiryDetail(q.id); };
+                tr.innerHTML = '<td></td><td></td><td></td><td></td><td><span class="status-badge"></span></td>';
+                tr.children[0].textContent = q.categoryName;
+                tr.children[1].textContent = q.title;
+                tr.children[2].textContent = q.userNickname;
+                tr.children[3].textContent = formatDate(q.createdAt);
+                var badge = tr.querySelector('.status-badge');
+                badge.classList.add(statusBadgeClass(q.status));
+                badge.textContent = statusLabel(q.status);
+                tbody.appendChild(tr);
+            });
+
+            renderInquiryPagination();
+            lucide.createIcons();
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    function renderInquiryPagination() {
+        var wrap = document.getElementById('inquiry-pagination');
+        if (inquiryState.totalPages <= 1) { wrap.innerHTML = ''; return; }
+
+        var page = inquiryState.page;
+        var totalPages = inquiryState.totalPages;
+        var prevDisabled = page === 0 ? ' disabled' : '';
+        var nextDisabled = page >= totalPages - 1 ? ' disabled' : '';
+        wrap.innerHTML =
+            '<button class="admin-page-btn' + prevDisabled + '" type="button" onclick="loadInquiries(' + (page - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
+            '<span class="admin-page-label">' + (page + 1) + ' / ' + totalPages + '</span>' +
+            '<button class="admin-page-btn' + nextDisabled + '" type="button" onclick="loadInquiries(' + (page + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+        lucide.createIcons();
+    }
+
+    // ===== 문의 상세 + 답변 작성 =====
+    async function openInquiryDetail(id) {
+        currentInquiryId = id;
+        try {
+            var detail = await fetchJson('/admin/inquiries/' + id);
+            currentInquiryDetail = detail;
+            renderInquiryDetail(detail);
+            openModal('modal-inquiry-detail');
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    function renderInquiryDetail(inquiry) {
+        document.getElementById('iq-category').textContent = inquiry.categoryName;
+
+        var cultivationEl = document.getElementById('iq-cultivation');
+        if (inquiry.cultivationName) {
+            document.getElementById('iq-cultivation-label').textContent = inquiry.cultivationName;
+            cultivationEl.style.display = 'inline-flex';
+        } else {
+            cultivationEl.style.display = 'none';
+        }
+
+        document.getElementById('iq-title').textContent = inquiry.title;
+        document.getElementById('iq-date').textContent = formatDate(inquiry.createdAt) + ' 작성 · ' + inquiry.userNickname;
+
+        var statusBadge = document.getElementById('iq-status-badge');
+        statusBadge.textContent = statusLabel(inquiry.status);
+        statusBadge.className = 'status-badge ' + statusBadgeClass(inquiry.status);
+
+        var chat = document.getElementById('iq-chat');
+        chat.innerHTML = '';
+        (inquiry.messages || []).forEach(function (m) {
+            appendAdminChatBubble(chat, inquiry.userNickname, m.content, formatDateTime(m.createdAt), false);
+            if (m.answerContent) {
+                appendAdminChatBubble(chat, '관리자', m.answerContent, formatDateTime(m.createdAt), true);
+            }
+        });
+        chat.scrollTop = chat.scrollHeight;
+
+        document.querySelector('.iq-composer').style.display = inquiry.status === 'RESOLVED' ? 'none' : 'flex';
+        document.getElementById('iq-reply-input').value = '';
+    }
+
+    function appendAdminChatBubble(chat, name, content, time, isAdmin) {
+        var row = document.createElement('div');
+        row.className = 'iq-chat-msg' + (isAdmin ? ' from-admin' : '');
+        row.innerHTML =
+            '<div class="iq-chat-avatar">' + (isAdmin ? '관' : '유') + '</div>' +
+            '<div class="iq-chat-col">' +
+            '<div class="iq-chat-name"></div>' +
+            '<div class="iq-chat-bubble"><span></span></div>' +
+            '<div class="iq-chat-time"></div>' +
+            '</div>';
+        row.querySelector('.iq-chat-name').textContent = name;
+        row.querySelector('.iq-chat-bubble span').textContent = content;
+        row.querySelector('.iq-chat-time').textContent = time;
+        chat.appendChild(row);
+    }
+
+    async function submitAdminReply(event) {
+        event.preventDefault();
+        var input = document.getElementById('iq-reply-input');
+        var text = input.value.trim();
+        if (!text || !currentInquiryDetail) return;
+
+        var messages = currentInquiryDetail.messages || [];
+        var target = messages[messages.length - 1];
+        if (!target || target.answerContent) {
+            alert('답변할 질문이 없어요.');
+            return;
+        }
+
+        try {
+            var detail = await fetchJson('/admin/inquiries/messages/' + target.id, {
+                method: 'PUT',
+                body: JSON.stringify({ content: text })
+            });
+            currentInquiryDetail = detail;
+            renderInquiryDetail(detail);
+            loadInquiries(inquiryState.page);
+        } catch (e) {
+            alert(e.message);
+        }
+    }
+
+    loadInquiries(0);
+</script>
+
+</body>
+</html>

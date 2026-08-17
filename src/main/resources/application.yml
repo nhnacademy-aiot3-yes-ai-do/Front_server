@@ -7,14 +7,32 @@ server:
         secure: true
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: front_server
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 12MB
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_SECRET}
+            scope:
+              - openid
+              - email
+              - profile
 
 feign:
   client:
     gateway:
       url: ${GATEWAY_URL:http://localhost:8080}
+
+# seed 순서(TELEGRAM, DISCORD) 기준 기본값. 채널 타입 목록 API가 생기면 교체.
+notification:
+  discord:
+    channel-type-id: ${NOTIFICATION_DISCORD_CHANNEL_TYPE_ID:2}

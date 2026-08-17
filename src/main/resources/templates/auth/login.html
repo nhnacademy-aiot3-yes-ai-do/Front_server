@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>로그인 | MushMush</title>
     <link rel="stylesheet" href="/css/style.css" />
+    <script src="/js/lucide.js"></script>
+    <script src="/js/common.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 <div class="auth-wrap">
@@ -12,9 +15,14 @@
         <img src="/images/logo1.png" alt="MushMush 로고" class="auth-logo" />
 
         <div class="auth-body">
-            <p class="help-text error" th:if="${loginError}" th:text="${loginError}"></p>
+            <p class="help-text error" th:if="${loginError}">
+                <span th:text="${loginError}"></span>
+                <a th:if="${loginError.contains('5회') || loginError.contains('인증')}"
+                   href="/find-password?type=dormant"
+                   style="color: #d9534f; font-weight: bold; text-decoration: underline; margin-left: 6px;">[이메일 인증하기]</a>
+            </p>
 
-            <form action="/login" method="post">
+            <form id="login-form" action="/login" method="post">
                 <div class="field">
                     <input type="email" id="email" name="email" placeholder="이메일" required />
                 </div>
@@ -28,7 +36,10 @@
 
             <div class="divider">또는</div>
 
-            <button type="button" class="btn btn-secondary">OAuth 로그인</button>
+            <a href="/oauth2/authorization/google" class="btn btn-secondary" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none;">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width: 18px; height: 18px;" />
+                Google 계정으로 로그인
+            </a>
 
             <div class="auth-links">
                 <a href="/signup">회원가입</a>
@@ -39,6 +50,230 @@
     </div>
 </div>
 
+<!-- 휴면 계정 안내 + 인증 팝업 (프론트 목업: 실제 인증/복구 API 연동 없음) -->
+<div class="modal-overlay" id="modal-dormant">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeDormantModal()">
+            <i data-lucide="x"></i>
+        </button>
+
+        <!-- 1단계: 휴면 계정 안내 -->
+        <div class="modal-step" id="dormant-step-notice">
+            <h3 class="modal-title">휴면 계정 안내</h3>
+            <p class="modal-desc">
+                장기간 로그인하지 않아 휴면 계정으로 전환된 계정이에요.<br />
+                이메일 인증을 완료하면 계정을 바로 복구할 수 있어요.
+            </p>
+
+            <div class="modal-field">
+                <label>이메일</label>
+                <input type="email" id="dormant-email" readonly />
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-outline" type="button" onclick="closeDormantModal()">닫기</button>
+                <button class="btn btn-primary" type="button" onclick="handleDormantSendCode()" id="dormant-send-btn">인증번호 받기</button>
+            </div>
+        </div>
+
+        <!-- 2단계: 인증번호 입력 -->
+        <div class="modal-step" id="dormant-step-code" style="display:none;">
+            <h3 class="modal-title">인증번호 입력</h3>
+            <p class="modal-desc">
+                <span id="dormant-email-echo"></span>로 인증번호를 발송했어요.<br />
+                받으신 인증번호 6자리를 입력해 주세요.
+            </p>
+
+            <div class="modal-field">
+                <label>인증번호</label>
+                <div class="field-inline">
+                    <input type="text" id="dormant-code" maxlength="6" placeholder="인증번호 6자리" style="padding-right: 55px;" />
+                    <span id="dormant-timer-text" style="position: absolute; right: 105px; top: 50%; transform: translateY(-50%); color: #ef4444; font-weight: bold; font-size: 13px; pointer-events: none;"></span>
+                    <button type="button" id="dormant-verify-btn" class="btn btn-outline btn-inline" onclick="handleDormantVerifyCode()">인증확인</button>
+                </div>
+                <p class="help-text" id="dormant-status-text" style="min-height: 16px; margin-top: 4px; margin-bottom: 0;"></p>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-outline" type="button" onclick="showDormantStep('notice')">이전</button>
+                <button class="btn btn-primary" type="button" onclick="handleDormantResend()">재발송</button>
+            </div>
+        </div>
+
+        <!-- 3단계: 복구 완료 -->
+        <div class="modal-step" id="dormant-step-success" style="display:none;">
+            <div class="modal-success">
+                <div class="modal-success-icon"><i data-lucide="check"></i></div>
+                <h3 class="modal-title">계정이 복구되었어요!</h3>
+                <p class="modal-desc">휴면 상태가 해제되었습니다.<br />잠시 후 자동으로 로그인돼요.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    lucide.createIcons();
+
+    var dormantTimerInterval = null;
+    var dormantTimerExpired = false;
+    var dormantCurrentEmail = '';
+
+    function showDormantStep(step) {
+        document.getElementById('dormant-step-notice').style.display = step === 'notice' ? 'block' : 'none';
+        document.getElementById('dormant-step-code').style.display = step === 'code' ? 'block' : 'none';
+        document.getElementById('dormant-step-success').style.display = step === 'success' ? 'block' : 'none';
+    }
+
+    function openDormantModal(email) {
+        dormantCurrentEmail = email || '';
+        document.getElementById('dormant-email').value = dormantCurrentEmail;
+        document.getElementById('dormant-email-echo').textContent = dormantCurrentEmail;
+        document.getElementById('dormant-code').value = '';
+        document.getElementById('dormant-status-text').textContent = '';
+        document.getElementById('dormant-send-btn').disabled = false;
+        document.getElementById('dormant-send-btn').textContent = '인증번호 받기';
+        showDormantStep('notice');
+        openModal('modal-dormant');
+    }
+
+    function closeDormantModal() {
+        if (dormantTimerInterval) clearInterval(dormantTimerInterval);
+        closeModal('modal-dormant');
+    }
+
+    function startDormantTimer(durationSeconds) {
+        if (dormantTimerInterval) clearInterval(dormantTimerInterval);
+
+        dormantTimerExpired = false;
+        var codeInput = document.getElementById('dormant-code');
+        var verifyBtn = document.getElementById('dormant-verify-btn');
+        codeInput.disabled = false;
+        verifyBtn.disabled = false;
+
+        var timeLeft = durationSeconds;
+        var timerText = document.getElementById('dormant-timer-text');
+
+        dormantTimerInterval = setInterval(function () {
+            var minutes = Math.floor(timeLeft / 60);
+            var seconds = timeLeft % 60;
+            timerText.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+
+            if (timeLeft <= 0) {
+                clearInterval(dormantTimerInterval);
+                dormantTimerExpired = true;
+                timerText.textContent = '(만료됨)';
+                codeInput.disabled = true;
+                verifyBtn.disabled = true;
+                var statusText = document.getElementById('dormant-status-text');
+                statusText.textContent = '인증 시간이 만료되었어요. 재발송을 눌러주세요.';
+                statusText.classList.add('error');
+            }
+            timeLeft--;
+        }, 1000);
+    }
+
+    // 1. 실제 이메일 인증번호 발송 요청
+    function handleDormantSendCode() {
+        var btn = document.getElementById('dormant-send-btn');
+        btn.disabled = true;
+        btn.textContent = '발송 중...';
+
+        fetch('/users/email/send?email=' + encodeURIComponent(dormantCurrentEmail), { method: 'POST' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('이메일 발송 실패');
+                showDormantStep('code');
+                document.getElementById('dormant-status-text').textContent = '';
+                document.getElementById('dormant-status-text').classList.remove('error');
+                startDormantTimer(300);
+            })
+            .catch(function (err) {
+                alert('인증번호 발송 실패: ' + err.message);
+                btn.disabled = false;
+                btn.textContent = '인증번호 받기';
+            });
+    }
+
+    // 2. 이메일 인증번호 재발송 요청
+    function handleDormantResend() {
+        document.getElementById('dormant-code').value = '';
+        var statusText = document.getElementById('dormant-status-text');
+        statusText.textContent = '인증번호를 다시 보냈어요.';
+        statusText.classList.remove('error');
+
+        fetch('/users/email/send?email=' + encodeURIComponent(dormantCurrentEmail), { method: 'POST' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('재발송 실패');
+                startDormantTimer(300);
+            })
+            .catch(function (err) {
+                statusText.textContent = '인증번호 재발송 실패: ' + err.message;
+                statusText.classList.add('error');
+            });
+    }
+
+    // 3. 인증번호 확인 및 백엔드 휴면 해제 API 호출
+    function handleDormantVerifyCode() {
+        var code = document.getElementById('dormant-code').value.trim();
+        var statusText = document.getElementById('dormant-status-text');
+
+        if (dormantTimerExpired) {
+            statusText.textContent = '인증 시간이 만료되었어요. 재발송을 눌러주세요.';
+            statusText.classList.add('error');
+            return;
+        }
+
+        if (!/^\d{6}$/.test(code)) {
+            statusText.textContent = '인증번호는 숫자 6자리입니다.';
+            statusText.classList.add('error');
+            return;
+        }
+
+        // A. 이메일 인증번호 검증
+        fetch('/users/email/verify?email=' + encodeURIComponent(dormantCurrentEmail) + '&code=' + encodeURIComponent(code), { method: 'POST' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('인증번호 불일치');
+                return res.json();
+            })
+            .then(function (isSuccess) {
+                if (!isSuccess) throw new Error('인증번호가 올바르지 않습니다.');
+
+                statusText.classList.remove('error');
+                statusText.textContent = '인증되었습니다. 계정을 복구하는 중이에요...';
+
+                // B. 백엔드 휴면 해제 API 호출
+                return fetch('/users/dormant/release?email=' + encodeURIComponent(dormantCurrentEmail), { method: 'POST' });
+            })
+            .then(function (res) {
+                if (!res.ok) throw new Error('휴면 해제 처리 실패');
+
+                clearInterval(dormantTimerInterval);
+                document.getElementById('dormant-timer-text').textContent = '';
+                document.getElementById('dormant-code').disabled = true;
+                document.getElementById('dormant-verify-btn').disabled = true;
+
+                showDormantStep('success');
+                lucide.createIcons();
+
+                // C. 해제 성공 후 로그인 페이지로 자동 이동하여 유저가 바로 로그인할 수 있게 안내
+                setTimeout(function () {
+                    alert('휴면 계정이 성공적으로 해제되었습니다! 다시 로그인해 주세요.');
+                    window.location.href = '/login';
+                }, 1500);
+            })
+            .catch(function (err) {
+                statusText.textContent = err.message || '휴면 해제 처리 중 오류가 발생했어요.';
+                statusText.classList.add('error');
+            });
+    }
+
+    // ── 로그인 실패 시 서버의 isDormant 깃발로 즉시 휴면 모달 팝업 띄우기 ───────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        /*[# th:if="${isDormant}"]*/
+        var email = /*[[${dormantEmail}]]*/ '';
+        openDormantModal(email);
+        /*[/]*/
+    });
+</script>
 
 </body>
 </html>

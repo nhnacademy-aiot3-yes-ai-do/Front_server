@@ -23,17 +23,12 @@
             <span class="step-line"></span>
             <div class="wizard-step" id="stepnav-2">
                 <span class="step-num">2</span>
-                <span class="step-label">센서 선택</span>
+                <span class="step-label">AI 분석</span>
             </div>
             <span class="step-line"></span>
             <div class="wizard-step" id="stepnav-3">
                 <span class="step-num">3</span>
-                <span class="step-label">환경 분석</span>
-            </div>
-            <span class="step-line"></span>
-            <div class="wizard-step" id="stepnav-4">
-                <span class="step-num">4</span>
-                <span class="step-label">추천 환경</span>
+                <span class="step-label">확인</span>
             </div>
         </div>
 
@@ -42,7 +37,7 @@
             <!-- STEP 1 : 재배지 정보 입력 -->
             <section class="wizard-panel active" id="step-1">
                 <h2 class="wizard-title">재배지 정보를 입력해주세요</h2>
-                <p class="wizard-desc">새로 시작할 재배지의 기본 정보를 알려주세요.</p>
+                <p class="wizard-desc">새로 시작할 재배지의 기본 정보를 알려주세요. 센서는 생성 후 '내 센서'에서 등록할 수 있어요.</p>
 
                 <div class="form-grid">
                     <div class="form-field">
@@ -50,28 +45,9 @@
                         <input type="text" id="f-name" placeholder="예: 양송이 1번 재배지" />
                     </div>
                     <div class="form-field">
-                        <label>인원 수</label>
-                        <input type="number" id="f-members" placeholder="예: 3" min="1" />
+                        <label>버섯 종류</label>
+                        <select id="f-mushroom"></select>
                     </div>
-                    <div class="form-field">
-                        <label>재배 시작일</label>
-                        <input type="date" id="f-start" />
-                    </div>
-                    <div class="form-field">
-                        <label>재배 장소</label>
-                        <input type="text" id="f-place" placeholder="예: 우리 집 재배실" />
-                    </div>
-                </div>
-
-                <div class="form-field form-field-wide">
-                    <label>버섯 종류</label>
-                    <select id="f-mushroom">
-                        <option value="양송이버섯">양송이버섯</option>
-                        <option value="느타리버섯">느타리버섯</option>
-                        <option value="표고버섯">표고버섯</option>
-                        <option value="새송이버섯">새송이버섯</option>
-                        <option value="팽이버섯">팽이버섯</option>
-                    </select>
                 </div>
 
                 <div class="wizard-actions">
@@ -81,71 +57,30 @@
                 </div>
             </section>
 
-            <!-- STEP 2 : 센서 선택 -->
+            <!-- STEP 2 : 로딩 (AI 분석) -->
             <section class="wizard-panel" id="step-2">
-                <h2 class="wizard-title">사용할 센서를 선택해주세요</h2>
-                <p class="wizard-desc">이미 등록해두신 센서 중, 이 재배지에서 사용할 센서를 골라주세요.</p>
+                <div class="loading-wrap">
+                    <div class="loading-spinner"></div>
+                    <p class="loading-text">AI가 <span id="loading-mushroom">양송이버섯</span> 재배 정보를<br />준비하고 있어요...</p>
+                </div>
+            </section>
 
-                <div class="sensor-select-list" id="sensor-select-list"></div>
+            <!-- STEP 3 : 버섯 효능 확인 -->
+            <section class="wizard-panel" id="step-3">
+                <h2 class="wizard-title">
+                    <span id="result-mushroom">양송이버섯</span> 재배를 시작해볼까요?
+                </h2>
+                <p class="wizard-desc">센서와 환경 임계값은 생성 후 '내 센서'에서 등록할 수 있어요.</p>
+
+                <div class="mushroom-info-card" id="mushroom-info-card">
+                    <div class="mushroom-info-title">
+                        <i data-lucide="sparkles"></i><span id="mushroom-info-name">양송이버섯</span>의 효능
+                    </div>
+                    <ul class="mushroom-info-list" id="mushroom-info-list"></ul>
+                </div>
 
                 <div class="wizard-actions wizard-actions-split">
                     <button class="step-next" type="button" onclick="goToStep(1)" title="이전">
-                        <i data-lucide="circle-arrow-left"></i>
-                    </button>
-                    <button class="step-next" type="button" onclick="goToStep(3)" title="다음">
-                        <i data-lucide="circle-arrow-right"></i>
-                    </button>
-                </div>
-            </section>
-
-            <!-- STEP 3 : 로딩 (AI 환경 분석) -->
-            <section class="wizard-panel" id="step-3">
-                <div class="loading-wrap">
-                    <div class="loading-spinner"></div>
-                    <p class="loading-text">AI가 <span id="loading-mushroom">양송이버섯</span> 재배에<br />최적인 환경을 분석하고 있어요...</p>
-                </div>
-            </section>
-
-            <!-- STEP 4 : AI 추천 환경 -->
-            <section class="wizard-panel" id="step-4">
-                <h2 class="wizard-title">
-                    AI가 추천한 <span id="result-mushroom">양송이버섯</span> 재배 최적의 환경입니다
-                </h2>
-                <p class="wizard-desc">필요하다면 값을 직접 수정할 수 있어요.</p>
-
-                <div class="recommend-grid">
-                    <div class="recommend-card">
-                        <div class="recommend-title"><i data-lucide="thermometer"></i>온도</div>
-                        <div class="recommend-inputs">
-                            <label>최고값<input type="number" value="22" />°C</label>
-                            <label>최저값<input type="number" value="16" />°C</label>
-                        </div>
-                    </div>
-                    <div class="recommend-card">
-                        <div class="recommend-title"><i data-lucide="droplet"></i>습도</div>
-                        <div class="recommend-inputs">
-                            <label>최고값<input type="number" value="70" />%</label>
-                            <label>최저값<input type="number" value="55" />%</label>
-                        </div>
-                    </div>
-                    <div class="recommend-card">
-                        <div class="recommend-title"><i data-lucide="cloudy"></i>CO2</div>
-                        <div class="recommend-inputs">
-                            <label>최고값<input type="number" value="600" />ppm</label>
-                            <label>최저값<input type="number" value="400" />ppm</label>
-                        </div>
-                    </div>
-                    <div class="recommend-card">
-                        <div class="recommend-title"><i data-lucide="sun"></i>조도</div>
-                        <div class="recommend-inputs">
-                            <label>최고값<input type="number" value="450" />lux</label>
-                            <label>최저값<input type="number" value="250" />lux</label>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="wizard-actions wizard-actions-split">
-                    <button class="step-next" type="button" onclick="goToStep(2)" title="이전">
                         <i data-lucide="circle-arrow-left"></i>
                     </button>
                     <button class="btn btn-primary" type="button" onclick="finishCultivation()">
@@ -161,79 +96,99 @@
 <script>
     lucide.createIcons();
 
-    // 이미 등록된 센서 목록 (데모 데이터) - 실제로는 서버에서 조회
-    var REGISTERED_SENSORS = [
-        { id: 1, type: '온도', icon: 'thermometer', place: '1번 선반', model: 'TH-1001' },
-        { id: 2, type: '습도', icon: 'droplet', place: '1번 선반', model: 'HD-2002' },
-        { id: 3, type: 'CO2', icon: 'cloudy', place: '2번 선반', model: 'CO-3003' },
-        { id: 4, type: '조도', icon: 'sun', place: '2번 선반', model: 'LX-4004' },
-        { id: 5, type: '온도', icon: 'thermometer', place: '3번 선반', model: 'TH-1005' }
-    ];
-    var selectedSensorIds = [];
+    var MUSHROOMS = [];
 
-    function renderSensorSelectList() {
-        var wrap = document.getElementById('sensor-select-list');
-        wrap.innerHTML = '';
-        REGISTERED_SENSORS.forEach(function (s) {
-            var row = document.createElement('label');
-            row.className = 'sensor-select-row';
-            row.innerHTML =
-                '<input type="checkbox" onchange="toggleSensor(' + s.id + ', this.checked)" />' +
-                '<i data-lucide="' + s.icon + '" class="sensor-select-icon"></i>' +
-                '<span class="sensor-select-info"><strong>' + s.type + ' 센서</strong><small>' + s.place + ' · ' + s.model + '</small></span>';
-            wrap.appendChild(row);
-        });
-        lucide.createIcons();
+    // 버섯별 효능 정보 (데모 데이터) - mushroom_reference에 효능 컬럼이 없어서 당장은 유지
+    var MUSHROOM_INFO = {
+        '양송이버섯': ['항산화 성분이 풍부해 노화 방지에 도움', '비타민 D 함량이 높아 뼈 건강에 좋음', '저칼로리라 체중 관리에 부담이 적음'],
+        '느타리버섯': ['베타글루칸이 풍부해 면역력 강화에 도움', '콜레스테롤 수치 관리에 도움', '식이섬유가 풍부해 장 건강에 좋음'],
+        '표고버섯': ['렌티난 성분이 면역력 증진에 도움', '혈중 콜레스테롤 개선 효과', '비타민 B군이 풍부해 피로 회복에 도움'],
+        '새송이버섯': ['식이섬유가 풍부해 소화와 배변 활동에 도움', '저칼로리·고단백이라 다이어트에 좋음', '칼륨이 풍부해 나트륨 배출에 도움'],
+        '큰느타리': ['식이섬유가 풍부해 소화와 배변 활동에 도움', '저칼로리·고단백이라 다이어트에 좋음', '칼륨이 풍부해 나트륨 배출에 도움'],
+        '팽이버섯': ['저칼로리·고식이섬유로 체중 관리에 도움', '아미노산이 풍부해 성장기 영양 보충에 좋음', '항산화 성분이 함유되어 있음']
+    };
+
+    function loadMushrooms() {
+        return fetch('/cultivations/mushroom-references')
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                MUSHROOMS = data.mushroomReferenceInfoResponses || [];
+                renderMushroomSelect();
+            })
+            .catch(function () {
+                alert('버섯 목록을 불러오지 못했습니다.');
+            });
     }
 
-    function toggleSensor(id, checked) {
-        if (checked) {
-            if (selectedSensorIds.indexOf(id) === -1) selectedSensorIds.push(id);
-        } else {
-            selectedSensorIds = selectedSensorIds.filter(function (x) { return x !== id; });
+    function renderMushroomSelect() {
+        var select = document.getElementById('f-mushroom');
+        select.innerHTML = '';
+        if (MUSHROOMS.length === 0) {
+            select.innerHTML = '<option value="">등록된 버섯이 없습니다</option>';
+            return;
         }
+        MUSHROOMS.forEach(function (m) {
+            var opt = document.createElement('option');
+            opt.value = m.id;
+            opt.textContent = m.mushroomNameKo;
+            select.appendChild(opt);
+        });
     }
 
-    renderSensorSelectList();
+    loadMushrooms();
+
+    function renderMushroomInfo() {
+        var selected = document.getElementById('f-mushroom');
+        var mushroomName = selected.selectedOptions[0] ? selected.selectedOptions[0].textContent : '';
+        document.getElementById('mushroom-info-name').textContent = mushroomName;
+        document.getElementById('result-mushroom').textContent = mushroomName;
+
+        var list = document.getElementById('mushroom-info-list');
+        list.innerHTML = '';
+        var benefits = MUSHROOM_INFO[mushroomName] || ['등록된 효능 정보가 아직 없어요.'];
+        benefits.forEach(function (text) {
+            var li = document.createElement('li');
+            li.textContent = text;
+            list.appendChild(li);
+        });
+    }
 
     function goToStep(n) {
         document.querySelectorAll('.wizard-panel').forEach(function (p) { p.classList.remove('active'); });
-        document.querySelectorAll('.wizard-step').forEach(function (s) { s.classList.remove('active'); });
+        document.querySelectorAll('.wizard-step').forEach(function (s) { s.classList.remove('active', 'done'); });
         document.getElementById('step-' + n).classList.add('active');
         document.getElementById('stepnav-' + n).classList.add('active');
         for (var i = 1; i < n; i++) {
             document.getElementById('stepnav-' + i).classList.add('done');
         }
 
-        if (n === 3) {
-            var mushroom = document.getElementById('f-mushroom').value;
-            document.getElementById('loading-mushroom').textContent = mushroom;
-            document.getElementById('result-mushroom').textContent = mushroom;
-            window.setTimeout(function () { goToStep(4); }, 2200);
+        if (n === 2) {
+            var selected = document.getElementById('f-mushroom');
+            if (!selected.value) {
+                alert('버섯 종류를 확인해주세요.');
+                goToStep(1);
+                return;
+            }
+            document.getElementById('loading-mushroom').textContent = selected.selectedOptions[0].textContent;
+            window.setTimeout(function () {
+                renderMushroomInfo();
+                goToStep(3);
+            }, 1500);
         }
     }
 
-    // TEMP: 백엔드에 버섯 목록 조회 API가 없어서 임시로 이름→ID를 하드코딩함.
-    // mushroom_reference 테이블의 실제 값과 다를 수 있음 — 조회 API가 생기면 반드시 교체할 것.
-    var MUSHROOM_ID_MAP = {
-        '양송이버섯': 1,
-        '느타리버섯': 2,
-        '표고버섯': 3,
-        '새송이버섯': 4,
-        '팽이버섯': 5
-    };
-
     function finishCultivation() {
         var name = document.getElementById('f-name').value.trim();
-        var mushroomName = document.getElementById('f-mushroom').value;
-        var mushroomId = MUSHROOM_ID_MAP[mushroomName];
+        var mushroomId = document.getElementById('f-mushroom').value;
 
         if (!name) {
             alert('재배지 이름을 입력해주세요.');
+            goToStep(1);
             return;
         }
         if (!mushroomId) {
             alert('버섯 종류를 확인해주세요.');
+            goToStep(1);
             return;
         }
 

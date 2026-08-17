@@ -1,0 +1,141 @@
+<!-- templates/admin/members.html -->
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원 관리 | MushMush</title>
+    <link rel="stylesheet" href="/css/admin.css" />
+    <script src="/js/lucide.js"></script>
+    <script src="/js/admin-common.js"></script>
+</head>
+<body>
+
+<div class="admin-body-row">
+<aside th:replace="~{fragments/admin-sidebar :: adminSidebar('members')}"></aside>
+
+<div class="page-container admin-list-page">
+
+    <div class="admin-panel">
+        <div class="admin-page-head">
+            <button class="admin-back-link" type="button" onclick="location.href='/admin'">
+                <i data-lucide="chevron-left"></i>회원 관리
+            </button>
+            <div class="admin-filters">
+                <div class="msh-select msh-select--admin-filter" id="member-sub-select" data-value="active" data-onchange="switchMemberSub">
+                    <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                        <span class="msh-select-value">활성 회원</span>
+                        <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                    </button>
+                    <div class="msh-select-menu">
+                        <div class="msh-select-option selected" data-value="active" onclick="selectMshOption(this)">활성 회원</div>
+                        <div class="msh-select-option" data-value="withdrawn" onclick="selectMshOption(this)">탈퇴 회원</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="list-table-wrap">
+            <table class="list-table">
+                <thead>
+                <tr id="member-thead-row">
+                    <th>닉네임</th>
+                    <th>이메일</th>
+                    <th>회원가입일자</th>
+                    <th>회원수정일자</th>
+                    <th id="member-last-col">마지막 로그인 일자</th>
+                </tr>
+                </thead>
+                <tbody id="member-tbody"></tbody>
+            </table>
+        </div>
+
+        <div class="admin-pagination" id="member-pagination"></div>
+    </div>
+
+</div>
+</div>
+
+<script src="/js/msh-select.js"></script>
+<script>
+    lucide.createIcons();
+
+    // ===== 회원 관리 (데모 데이터) =====
+    var ACTIVE_MEMBERS = [
+        { nickname: 'nickname', email: 'nickname@gmail.com', joined: '2026.06.01', updated: '2026.06.10', last: '2026.07.29' },
+        { nickname: 'nickname1', email: 'nickname1@gmail.com', joined: '2026.06.03', updated: '2026.06.03', last: '2026.07.28' },
+        { nickname: 'nickname2', email: 'nickname2@gmail.com', joined: '2026.06.15', updated: '2026.07.01', last: '2026.07.20' },
+        { nickname: 'nickname3', email: 'nickname3@gmail.com', joined: '2026.06.18', updated: '2026.06.18', last: '2026.07.19' },
+        { nickname: 'nickname4', email: 'nickname4@gmail.com', joined: '2026.06.20', updated: '2026.06.25', last: '2026.07.15' },
+        { nickname: 'nickname5', email: 'nickname5@gmail.com', joined: '2026.06.22', updated: '2026.06.22', last: '2026.07.10' },
+        { nickname: 'nickname6', email: 'nickname6@gmail.com', joined: '2026.06.25', updated: '2026.07.02', last: '2026.07.05' },
+        { nickname: 'nickname7', email: 'nickname7@gmail.com', joined: '2026.06.27', updated: '2026.06.27', last: '2026.07.03' },
+        { nickname: 'nickname8', email: 'nickname8@gmail.com', joined: '2026.06.29', updated: '2026.07.05', last: '2026.07.02' },
+        { nickname: 'nickname10', email: 'nickname10@gmail.com', joined: '2026.07.01', updated: '2026.07.01', last: '2026.07.30' },
+        { nickname: 'nickname11', email: 'nickname11@gmail.com', joined: '2026.07.03', updated: '2026.07.10', last: '2026.07.31' }
+    ];
+
+    var WITHDRAWN_MEMBERS = [
+        { nickname: 'nickname9', email: 'nickname9@gmail.com', joined: '2026.01.10', updated: '2026.02.01', last: '2026.03.15' }
+    ];
+
+    var memberSub = 'active';
+    var memberPage = 1;
+    var MEMBER_PAGE_SIZE = 8;
+
+    function switchMemberSub(wrapperEl) {
+        var sub = wrapperEl.dataset.value;
+        memberSub = sub;
+        memberPage = 1;
+        document.getElementById('member-last-col').textContent = sub === 'active' ? '마지막 로그인 일자' : '탈퇴 일자';
+        renderMembers();
+    }
+
+    function goToMemberPage(page) {
+        memberPage = page;
+        renderMembers();
+    }
+
+    function renderMembers() {
+        var data = memberSub === 'active' ? ACTIVE_MEMBERS : WITHDRAWN_MEMBERS;
+        var totalPages = Math.max(1, Math.ceil(data.length / MEMBER_PAGE_SIZE));
+        if (memberPage > totalPages) memberPage = totalPages;
+
+        var start = (memberPage - 1) * MEMBER_PAGE_SIZE;
+        var pageData = data.slice(start, start + MEMBER_PAGE_SIZE);
+
+        var tbody = document.getElementById('member-tbody');
+        tbody.innerHTML = '';
+        pageData.forEach(function (m) {
+            var tr = document.createElement('tr');
+            tr.className = 'readonly';
+            tr.innerHTML =
+                '<td><div class="member-row-name"><span class="member-row-avatar"><i data-lucide="circle-user-round"></i></span>' + m.nickname + '</div></td>' +
+                '<td>' + m.email + '</td>' +
+                '<td>' + m.joined + '</td>' +
+                '<td>' + m.updated + '</td>' +
+                '<td>' + m.last + '</td>';
+            tbody.appendChild(tr);
+        });
+
+        renderMemberPagination(totalPages);
+        lucide.createIcons();
+    }
+
+    function renderMemberPagination(totalPages) {
+        var wrap = document.getElementById('member-pagination');
+        if (totalPages <= 1) { wrap.innerHTML = ''; return; }
+
+        var prevDisabled = memberPage === 1 ? ' disabled' : '';
+        var nextDisabled = memberPage === totalPages ? ' disabled' : '';
+        wrap.innerHTML =
+            '<button class="admin-page-btn' + prevDisabled + '" type="button" onclick="goToMemberPage(' + (memberPage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
+            '<span class="admin-page-label">' + memberPage + ' / ' + totalPages + '</span>' +
+            '<button class="admin-page-btn' + nextDisabled + '" type="button" onclick="goToMemberPage(' + (memberPage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+    }
+
+    renderMembers();
+</script>
+
+</body>
+</html>
