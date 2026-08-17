@@ -14,6 +14,10 @@ public class TokenReissueOnlyRetryer implements Retryer, Cloneable {
         this.delegate = new Retryer.Default(100, 100, 2);
     }
 
+    private TokenReissueOnlyRetryer(Retryer.Default delegate) {
+        this.delegate = delegate;
+    }
+
     @Override
     public void continueOrPropagate(RetryableException e) {
         if (!(e instanceof TokenReissueRetryableException)) {
@@ -22,14 +26,10 @@ public class TokenReissueOnlyRetryer implements Retryer, Cloneable {
         delegate.continueOrPropagate(e);
     }
 
+    // Feign의 Retryer 인터페이스가 clone()을 추상 메서드로 강제하기 때문에 구현이 불가피함.
+    // super.clone() 대신 복사 생성자로 새 인스턴스를 만들어 반환함.
     @Override
-    public Retryer clone() {
-        try {
-            TokenReissueOnlyRetryer cloned = (TokenReissueOnlyRetryer) super.clone();
-            cloned.delegate = (Retryer.Default) delegate.clone();
-            return cloned;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError("Cloneable을 구현했으므로 발생할 수 없음", e);
-        }
+    public Retryer clone() { // NOSONAR
+        return new TokenReissueOnlyRetryer((Retryer.Default) delegate.clone());
     }
 }
