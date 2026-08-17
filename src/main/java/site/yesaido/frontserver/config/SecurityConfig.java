@@ -32,6 +32,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http){
         try {
             http
+                    // CSRF: Spring의 토큰 기반 방어 대신 AuthCookieProvider가 발급하는 모든 인증 쿠키에
+                    // SameSite=Lax를 적용해서 방어함(외부 사이트발 폼 POST/fetch에는 쿠키가 실리지 않음).
+                    // 상태 변경 엔드포인트는 전부 POST/PUT/DELETE이고 GET은 조회 전용이라 Lax의
+                    // top-level GET 허용 특성이 악용될 여지도 없음. CORS 설정도 없어 크로스 오리진
+                    // credentialed 요청 자체가 브라우저 기본 정책으로 차단됨.
                     .csrf(AbstractHttpConfigurer::disable)
                     .formLogin(AbstractHttpConfigurer::disable)
                     .httpBasic(AbstractHttpConfigurer::disable)
