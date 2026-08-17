@@ -39,27 +39,30 @@ class TokenReissueOnlyRetryerTest {
     void tokenReissueExceptionThrowsWhenRetriesExhausted() {
         retryer.continueOrPropagate(createReissueException());
 
+        TokenReissueRetryableException secondException = createReissueException();
         assertThrows(RetryableException.class,
-                () -> retryer.continueOrPropagate(createReissueException()));
+                () -> retryer.continueOrPropagate(secondException));
     }
 
     @Test
     @DisplayName("clone은 새로운 인스턴스를 반환하고 내부 재시도 횟수를 초기화한다")
     void cloneResetsRetryState() {
         retryer.continueOrPropagate(createReissueException());
+        TokenReissueRetryableException secondException = createReissueException();
         assertThrows(RetryableException.class,
-                () -> retryer.continueOrPropagate(createReissueException()));
+                () -> retryer.continueOrPropagate(secondException));
 
         feign.Retryer cloned = retryer.clone();
 
+        TokenReissueRetryableException thirdException = createReissueException();
         assertNotSame(retryer, cloned);
-        assertDoesNotThrow(() -> cloned.continueOrPropagate(createReissueException()));
+        assertDoesNotThrow(() -> cloned.continueOrPropagate(thirdException));
     }
 
     private RetryableException createPlainException() {
         Request request = Request.create(Request.HttpMethod.GET, "/api/test",
                 Collections.emptyMap(), null, StandardCharsets.UTF_8, null);
-        return new RetryableException(500, "일반 오류", Request.HttpMethod.GET, (Date) null, request);
+        return new RetryableException(500, "일반 오류", Request.HttpMethod.GET, (Long) null, request);
     }
 
     private TokenReissueRetryableException createReissueException() {

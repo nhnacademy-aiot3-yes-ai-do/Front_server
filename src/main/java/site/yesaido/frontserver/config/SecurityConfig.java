@@ -16,6 +16,7 @@ import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.GoogleLoginRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
+import site.yesaido.frontserver.exception.SecurityFilterChainConfigurationException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 @Slf4j
@@ -28,22 +29,31 @@ public class SecurityConfig {
     private final AuthCookieProvider authCookieProvider;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(AbstractHttpConfigurer::disable)
-                .formLogin(AbstractHttpConfigurer::disable)
-                .httpBasic(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
-                        .anyRequest().permitAll()
-                )
-                .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
-                        .successHandler(oAuth2SuccessHandler())
-                        .failureHandler(oAuth2FailureHandler())
-                );
+    public SecurityFilterChain securityFilterChain(HttpSecurity http){
+        try {
+            http
+                    // CSRF: Spring의 토큰 기반 방어 대신 AuthCookieProvider가 발급하는 모든 인증 쿠키에
+                    // SameSite=Lax를 적용해서 방어함(외부 사이트발 폼 POST/fetch에는 쿠키가 실리지 않음).
+                    // 상태 변경 엔드포인트는 전부 POST/PUT/DELETE이고 GET은 조회 전용이라 Lax의
+                    // top-level GET 허용 특성이 악용될 여지도 없음. CORS 설정도 없어 크로스 오리진
+                    // credentialed 요청 자체가 브라우저 기본 정책으로 차단됨.
+                    .csrf(AbstractHttpConfigurer::disable)
+                    .formLogin(AbstractHttpConfigurer::disable)
+                    .httpBasic(AbstractHttpConfigurer::disable)
+                    .authorizeHttpRequests(auth -> auth
+                            .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                            .anyRequest().permitAll()
+                    )
+                    .oauth2Login(oauth2 -> oauth2
+                            .loginPage("/login")
+                            .successHandler(oAuth2SuccessHandler())
+                            .failureHandler(oAuth2FailureHandler())
+                    );
 
-        return http.build();
+            return http.build();
+        } catch (Exception e) {
+            throw new SecurityFilterChainConfigurationException("SecurityFilterChain 구성에 실패했습니다.", e);
+        }
     }
 
     /**

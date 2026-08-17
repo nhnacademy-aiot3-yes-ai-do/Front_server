@@ -455,8 +455,8 @@
 
 <script th:inline="javascript">
     var CULTIVATION_ID = /*[[${cultivation?.cultivationId}]]*/ 0;
-    var PHOTOS = /*[[${photos}]]*/ [];
-    var memberData = /*[[${members}]]*/ [];
+    var PHOTOS = [(${photosJson})];
+    var memberData = [(${membersJson})];
     var MY_ROLE = /*[[${myRole}]]*/ null;
 </script>
 <script src="/js/msh-select.js"></script>

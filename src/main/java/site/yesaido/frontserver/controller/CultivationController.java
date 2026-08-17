@@ -15,10 +15,7 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.Member
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationDetailResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryPageResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.*;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
@@ -27,7 +24,9 @@ import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSenso
 import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.ViewJsonWriter;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,7 @@ public class CultivationController {
 
     private final CultivationClient cultivationClient;
     private final UserClient userClient;
+    private final ViewJsonWriter viewJsonWriter;
 
     @GetMapping
     public String list(Model model) {
@@ -48,23 +48,7 @@ public class CultivationController {
         // list.html에서 이 목록을 th:inline="javascript"로 그대로 직렬화하는데,
         // Thymeleaf가 내부적으로 쓰는 Jackson ObjectMapper엔 JSR-310(LocalDateTime) 모듈이 없어서
         // createdAt(LocalDateTime) 필드가 있으면 직렬화 중 예외가 남. JS로 넘기기 전에 문자열로 미리 변환.
-        List<Map<String, Object>> cultivationsForView = cultivations == null ? List.of() : cultivations.stream()
-                .map(c -> {
-                    Map<String, Object> m = new LinkedHashMap<>();
-                    m.put("cultivationId", c.cultivationId());
-                    m.put("name", c.name());
-                    m.put("mushroomId", c.mushroomId());
-                    m.put("status", c.status());
-                    m.put("mode", c.mode());
-                    m.put("memberCount", c.memberCount());
-                    m.put("ownerNickname", c.ownerNickname());
-                    String createdAt = c.createdAt() != null ? c.createdAt().toString() : null;
-                    m.put("createdAt", createdAt);
-                    return m;
-                })
-                .toList();
-
-        model.addAttribute("cultivations", cultivationsForView);
+        model.addAttribute("cultivationsJson", viewJsonWriter.toJson(cultivations == null ? List.of() : cultivations));
         return "cultivation/list";
     }
 
@@ -81,32 +65,11 @@ public class CultivationController {
 
         // list()와 동일한 이유: history.content[].finishedAt(LocalDateTime)이 있으면
         // Thymeleaf JS 인라인(/*[[${history}]]*/) 직렬화 중 JSR-310 미등록 예외가 남 -> 문자열로 미리 변환.
-        Map<String, Object> historyForView = new LinkedHashMap<>();
-        if (history != null) {
-            List<Map<String, Object>> contentForView = history.content() == null ? List.of() : history.content().stream()
-                    .map(c -> {
-                        Map<String, Object> m = new LinkedHashMap<>();
-                        m.put("cultivationId", c.cultivationId());
-                        m.put("name", c.name());
-                        m.put("mushroomId", c.mushroomId());
-                        m.put("status", c.status());
-                        m.put("harvestWeight", c.harvestWeight());
-                        m.put("productGrade", c.productGrade());
-                        String finishedAt = c.finishedAt() != null ? c.finishedAt().toString() : null;
-                        m.put("finishedAt", finishedAt);
-                        return m;
-                    })
-                    .toList();
-            historyForView.put("content", contentForView);
-            historyForView.put("totalPages", history.totalPages());
-            historyForView.put("totalElements", history.totalElements());
-            historyForView.put("number", history.number());
-            historyForView.put("size", history.size());
-        } else {
-            historyForView.put("content", List.of());
+        if (history == null) {
+            history = new CultivationHistoryPageResponse(List.of(), 0, 0, 0, size);
         }
 
-        model.addAttribute("history", historyForView);
+        model.addAttribute("historyJson", viewJsonWriter.toJson(history));
         return "cultivation/history";
     }
   
@@ -125,35 +88,9 @@ public class CultivationController {
 
         // dashboard/main.html도 members/photos를 th:inline="javascript"로 통째로 직렬화함.
         // MemberResponse.joinedAt / PhotoResponse.updatedAt이 LocalDateTime이라 위와 같은 이유로 문자열 변환 필요.
-        List<Map<String, Object>> membersForView = members == null ? List.of() : members.stream()
-                .map(m -> {
-                    Map<String, Object> map = new LinkedHashMap<>();
-                    map.put("memberId", m.memberId());
-                    map.put("userId", m.userId());
-                    map.put("nickname", m.nickname());
-                    map.put("role", m.role());
-                    String joinedAt = m.joinedAt() != null ? m.joinedAt().toString() : null;
-                    map.put("joinedAt", joinedAt);
-                    return map;
-                })
-                .toList();
-
-        List<Map<String, Object>> photosForView = photos == null ? List.of() : photos.stream()
-                .map(p -> {
-                    Map<String, Object> map = new LinkedHashMap<>();
-                    map.put("photoId", p.photoId());
-                    map.put("objectKey", p.objectKey());
-                    map.put("uri", p.uri());
-                    map.put("storageType", p.storageType());
-                    String updatedAt = p.updatedAt() != null ? p.updatedAt().toString() : null;
-                    map.put("updatedAt", updatedAt);
-                    return map;
-                })
-                .toList();
-
         model.addAttribute("cultivation", cultivation);
-        model.addAttribute("members", membersForView);
-        model.addAttribute("photos", photosForView);
+        model.addAttribute("membersJson", viewJsonWriter.toJson(members == null ? List.of() : members));
+        model.addAttribute("photosJson", viewJsonWriter.toJson(photos == null ? List.of() : photos));
         model.addAttribute("myRole", cultivation != null ? cultivation.myRole() : null);
         return "dashboard/main";
     }
@@ -267,5 +204,67 @@ public class CultivationController {
     @GetMapping("/{cultivation-id}/sensor-values")
     public ResponseEntity<List<LatestSensorValueResponse>> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId) {
         return cultivationClient.getLatestSensorValues(cultivationId);
+    }
+
+    // Helper Method
+    private List<Map<String, Object>> toCultivationViewList(List<CultivationSummaryResponse> cultivations) {
+        if (cultivations == null) {
+            return List.of();
+        }
+        return cultivations.stream()
+                .map(this::toCultivationViewModel)
+                .toList();
+    }
+
+    private Map<String, Object> toCultivationViewModel(CultivationSummaryResponse c) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("cultivationId", c.cultivationId());
+        m.put("name", c.name());
+        m.put("mushroomId", c.mushroomId());
+        m.put("status", c.status());
+        m.put("mode", c.mode());
+        m.put("memberCount", c.memberCount());
+        m.put("ownerNickname", c.ownerNickname());
+        m.put("createdAt", formatDateTime(c.createdAt()));
+        return m;
+    }
+
+    private Map<String, Object> toHistoryViewModel(CultivationHistoryPageResponse history) {
+        Map<String, Object> historyForView = new LinkedHashMap<>();
+        if (history == null) {
+            historyForView.put("content", List.of());
+            return historyForView;
+        }
+        historyForView.put("content", toHistoryContentList(history.content()));
+        historyForView.put("totalPages", history.totalPages());
+        historyForView.put("totalElements", history.totalElements());
+        historyForView.put("number", history.number());
+        historyForView.put("size", history.size());
+        return historyForView;
+    }
+
+    private List<Map<String, Object>> toHistoryContentList(List<CultivationHistoryResponse> content) {
+        if (content == null) {
+            return List.of();
+        }
+        return content.stream()
+                .map(this::toHistoryContentViewModel)
+                .toList();
+    }
+
+    private Map<String, Object> toHistoryContentViewModel(CultivationHistoryResponse c) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("cultivationId", c.cultivationId());
+        m.put("name", c.name());
+        m.put("mushroomId", c.mushroomId());
+        m.put("status", c.status());
+        m.put("harvestWeight", c.harvestWeight());
+        m.put("productGrade", c.productGrade());
+        m.put("finishedAt", formatDateTime(c.finishedAt()));
+        return m;
+    }
+
+    private String formatDateTime(LocalDateTime dateTime) {
+        return dateTime != null ? dateTime.toString() : null;
     }
 }

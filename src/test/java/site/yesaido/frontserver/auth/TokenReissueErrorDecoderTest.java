@@ -8,6 +8,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,6 +26,7 @@ import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -59,14 +63,24 @@ class TokenReissueErrorDecoderTest {
         RequestContextHolder.resetRequestAttributes();
     }
 
-    @Test
-    @DisplayName("401이 아닐 때 일반 디코더 작동 분기")
-    void decodeNon401ReturnsDefaultDecoder() {
-        Response feignResponse = createResponse(500, "Internal Error");
-        Exception ex = decoder.decode("someMethod", feignResponse);
+    @ParameterizedTest(name = "status={0}, methodKey=\"{1}\" \u2192 기본 디코더 반환")
+    @MethodSource("defaultDecoderCases")
+    @DisplayName("401이 아니거나 / reissue 메소드 자체이거나 / refreshToken 쿠키가 없으면 기본 디코더가 작동한다")
+    void decodeReturnsDefaultDecoderWhenNotEligibleForReissue(int status, String methodKey) {
+        Response feignResponse = createResponse(status, "Unauthorized");
+
+        Exception ex = decoder.decode(methodKey, feignResponse);
 
         assertNotNull(ex);
         assertFalse(ex instanceof TokenReissueRetryableException);
+    }
+
+    private static Stream<Arguments> defaultDecoderCases() {
+        return Stream.of(
+                Arguments.of(500, "someMethod"),          // 401이 아님
+                Arguments.of(401, "UserClient#reissue"),  // reissue 메소드 자체의 401
+                Arguments.of(401, "someMethod")           // refreshToken 쿠키 없음 (요청에 쿠키 미설정)
+        );
     }
 
     @Test
@@ -81,16 +95,6 @@ class TokenReissueErrorDecoderTest {
     }
 
     @Test
-    @DisplayName("reissue 메소드 자체 401 오류 시 기본 디코더 반환 분기")
-    void decodeReissueMethod401() {
-        Response feignResponse = createResponse(401, "Unauthorized");
-        Exception ex = decoder.decode("UserClient#reissue", feignResponse);
-
-        assertNotNull(ex);
-        assertFalse(ex instanceof TokenReissueRetryableException);
-    }
-
-    @Test
     @DisplayName("RequestContextHolder 없을 때 기본 디코더 반환 분기")
     void decodeWithoutRequestContext() {
         RequestContextHolder.resetRequestAttributes();
@@ -98,16 +102,6 @@ class TokenReissueErrorDecoderTest {
 
         Exception ex = decoder.decode("someMethod", feignResponse);
         assertNotNull(ex);
-    }
-
-    @Test
-    @DisplayName("refreshToken 쿠키가 없을 때 기본 디코더 반환 분기")
-    void decodeWithoutRefreshTokenCookie() {
-        Response feignResponse = createResponse(401, "Unauthorized");
-        Exception ex = decoder.decode("someMethod", feignResponse);
-
-        assertNotNull(ex);
-        assertFalse(ex instanceof TokenReissueRetryableException);
     }
 
     @Test

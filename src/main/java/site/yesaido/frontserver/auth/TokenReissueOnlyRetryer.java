@@ -3,19 +3,15 @@ package site.yesaido.frontserver.auth;
 import feign.RetryableException;
 import feign.Retryer;
 
-public class TokenReissueOnlyRetryer implements Retryer {
+public class TokenReissueOnlyRetryer implements Retryer, Cloneable {
     // 실제 재시도 로직은 직접 구현하는게 아니라 Feign이 제공하는 재시도 로직을 사용함
-    private final Retryer.Default delegate;
+    private Retryer.Default delegate;
 
     public TokenReissueOnlyRetryer() {
         // 첫 재시도까지 대기 시간: 100ms
         // 대기 시간 상한: 100ms
         // 최대 시도 횟수: 최초 1회 + 재시도 (총합 2번)
-        this(new Retryer.Default(100, 100, 2));
-    }
-
-    private TokenReissueOnlyRetryer(Retryer.Default delegate) {
-        this.delegate = delegate;
+        this.delegate = new Retryer.Default(100, 100, 2);
     }
 
     @Override
@@ -28,6 +24,12 @@ public class TokenReissueOnlyRetryer implements Retryer {
 
     @Override
     public Retryer clone() {
-        return new TokenReissueOnlyRetryer((Retryer.Default) delegate.clone());
+        try {
+            TokenReissueOnlyRetryer cloned = (TokenReissueOnlyRetryer) super.clone();
+            cloned.delegate = (Retryer.Default) delegate.clone();
+            return cloned;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError("Cloneable을 구현했으므로 발생할 수 없음", e);
+        }
     }
 }

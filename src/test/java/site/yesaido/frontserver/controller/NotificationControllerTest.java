@@ -50,7 +50,7 @@ class NotificationControllerTest {
                 )),
                 0, 5, 1, 1, false
         );
-        given(notificationClient.getNotifications(eq(0), eq(5)))
+        given(notificationClient.getNotifications(0, 5))
                 .willReturn(ResponseEntity.ok(body));
 
         mockMvc.perform(get("/notifications")
