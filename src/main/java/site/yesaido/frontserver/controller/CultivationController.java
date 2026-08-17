@@ -15,7 +15,10 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.Member
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.*;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationDetailResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryPageResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
@@ -26,10 +29,7 @@ import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoLi
 import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @LoginRequired
 @Controller
@@ -204,67 +204,5 @@ public class CultivationController {
     @GetMapping("/{cultivation-id}/sensor-values")
     public ResponseEntity<List<LatestSensorValueResponse>> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId) {
         return cultivationClient.getLatestSensorValues(cultivationId);
-    }
-
-    // Helper Method
-    private List<Map<String, Object>> toCultivationViewList(List<CultivationSummaryResponse> cultivations) {
-        if (cultivations == null) {
-            return List.of();
-        }
-        return cultivations.stream()
-                .map(this::toCultivationViewModel)
-                .toList();
-    }
-
-    private Map<String, Object> toCultivationViewModel(CultivationSummaryResponse c) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("cultivationId", c.cultivationId());
-        m.put("name", c.name());
-        m.put("mushroomId", c.mushroomId());
-        m.put("status", c.status());
-        m.put("mode", c.mode());
-        m.put("memberCount", c.memberCount());
-        m.put("ownerNickname", c.ownerNickname());
-        m.put("createdAt", formatDateTime(c.createdAt()));
-        return m;
-    }
-
-    private Map<String, Object> toHistoryViewModel(CultivationHistoryPageResponse history) {
-        Map<String, Object> historyForView = new LinkedHashMap<>();
-        if (history == null) {
-            historyForView.put("content", List.of());
-            return historyForView;
-        }
-        historyForView.put("content", toHistoryContentList(history.content()));
-        historyForView.put("totalPages", history.totalPages());
-        historyForView.put("totalElements", history.totalElements());
-        historyForView.put("number", history.number());
-        historyForView.put("size", history.size());
-        return historyForView;
-    }
-
-    private List<Map<String, Object>> toHistoryContentList(List<CultivationHistoryResponse> content) {
-        if (content == null) {
-            return List.of();
-        }
-        return content.stream()
-                .map(this::toHistoryContentViewModel)
-                .toList();
-    }
-
-    private Map<String, Object> toHistoryContentViewModel(CultivationHistoryResponse c) {
-        Map<String, Object> m = new LinkedHashMap<>();
-        m.put("cultivationId", c.cultivationId());
-        m.put("name", c.name());
-        m.put("mushroomId", c.mushroomId());
-        m.put("status", c.status());
-        m.put("harvestWeight", c.harvestWeight());
-        m.put("productGrade", c.productGrade());
-        m.put("finishedAt", formatDateTime(c.finishedAt()));
-        return m;
-    }
-
-    private String formatDateTime(LocalDateTime dateTime) {
-        return dateTime != null ? dateTime.toString() : null;
     }
 }
