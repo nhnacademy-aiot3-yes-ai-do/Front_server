@@ -49,6 +49,7 @@
 
             <div class="settings-section">
                 <h3 class="settings-section-title">알림 유형</h3>
+                <p class="settings-section-desc" id="subscription-hint">설정을 불러오는 중이에요.</p>
 
                 <div class="settings-row">
                     <div class="settings-row-icon"><i data-lucide="thermometer"></i></div>
@@ -57,7 +58,7 @@
                         <span class="settings-row-desc">온도·습도 등 센서 값이 설정 범위를 벗어나면 알려드려요.</span>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="toggle-sensor" onchange="handleCategoryToggle('sensor', this.checked)" />
+                        <input type="checkbox" id="toggle-sensor" disabled />
                         <span class="toggle-track"><span class="toggle-thumb"></span></span>
                     </label>
                 </div>
@@ -69,7 +70,7 @@
                         <span class="settings-row-desc">재배가 종료되거나 수확이 등록되면 알려드려요.</span>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="toggle-harvest" onchange="handleCategoryToggle('harvest', this.checked)" />
+                        <input type="checkbox" id="toggle-harvest" disabled />
                         <span class="toggle-track"><span class="toggle-thumb"></span></span>
                     </label>
                 </div>
@@ -81,15 +82,15 @@
                         <span class="settings-row-desc">AI 버섯 정보 요약이 준비되면 알려드려요.</span>
                     </div>
                     <label class="toggle-switch">
-                        <input type="checkbox" id="toggle-ai" onchange="handleCategoryToggle('ai', this.checked)" />
+                        <input type="checkbox" id="toggle-ai" disabled />
                         <span class="toggle-track"><span class="toggle-thumb"></span></span>
                     </label>
                 </div>
             </div>
 
             <div class="settings-section settings-section-scroll">
-                <h3 class="settings-section-title">재배지별 센서 알림</h3>
-                <p class="settings-section-desc">재배지마다 센서 임계치 알림을 따로 켜고 끌 수 있어요.</p>
+                <h3 class="settings-section-title">재배지별 알림</h3>
+                <p class="settings-section-desc">위에서 켠 알림을 재배지마다 따로 켜고 끌 수 있어요.</p>
                 <div id="cultivation-toggle-list"></div>
             </div>
         </div>
@@ -128,7 +129,7 @@
             <div class="modal-success">
                 <div class="modal-success-icon"><i data-lucide="check"></i></div>
                 <h3 class="modal-title">디스코드 연결 완료</h3>
-                <p class="modal-desc">이제부터 이 웹후크로 알림을 보낼 수 있어요. 알림 종류 구독은 다음 단계에서 연결됩니다.</p>
+                <p class="modal-desc">이제 아래 알림 유형과 재배지를 켜면 이 웹후크로 알림을 받아요.</p>
                 <div class="modal-actions" style="justify-content:center;">
                     <button class="btn btn-primary" type="button" onclick="closeDiscordModal()">확인</button>
                 </div>
