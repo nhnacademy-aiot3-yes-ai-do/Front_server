@@ -1,7 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -292,5 +290,87 @@ class UserControllerTest {
                 .andExpect(status().isOk());
 
         verify(authCookieProvider).setAuthCookies(any(), eq("access"), eq("refresh"), eq("USER"));
+    }
+
+    @Test
+    @DisplayName("이메일 인증번호 검증 - response가 null인 분기")
+    void verifyEmailReturnsFalseWhenResponseIsNull() throws Exception {
+        given(userClient.verifyEmail(any())).willReturn(null);
+
+        mockMvc.perform(post("/users/email/verify")
+                        .param("email", "test@naver.com")
+                        .param("code", "000000"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("이메일 인증번호 검증 - response는 있지만 data가 false인 분기")
+    void verifyEmailReturnsFalseWhenDataIsFalse() throws Exception {
+        given(userClient.verifyEmail(any())).willReturn(new ApiResponse<>(true, "검증 실패", false));
+
+        mockMvc.perform(post("/users/email/verify")
+                        .param("email", "test@naver.com")
+                        .param("code", "000000"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"));
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 - 성공 분기")
+    void adminLoginSuccess() throws Exception {
+        TokenResponse tokenResponse = TokenResponse.builder()
+                .accessToken("adminAccess")
+                .refreshToken("adminRefresh")
+                .role("ADMIN")
+                .build();
+        given(userClient.login(any(LoginRequest.class))).willReturn(new ApiResponse<>(true, "성공", tokenResponse));
+
+        mockMvc.perform(post("/admin/login")
+                        .param("email", "admin@naver.com")
+                        .param("password", "adminpass"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin"));
+
+        verify(authCookieProvider).setAuthCookies(any(), eq("adminAccess"), eq("adminRefresh"), eq("ADMIN"));
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 - ADMIN 아닌 계정으로 시도 시 실패 분기")
+    void adminLoginNonAdminRoleFails() throws Exception {
+        TokenResponse tokenResponse = TokenResponse.builder()
+                .accessToken("userAccess")
+                .refreshToken("userRefresh")
+                .role("USER")
+                .build();
+        given(userClient.login(any(LoginRequest.class))).willReturn(new ApiResponse<>(true, "성공", tokenResponse));
+
+        mockMvc.perform(post("/admin/login")
+                        .param("email", "notadmin@naver.com")
+                        .param("password", "password123"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/login"));
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 - 인증 실패 예외 분기")
+    void adminLoginExceptionFails() throws Exception {
+        given(userClient.login(any(LoginRequest.class))).willThrow(new RuntimeException("로그인 실패"));
+
+        mockMvc.perform(post("/admin/login")
+                        .param("email", "admin@naver.com")
+                        .param("password", "wrongpass"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/login"));
+    }
+
+    @Test
+    @DisplayName("로그아웃 요청 - X-User-Id 헤더 없음 분기")
+    void logoutWithoutUserIdHeader() throws Exception {
+        mockMvc.perform(post("/logout"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+
+        verify(userClient, never()).logout(anyLong());
     }
 }
