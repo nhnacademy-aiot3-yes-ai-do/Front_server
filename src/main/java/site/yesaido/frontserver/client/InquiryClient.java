@@ -1,10 +1,12 @@
 package site.yesaido.frontserver.client;
 
+import feign.form.FormData;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.inquiry.InquiryStatus;
-import site.yesaido.frontserver.dto.inquiry.request.InquiryCreateRequest;
 import site.yesaido.frontserver.dto.inquiry.request.InquiryMessageRequest;
 import site.yesaido.frontserver.dto.inquiry.response.InquiryCategoryResponse;
 import site.yesaido.frontserver.dto.inquiry.response.InquiryDetailResponse;
@@ -19,8 +21,9 @@ public interface InquiryClient {
     @GetMapping("/api/inquiries/categories")
     ApiResponse<List<InquiryCategoryResponse>> getCategories();
 
-    @PostMapping("/api/inquiries")
-    ApiResponse<InquiryDetailResponse> createInquiry(@RequestBody InquiryCreateRequest request);
+    @PostMapping(value = "/api/inquiries", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ApiResponse<InquiryDetailResponse> createInquiry(@RequestPart("request") FormData request,
+                                                     @RequestPart(value = "files", required = false) List<MultipartFile> files);
 
     @GetMapping("/api/inquiries")
     ApiResponse<InquirySummaryPageResponse> getMyInquiries(@RequestParam("page") int page,
