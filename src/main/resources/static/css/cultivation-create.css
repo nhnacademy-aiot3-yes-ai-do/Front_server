@@ -328,6 +328,219 @@ body {
     line-height: 1.4;
 }
 
+.mushroom-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.mushroom-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: rgba(124, 148, 115, 0.18);
+    border: 1px solid rgba(124, 148, 115, 0.35);
+    color: var(--sage-600);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.mushroom-info-summary {
+    font-size: 0.8rem;
+    color: var(--brown-700);
+    line-height: 1.5;
+    margin: 0 0 8px;
+}
+
+.mushroom-info-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    margin-bottom: 8px;
+}
+
+.mushroom-info-note svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.mushroom-info-caution {
+    background: rgba(196, 108, 74, 0.12);
+    border: 1px solid rgba(196, 108, 74, 0.3);
+    color: var(--brown-900);
+}
+
+.mushroom-info-caution svg { color: #c46c4a; }
+
+.mushroom-info-tip {
+    background: rgba(124, 148, 115, 0.12);
+    border: 1px solid rgba(124, 148, 115, 0.3);
+    color: var(--brown-900);
+}
+
+.mushroom-info-tip svg { color: var(--sage-600); }
+
+.mushroom-info-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--brown-900);
+    margin: 4px 0 6px;
+}
+
+.mushroom-info-subtitle svg { width: 0.95rem; height: 0.95rem; color: var(--sage-600); }
+
+.mushroom-env-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+    margin-bottom: 8px;
+}
+
+.mushroom-env-box {
+    border: 1px solid rgba(139, 94, 60, 0.2);
+    border-radius: 10px;
+    padding: 0.5rem 0.7rem;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.mushroom-env-heading {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin-bottom: 4px;
+}
+
+.mushroom-env-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--brown-700);
+    padding: 1px 0;
+}
+
+.mushroom-env-label { color: var(--brown-500); }
+.mushroom-env-value { font-weight: 700; }
+
+.mushroom-recipe-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mushroom-recipe-card {
+    border: 1px solid rgba(139, 94, 60, 0.2);
+    border-radius: 10px;
+    padding: 0.5rem 0.7rem;
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.mushroom-recipe-name {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--brown-900);
+    margin-bottom: 2px;
+}
+
+.mushroom-recipe-instructions {
+    font-size: 0.72rem;
+    color: var(--brown-700);
+    line-height: 1.45;
+}
+
+/* ---- 요리법 버튼 + 모달 ---- */
+.mushroom-recipe-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--sage-500), var(--sage-600));
+    color: #fff;
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 10px rgba(124, 148, 115, 0.35);
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mushroom-recipe-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(124, 148, 115, 0.45);
+}
+
+.mushroom-recipe-btn:active { transform: translateY(0); }
+.mushroom-recipe-btn svg { width: 1rem; height: 1rem; }
+
+.recipe-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(63, 42, 29, 0.45);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1.5rem;
+}
+
+.recipe-modal-overlay.active { display: flex; }
+
+.recipe-modal {
+    width: min(90vw, 32rem);
+    max-height: 80vh;
+    overflow-y: auto;
+    background: var(--cream-200, #fbf6ea);
+    border: 2px solid rgba(139, 94, 60, 0.28);
+    border-radius: 16px;
+    padding: 1.2rem 1.4rem;
+    box-shadow: 0 12px 32px rgba(63, 42, 29, 0.25);
+}
+
+.recipe-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.6rem;
+}
+
+.recipe-modal-header .mushroom-info-subtitle { margin: 0; }
+
+.recipe-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.8rem;
+    height: 1.8rem;
+    border: none;
+    border-radius: 50%;
+    background: rgba(139, 94, 60, 0.12);
+    color: var(--brown-700);
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+}
+
+.recipe-modal-close svg { width: 1rem; height: 1rem; }
+
+@media (max-width: 640px) {
+    .mushroom-env-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* ---- step4 2단 레이아웃 ---- */
 .step4-columns {
     display: flex;
