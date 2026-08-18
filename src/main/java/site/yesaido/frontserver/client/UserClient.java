@@ -35,7 +35,7 @@ public interface UserClient {
 
     // 6. 로그아웃
     @PostMapping("/api/auth/logout")
-    void logout(@RequestHeader("X-User-Id") Long userId);
+    void logout();
 
     // 7. Token 재발급
     @PostMapping("/api/auth/reissue")
@@ -51,15 +51,15 @@ public interface UserClient {
 
     // 10. 프로필 조회
     @GetMapping("/api/users/mypage")
-    ApiResponse<UserProfileResponse> getMyPage(@RequestHeader(value = "X-User-Id", required = false) Long userId);
+    ApiResponse<UserProfileResponse> getMyPage();
 
     // 11. 프로필 수정
     @PostMapping("/api/users/mypage")
-    ApiResponse<UserProfileResponse> updateMyPage(@RequestHeader(value = "X-User-Id", required = false) Long userId, @RequestBody ProfileUpdateRequest request);
+    ApiResponse<UserProfileResponse> updateMyPage(@RequestBody ProfileUpdateRequest request);
 
     // 12. 비밀번호 확인
     @PostMapping("/api/users/verify-password")
-    ApiResponse<Boolean> verifyPassword(@RequestHeader(value = "X-User-Id", required = false) Long userId, @RequestBody PasswordVerifyRequest request);
+    ApiResponse<Boolean> verifyPassword(@RequestBody PasswordVerifyRequest request);
 
     // 13. 휴먼 계정 해제
     @PostMapping("/api/auth/dormant/release")

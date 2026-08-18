@@ -168,7 +168,7 @@ class UserApiControllerTest {
     @DisplayName("프로필 마이페이지 조회")
     void getMyPageSuccess() throws Exception {
         UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "이름", "닉네임", "USER", LocalDateTime.now(), LocalDateTime.now());
-        given(userClient.getMyPage(null)).willReturn(new ApiResponse<>(true, "조회 성공", profileResponse));
+        given(userClient.getMyPage()).willReturn(new ApiResponse<>(true, "조회 성공", profileResponse));
 
         mockMvc.perform(get("/users/mypage"))
                 .andExpect(status().isOk());
@@ -178,7 +178,7 @@ class UserApiControllerTest {
     @DisplayName("프로필 수정")
     void updateMyPageSuccess() throws Exception {
         ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임", "oldPass", "newPass");
-        given(userClient.updateMyPage(eq(null), any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
+        given(userClient.updateMyPage(any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
 
         mockMvc.perform(post("/users/mypage")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -190,7 +190,7 @@ class UserApiControllerTest {
     @DisplayName("비밀번호 검증")
     void verifyPasswordSuccess() throws Exception {
         PasswordVerifyRequest request = new PasswordVerifyRequest("password123");
-        given(userClient.verifyPassword(eq(null), any())).willReturn(new ApiResponse<>(true, "검증 성공", true));
+        given(userClient.verifyPassword(any())).willReturn(new ApiResponse<>(true, "검증 성공", true));
 
         mockMvc.perform(post("/users/verify-password")
                         .contentType(MediaType.APPLICATION_JSON)
