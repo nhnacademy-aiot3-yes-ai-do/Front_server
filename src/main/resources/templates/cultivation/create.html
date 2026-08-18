@@ -74,9 +74,40 @@
 
                 <div class="mushroom-info-card" id="mushroom-info-card">
                     <div class="mushroom-info-title">
-                        <i data-lucide="sparkles"></i><span id="mushroom-info-name">양송이버섯</span>의 효능
+                        <i data-lucide="sparkles"></i><span id="mushroom-info-name">양송이버섯</span> AI 재배 가이드
                     </div>
-                    <ul class="mushroom-info-list" id="mushroom-info-list"></ul>
+
+                    <div class="mushroom-badges" id="mushroom-badges"></div>
+
+                    <p class="mushroom-info-summary" id="mushroom-info-summary"></p>
+
+                    <div class="mushroom-info-note mushroom-info-caution" id="mushroom-info-caution-wrap">
+                        <i data-lucide="alert-triangle"></i>
+                        <span id="mushroom-info-caution"></span>
+                    </div>
+
+                    <div class="mushroom-info-note mushroom-info-tip" id="mushroom-info-tip-wrap">
+                        <i data-lucide="lightbulb"></i>
+                        <span id="mushroom-info-tip"></span>
+                    </div>
+
+                    <div class="mushroom-env-grid" id="mushroom-env-grid"></div>
+
+                    <button type="button" class="mushroom-recipe-btn" id="mushroom-recipe-btn" onclick="openRecipeModal()">
+                        <i data-lucide="chef-hat"></i>추천 요리법 보기
+                    </button>
+                </div>
+
+                <div class="recipe-modal-overlay" id="recipe-modal-overlay" onclick="closeRecipeModal(event)">
+                    <div class="recipe-modal">
+                        <div class="recipe-modal-header">
+                            <div class="mushroom-info-subtitle"><i data-lucide="chef-hat"></i>추천 요리법</div>
+                            <button type="button" class="recipe-modal-close" onclick="closeRecipeModal()">
+                                <i data-lucide="x"></i>
+                            </button>
+                        </div>
+                        <div class="mushroom-recipe-list" id="mushroom-recipe-list"></div>
+                    </div>
                 </div>
 
                 <div class="wizard-actions wizard-actions-split">
@@ -98,15 +129,8 @@
 
     var MUSHROOMS = [];
 
-    // 버섯별 효능 정보 (데모 데이터) - mushroom_reference에 효능 컬럼이 없어서 당장은 유지
-    var MUSHROOM_INFO = {
-        '양송이버섯': ['항산화 성분이 풍부해 노화 방지에 도움', '비타민 D 함량이 높아 뼈 건강에 좋음', '저칼로리라 체중 관리에 부담이 적음'],
-        '느타리버섯': ['베타글루칸이 풍부해 면역력 강화에 도움', '콜레스테롤 수치 관리에 도움', '식이섬유가 풍부해 장 건강에 좋음'],
-        '표고버섯': ['렌티난 성분이 면역력 증진에 도움', '혈중 콜레스테롤 개선 효과', '비타민 B군이 풍부해 피로 회복에 도움'],
-        '새송이버섯': ['식이섬유가 풍부해 소화와 배변 활동에 도움', '저칼로리·고단백이라 다이어트에 좋음', '칼륨이 풍부해 나트륨 배출에 도움'],
-        '큰느타리': ['식이섬유가 풍부해 소화와 배변 활동에 도움', '저칼로리·고단백이라 다이어트에 좋음', '칼륨이 풍부해 나트륨 배출에 도움'],
-        '팽이버섯': ['저칼로리·고식이섬유로 체중 관리에 도움', '아미노산이 풍부해 성장기 영양 보충에 좋음', '항산화 성분이 함유되어 있음']
-    };
+    var DIFFICULTY_LABELS = ['', '매우 쉬움', '쉬움', '보통', '어려움', '매우 어려움'];
+    var SPEED_LABELS = ['', '매우 느림', '느림', '보통', '빠름', '매우 빠름'];
 
     function loadMushrooms() {
         return fetch('/cultivations/mushroom-references')
@@ -137,20 +161,126 @@
 
     loadMushrooms();
 
-    function renderMushroomInfo() {
+    function makeBadge(text) {
+        var span = document.createElement('span');
+        span.className = 'mushroom-badge';
+        span.textContent = text;
+        return span;
+    }
+
+    function renderEnvBlock(title, condition) {
+        var box = document.createElement('div');
+        box.className = 'mushroom-env-box';
+
+        var heading = document.createElement('div');
+        heading.className = 'mushroom-env-heading';
+        heading.textContent = title;
+        box.appendChild(heading);
+
+        var rows = [
+            ['온도', condition ? condition.temperature : null, '℃'],
+            ['습도', condition ? condition.humidity : null, '%'],
+            ['CO2', condition ? condition.co2 : null, 'ppm'],
+            ['조도', condition ? condition.light : null, 'lux']
+        ];
+
+        rows.forEach(function (row) {
+            var label = row[0], range = row[1], unit = row[2];
+            var line = document.createElement('div');
+            line.className = 'mushroom-env-row';
+            var value = (range && range.min != null && range.max != null)
+                ? (range.min + ' ~ ' + range.max + unit)
+                : '정보 없음';
+            line.innerHTML = '<span class="mushroom-env-label">' + label + '</span><span class="mushroom-env-value"></span>';
+            line.querySelector('.mushroom-env-value').textContent = value;
+            box.appendChild(line);
+        });
+
+        return box;
+    }
+
+    function renderMushroomInfo(guide) {
         var selected = document.getElementById('f-mushroom');
-        var mushroomName = selected.selectedOptions[0] ? selected.selectedOptions[0].textContent : '';
+        var mushroomName = (guide && guide.mushroomName) || (selected.selectedOptions[0] ? selected.selectedOptions[0].textContent : '');
         document.getElementById('mushroom-info-name').textContent = mushroomName;
         document.getElementById('result-mushroom').textContent = mushroomName;
 
-        var list = document.getElementById('mushroom-info-list');
-        list.innerHTML = '';
-        var benefits = MUSHROOM_INFO[mushroomName] || ['등록된 효능 정보가 아직 없어요.'];
-        benefits.forEach(function (text) {
-            var li = document.createElement('li');
-            li.textContent = text;
-            list.appendChild(li);
-        });
+        if (!guide) {
+            document.getElementById('mushroom-badges').innerHTML = '';
+            document.getElementById('mushroom-info-summary').textContent = 'AI 가이드를 불러오지 못했어요. 재배지는 생성 후에도 이용할 수 있어요.';
+            document.getElementById('mushroom-info-caution-wrap').style.display = 'none';
+            document.getElementById('mushroom-info-tip-wrap').style.display = 'none';
+            document.getElementById('mushroom-env-grid').innerHTML = '';
+            document.getElementById('mushroom-recipe-btn').style.display = 'none';
+            return;
+        }
+
+        var badges = document.getElementById('mushroom-badges');
+        badges.innerHTML = '';
+        var evaluation = guide.evaluation;
+        if (evaluation) {
+            badges.appendChild(makeBadge('난이도 ' + (DIFFICULTY_LABELS[evaluation.difficultyLevel] || evaluation.difficultyLevel)));
+            badges.appendChild(makeBadge('성장속도 ' + (SPEED_LABELS[evaluation.growthSpeed] || evaluation.growthSpeed)));
+            if (evaluation.sensitivity) {
+                badges.appendChild(makeBadge(evaluation.sensitivity));
+            }
+        }
+
+        document.getElementById('mushroom-info-summary').textContent = guide.summary || (evaluation ? evaluation.aiStrategy : '') || '';
+
+        var cautionWrap = document.getElementById('mushroom-info-caution-wrap');
+        if (guide.caution) {
+            cautionWrap.style.display = '';
+            document.getElementById('mushroom-info-caution').textContent = guide.caution;
+        } else {
+            cautionWrap.style.display = 'none';
+        }
+
+        var tipWrap = document.getElementById('mushroom-info-tip-wrap');
+        if (guide.tip) {
+            tipWrap.style.display = '';
+            document.getElementById('mushroom-info-tip').textContent = guide.tip;
+        } else {
+            tipWrap.style.display = 'none';
+        }
+
+        var envGrid = document.getElementById('mushroom-env-grid');
+        envGrid.innerHTML = '';
+        if (guide.cultivationCondition || guide.harvestCondition) {
+            envGrid.appendChild(renderEnvBlock('재배 환경 조건', guide.cultivationCondition));
+            envGrid.appendChild(renderEnvBlock('수확 환경 조건', guide.harvestCondition));
+        }
+
+        var recipeBtn = document.getElementById('mushroom-recipe-btn');
+        var recipeList = document.getElementById('mushroom-recipe-list');
+        recipeList.innerHTML = '';
+        if (guide.recipes && guide.recipes.length > 0) {
+            recipeBtn.style.display = '';
+            guide.recipes.forEach(function (recipe) {
+                var card = document.createElement('div');
+                card.className = 'mushroom-recipe-card';
+                var name = document.createElement('div');
+                name.className = 'mushroom-recipe-name';
+                name.textContent = recipe.name;
+                var instructions = document.createElement('div');
+                instructions.className = 'mushroom-recipe-instructions';
+                instructions.textContent = recipe.instructions;
+                card.appendChild(name);
+                card.appendChild(instructions);
+                recipeList.appendChild(card);
+            });
+        } else {
+            recipeBtn.style.display = 'none';
+        }
+    }
+
+    function openRecipeModal() {
+        document.getElementById('recipe-modal-overlay').classList.add('active');
+    }
+
+    function closeRecipeModal(e) {
+        if (e && e.target !== e.currentTarget) return;
+        document.getElementById('recipe-modal-overlay').classList.remove('active');
     }
 
     function goToStep(n) {
@@ -170,10 +300,18 @@
                 return;
             }
             document.getElementById('loading-mushroom').textContent = selected.selectedOptions[0].textContent;
-            window.setTimeout(function () {
-                renderMushroomInfo();
-                goToStep(3);
-            }, 1500);
+
+            fetch('/cultivations/mushrooms/' + selected.value + '/guide')
+                .then(function (res) { return res.json(); })
+                .then(function (result) {
+                    var guide = (result && result.success) ? result.data : null;
+                    renderMushroomInfo(guide);
+                    goToStep(3);
+                })
+                .catch(function () {
+                    renderMushroomInfo(null);
+                    goToStep(3);
+                });
         }
     }
 

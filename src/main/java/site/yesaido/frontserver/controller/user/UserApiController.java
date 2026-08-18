@@ -65,18 +65,18 @@ public class UserApiController {
     // 프로필 정보 조회
     @GetMapping("/users/mypage")
     public ApiResponse<UserProfileResponse> getMyPage() {
-        return userClient.getMyPage(null);
+        return userClient.getMyPage();
     }
 
     @PostMapping("/users/mypage")
     public ApiResponse<UserProfileResponse> updateMyPage(@RequestBody ProfileUpdateRequest request) {
-        return userClient.updateMyPage(null, request);
+        return userClient.updateMyPage(request);
     }
 
     // 프로필 수정 전 비밀번호 검증
     @PostMapping("/users/verify-password")
     public ApiResponse<Boolean> verifyPassword(@RequestBody PasswordVerifyRequest request) {
-        return userClient.verifyPassword(null, request);
+        return userClient.verifyPassword(request);
     }
 
     // 휴면 해제

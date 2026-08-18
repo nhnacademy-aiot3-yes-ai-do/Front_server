@@ -6,8 +6,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.common.ApiResponse;
+import site.yesaido.frontserver.dto.ai.MushGuideResponse;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddFormRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddRequest;
@@ -32,8 +35,8 @@ public class CultivationController {
 
     private final CultivationClient cultivationClient;
     private final UserClient userClient;
+    private final AiClient aiClient;
     private final ViewJsonWriter viewJsonWriter;
-
 
     @GetMapping
     public String list(Model model) {

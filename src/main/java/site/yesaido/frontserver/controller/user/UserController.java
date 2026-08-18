@@ -87,15 +87,13 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletResponse response,
-                         @RequestHeader(value = "X-User-Id", required = false) Long userId) {
-        if (userId != null) {
-            try {
-                userClient.logout(userId);
-            } catch (Exception e) {
-                log.warn("백엔드 레디스 로그아웃 처리 중 예외 발생: ", e);
-            }
+    public String logout(HttpServletResponse response) {
+        try {
+            userClient.logout();
+        } catch (Exception e) {
+            log.warn("백엔드 레디스 토큰 삭제 중 예외 발생 : {}", e.getMessage());
         }
+
         authCookieProvider.clearAuthCookies(response);
         return REDIRECT_PREFIX + LOGIN_URL;
     }

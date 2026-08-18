@@ -1,8 +1,10 @@
 package site.yesaido.frontserver.controller;
 
+import feign.form.FormData;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientAutoConfiguration;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
@@ -11,6 +13,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.CultivationClient;
@@ -29,12 +32,11 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -81,16 +83,23 @@ class InquiryControllerTest {
         InquiryCreateRequest request = new InquiryCreateRequest(1L, "제목", "내용", null);
         InquiryDetailResponse detail = new InquiryDetailResponse(
                 1L, 10L, "닉네임", 1L, "재배 관련", "제목", null, LocalDateTime.now(), null, null, List.of());
-        when(inquiryClient.createInquiry(any(InquiryCreateRequest.class)))
+        when(inquiryClient.createInquiry(any(FormData.class), any()))
                 .thenReturn(new ApiResponse<>(true, "등록 성공", detail));
 
-        mockMvc.perform(post("/support/inquiries")
-                        .cookie(LOGGED_IN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        MockMultipartFile requestPart = new MockMultipartFile(
+                "request", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+
+        mockMvc.perform(multipart("/support/inquiries")
+                        .file(requestPart)
+                        .cookie(LOGGED_IN))
                 .andExpect(status().isOk());
 
-        verify(inquiryClient).createInquiry(request);
+        ArgumentCaptor<FormData> captor = ArgumentCaptor.forClass(FormData.class);
+        verify(inquiryClient).createInquiry(captor.capture(), isNull());
+
+        FormData sent = captor.getValue();
+        assertThat(sent.getContentType()).isEqualTo("application/json");
+        assertThat(objectMapper.readValue(sent.getData(), InquiryCreateRequest.class)).isEqualTo(request);
     }
 
     @Test

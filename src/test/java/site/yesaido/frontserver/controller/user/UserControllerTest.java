@@ -122,33 +122,14 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("로그아웃 요청 - userId 있음 + 정상 분기")
-    void logoutWithUserId() throws Exception {
-        mockMvc.perform(post("/logout").header("X-User-Id", 1L))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
-
-        verify(userClient).logout(1L);
-    }
-
-    @Test
-    @DisplayName("로그아웃 요청 - userId 없음 / 예외 발생 안전 예외처리 분기")
-    void logoutWithoutUserIdAndExceptionHandled() throws Exception {
-        doThrow(new RuntimeException("Redis error")).when(userClient).logout(1L);
-
-        mockMvc.perform(post("/logout").header("X-User-Id", 1L))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
-    }
-
-    @Test
-    @DisplayName("로그아웃 요청 - X-User-Id 헤더 없음 분기")
-    void logoutWithoutUserIdHeader() throws Exception {
+    @DisplayName("로그아웃 요청 - 성공 분기")
+    void logoutSuccess() throws Exception {
         mockMvc.perform(post("/logout"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
 
-        verify(userClient, never()).logout(anyLong());
+        verify(userClient).logout();
+        verify(authCookieProvider).clearAuthCookies(any());
     }
 
     @Test
