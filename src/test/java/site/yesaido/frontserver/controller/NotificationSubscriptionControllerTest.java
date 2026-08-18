@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.config.WebConfig;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionEnabledRequest;
@@ -162,9 +163,9 @@ class NotificationSubscriptionControllerTest {
     @Test
     @DisplayName("재배지 옵션은 기존 Cultivation 목록 API를 그대로 사용")
     void listCultivations() throws Exception {
-        given(cultivationClient.getCultivations()).willReturn(ResponseEntity.ok(List.of(
+        given(cultivationClient.getCultivations()).willReturn(ResponseEntity.ok(new CultivationSummaryListResponse(List.of(
                 new CultivationSummaryResponse(3L, "느타리 1번", 1L, "GROWTH", "GROWTH", 1, "오너", null)
-        )));
+        ))));
 
         mockMvc.perform(get("/notifications/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
