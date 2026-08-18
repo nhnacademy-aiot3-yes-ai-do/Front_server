@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
@@ -65,6 +66,9 @@ class CultivationControllerTest {
 
     @MockitoBean
     private UserClient userClient;
+
+    @MockitoBean
+    private AiClient aiClient;
 
     @Test
     @DisplayName("로그인 안 한 상태로 목록 접근 시 로그인 페이지로 리다이렉트")
