@@ -38,7 +38,9 @@ public class CultivationController {
     @GetMapping
     public String list(Model model) {
         CultivationSummaryListResponse cultivationSummaryListResponse = cultivationClient.getCultivations().getBody();
-        List<CultivationSummaryResponse> cultivations = cultivationSummaryListResponse.cultivationSummaryResponses();
+        List<CultivationSummaryResponse> cultivations = cultivationSummaryListResponse == null
+                ? List.of()
+                : cultivationSummaryListResponse.cultivationSummaryResponses();
 
         // list.html에서 이 목록을 th:inline="javascript"로 그대로 직렬화하는데,
         // Thymeleaf가 내부적으로 쓰는 Jackson ObjectMapper엔 JSR-310(LocalDateTime) 모듈이 없어서
@@ -83,8 +85,12 @@ public class CultivationController {
         MemberListResponse memberListResponse = cultivationClient.getMembers(cultivationId).getBody();
         PhotoListResponse photoListResponse = cultivationClient.getPhoto(cultivationId).getBody();
 
-        List<MemberResponse> members = memberListResponse.memberResponses();
-        List<PhotoResponse> photos = photoListResponse.photoUploadResponses();
+        List<MemberResponse> members = memberListResponse == null
+                ? List.of()
+                : memberListResponse.memberResponses();
+        List<PhotoResponse> photos = photoListResponse == null
+                ? List.of()
+                : photoListResponse.photoUploadResponses();
 
         // dashboard/main.html도 members/photos를 th:inline="javascript"로 통째로 직렬화함.
         // MemberResponse.joinedAt / PhotoResponse.updatedAt이 LocalDateTime이라 위와 같은 이유로 문자열 변환 필요.

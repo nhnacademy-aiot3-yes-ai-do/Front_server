@@ -90,9 +90,9 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("내 재배지 목록 조회 성공 - null 리턴 분기")
-    void listReturnsNullCultivations() throws Exception {
-        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(null)));
+    @DisplayName("내 재배지 목록 조회 성공 - wrapper body가 없는 경우")
+    void listReturnsEmptyCultivationsWhenWrapperBodyIsNull() throws Exception {
+        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(null));
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
@@ -144,16 +144,16 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("재배 상세 조회 성공 - null 리스트 분기 처리 포함")
-    void detailReturnsDashboardViewWithNulls() throws Exception {
+    @DisplayName("재배 상세 조회 성공 - 멤버·사진 wrapper body가 없는 경우")
+    void detailReturnsDashboardViewWhenListWrapperBodiesAreNull() throws Exception {
         Long cultivationId = 1L;
         CultivationDetailResponse detail = new CultivationDetailResponse(
                 cultivationId, "테스트 재배", 10L, "GROWTH", "GROWTH", "MEMBER",
                 LocalDateTime.now(), null, LocalDateTime.now(), null);
 
         when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(detail));
-        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(new MemberListResponse(null)));
-        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(new PhotoListResponse(null)));
+        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(null));
 
         mockMvc.perform(get("/cultivations/{cultivation-id}", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())

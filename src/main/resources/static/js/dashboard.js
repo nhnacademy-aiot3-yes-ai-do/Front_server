@@ -4,13 +4,21 @@ var CANONICAL_SENSOR_TYPES = ['TEMPERATURE', 'HUMIDITY', 'CO2', 'LIGHT'];
 var SENSOR_DEVICES_BY_TYPE = {};
 var LATEST_VALUES = {};
 
+function latestSensorValuesOf(payload) {
+    return payload && Array.isArray(payload.latestSensorValueResponses)
+        ? payload.latestSensorValueResponses
+        : [];
+}
+
 function loadSensorPanel() {
     return Promise.all([
         fetch('/cultivations/' + CULTIVATION_ID + '/sensors').then(function (res) { return res.ok ? res.json() : { sensors: [] }; }),
-        fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values').then(function (res) { return res.ok ? res.json() : []; })
+        fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values').then(function (res) {
+            return res.ok ? res.json() : { latestSensorValueResponses: [] };
+        })
     ]).then(function (results) {
         var sensorsRes = results[0];
-        var latestList = results[1];
+        var latestList = latestSensorValuesOf(results[1]);
 
         SENSOR_DEVICES_BY_TYPE = {};
         CANONICAL_SENSOR_TYPES.forEach(function (t) { SENSOR_DEVICES_BY_TYPE[t] = []; });
@@ -151,11 +159,13 @@ function stopChartPolling() {
 function pollChartValue() {
     if (!CHART_SELECTED) return;
     fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values')
-        .then(function (res) { return res.ok ? res.json() : []; })
-        .then(function (latestList) {
+        .then(function (res) {
+            return res.ok ? res.json() : { latestSensorValueResponses: [] };
+        })
+        .then(function (payload) {
             if (!CHART_SELECTED) return;
 
-            (latestList || []).forEach(function (v) {
+            latestSensorValuesOf(payload).forEach(function (v) {
                 LATEST_VALUES[v.sensorType + '|' + v.deviceEui] = { value: v.value, unit: v.unit };
             });
             updateVisibleSensorValues();
@@ -414,10 +424,18 @@ function roleLabel(role) {
 
 function refreshMembers() {
     fetch('/cultivations/' + CULTIVATION_ID + '/members')
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            memberData = data;
+        .then(function (res) {
+            if (!res.ok) throw new Error('member refresh failed');
+            return res.json();
+        })
+        .then(function (payload) {
+            memberData = payload && Array.isArray(payload.memberResponses)
+                ? payload.memberResponses
+                : [];
             renderMemberPanel();
+        })
+        .catch(function () {
+            // 현재 화면의 멤버 목록을 유지하고 다음 새로고침에서 재시도한다.
         });
 }
 
