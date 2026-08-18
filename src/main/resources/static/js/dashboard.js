@@ -160,7 +160,10 @@ function pollChartValue() {
     if (!CHART_SELECTED) return;
     fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values')
         .then(function (res) {
-            return res.ok ? res.json() : { latestSensorValueResponses: [] };
+            if (!res.ok) {
+                throw new Error('sensor-values request failed: ' + res.status);
+            }
+            return res.json();
         })
         .then(function (payload) {
             if (!CHART_SELECTED) return;

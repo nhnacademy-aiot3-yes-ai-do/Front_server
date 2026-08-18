@@ -159,9 +159,21 @@ class InquiryControllerTest {
     }
 
     @Test
-    @DisplayName("내 재배지 목록 조회 - null 응답 분기")
-    void getMyCultivationsWithNullBody() throws Exception {
+    @DisplayName("내 재배지 목록 조회 - wrapper 내부 목록이 null이면 빈 목록을 반환")
+    void getMyCultivationsWithNullList() throws Exception {
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(null)));
+
+        mockMvc.perform(get("/support/inquiries/my-cultivations").cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.cultivationSummaryResponses").isArray())
+                .andExpect(jsonPath("$.data.cultivationSummaryResponses").isEmpty());
+    }
+
+    @Test
+    @DisplayName("내 재배지 목록 조회 - Feign 응답 body가 null이면 빈 목록을 반환")
+    void getMyCultivationsWithNullResponseBody() throws Exception {
+        when(cultivationClient.getCultivations())
+                .thenReturn(ResponseEntity.<CultivationSummaryListResponse>ok().build());
 
         mockMvc.perform(get("/support/inquiries/my-cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())

@@ -60,6 +60,9 @@ public class InquiryController {
     @GetMapping("/my-cultivations")
     public ApiResponse<CultivationSummaryListResponse> getMyCultivations() {
         CultivationSummaryListResponse response = cultivationClient.getCultivations().getBody();
-        return new ApiResponse<>(true, "success", response);
+        CultivationSummaryListResponse safeResponse = response == null
+                ? new CultivationSummaryListResponse(null)
+                : response;
+        return new ApiResponse<>(true, "success", safeResponse);
     }
 }
