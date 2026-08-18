@@ -15,7 +15,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.InquiryClient;
+import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.common.ApiResponse;
+import site.yesaido.frontserver.controller.admin.AdminInquiryController;
+import site.yesaido.frontserver.controller.admin.AdminMushroomReferenceController;
+import site.yesaido.frontserver.controller.admin.AdminSensorTypeController;
 import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
@@ -38,7 +42,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
-        value = AdminApiController.class,
+        value = {
+                AdminInquiryController.class,
+                AdminMushroomReferenceController.class,
+                AdminSensorTypeController.class
+        },
         excludeAutoConfiguration = {
                 OAuth2ClientAutoConfiguration.class,
                 OAuth2ClientWebSecurityAutoConfiguration.class
@@ -59,6 +67,9 @@ class AdminApiControllerTest {
 
     @MockitoBean
     private InquiryClient inquiryClient;
+
+    @MockitoBean
+    private SensorClient sensorClient;
 
     private static final Cookie ADMIN_COOKIE = new Cookie("role", "ADMIN");
     private static final Cookie ACCESS_COOKIE = new Cookie("accessToken", "adminToken");
@@ -128,7 +139,7 @@ class AdminApiControllerTest {
     @Test
     @DisplayName("버섯 도감 목록 조회")
     void getMushroomReferencesSuccess() throws Exception {
-        when(cultivationClient.getAllMushroomReferences())
+        when(sensorClient.getAllMushroomReferences())
                 .thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
         mockMvc.perform(get("/admin/mushroom-references").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
@@ -139,50 +150,50 @@ class AdminApiControllerTest {
     @DisplayName("버섯 도감 등록")
     void createMushroomReferenceSuccess() throws Exception {
         MushroomReferenceRequest request = new MushroomReferenceRequest("양송이", "Button mushroom", "Agaricus bisporus", List.of());
-        when(cultivationClient.registerMushroomReference(any(MushroomReferenceRequest.class)))
-                .thenReturn(ResponseEntity.ok().build());
+        when(sensorClient.registerMushroomReference(any(MushroomReferenceRequest.class)))
+                .thenReturn(ResponseEntity.status(201).build());
 
         mockMvc.perform(post("/admin/mushroom-references")
                         .cookie(ACCESS_COOKIE, ADMIN_COOKIE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
-        verify(cultivationClient).registerMushroomReference(request);
+        verify(sensorClient).registerMushroomReference(request);
     }
 
     @Test
     @DisplayName("버섯 도감 수정")
     void updateMushroomReferenceSuccess() throws Exception {
         MushroomReferenceRequest request = new MushroomReferenceRequest("양송이", "Button mushroom", "Agaricus bisporus", List.of());
-        when(cultivationClient.updateMushroomReference(eq(1L), any(MushroomReferenceRequest.class)))
-                .thenReturn(ResponseEntity.ok().build());
+        when(sensorClient.updateMushroomReference(eq(1L), any(MushroomReferenceRequest.class)))
+                .thenReturn(ResponseEntity.noContent().build());
 
         mockMvc.perform(put("/admin/mushroom-references/{mushroom-reference-id}", 1L)
                         .cookie(ACCESS_COOKIE, ADMIN_COOKIE)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
-        verify(cultivationClient).updateMushroomReference(1L, request);
+        verify(sensorClient).updateMushroomReference(1L, request);
     }
 
     @Test
     @DisplayName("버섯 도감 삭제")
     void deleteMushroomReferenceSuccess() throws Exception {
-        when(cultivationClient.deleteMushroomReference(1L)).thenReturn(ResponseEntity.ok().build());
+        when(sensorClient.deleteMushroomReference(1L)).thenReturn(ResponseEntity.noContent().build());
 
         mockMvc.perform(delete("/admin/mushroom-references/{mushroom-reference-id}", 1L)
                         .cookie(ACCESS_COOKIE, ADMIN_COOKIE))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
 
-        verify(cultivationClient).deleteMushroomReference(1L);
+        verify(sensorClient).deleteMushroomReference(1L);
     }
 
     @Test
     @DisplayName("센서 타입 목록 조회")
     void getSensorTypesSuccess() throws Exception {
-        when(cultivationClient.getSensorTypes())
+        when(sensorClient.getSensorTypes())
                 .thenReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of())));
 
         mockMvc.perform(get("/admin/sensor-types").cookie(ACCESS_COOKIE, ADMIN_COOKIE))

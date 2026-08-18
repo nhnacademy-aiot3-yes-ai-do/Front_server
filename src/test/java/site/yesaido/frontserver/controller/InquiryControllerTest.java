@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.common.ApiResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
 import site.yesaido.frontserver.dto.inquiry.request.InquiryCreateRequest;
 import site.yesaido.frontserver.dto.inquiry.request.InquiryMessageRequest;
@@ -141,21 +142,21 @@ class InquiryControllerTest {
     void getMyCultivationsWithData() throws Exception {
         CultivationSummaryResponse summary = new CultivationSummaryResponse(
                 1L, "재배지1", 10L, "GROWTH", "GROWTH", 2, "오너닉네임", LocalDateTime.now());
-        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(List.of(summary)));
+        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(List.of(summary))));
 
         mockMvc.perform(get("/support/inquiries/my-cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].name").value("재배지1"));
+                .andExpect(jsonPath("$.data.cultivationSummaryResponses[0].name").value("재배지1"));
     }
 
     @Test
     @DisplayName("내 재배지 목록 조회 - null 응답 분기")
     void getMyCultivationsWithNullBody() throws Exception {
-        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(null)));
 
         mockMvc.perform(get("/support/inquiries/my-cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.data.cultivationSummaryResponses").isArray())
+                .andExpect(jsonPath("$.data.cultivationSummaryResponses").isEmpty());
     }
 }

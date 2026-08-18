@@ -10,6 +10,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
+import site.yesaido.frontserver.controller.admin.AdminViewController;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -17,7 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(
-        value = AdminController.class,
+        value = AdminViewController.class,
         excludeAutoConfiguration = {
                 OAuth2ClientAutoConfiguration.class,
                 OAuth2ClientWebSecurityAutoConfiguration.class

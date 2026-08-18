@@ -22,6 +22,7 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.Member
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.*;
+import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
@@ -78,7 +79,7 @@ class CultivationControllerTest {
     void listReturnsCultivationListView() throws Exception {
         CultivationSummaryResponse summary = new CultivationSummaryResponse(
                 1L, "테스트 재배", 10L, "GROWTH", "GROWTH", 3, "오너닉네임", LocalDateTime.now());
-        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(List.of(summary)));
+        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(List.of(summary))));
 
         String expectedJson = objectMapper.writeValueAsString(List.of(summary));
 
@@ -91,7 +92,7 @@ class CultivationControllerTest {
     @Test
     @DisplayName("내 재배지 목록 조회 성공 - null 리턴 분기")
     void listReturnsNullCultivations() throws Exception {
-        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(null)));
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
@@ -151,8 +152,8 @@ class CultivationControllerTest {
                 LocalDateTime.now(), null, LocalDateTime.now(), null);
 
         when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(detail));
-        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(null));
-        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(new MemberListResponse(null)));
+        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(new PhotoListResponse(null)));
 
         mockMvc.perform(get("/cultivations/{cultivation-id}", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
@@ -179,11 +180,11 @@ class CultivationControllerTest {
     void getMembersReturnsMemberList() throws Exception {
         Long cultivationId = 1L;
         MemberResponse member = new MemberResponse(1L, 100L, "닉네임", "MEMBER", LocalDateTime.now());
-        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(List.of(member)));
+        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(new MemberListResponse(List.of(member))));
 
         mockMvc.perform(get("/cultivations/{cultivation-id}/members", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].nickname").value("닉네임"));
+                .andExpect(jsonPath("$.memberResponses[0].nickname").value("닉네임"));
     }
 
     @Test
@@ -270,7 +271,7 @@ class CultivationControllerTest {
         PhotoResponse photo = new PhotoResponse(100L, "key", "uri", "S3", LocalDateTime.now());
 
         when(cultivationClient.uploadPhoto(eq(cultivationId), any())).thenReturn(ResponseEntity.ok(photo));
-        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(List.of(photo)));
+        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(new PhotoListResponse(List.of(photo))));
         when(cultivationClient.deletePhoto(cultivationId, 100L)).thenReturn(ResponseEntity.ok().build());
 
         mockMvc.perform(multipart("/cultivations/{cultivation-id}/photos", cultivationId)

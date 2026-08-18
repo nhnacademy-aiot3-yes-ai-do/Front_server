@@ -1,7 +1,7 @@
 package site.yesaido.frontserver.dto.cultivation.response.sensor;
 
 public record SensorTypeInfoResponse(
-        Long id,
+        long id,
         String type,
         String valueUnit
 ) {

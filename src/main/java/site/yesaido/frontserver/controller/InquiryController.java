@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.common.ApiResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
 import site.yesaido.frontserver.dto.inquiry.request.InquiryCreateRequest;
 import site.yesaido.frontserver.dto.inquiry.request.InquiryMessageRequest;
 import site.yesaido.frontserver.dto.inquiry.response.InquiryCategoryResponse;
@@ -52,8 +52,8 @@ public class InquiryController {
     }
 
     @GetMapping("/my-cultivations")
-    public ApiResponse<List<CultivationSummaryResponse>> getMyCultivations() {
-        List<CultivationSummaryResponse> cultivations = cultivationClient.getCultivations().getBody();
-        return new ApiResponse<>(true, "success", cultivations == null ? List.of() : cultivations);
+    public ApiResponse<CultivationSummaryListResponse> getMyCultivations() {
+        CultivationSummaryListResponse response = cultivationClient.getCultivations().getBody();
+        return new ApiResponse<>(true, "success", response);
     }
 }

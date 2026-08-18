@@ -1,4 +1,4 @@
-package site.yesaido.frontserver.controller;
+package site.yesaido.frontserver.controller.admin;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -8,7 +8,7 @@ import site.yesaido.frontserver.util.LoginRequired;
 @Controller
 @LoginRequired(adminOnly = true)
 @RequiredArgsConstructor
-public class AdminController {
+public class AdminViewController {
 
     @GetMapping("/admin")
     public String admin() {
