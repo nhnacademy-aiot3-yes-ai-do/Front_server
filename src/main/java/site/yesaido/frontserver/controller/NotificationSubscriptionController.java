@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.NotificationClient;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionEnabledRequest;
 import site.yesaido.frontserver.dto.notification.response.CultivationOptionResponse;
@@ -64,10 +65,10 @@ public class NotificationSubscriptionController {
 
     @GetMapping("/cultivations")
     public ResponseEntity<List<CultivationOptionResponse>> listCultivations() {
-        var body = cultivationClient.getCultivations().getBody();
+        CultivationSummaryListResponse body = cultivationClient.getCultivations().getBody();
         List<CultivationOptionResponse> options = body == null
                 ? List.of()
-                : body.stream()
+                : body.cultivationSummaryResponses().stream()
                 .map(item -> new CultivationOptionResponse(item.cultivationId(), item.name()))
                 .toList();
         return ResponseEntity.ok(options);
