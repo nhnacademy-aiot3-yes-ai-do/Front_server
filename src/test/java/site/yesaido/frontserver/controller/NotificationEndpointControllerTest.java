@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -124,8 +123,8 @@ class NotificationEndpointControllerTest {
                 .andExpect(jsonPath("$.id").value(11))
                 .andExpect(jsonPath("$.channelCode").value("DISCORD"));
 
-        verify(notificationClient).createEndpoint(eq(new EndpointCreateRequest(
-                2L, "https://discord.com/api/webhooks/1/token", "우리 농장 알림")));
+        verify(notificationClient).createEndpoint(new EndpointCreateRequest(
+                2L, "https://discord.com/api/webhooks/1/token", "우리 농장 알림"));
     }
 
     @Test
