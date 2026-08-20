@@ -1,6 +1,7 @@
 package site.yesaido.frontserver.util;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
@@ -10,29 +11,55 @@ public class AuthCookieProvider {
     private static final String ACCESS_TOKEN = "accessToken";
     private static final String REFRESH_TOKEN = "refreshToken";
     private static final String ROLE = "role";
+    private static final String ACCESS_TOKEN_EXPIRES_AT = "accessTokenExpiresAt";
+
+    @Value("${spring.auth.cookie.secure}")
+    private boolean cookieSecure;
 
     public void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken, String role) {
-        addCookie(response, ACCESS_TOKEN, accessToken, -1);
-        if (refreshToken != null) {
-            addCookie(response, REFRESH_TOKEN, refreshToken, -1);
+        setAuthCookies(response, accessToken, refreshToken, role, null);
+    }
+
+    public void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken, String role, Long accessTokenExpiresAt){
+        addHttpOnlyCookie(response, ACCESS_TOKEN, accessToken, -1);
+
+        if(refreshToken != null){
+            addHttpOnlyCookie(response, REFRESH_TOKEN, refreshToken, -1);
         }
-        if (role != null) {
-            addCookie(response, ROLE, role, -1);
+        if(role != null){
+            addHttpOnlyCookie(response, ROLE, role, -1);
         }
+
+        if(accessTokenExpiresAt != null){
+            addReadableCookie(response, ACCESS_TOKEN_EXPIRES_AT, String.valueOf(accessTokenExpiresAt), -1);
+        }
+    }
+
+    private void addReadableCookie(
+            HttpServletResponse response,
+            String name,
+            String value,
+            int maxAgeSeconds
+    ) {
+        addCookie(response, name, value, maxAgeSeconds, false);
     }
 
     public void clearAuthCookies(HttpServletResponse response) {
-        addCookie(response, ACCESS_TOKEN, "", 0);
-        addCookie(response, REFRESH_TOKEN, "", 0);
-        addCookie(response, ROLE, "", 0);
+        addHttpOnlyCookie(response, ACCESS_TOKEN, "", 0);
+        addHttpOnlyCookie(response, REFRESH_TOKEN, "", 0);
+        addHttpOnlyCookie(response, ROLE, "", 0);
+        addReadableCookie(response, ACCESS_TOKEN_EXPIRES_AT, "", 0);
     }
 
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAgeSeconds) {
+    private void addCookie(HttpServletResponse response, String name, String value, int maxAgeSeconds, boolean httpOnly) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
-                .path("/").httpOnly(true).sameSite("Lax");
+                .path("/").httpOnly(httpOnly).secure(cookieSecure).sameSite("Lax");
         if (maxAgeSeconds >= 0) {
             builder.maxAge(maxAgeSeconds);
         }
         response.addHeader(HttpHeaders.SET_COOKIE, builder.build().toString());
+    }
+    private void addHttpOnlyCookie(HttpServletResponse response, String name, String value, int maxAgeSeconds){
+        addCookie(response, name, value, maxAgeSeconds, true);
     }
 }

@@ -149,13 +149,14 @@ class UserApiControllerTest {
                 .accessToken("newAccess")
                 .refreshToken("newRefresh")
                 .role("USER")
+                .accessTokenExpiresAt(1_755_671_400_000L)
                 .build();
         given(userClient.reissue(any())).willReturn(new ApiResponse<>(true, "재발급 성공", tokenResponse));
 
         mockMvc.perform(post("/users/reissue").cookie(new Cookie("refreshToken", "validRefresh")))
                 .andExpect(status().isOk());
 
-        verify(authCookieProvider).setAuthCookies(any(), eq("newAccess"), eq("newRefresh"), eq("USER"));
+        verify(authCookieProvider).setAuthCookies(any(), eq("newAccess"), eq("newRefresh"), eq("USER"), eq(1_755_671_400_000L));
     }
 
     @Test
@@ -211,7 +212,12 @@ class UserApiControllerTest {
     @DisplayName("Google OAuth2 로그인")
     void loginWithGoogleSuccess() throws Exception {
         GoogleLoginRequest request = new GoogleLoginRequest("googleIdToken", "google@gmail.com", "구글유저");
-        TokenResponse tokenResponse = TokenResponse.builder().accessToken("access").refreshToken("refresh").role("USER").build();
+        TokenResponse tokenResponse = TokenResponse.builder()
+                .accessToken("access")
+                .refreshToken("refresh")
+                .role("USER")
+                .accessTokenExpiresAt(1_755_671_400_000L)
+                .build();
         given(userClient.loginWithGoogle(any())).willReturn(new ApiResponse<>(true, "구글로그인 성공", tokenResponse));
 
         mockMvc.perform(post("/users/oauth2/google")
@@ -219,6 +225,6 @@ class UserApiControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(authCookieProvider).setAuthCookies(any(), eq("access"), eq("refresh"), eq("USER"));
+        verify(authCookieProvider).setAuthCookies(any(), eq("access"), eq("refresh"), eq("USER"), eq(1_755_671_400_000L));
     }
 }

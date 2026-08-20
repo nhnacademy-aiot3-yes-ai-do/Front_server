@@ -19,8 +19,6 @@ import site.yesaido.frontserver.exception.DormantUserException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -66,6 +64,7 @@ class UserControllerTest {
                 .accessToken("mockAccess")
                 .refreshToken("mockRefresh")
                 .role("USER")
+                .accessTokenExpiresAt(1_755_671_400_000L)
                 .build();
         given(userClient.login(any(LoginRequest.class))).willReturn(new ApiResponse<>(true, "성공", tokenResponse));
 
@@ -75,7 +74,7 @@ class UserControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/"));
 
-        verify(authCookieProvider).setAuthCookies(any(), eq("mockAccess"), eq("mockRefresh"), eq("USER"));
+        verify(authCookieProvider).setAuthCookies(any(), eq("mockAccess"), eq("mockRefresh"), eq("USER"), eq(1_755_671_400_000L));
     }
 
     @Test
@@ -85,6 +84,7 @@ class UserControllerTest {
                 .accessToken("mockAccess")
                 .refreshToken("mockRefresh")
                 .role("ADMIN")
+                .accessTokenExpiresAt(1_755_671_400_000L)
                 .build();
         given(userClient.login(any(LoginRequest.class))).willReturn(new ApiResponse<>(true, "성공", tokenResponse));
 
@@ -94,7 +94,7 @@ class UserControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin"));
 
-        verify(authCookieProvider).setAuthCookies(any(), eq("mockAccess"), eq("mockRefresh"), eq("ADMIN"));
+        verify(authCookieProvider).setAuthCookies(any(), eq("mockAccess"), eq("mockRefresh"), eq("ADMIN"), eq(1_755_671_400_000L));
     }
 
     @Test
@@ -139,6 +139,7 @@ class UserControllerTest {
                 .accessToken("adminAccess")
                 .refreshToken("adminRefresh")
                 .role("ADMIN")
+                .accessTokenExpiresAt(1_755_671_400_000L)
                 .build();
         given(userClient.login(any(LoginRequest.class))).willReturn(new ApiResponse<>(true, "성공", tokenResponse));
 
@@ -148,7 +149,7 @@ class UserControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin"));
 
-        verify(authCookieProvider).setAuthCookies(any(), eq("adminAccess"), eq("adminRefresh"), eq("ADMIN"));
+        verify(authCookieProvider).setAuthCookies(any(), eq("adminAccess"), eq("adminRefresh"), eq("ADMIN"), eq(1_755_671_400_000L));
     }
 
     @Test

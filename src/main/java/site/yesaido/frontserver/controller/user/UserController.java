@@ -48,7 +48,7 @@ public class UserController {
             if (tokenResponse == null) {
                 throw new IllegalStateException("Token response is null");
             }
-            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role());
+            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
             redirectAttributes.addFlashAttribute("justLoggedIn", true);
             return "ADMIN".equals(tokenResponse.role()) ? REDIRECT_PREFIX + "/admin" : REDIRECT_PREFIX + "/";
         } catch (DormantUserException e) {
@@ -77,7 +77,7 @@ public class UserController {
             if (!"ADMIN".equals(tokenResponse.role())) {
                 throw new IllegalStateException("관리자 계정이 아닙니다");
             }
-            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role());
+            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
             response.sendRedirect("/admin");
         } catch (Exception e) {
             log.warn("관리자 로그인 실패: {}", e.getMessage());
