@@ -170,7 +170,6 @@ body {
 
 .page-container.admin-list-page .admin-panel {
     width: min(90%, 100rem);
-    aspect-ratio: 2.56 / 1;
     display: flex;
     flex-direction: column;
 }
@@ -412,6 +411,13 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 }
 
 .admin-activity-item-meta { font-size: 0.74rem; color: var(--brown-500); margin-top: 0.1rem; }
+
+.admin-activity-empty {
+    padding: 1.2rem 0.7rem;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--brown-500);
+}
 
 /* ===== 하위 페이지 공통: 상단 타이틀 + 뒤로가기 + 필터 ===== */
 /* 예전엔 카드 상자(테두리+그림자)로 감쌌지만, 리스트 페이지는 그냥 페이지 배경 위에
@@ -1093,7 +1099,8 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
-    max-height: 20rem;
+    min-height: 32rem;
+    max-height: 32rem;
     overflow-y: auto;
     padding: 1rem 0.3rem 0.8rem;
     margin-bottom: 1rem;
