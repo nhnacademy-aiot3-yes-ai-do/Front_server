@@ -56,7 +56,7 @@ public class UserApiController {
         TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
 
         if (tokenResponse != null) {
-            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role());
+            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
         }
 
         return apiResponse;
@@ -92,7 +92,7 @@ public class UserApiController {
         TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
 
         if (tokenResponse != null) {
-            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role());
+            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
         }
 
         return apiResponse;

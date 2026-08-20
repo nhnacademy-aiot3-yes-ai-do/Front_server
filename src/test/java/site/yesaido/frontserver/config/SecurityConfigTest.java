@@ -59,6 +59,7 @@ class SecurityConfigTest {
                 .accessToken("access")
                 .refreshToken("refresh")
                 .role("USER")
+                .accessTokenExpiresAt(1_755_671_400_000L)
                 .build();
         given(userClient.loginWithGoogle(any(GoogleLoginRequest.class)))
                 .willReturn(new ApiResponse<>(true, "성공", tokenResponse));
@@ -68,7 +69,7 @@ class SecurityConfigTest {
 
         getSuccessHandler().onAuthenticationSuccess(request, response, authentication);
 
-        verify(authCookieProvider).setAuthCookies(response, "access", "refresh", "USER");
+        verify(authCookieProvider).setAuthCookies(response, "access", "refresh", "USER", 1_755_671_400_000L);
         assertEquals("/", response.getRedirectedUrl());
     }
 

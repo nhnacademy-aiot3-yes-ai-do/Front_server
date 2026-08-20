@@ -93,7 +93,7 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
 
             requestTokenHolder.refreshAccessToken(tokenResponse.accessToken());
             if (httpResponse != null) {
-                authCookieProvider.setAuthCookies(httpResponse, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role());
+                authCookieProvider.setAuthCookies(httpResponse, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
             }
 
             log.info("accessToken 재발급 성공, 원요청 재시도: {}", methodKey);

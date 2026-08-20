@@ -114,6 +114,7 @@ class TokenReissueErrorDecoderTest {
                 .accessToken("newAccess")
                 .refreshToken("newRefresh")
                 .role("USER")
+                .accessTokenExpiresAt(1_755_671_400_000L)
                 .build();
         given(userClient.reissue(any())).willReturn(new ApiResponse<>(true, "성공", tokenResponse));
 
@@ -121,7 +122,7 @@ class TokenReissueErrorDecoderTest {
 
         assertTrue(ex instanceof TokenReissueRetryableException);
         verify(requestTokenHolder).refreshAccessToken("newAccess");
-        verify(authCookieProvider).setAuthCookies(response, "newAccess", "newRefresh", "USER");
+        verify(authCookieProvider).setAuthCookies(response, "newAccess", "newRefresh", "USER", 1_755_671_400_000L);
     }
 
     @Test
