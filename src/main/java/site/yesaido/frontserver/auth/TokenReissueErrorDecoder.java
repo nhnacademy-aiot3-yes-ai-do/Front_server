@@ -19,15 +19,6 @@ import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.nio.charset.StandardCharsets;
 
-/*
-* Feign 호출이 401을 받으면 그걸 예외로 던지는 대신 refreshToken으로 조용히 재발급 받고 원래 요청을 재시도 시킴
-* RequestTokenHolder가 만들어 둔 통로에 새로운 토큰을 채워 넣어주는 주체
-*
-* front에 있어야 하는 이유?
-* accessToken/RefreshToken은 front_server가 브라우저에게 내려주는 httpOnly 쿠키임.
-* 부라우저는 front와만 통신을 함. 따라서 토큰이 만료되면 재발급 요청을 받는건 front임.
-* */
-
 @Slf4j
 @Component
 public class TokenReissueErrorDecoder implements ErrorDecoder {
@@ -59,11 +50,7 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
         return handleReissue(methodKey, response);
     }
 
-    /**
-     *
-     * 1. 휴면 계정 감지 메서드
-     *
-     */
+
     private DormantUserException checkDormantUser(Response response){
         if(response.body() == null) return null;
 
@@ -84,10 +71,6 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
         return null;
     }
 
-    /**
-     * 2. 401 토큰 재발급 처리 메서드
-     *
-     */
     private Exception handleReissue(String methodKey, Response response) {
         ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attr == null) {
