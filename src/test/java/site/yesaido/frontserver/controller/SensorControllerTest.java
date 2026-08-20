@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
@@ -54,6 +55,9 @@ class SensorControllerTest {
 
     @MockitoBean
     private SensorClient sensorClient;
+
+    @MockitoBean
+    private AiClient aiClient;
 
     @Test
     void getMushroomReferencesDelegatesToPublicSensorClient() throws Exception {
