@@ -27,9 +27,9 @@ spring:
               - email
               - profile
 
-  auth:
-    cookie:
-      secure: ${AUTH_COOKIE_SECURE:true}
+auth:
+  cookie:
+    secure: ${AUTH_COOKIE_SECURE:true}
 
 feign:
   client:

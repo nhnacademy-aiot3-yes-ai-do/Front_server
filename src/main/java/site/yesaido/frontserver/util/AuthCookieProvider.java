@@ -13,7 +13,7 @@ public class AuthCookieProvider {
     private static final String ROLE = "role";
     private static final String ACCESS_TOKEN_EXPIRES_AT = "accessTokenExpiresAt";
 
-    @Value("${spring.auth.cookie.secure}")
+    @Value("${auth.cookie.secure:false}")
     private boolean cookieSecure;
 
     public void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken, String role) {
