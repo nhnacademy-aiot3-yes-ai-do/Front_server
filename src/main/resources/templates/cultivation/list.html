@@ -342,8 +342,10 @@
             row.innerHTML =
                 '<input type="checkbox" data-sensor-type-id="' + t.id + '" onchange="toggleSensorTypeRow(this)" />' +
                 '<span>' + t.type + ' (' + t.valueUnit + ')</span>' +
-                '<input type="number" class="st-min" placeholder="최소" disabled />' +
-                '<input type="number" class="st-max" placeholder="최대" disabled />';
+                '<input type="number" class="st-min" placeholder="최소" disabled oninput="clearThresholdValidation(this)" />' +
+                '<input type="number" class="st-max" placeholder="최대" disabled oninput="clearThresholdValidation(this)" />' +
+                '<button type="button" class="st-validate-btn" onclick="validateThreshold(this)" disabled>검증</button>' +
+                '<span class="st-validate-msg"></span>';
             wrap.appendChild(row);
         });
     }
@@ -353,10 +355,49 @@
         var disabled = !checkbox.checked;
         row.querySelector('.st-min').disabled = disabled;
         row.querySelector('.st-max').disabled = disabled;
+        row.querySelector('.st-validate-btn').disabled = disabled;
         if (disabled) {
             row.querySelector('.st-min').value = '';
             row.querySelector('.st-max').value = '';
         }
+        clearThresholdValidation(checkbox);
+    }
+
+    function clearThresholdValidation(el) {
+        var row = el.closest('.sensor-type-check-row');
+        var msg = row.querySelector('.st-validate-msg');
+        msg.textContent = '';
+        msg.className = 'st-validate-msg';
+        row.dataset.validated = '';
+    }
+
+    function validateThreshold(button) {
+        var row = button.closest('.sensor-type-check-row');
+        var msg = row.querySelector('.st-validate-msg');
+        var min = row.querySelector('.st-min').value;
+        var max = row.querySelector('.st-max').value;
+
+        function showResult(valid, text) {
+            msg.textContent = text;
+            msg.className = 'st-validate-msg ' + (valid ? 'valid' : 'invalid');
+            row.dataset.validated = valid ? 'true' : '';
+        }
+
+        if (min === '' || max === '') {
+            showResult(false, '최소값과 최대값을 모두 입력해주세요.');
+            return;
+        }
+        var minNum = Number(min);
+        var maxNum = Number(max);
+        if (isNaN(minNum) || isNaN(maxNum)) {
+            showResult(false, '숫자만 입력할 수 있어요.');
+            return;
+        }
+        if (minNum >= maxNum) {
+            showResult(false, '최소값은 최대값보다 작아야 해요.');
+            return;
+        }
+        showResult(true, '확인했어요. 이 범위로 등록돼요.');
     }
 
     function openSensorModal() {
@@ -383,12 +424,14 @@
         }
 
         var sensorSettings = [];
+        var invalidRange = false;
         document.querySelectorAll('#ms-type-list .sensor-type-check-row').forEach(function (row) {
             var checkbox = row.querySelector('input[type="checkbox"]');
             if (!checkbox.checked) return;
             var min = row.querySelector('.st-min').value;
             var max = row.querySelector('.st-max').value;
             if (min === '' || max === '') return;
+            if (Number(min) >= Number(max)) { invalidRange = true; return; }
             sensorSettings.push({
                 sensorTypeId: Number(checkbox.dataset.sensorTypeId),
                 thresholdMin: Number(min),
@@ -396,6 +439,10 @@
             });
         });
 
+        if (invalidRange) {
+            alert('최소값은 최대값보다 작아야 해요. 검증 버튼으로 다시 확인해주세요.');
+            return;
+        }
         if (sensorSettings.length === 0) {
             alert('측정 타입을 하나 이상 선택하고 임계값을 입력해주세요.');
             return;
