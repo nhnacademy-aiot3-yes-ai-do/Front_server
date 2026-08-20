@@ -26,6 +26,7 @@ body {
 /* ===== 내 정보 / 회원정보 수정 카드 ===== */
 .profile-panels {
     display: grid;
+    align-items: center;
     width: 100%;
     max-width: 38rem;
 }
