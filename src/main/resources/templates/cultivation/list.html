@@ -377,10 +377,23 @@
         var min = row.querySelector('.st-min').value;
         var max = row.querySelector('.st-max').value;
 
+        var checkbox = row.querySelector('input[type="checkbox"]');
+        var sensorTypeId = Number(checkbox.dataset.sensorTypeId);
+        var labelText = (checkbox.nextElementSibling ? checkbox.nextElementSibling.textContent : '');
+        var match = labelText.match(/^(.*?)\s*\((.*?)\)$/);
+        var sensorTypeName = match ? match[1].trim() : labelText;
+        var sensorUnit = match ? match[2].trim() : '';
+        var cultivationId = document.getElementById('ms-cultivation').dataset.value;
+
         function showResult(valid, text) {
             msg.textContent = text;
             msg.className = 'st-validate-msg ' + (valid ? 'valid' : 'invalid');
             row.dataset.validated = valid ? 'true' : '';
+        }
+
+        if (!cultivationId) {
+            showResult(false, '재배지를 먼저 선택해주세요.');
+            return;
         }
 
         if (min === '' || max === '') {
@@ -397,7 +410,32 @@
             showResult(false, '최소값은 최대값보다 작아야 해요.');
             return;
         }
-        showResult(true, '확인했어요. 이 범위로 등록돼요.');
+        showResult(false, 'AI 검증 중...');
+
+        fetch('/cultivations/sensor-validation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                cultivationId: Number(cultivationId),
+                sensorTypeId: sensorTypeId,
+                sensorTypeName: sensorTypeName,
+                sensorUnit: sensorUnit,
+                userMin: minNum,
+                userMax: maxNum
+            })
+        })
+            .then(function (res) { return res.json(); })
+            .then(function (result) {
+                // AI가 돌려준 진짜 isValid(true/false)와 피드백 문구 출력!
+                if (result.data) {
+                    showResult(result.data.isValid, result.data.message);
+                } else {
+                    showResult(false, '검증에 실패했습니다.');
+                }
+            })
+            .catch(function () {
+                showResult(false, '서버 통신 오류가 발생했습니다.');
+            });
     }
 
     function openSensorModal() {
@@ -425,9 +463,14 @@
 
         var sensorSettings = [];
         var invalidRange = false;
+        var unvalidated = false;
         document.querySelectorAll('#ms-type-list .sensor-type-check-row').forEach(function (row) {
             var checkbox = row.querySelector('input[type="checkbox"]');
             if (!checkbox.checked) return;
+            if (row.dataset.validated !== 'true') {
+                unvalidated = true;
+                return;
+            }
             var min = row.querySelector('.st-min').value;
             var max = row.querySelector('.st-max').value;
             if (min === '' || max === '') return;
@@ -438,6 +481,10 @@
                 thresholdMax: Number(max)
             });
         });
+        if (unvalidated) {
+            alert('선택하신 모든 센서의 임계값 검증을 먼저 완료(통과)해주세요.');
+            return;
+        }
 
         if (invalidRange) {
             alert('최소값은 최대값보다 작아야 해요. 검증 버튼으로 다시 확인해주세요.');
