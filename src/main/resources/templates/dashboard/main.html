@@ -234,7 +234,7 @@
                 <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
                     <i data-lucide="bell"></i>
                 </button>
-                <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openModal('modal-end')">
+                <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openEndAmountModal()">
                     <i data-lucide="power"></i>
                 </button>
                 <button class="icon-btn danger" type="button" title="삭제하기" th:if="${myRole == 'OWNER'}" onclick="openModal('modal-delete')">
