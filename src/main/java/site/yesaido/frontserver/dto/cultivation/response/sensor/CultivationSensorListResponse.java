@@ -6,4 +6,8 @@ public record CultivationSensorListResponse(
         List<CultivationSensorResponse> sensors,
         List<EnvironmentSettingResponse> environmentSettings
 ) {
+    public CultivationSensorListResponse {
+        sensors = sensors == null ? List.of() : List.copyOf(sensors);
+        environmentSettings = environmentSettings == null ? List.of() : List.copyOf(environmentSettings);
+    }
 }

@@ -6,26 +6,22 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.common.ApiResponse;
+import site.yesaido.frontserver.dto.ai.MushGuideResponse;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddFormRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberRoleUpdateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
-import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationDetailResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryPageResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.*;
+import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
-import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
@@ -39,11 +35,15 @@ public class CultivationController {
 
     private final CultivationClient cultivationClient;
     private final UserClient userClient;
+    private final AiClient aiClient;
     private final ViewJsonWriter viewJsonWriter;
 
     @GetMapping
     public String list(Model model) {
-        List<CultivationSummaryResponse> cultivations = cultivationClient.getCultivations().getBody();
+        CultivationSummaryListResponse cultivationSummaryListResponse = cultivationClient.getCultivations().getBody();
+        List<CultivationSummaryResponse> cultivations = cultivationSummaryListResponse == null
+                ? List.of()
+                : cultivationSummaryListResponse.cultivationSummaryResponses();
 
         // list.html에서 이 목록을 th:inline="javascript"로 그대로 직렬화하는데,
         // Thymeleaf가 내부적으로 쓰는 Jackson ObjectMapper엔 JSR-310(LocalDateTime) 모듈이 없어서
@@ -55,6 +55,11 @@ public class CultivationController {
     @GetMapping("/new")
     public String createForm() {
         return "cultivation/create";
+    }
+
+    @GetMapping("/mushrooms/{mushroom-id}/guide")
+    public ResponseEntity<ApiResponse<MushGuideResponse>> getMushroomGuide(@PathVariable("mushroom-id") Long mushroomId) {
+        return ResponseEntity.ok(aiClient.getMushroomGuide(mushroomId));
     }
 
     @GetMapping("/history")
@@ -80,11 +85,20 @@ public class CultivationController {
     }
 
     @GetMapping("/{cultivation-id}")
-    public String detail(@PathVariable("cultivation-id") Long cultivationId,
-                         Model model) {
+    public String detail(@PathVariable("cultivation-id") Long cultivationId, Model model) {
+
+        // cultivationClient 3번 요청을 하는데, 하나의 meta data로 dto로 묶어서 받을 수 있게 나중에 리팩토링
         CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
-        List<MemberResponse> members = cultivationClient.getMembers(cultivationId).getBody();
-        List<PhotoResponse> photos = cultivationClient.getPhoto(cultivationId).getBody();
+
+        MemberListResponse memberListResponse = cultivationClient.getMembers(cultivationId).getBody();
+        PhotoListResponse photoListResponse = cultivationClient.getPhoto(cultivationId).getBody();
+
+        List<MemberResponse> members = memberListResponse == null
+                ? List.of()
+                : memberListResponse.memberResponses();
+        List<PhotoResponse> photos = photoListResponse == null
+                ? List.of()
+                : photoListResponse.photoUploadResponses();
 
         // dashboard/main.html도 members/photos를 th:inline="javascript"로 통째로 직렬화함.
         // MemberResponse.joinedAt / PhotoResponse.updatedAt이 LocalDateTime이라 위와 같은 이유로 문자열 변환 필요.
@@ -109,7 +123,7 @@ public class CultivationController {
 
     // CultivationMember
     @GetMapping("/{cultivation-id}/members")
-    public ResponseEntity<List<MemberResponse>> getMembers(@PathVariable("cultivation-id") Long cultivationId) {
+    public ResponseEntity<MemberListResponse> getMembers(@PathVariable("cultivation-id") Long cultivationId) {
         return cultivationClient.getMembers(cultivationId);
     }
 
@@ -164,7 +178,7 @@ public class CultivationController {
     }
 
     @GetMapping("{cultivation-id}/photos")
-    public ResponseEntity<List<PhotoResponse>> getPhoto(@PathVariable("cultivation-id") Long cultivationId) {
+    public ResponseEntity<PhotoListResponse> getPhoto(@PathVariable("cultivation-id") Long cultivationId) {
         return cultivationClient.getPhoto(cultivationId);
     }
 
@@ -172,37 +186,5 @@ public class CultivationController {
     public ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                             @PathVariable("photo-id") Long photoId) {
         return cultivationClient.deletePhoto(cultivationId, photoId);
-    }
-
-    @GetMapping("/mushroom-references")
-    public ResponseEntity<MushroomReferenceInfoListResponse> getMushroomReferences() {
-        return cultivationClient.getAllMushroomReferences();
-    }
-
-    @GetMapping("/sensor-types")
-    public ResponseEntity<SensorTypeInfoListResponse> getSensorTypes() {
-        return cultivationClient.getSensorTypes();
-    }
-
-    @GetMapping("/{cultivation-id}/sensors")
-    public ResponseEntity<CultivationSensorListResponse> getSensors(@PathVariable("cultivation-id") Long cultivationId) {
-        return cultivationClient.getSensors(cultivationId);
-    }
-
-    @PostMapping("/{cultivation-id}/sensors")
-    public ResponseEntity<Void> registerSensor(@PathVariable("cultivation-id") Long cultivationId,
-                                               @RequestBody CreateCultivationSensorRequest request) {
-        return cultivationClient.registerSensor(cultivationId, request);
-    }
-
-    @DeleteMapping("/{cultivation-id}/sensors/{sensor-id}")
-    public ResponseEntity<Void> deleteSensor(@PathVariable("cultivation-id") Long cultivationId,
-                                             @PathVariable("sensor-id") Long sensorId) {
-        return cultivationClient.deleteSensor(cultivationId, sensorId);
-    }
-
-    @GetMapping("/{cultivation-id}/sensor-values")
-    public ResponseEntity<List<LatestSensorValueResponse>> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId) {
-        return cultivationClient.getLatestSensorValues(cultivationId);
     }
 }

@@ -166,7 +166,8 @@
     }
 
     async function loadMyCultivations() {
-        MY_CULTIVATIONS = (await fetchJson('/support/inquiries/my-cultivations')) || [];
+        var response = await fetchJson('/support/inquiries/my-cultivations');
+        MY_CULTIVATIONS = (response && response.cultivationSummaryResponses) || [];
     }
 
     // ===== 목록 =====
@@ -274,10 +275,15 @@
         }
 
         try {
-            var detail = await fetchJson('/support/inquiries', {
-                method: 'POST',
-                body: JSON.stringify({ categoryId: categoryId, title: title, content: content, cultivationId: cultivationId })
-            });
+            var formData = new FormData();
+            formData.append('request', new Blob([JSON.stringify({ categoryId: categoryId, title: title, content: content, cultivationId: cultivationId })], { type: 'application/json' }));
+
+            var detail = await fetch('/support/inquiries', { method: 'POST', body: formData })
+                .then(function (res) { return res.json(); })
+                .then(function (body) {
+                    if (!body || body.success === false) throw new Error((body && body.message) || '요청 처리 중 오류가 발생했어요.');
+                    return body.data;
+                });
             await loadList(0);
             openDetail(detail.id);
         } catch (e) {

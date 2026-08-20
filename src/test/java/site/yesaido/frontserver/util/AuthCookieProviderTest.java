@@ -14,17 +14,19 @@ class AuthCookieProviderTest {
     private final AuthCookieProvider authCookieProvider = new AuthCookieProvider();
 
     @Test
-    @DisplayName("setAuthCookies - refreshToken과 role이 모두 존재하는 정상 케이스")
-    void setAuthCookiesFull() {
+    @DisplayName("setAuthCookies - 만료 시각을 포함한 인증 쿠키를 생성한다")
+    void setAuthCookiesWithExpiration() {
         MockHttpServletResponse response = new MockHttpServletResponse();
-        authCookieProvider.setAuthCookies(response, "accessVal", "refreshVal", "USER");
+        authCookieProvider.setAuthCookies(response, "accessVal", "refreshVal", "USER", 1_755_671_400_000L);
 
         List<String> cookies = response.getHeaders("Set-Cookie");
-        assertEquals(3, cookies.size());
+        assertEquals(4, cookies.size());
 
         assertTrue(cookies.stream().anyMatch(c -> c.contains("accessToken=accessVal") && c.contains("HttpOnly") && c.contains("SameSite=Lax")));
         assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=refreshVal")));
         assertTrue(cookies.stream().anyMatch(c -> c.contains("role=USER")));
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("accessTokenExpiresAt=1755671400000")
+                && !c.contains("HttpOnly")));
     }
 
     @Test
@@ -45,7 +47,7 @@ class AuthCookieProviderTest {
         authCookieProvider.clearAuthCookies(response);
 
         List<String> cookies = response.getHeaders("Set-Cookie");
-        assertEquals(3, cookies.size());
+        assertEquals(4, cookies.size());
         assertTrue(cookies.stream().allMatch(c -> c.contains("Max-Age=0")));
     }
 }

@@ -227,6 +227,14 @@ body {
 .btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); }
 .btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
 
+.list-footer .btn {
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+    border-radius: 10px;
+}
+
+.list-footer .btn svg { width: 0.9rem; height: 0.9rem; }
+
 /* ===== modal (다른 페이지와 동일 패턴) ===== */
 .modal-overlay {
     display: none;
@@ -342,7 +350,7 @@ body {
 
 #ms-type-list .sensor-type-check-row {
     display: grid;
-    grid-template-columns: 18px 1fr auto auto;
+    grid-template-columns: 18px 1fr auto auto auto;
     align-items: center;
     gap: 10px;
     padding: 10px 12px;
@@ -356,6 +364,7 @@ body {
     height: 18px;
     margin: 0;
     accent-color: var(--sage-500);
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
 #ms-type-list .sensor-type-check-row span {
@@ -377,3 +386,42 @@ body {
 .sensor-type-check-row .st-max:disabled {
     background: rgba(139, 94, 60, 0.06);
 }
+
+.sensor-type-check-row .st-validate-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--sage-600);
+    background: rgba(124, 148, 115, 0.14);
+    border: 2px solid var(--sage-500);
+    border-radius: 8px;
+    white-space: nowrap;
+    cursor: url("/images/cursor-default.png") 3 2, pointer;
+}
+
+.sensor-type-check-row .st-validate-btn:hover:not(:disabled) {
+    background: rgba(124, 148, 115, 0.26);
+}
+
+.sensor-type-check-row .st-validate-btn:disabled {
+    color: var(--brown-300);
+    background: rgba(139, 94, 60, 0.06);
+    border-color: rgba(139, 94, 60, 0.18);
+    cursor: url("/images/cursor-default.png") 3 2, not-allowed;
+}
+
+.sensor-type-check-row .st-validate-msg {
+    grid-column: 1 / -1;
+    display: none;
+    font-size: 12px;
+}
+
+.sensor-type-check-row .st-validate-msg.valid,
+.sensor-type-check-row .st-validate-msg.invalid {
+    display: block;
+    margin-top: 2px;
+}
+
+.sensor-type-check-row .st-validate-msg.valid { color: var(--sage-600); }
+.sensor-type-check-row .st-validate-msg.invalid { color: var(--danger); }

@@ -89,6 +89,10 @@ body {
     opacity: 1;
 }
 
+.settings-save-status.error {
+    color: var(--danger);
+}
+
 .settings-desc {
     flex-shrink: 0;
     font-size: 0.9rem;

@@ -89,7 +89,7 @@ public class SecurityConfig {
 
                 TokenResponse data = tokenResponse.data();
 
-                authCookieProvider.setAuthCookies(response, data.accessToken(), data.refreshToken(), data.role());
+                authCookieProvider.setAuthCookies(response, data.accessToken(), data.refreshToken(), data.role(), data.accessTokenExpiresAt());
 
                 response.sendRedirect("/");
             } catch (Exception e) {

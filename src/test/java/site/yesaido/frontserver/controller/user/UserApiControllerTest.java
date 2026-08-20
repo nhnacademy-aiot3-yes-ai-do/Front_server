@@ -149,13 +149,14 @@ class UserApiControllerTest {
                 .accessToken("newAccess")
                 .refreshToken("newRefresh")
                 .role("USER")
+                .accessTokenExpiresAt(1_755_671_400_000L)
                 .build();
         given(userClient.reissue(any())).willReturn(new ApiResponse<>(true, "재발급 성공", tokenResponse));
 
         mockMvc.perform(post("/users/reissue").cookie(new Cookie("refreshToken", "validRefresh")))
                 .andExpect(status().isOk());
 
-        verify(authCookieProvider).setAuthCookies(any(), eq("newAccess"), eq("newRefresh"), eq("USER"));
+        verify(authCookieProvider).setAuthCookies(any(), eq("newAccess"), eq("newRefresh"), eq("USER"), eq(1_755_671_400_000L));
     }
 
     @Test
@@ -168,7 +169,7 @@ class UserApiControllerTest {
     @DisplayName("프로필 마이페이지 조회")
     void getMyPageSuccess() throws Exception {
         UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "이름", "닉네임", "USER", LocalDateTime.now(), LocalDateTime.now());
-        given(userClient.getMyPage(null)).willReturn(new ApiResponse<>(true, "조회 성공", profileResponse));
+        given(userClient.getMyPage()).willReturn(new ApiResponse<>(true, "조회 성공", profileResponse));
 
         mockMvc.perform(get("/users/mypage"))
                 .andExpect(status().isOk());
@@ -178,7 +179,7 @@ class UserApiControllerTest {
     @DisplayName("프로필 수정")
     void updateMyPageSuccess() throws Exception {
         ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임", "oldPass", "newPass");
-        given(userClient.updateMyPage(eq(null), any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
+        given(userClient.updateMyPage(any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
 
         mockMvc.perform(post("/users/mypage")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -190,7 +191,7 @@ class UserApiControllerTest {
     @DisplayName("비밀번호 검증")
     void verifyPasswordSuccess() throws Exception {
         PasswordVerifyRequest request = new PasswordVerifyRequest("password123");
-        given(userClient.verifyPassword(eq(null), any())).willReturn(new ApiResponse<>(true, "검증 성공", true));
+        given(userClient.verifyPassword(any())).willReturn(new ApiResponse<>(true, "검증 성공", true));
 
         mockMvc.perform(post("/users/verify-password")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -211,7 +212,12 @@ class UserApiControllerTest {
     @DisplayName("Google OAuth2 로그인")
     void loginWithGoogleSuccess() throws Exception {
         GoogleLoginRequest request = new GoogleLoginRequest("googleIdToken", "google@gmail.com", "구글유저");
-        TokenResponse tokenResponse = TokenResponse.builder().accessToken("access").refreshToken("refresh").role("USER").build();
+        TokenResponse tokenResponse = TokenResponse.builder()
+                .accessToken("access")
+                .refreshToken("refresh")
+                .role("USER")
+                .accessTokenExpiresAt(1_755_671_400_000L)
+                .build();
         given(userClient.loginWithGoogle(any())).willReturn(new ApiResponse<>(true, "구글로그인 성공", tokenResponse));
 
         mockMvc.perform(post("/users/oauth2/google")
@@ -219,6 +225,6 @@ class UserApiControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
 
-        verify(authCookieProvider).setAuthCookies(any(), eq("access"), eq("refresh"), eq("USER"));
+        verify(authCookieProvider).setAuthCookies(any(), eq("access"), eq("refresh"), eq("USER"), eq(1_755_671_400_000L));
     }
 }

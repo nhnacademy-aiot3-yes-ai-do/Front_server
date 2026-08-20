@@ -48,7 +48,7 @@ public class UserController {
             if (tokenResponse == null) {
                 throw new IllegalStateException("Token response is null");
             }
-            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role());
+            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
             redirectAttributes.addFlashAttribute("justLoggedIn", true);
             return "ADMIN".equals(tokenResponse.role()) ? REDIRECT_PREFIX + "/admin" : REDIRECT_PREFIX + "/";
         } catch (DormantUserException e) {
@@ -77,7 +77,7 @@ public class UserController {
             if (!"ADMIN".equals(tokenResponse.role())) {
                 throw new IllegalStateException("관리자 계정이 아닙니다");
             }
-            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role());
+            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
             response.sendRedirect("/admin");
         } catch (Exception e) {
             log.warn("관리자 로그인 실패: {}", e.getMessage());
@@ -87,15 +87,13 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public String logout(HttpServletResponse response,
-                         @RequestHeader(value = "X-User-Id", required = false) Long userId) {
-        if (userId != null) {
-            try {
-                userClient.logout(userId);
-            } catch (Exception e) {
-                log.warn("백엔드 레디스 로그아웃 처리 중 예외 발생: ", e);
-            }
+    public String logout(HttpServletResponse response) {
+        try {
+            userClient.logout();
+        } catch (Exception e) {
+            log.warn("백엔드 레디스 토큰 삭제 중 예외 발생 : {}", e.getMessage());
         }
+
         authCookieProvider.clearAuthCookies(response);
         return REDIRECT_PREFIX + LOGIN_URL;
     }

@@ -23,7 +23,11 @@
 
         <div class="admin-hero-panel">
             <div class="admin-hero-title">오늘 확인할 항목이 있어요</div>
-            <p class="admin-hero-desc">미답변 문의 5건을 확인해 보세요.<br />회원·문의·버섯 정보는 왼쪽 메뉴에서 바로 이동할 수 있어요.</p>
+            <p class="admin-hero-desc">
+                <span th:if="${pendingInquiryCount > 0}">미답변 문의 <span th:text="${pendingInquiryCount}">0</span>건을 확인해 보세요.</span>
+                <span th:unless="${pendingInquiryCount > 0}">미답변 문의가 없어요.</span>
+                <br />회원·문의·버섯 정보는 왼쪽 메뉴에서 바로 이동할 수 있어요.
+            </p>
             <div class="admin-hero-actions">
                 <button class="btn btn-primary btn-sm" type="button" onclick="location.href='/admin/inquiries'">
                     <i data-lucide="message-square" style="width:14px;height:14px;"></i>미답변 문의 보기
@@ -35,6 +39,7 @@
             <div class="admin-stat-card">
                 <span class="admin-stat-icon-wrap"><i data-lucide="users"></i></span>
                 <div>
+                    <!-- TODO: User_server에 관리자용 회원 수/목록 조회 API가 아직 없어서 데모 값 유지 -->
                     <div class="admin-stat-value">12</div>
                     <div class="admin-stat-label">전체 회원</div>
                 </div>
@@ -42,14 +47,14 @@
             <div class="admin-stat-card">
                 <span class="admin-stat-icon-wrap"><i data-lucide="message-square"></i></span>
                 <div>
-                    <div class="admin-stat-value">5</div>
+                    <div class="admin-stat-value" th:text="${pendingInquiryCount}">5</div>
                     <div class="admin-stat-label">미답변 문의</div>
                 </div>
             </div>
             <div class="admin-stat-card">
                 <span class="admin-stat-icon-wrap"><i data-lucide="package"></i></span>
                 <div>
-                    <div class="admin-stat-value">5</div>
+                    <div class="admin-stat-value" th:text="${mushroomCount}">5</div>
                     <div class="admin-stat-label">등록된 버섯 종류</div>
                 </div>
             </div>
@@ -62,38 +67,17 @@
                     <a href="/admin/inquiries" class="admin-activity-more">전체보기<i data-lucide="chevron-right"></i></a>
                 </div>
                 <div class="admin-activity-list">
-                    <a class="admin-activity-item" href="/admin/inquiries">
+                    <a class="admin-activity-item" href="/admin/inquiries"
+                       th:each="inquiry : ${pendingInquiries}">
                         <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
                         <div class="admin-activity-item-body">
-                            <div class="admin-activity-item-title">중간 재배 기록이 사라졌어요</div>
-                            <div class="admin-activity-item-meta">nickname2 · 2026.07.28</div>
+                            <div class="admin-activity-item-title" th:text="${inquiry.title}">문의 제목</div>
+                            <div class="admin-activity-item-meta"
+                                 th:text="${inquiry.userNickname} + ' · ' + ${#temporals.format(inquiry.createdAt, 'yyyy.MM.dd')}">nickname · 2026.07.28</div>
                         </div>
                         <span class="status-badge pending">답변대기</span>
                     </a>
-                    <a class="admin-activity-item" href="/admin/inquiries">
-                        <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
-                        <div class="admin-activity-item-body">
-                            <div class="admin-activity-item-title">재배 이력 페이지에서 사진이 안 보여요</div>
-                            <div class="admin-activity-item-meta">nickname · 2026.07.24</div>
-                        </div>
-                        <span class="status-badge pending">답변대기</span>
-                    </a>
-                    <a class="admin-activity-item" href="/admin/inquiries">
-                        <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
-                        <div class="admin-activity-item-body">
-                            <div class="admin-activity-item-title">수확량 입력이 저장되지 않아요</div>
-                            <div class="admin-activity-item-meta">nickname4 · 2026.07.18</div>
-                        </div>
-                        <span class="status-badge pending">답변대기</span>
-                    </a>
-                    <a class="admin-activity-item" href="/admin/inquiries">
-                        <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
-                        <div class="admin-activity-item-body">
-                            <div class="admin-activity-item-title">탈퇴 후 재가입이 안 돼요</div>
-                            <div class="admin-activity-item-meta">nickname6 · 2026.07.09</div>
-                        </div>
-                        <span class="status-badge pending">답변대기</span>
-                    </a>
+                    <div class="admin-activity-empty" th:if="${#lists.isEmpty(pendingInquiries)}">미답변 문의가 없어요.</div>
                 </div>
             </div>
 
