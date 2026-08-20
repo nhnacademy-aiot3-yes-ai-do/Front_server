@@ -5,8 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.InquiryClient;
+import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.inquiry.InquiryStatus;
@@ -25,7 +25,7 @@ public class AdminViewController {
     private static final int DASHBOARD_INQUIRY_PREVIEW_SIZE = 4;
 
     private final InquiryClient inquiryClient;
-    private final CultivationClient cultivationClient;
+    private final SensorClient sensorClient;
 
     @GetMapping("/admin")
     public String admin(Model model) {
@@ -45,7 +45,7 @@ public class AdminViewController {
 
         int mushroomCount = 0;
         try {
-            MushroomReferenceInfoListResponse mushroomReferences = cultivationClient.getAllMushroomReferences().getBody();
+            MushroomReferenceInfoListResponse mushroomReferences = sensorClient.getAllMushroomReferences().getBody();
             if (mushroomReferences != null && mushroomReferences.mushroomReferenceInfoResponses() != null) {
                 mushroomCount = mushroomReferences.mushroomReferenceInfoResponses().size();
             }
