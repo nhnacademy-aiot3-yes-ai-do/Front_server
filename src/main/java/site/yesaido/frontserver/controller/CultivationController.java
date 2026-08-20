@@ -57,6 +57,11 @@ public class CultivationController {
         return "cultivation/create";
     }
 
+    @GetMapping("/mushrooms/{mushroom-id}/guide")
+    public ResponseEntity<ApiResponse<MushGuideResponse>> getMushroomGuide(@PathVariable("mushroom-id") Long mushroomId) {
+        return ResponseEntity.ok(aiClient.getMushroomGuide(mushroomId));
+    }
+
     @GetMapping("/history")
     public String cultivationHistory(@RequestParam(defaultValue = "0") int page,
                                      @RequestParam(defaultValue = "20") int size,
