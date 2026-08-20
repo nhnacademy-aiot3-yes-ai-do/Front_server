@@ -227,6 +227,14 @@ body {
 .btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); }
 .btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
 
+.list-footer .btn {
+    padding: 0.55rem 1.1rem;
+    font-size: 0.85rem;
+    border-radius: 10px;
+}
+
+.list-footer .btn svg { width: 0.9rem; height: 0.9rem; }
+
 /* ===== modal (다른 페이지와 동일 패턴) ===== */
 .modal-overlay {
     display: none;

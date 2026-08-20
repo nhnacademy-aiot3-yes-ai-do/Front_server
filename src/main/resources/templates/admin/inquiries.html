@@ -436,7 +436,9 @@
         });
         chat.scrollTop = chat.scrollHeight;
 
-        document.querySelector('.iq-composer').style.display = inquiry.status === 'RESOLVED' ? 'none' : 'flex';
+        var composer = document.querySelector('.iq-composer');
+        composer.style.display = inquiry.status === 'RESOLVED' ? 'none' : 'flex';
+
         document.getElementById('iq-reply-input').value = '';
     }
 
@@ -464,10 +466,7 @@
 
         var messages = currentInquiryDetail.messages || [];
         var target = messages[messages.length - 1];
-        if (!target || target.answerContent) {
-            alert('답변할 질문이 없어요.');
-            return;
-        }
+        if (!target || target.answerContent) return;
 
         try {
             var detail = await fetchJson('/admin/inquiries/messages/' + target.id, {
