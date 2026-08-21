@@ -156,8 +156,7 @@
 </div>
 
 <script th:inline="javascript">
-    // 서버에서 내려준 실제 재배 목록 (CultivationSummaryResponse 리스트)
-    var cultivationData = [(${cultivationsJson})];
+    var cultivationListPageData = [(${cultivationListPageJson})];
 </script>
 <script src="/js/cultivation-list.js"></script>
 <script src="/js/msh-select.js"></script>

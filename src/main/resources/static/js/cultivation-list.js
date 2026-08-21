@@ -2,6 +2,10 @@ lucide.createIcons();
 
 var PAGE_SIZE = 6;
 
+var cultivationItemsData = (cultivationListPageData && cultivationListPageData.cultivations) || [];
+var cultivationData = cultivationItemsData.map(function (item) { return item.cultivation; });
+var sensorTypesData = (cultivationListPageData && cultivationListPageData.sensorTypes) || [];
+
 var SENSOR_LIST = [];
 var SENSOR_TYPES = [];
 
@@ -116,64 +120,30 @@ function switchTab(name) {
     document.getElementById('tab-' + name).classList.add('active');
 }
 
-function loadSensorTypes() {
-    return fetch('/cultivations/sensor-types')
-        .then(function (res) {
-            if (!res.ok) {
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/login';
-                    return Promise.reject(new Error('unauthorized'));
-                }
-                return { sensorTypeInfoResponses: [] };
-            }
-            return res.json();
-        })
-        .then(function (data) {
-            SENSOR_TYPES = data.sensorTypeInfoResponses || [];
-        })
-        .catch(function () { SENSOR_TYPES = []; });
-}
-
-// 센서는 재배지 단위 API라, 내가 가진 재배지마다 조회해서 합침
-function loadAllSensors() {
-    if (cultivationData.length === 0) {
-        SENSOR_LIST = [];
-        listState.sensor.data = SENSOR_LIST;
-        renderList('sensor');
-        return Promise.resolve();
-    }
-    var requests = cultivationData.map(function (c) {
-        return fetch('/cultivations/' + c.cultivationId + '/sensors')
-            .then(function (res) {
-                if (res.status === 401 || res.status === 403) {
-                    window.location.href = '/login';
-                    return { sensors: [] };
-                }
-                return res.ok ? res.json() : { sensors: [] };
-            })
-            .then(function (data) {
-                return (data.sensors || []).map(function (s) {
-                    return {
-                        cultivationId: c.cultivationId,
-                        cultivationName: c.name,
-                        sensorId: s.sensorId,
-                        deviceEui: s.deviceEui,
-                        deviceModel: s.deviceModel,
-                        deviceName: s.deviceName,
-                        location: s.location,
-                        locationDetail: s.locationDetail,
-                        sensorStatus: s.sensorStatus,
-                        sensorTypes: s.sensorTypes || []
-                    };
-                });
-            })
-            .catch(function () { return []; });
+// 목록 화면의 초기 데이터는 SSR bootstrap payload로만 초기화합니다.
+// 페이지 진입 중 브라우저가 재배지 수만큼 센서를 다시 요청하지 않습니다.
+function initializeSensorBootstrap() {
+    SENSOR_TYPES = Array.isArray(sensorTypesData) ? sensorTypesData : [];
+    SENSOR_LIST = cultivationItemsData.flatMap(function (item) {
+        var cultivation = item.cultivation || {};
+        var response = item.sensors || {};
+        return (response.sensors || []).map(function (sensor) {
+            return {
+                cultivationId: cultivation.cultivationId,
+                cultivationName: cultivation.name,
+                sensorId: sensor.sensorId,
+                deviceEui: sensor.deviceEui,
+                deviceModel: sensor.deviceModel,
+                deviceName: sensor.deviceName,
+                location: sensor.location,
+                locationDetail: sensor.locationDetail,
+                sensorStatus: sensor.sensorStatus,
+                sensorTypes: sensor.sensorTypes || []
+            };
+        });
     });
-    return Promise.all(requests).then(function (lists) {
-        SENSOR_LIST = lists.reduce(function (acc, l) { return acc.concat(l); }, []);
-        listState.sensor.data = SENSOR_LIST;
-        renderList('sensor');
-    });
+    listState.sensor.data = SENSOR_LIST;
+    renderList('sensor');
 }
 
 function deleteSensor(cultivationId, sensorId) {
@@ -181,9 +151,8 @@ function deleteSensor(cultivationId, sensorId) {
     fetch('/cultivations/' + cultivationId + '/sensors/' + sensorId, { method: 'DELETE' })
         .then(function (res) {
             if (!res.ok) throw new Error('delete failed');
-            return loadAllSensors();
+            window.location.reload();
         })
-        .then(function () { lucide.createIcons(); })
         .catch(function () { alert('센서 삭제에 실패했습니다.'); });
 }
 
@@ -375,15 +344,11 @@ function registerSensor() {
     })
         .then(function (res) {
             if (!res.ok) throw new Error('register failed');
-            return loadAllSensors();
-        })
-        .then(function () {
-            closeModal('modal-sensor');
+            window.location.reload();
         })
         .catch(function () { alert('센서 등록에 실패했습니다.'); });
 }
 
 renderList('cultivation');
-Promise.all([loadSensorTypes(), loadAllSensors()]).then(function () {
-    lucide.createIcons();
-});
+initializeSensorBootstrap();
+lucide.createIcons();
