@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
+import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.ai.MushGuideResponse;
@@ -22,12 +23,17 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.Membe
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
+import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @LoginRequired
 @Controller
@@ -36,6 +42,7 @@ import java.util.List;
 public class CultivationController {
 
     private final CultivationClient cultivationClient;
+    private final SensorClient sensorClient;
     private final UserClient userClient;
     private final AiClient aiClient;
     private final ViewJsonWriter viewJsonWriter;
@@ -46,16 +53,32 @@ public class CultivationController {
         List<CultivationSummaryResponse> cultivations = cultivationSummaryListResponse == null
                 ? List.of()
                 : cultivationSummaryListResponse.cultivationSummaryResponses();
+        SensorTypeInfoListResponse sensorTypes = sensorClient.getSensorTypes().getBody();
+        List<CultivationListItemView> cultivationItems = cultivations.stream()
+                .map(cultivation -> {
+                    CultivationSensorListResponse response = sensorClient.getSensors(cultivation.cultivationId()).getBody();
+                    CultivationSensorListResponse sensors = response == null
+                            ? new CultivationSensorListResponse(List.of(), List.of())
+                            : response;
+                    return new CultivationListItemView(cultivation, sensors);
+                })
+                .toList();
 
-        // list.html에서 이 목록을 th:inline="javascript"로 그대로 직렬화하는데,
-        // Thymeleaf가 내부적으로 쓰는 Jackson ObjectMapper엔 JSR-310(LocalDateTime) 모듈이 없어서
-        // createdAt(LocalDateTime) 필드가 있으면 직렬화 중 예외가 남. JS로 넘기기 전에 문자열로 미리 변환.
-        model.addAttribute("cultivationsJson", viewJsonWriter.toJson(cultivations == null ? List.of() : cultivations));
+        CultivationListPageView pageView = new CultivationListPageView(
+                cultivationItems,
+                sensorTypes == null ? List.of() : sensorTypes.sensorTypeInfoResponses()
+        );
+
+        model.addAttribute("cultivationListPageJson", viewJsonWriter.toScriptJson(pageView));
         return "cultivation/list";
     }
 
     @GetMapping("/new")
-    public String createForm() {
+    public String createForm(Model model) {
+        MushroomReferenceInfoListResponse mushrooms = sensorClient.getAllMushroomReferences().getBody();
+        model.addAttribute("mushroomsJson", viewJsonWriter.toScriptJson(
+                mushrooms == null ? List.of() : mushrooms.mushroomReferenceInfoResponses()
+        ));
         return "cultivation/create";
     }
 

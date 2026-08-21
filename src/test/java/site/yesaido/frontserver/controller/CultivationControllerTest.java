@@ -16,6 +16,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
+import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddFormRequest;
@@ -27,6 +28,8 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.Membe
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
+import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 import tools.jackson.databind.ObjectMapper;
@@ -34,6 +37,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -65,6 +69,9 @@ class CultivationControllerTest {
     private CultivationClient cultivationClient;
 
     @MockitoBean
+    private SensorClient sensorClient;
+
+    @MockitoBean
     private UserClient userClient;
 
     @MockitoBean
@@ -84,32 +91,38 @@ class CultivationControllerTest {
         CultivationSummaryResponse summary = new CultivationSummaryResponse(
                 1L, "테스트 재배", 10L, "GROWTH", "GROWTH", 3, "오너닉네임", LocalDateTime.now());
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(List.of(summary))));
+        when(sensorClient.getSensorTypes()).thenReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of())));
+        when(sensorClient.getSensors(1L)).thenReturn(ResponseEntity.ok(null));
 
         String expectedJson = objectMapper.writeValueAsString(List.of(summary));
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivationsJson", expectedJson));
+                .andExpect(model().attribute("cultivationListPageJson", "{\"cultivations\":[{\"cultivation\":" + expectedJson.substring(1, expectedJson.length() - 1) + ",\"sensors\":{\"sensors\":[],\"environmentSettings\":[]}}],\"sensorTypes\":[]}"));
     }
 
     @Test
     @DisplayName("내 재배지 목록 조회 성공 - wrapper body가 없는 경우")
     void listReturnsEmptyCultivationsWhenWrapperBodyIsNull() throws Exception {
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(null));
+        when(sensorClient.getSensorTypes()).thenReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of())));
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivationsJson", "[]"));
+                .andExpect(model().attribute("cultivationListPageJson", "{\"cultivations\":[],\"sensorTypes\":[]}"));
     }
 
     @Test
     @DisplayName("재배 생성 폼 페이지 반환")
     void createCultivationPageReturnsCreateView() throws Exception {
+        when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
+
         mockMvc.perform(get("/cultivations/new").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/create"));
+                .andExpect(view().name("cultivation/create"))
+                .andExpect(model().attribute("mushroomsJson", "[]"));
     }
 
     @Test
