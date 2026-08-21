@@ -117,7 +117,7 @@ function switchTab(name) {
 }
 
 function loadSensorTypes() {
-    return fetchWithTimeout('/cultivations/sensor-types', {}, 8000)
+    return fetch('/cultivations/sensor-types')
         .then(function (res) {
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
@@ -131,10 +131,7 @@ function loadSensorTypes() {
         .then(function (data) {
             SENSOR_TYPES = data.sensorTypeInfoResponses || [];
         })
-        .catch(function (err) {
-            console.warn('sensor-types 요청 실패/타임아웃:', err && err.name, err && err.message);
-            SENSOR_TYPES = [];
-        });
+        .catch(function () { SENSOR_TYPES = []; });
 }
 
 // 센서는 재배지 단위 API라, 내가 가진 재배지마다 조회해서 합침
@@ -146,7 +143,7 @@ function loadAllSensors() {
         return Promise.resolve();
     }
     var requests = cultivationData.map(function (c) {
-        return fetchWithTimeout('/cultivations/' + c.cultivationId + '/sensors', {}, 8000)
+        return fetch('/cultivations/' + c.cultivationId + '/sensors')
             .then(function (res) {
                 if (res.status === 401 || res.status === 403) {
                     window.location.href = '/login';
@@ -170,10 +167,7 @@ function loadAllSensors() {
                     };
                 });
             })
-            .catch(function (err) {
-                console.warn('sensors(' + c.cultivationId + ') 요청 실패/타임아웃:', err && err.name, err && err.message);
-                return [];
-            });
+            .catch(function () { return []; });
     });
     return Promise.all(requests).then(function (lists) {
         SENSOR_LIST = lists.reduce(function (acc, l) { return acc.concat(l); }, []);
