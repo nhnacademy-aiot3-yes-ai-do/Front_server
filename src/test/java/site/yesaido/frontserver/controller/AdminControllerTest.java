@@ -1,18 +1,27 @@
 package site.yesaido.frontserver.controller;
 
 import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientAutoConfiguration;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import site.yesaido.frontserver.client.InquiryClient;
+import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.controller.admin.AdminViewController;
+import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
+import java.util.List;
+
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -31,8 +40,20 @@ class AdminControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @MockitoBean
+    private InquiryClient inquiryClient;
+
+    @MockitoBean
+    private SensorClient sensorClient;
+
     private static final Cookie ADMIN_COOKIE = new Cookie("role", "ADMIN");
     private static final Cookie ACCESS_COOKIE = new Cookie("accessToken", "adminToken");
+
+    @BeforeEach
+    void setUp() {
+        given(sensorClient.getAllMushroomReferences())
+                .willReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
+    }
 
     @Test
     @DisplayName("어드민 메인 화면 접근 - 로그인 및 ADMIN 쿠키 보유 시 정상")

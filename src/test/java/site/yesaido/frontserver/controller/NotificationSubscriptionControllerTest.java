@@ -28,7 +28,6 @@ import site.yesaido.frontserver.util.LoginCheckInterceptor;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -106,7 +105,7 @@ class NotificationSubscriptionControllerTest {
     @DisplayName("구독 생성")
     void createSubscription() throws Exception {
         SubscriptionCreateRequest request = new SubscriptionCreateRequest(1L, 10L, 101L);
-        given(notificationClient.createSubscription(eq(request))).willReturn(ResponseEntity.status(201).body(
+        given(notificationClient.createSubscription(request)).willReturn(ResponseEntity.status(201).body(
                 new SubscriptionResponse(20L, 1L, "환경 이상 알림", "ENVIRONMENT_THRESHOLD_BREACHED",
                         "CULTIVATION", 101L, 10L, "DISCORD", true, null, null)
         ));
@@ -124,7 +123,7 @@ class NotificationSubscriptionControllerTest {
     @Test
     @DisplayName("구독 활성 변경")
     void changeEnabled() throws Exception {
-        given(notificationClient.changeSubscriptionEnabled(eq(20L), eq(new SubscriptionEnabledRequest(false))))
+        given(notificationClient.changeSubscriptionEnabled(20L, new SubscriptionEnabledRequest(false)))
                 .willReturn(ResponseEntity.ok(new SubscriptionResponse(
                         20L, 1L, "환경 이상 알림", "ENVIRONMENT_THRESHOLD_BREACHED",
                         "CULTIVATION", 101L, 10L, "DISCORD", false, null, null)));
