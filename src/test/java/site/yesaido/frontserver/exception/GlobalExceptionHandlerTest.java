@@ -9,8 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
@@ -54,28 +54,41 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Feign 오류 상태와 응답 본문을 유지")
-    void handleFeignExceptionPreservesStatusAndBody() {
+    @DisplayName("Feign 404 발생 시 버섯 가이드 안내 메시지 반환")
+    void handleFeignExceptionReturns404Message() {
         Request request = Request.create(
-                Request.HttpMethod.GET,
-                "/api/v1/notification-endpoints",
-                Collections.emptyMap(),
-                null,
-                StandardCharsets.UTF_8,
-                null
+                Request.HttpMethod.GET, "/api/v1/mushrooms/1/guide",
+                Collections.emptyMap(), null, StandardCharsets.UTF_8, null
         );
         Response response = Response.builder()
-                .status(503)
-                .reason("Service Unavailable")
-                .request(request)
+                .status(404).reason("Not Found").request(request)
+                .headers(Collections.emptyMap())
+                .build();
+        FeignException exception = FeignException.errorStatus("AiClient#getMushroomGuide(Long)", response);
+
+        ErrorResponse result = handler.handleFeignException(exception);
+
+        assertEquals(404, result.getStatusCode().value());
+        assertEquals("해당 버섯 가이드 정보를 찾을 수 없습니다.", result.getBody().getDetail());
+    }
+
+    @Test
+    @DisplayName("Feign 404 외 오류 발생 시 503과 알림 서비스 안내 메시지 반환")
+    void handleFeignExceptionReturns503ForOtherStatuses() {
+        Request request = Request.create(
+                Request.HttpMethod.GET, "/api/v1/notification-endpoints",
+                Collections.emptyMap(), null, StandardCharsets.UTF_8, null
+        );
+        Response response = Response.builder()
+                .status(503).reason("Service Unavailable").request(request)
                 .headers(Collections.emptyMap())
                 .body("{\"detail\":\"알림 서버를 사용할 수 없습니다.\"}", StandardCharsets.UTF_8)
                 .build();
-        FeignException exception = FeignException.errorStatus("getEndpoints", response);
+        FeignException exception = FeignException.errorStatus("NotificationClient#getEndpoints()", response);
 
-        ResponseEntity<Object> result = handler.handleFeignException(exception);
+        ErrorResponse result = handler.handleFeignException(exception);
 
         assertEquals(503, result.getStatusCode().value());
-        assertEquals("{\"detail\":\"알림 서버를 사용할 수 없습니다.\"}", result.getBody());
+        assertEquals("알림 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요.", result.getBody().getDetail());
     }
 }
