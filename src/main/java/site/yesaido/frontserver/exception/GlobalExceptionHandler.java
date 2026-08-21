@@ -3,6 +3,7 @@ package site.yesaido.frontserver.exception;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -13,6 +14,7 @@ import site.yesaido.frontserver.util.AuthCookieProvider;
 import java.io.IOException;
 import java.util.Map;
 
+@Slf4j
 @ControllerAdvice
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
@@ -21,7 +23,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FeignException.Unauthorized.class)
     public void handleUnauthorized(HttpServletResponse response) throws IOException {
         authCookieProvider.clearAuthCookies(response);
-        response.sendRedirect("/login");
+        try {
+            if (!response.isCommitted()) {
+                response.sendRedirect("/login");
+            } else {
+                log.warn("응답이 이미 커밋되어 /login으로 리다이렉트하지 못했습니다.");
+            }
+        } catch (Exception e) {
+            log.warn("sendRedirect 실패: {}", e.getMessage());
+            if (!response.isCommitted()) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.getWriter().write("{\"detail\":\"로그인이 필요합니다.\"}");
+            }
+        }
     }
 
     @ExceptionHandler(FeignException.class)
