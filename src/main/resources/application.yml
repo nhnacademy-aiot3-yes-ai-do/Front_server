@@ -5,6 +5,7 @@ server:
       cookie:
         http-only: ${COOKIE_HTTP_ONLY:true}
         secure: ${COOKIE_SECURE:true}
+  shutdown: graceful
 
 spring:
   config:
@@ -26,6 +27,8 @@ spring:
               - openid
               - email
               - profile
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
 
 auth:
   cookie:
