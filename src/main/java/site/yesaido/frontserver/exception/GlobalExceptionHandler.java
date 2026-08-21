@@ -59,4 +59,12 @@ public class GlobalExceptionHandler {
         redirectAttributes.addFlashAttribute("dormantEmail", e.getEmail());
         return "redirect:/login";
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleUnexpected(Exception exception) {
+        log.error("처리되지 않은 예외 발생: {}", exception.getClass().getName(), exception);
+        return ResponseEntity.status(500)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("detail", "일시적인 오류가 발생했습니다."));
+    }
 }
