@@ -5,18 +5,6 @@ var MUSHROOMS = [];
 var DIFFICULTY_LABELS = ['', '매우 쉬움', '쉬움', '보통', '어려움', '매우 어려움'];
 var SPEED_LABELS = ['', '매우 느림', '느림', '보통', '빠름', '매우 빠름'];
 
-function loadMushrooms() {
-    return fetch('/cultivations/mushroom-references')
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            MUSHROOMS = data.mushroomReferenceInfoResponses || [];
-            renderMushroomSelect();
-        })
-        .catch(function () {
-            alert('버섯 목록을 불러오지 못했습니다.');
-        });
-}
-
 function renderMushroomSelect() {
     var select = document.getElementById('f-mushroom');
     select.innerHTML = '';
@@ -32,7 +20,8 @@ function renderMushroomSelect() {
     });
 }
 
-loadMushrooms();
+MUSHROOMS = Array.isArray(mushroomsData) ? mushroomsData : [];
+renderMushroomSelect();
 
 function makeBadge(text) {
     var span = document.createElement('span');

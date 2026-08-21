@@ -16,6 +16,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
+import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddFormRequest;
@@ -27,6 +28,14 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.Membe
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
+import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorTypeResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.EnvironmentSettingResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 import tools.jackson.databind.ObjectMapper;
@@ -34,6 +43,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -65,6 +75,9 @@ class CultivationControllerTest {
     private CultivationClient cultivationClient;
 
     @MockitoBean
+    private SensorClient sensorClient;
+
+    @MockitoBean
     private UserClient userClient;
 
     @MockitoBean
@@ -83,33 +96,52 @@ class CultivationControllerTest {
     void listReturnsCultivationListView() throws Exception {
         CultivationSummaryResponse summary = new CultivationSummaryResponse(
                 1L, "테스트 재배", 10L, "GROWTH", "GROWTH", 3, "오너닉네임", LocalDateTime.now());
+        SensorTypeInfoResponse sensorType = new SensorTypeInfoResponse(7L, "TEMPERATURE", "°C");
+        CultivationSensorResponse sensor = new CultivationSensorResponse(
+                12L, "device-eui-12", "MODEL-A", "온도 센서", "재배실", "선반 A", "ACTIVE",
+                List.of(new CultivationSensorTypeResponse(7L, "TEMPERATURE", "°C"))
+        );
+        CultivationSensorListResponse sensors = new CultivationSensorListResponse(
+                List.of(sensor), List.of(new EnvironmentSettingResponse(7L, new BigDecimal("18.5"), new BigDecimal("22.0")))
+        );
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(List.of(summary))));
+        when(sensorClient.getSensorTypes()).thenReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of(sensorType))));
+        when(sensorClient.getSensors(1L)).thenReturn(ResponseEntity.ok(sensors));
 
-        String expectedJson = objectMapper.writeValueAsString(List.of(summary));
+        String expectedJson = objectMapper.writeValueAsString(new CultivationListPageView(
+                List.of(new CultivationListItemView(summary, sensors)), List.of(sensorType)
+        ));
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivationsJson", expectedJson));
+                .andExpect(model().attribute("cultivationListPageJson", expectedJson));
     }
 
     @Test
     @DisplayName("내 재배지 목록 조회 성공 - wrapper body가 없는 경우")
     void listReturnsEmptyCultivationsWhenWrapperBodyIsNull() throws Exception {
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(null));
+        when(sensorClient.getSensorTypes()).thenReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of())));
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivationsJson", "[]"));
+                .andExpect(model().attribute("cultivationListPageJson", "{\"cultivations\":[],\"sensorTypes\":[]}"));
     }
 
     @Test
     @DisplayName("재배 생성 폼 페이지 반환")
     void createCultivationPageReturnsCreateView() throws Exception {
+        MushroomReferenceInfoResponse mushroom = new MushroomReferenceInfoResponse(
+                9L, "표고", "Shiitake", "Lentinula edodes", List.of(), LocalDateTime.now(), LocalDateTime.now()
+        );
+        when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of(mushroom))));
+
         mockMvc.perform(get("/cultivations/new").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/create"));
+                .andExpect(view().name("cultivation/create"))
+                .andExpect(model().attribute("mushroomsJson", objectMapper.writeValueAsString(List.of(mushroom))));
     }
 
     @Test
