@@ -54,7 +54,7 @@ class SensorBffCompletionLoggingInterceptorTest {
     }
 
     @Test
-    void doesNotLogUnrelatedRequest() throws Exception {
+    void doesNotLogUnrelatedRequest() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/cultivations");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -62,10 +62,5 @@ class SensorBffCompletionLoggingInterceptorTest {
         interceptor.afterCompletion(request, response, new Object(), null);
 
         assertTrue(appender.list.isEmpty());
-    }
-
-    public static class TestController {
-        public void sensorTypes() {
-        }
     }
 }
