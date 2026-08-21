@@ -123,9 +123,7 @@ function loadSensorTypes() {
             SENSOR_TYPES = data.sensorTypeInfoResponses || [];
             refreshOpenSensorTypeCheckList();
         })
-        .catch(function () {
-            refreshOpenSensorTypeCheckList();
-        });
+        .catch(function () { SENSOR_TYPES = []; });
 }
 
 function refreshOpenSensorTypeCheckList() {
