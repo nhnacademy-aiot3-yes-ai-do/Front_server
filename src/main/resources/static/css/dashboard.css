@@ -30,9 +30,18 @@ body {
 }
 
 /* ===== Tabs ===== */
+/* 탭바를 콘텐츠 박스에 붙은 알약 모양이 아니라, 독립된 둥근 바 하나로 바꾸고
+   각 탭은 배경 없이 밑줄로만 활성 상태를 표시하는 스타일로 변경 */
 .tabs-nav {
     display: flex;
     gap: 4px;
+    background: rgba(251, 246, 234, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 2px solid rgba(139, 94, 60, 0.22);
+    border-radius: 16px;
+    padding: 0.4rem;
+    margin-bottom: 1.1rem;
 }
 
 .tab-btn {
@@ -40,15 +49,16 @@ body {
     align-items: center;
     gap: 0.5rem;
     border: none;
-    background: rgba(251, 246, 234, 0.4);
-    padding: 0.8rem 1.8rem;
+    border-bottom: 3px solid transparent;
+    background: none;
+    padding: 0.7rem 1.6rem 0.6rem;
     font-family: "Gaegu", inherit;
     font-size: 1.05rem;
     font-weight: 700;
-    color: var(--brown-700);
+    color: var(--brown-500);
     cursor: url("/images/cursor-default.png") 3 2, pointer;
-    border-radius: 14px 14px 0 0;
-    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    border-radius: 10px 10px 0 0;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .tab-btn svg {
@@ -58,16 +68,13 @@ body {
 }
 
 .tab-btn:hover:not(.active) {
-    background: rgba(251, 246, 234, 0.6);
+    background: rgba(139, 94, 60, 0.06);
     color: var(--brown-900);
 }
 
 .tab-btn.active {
     color: var(--brown-900);
-    background: rgba(251, 246, 234, 0.8);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    box-shadow: inset 0 3px 0 var(--sage-500);
+    border-bottom-color: var(--sage-500);
 }
 
 .tab-btn.active svg {
@@ -92,7 +99,7 @@ body {
     -webkit-backdrop-filter: blur(10px);
     border: 2px solid rgba(139, 94, 60, 0.22);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.18);
-    border-radius: 0 20px 20px 20px;
+    border-radius: 20px;
     padding: 1.8rem;
     transition: opacity 0.25s ease;
 }
@@ -282,19 +289,12 @@ body {
 /* ===== Main row: photo / sensors / stats ===== */
 .main-row {
     display: grid;
-    grid-template-columns: 1fr 0.7fr 1.1fr 1fr;
+    grid-template-columns: 1fr 0.7fr 1.6fr;
     gap: 1.3rem;
     align-items: stretch;
     /* 고정 height 대신 aspect-ratio를 써서, page-container 너비가 화면 크기에 맞춰
        커질 때 세로 높이도 같은 비율로 같이 커지도록 함 */
-    aspect-ratio: 3.01 / 1;
-}
-
-.chatbot-card {
-    display: flex;
-    flex-direction: column;
-    padding: 1.1rem 1.1rem 1.2rem;
-    min-height: 0;
+    aspect-ratio: 2.9 / 1;
 }
 
 .card {
@@ -336,32 +336,90 @@ body {
     justify-content: center;
 }
 
-/* ---- bottom row: site name (plain text) + action bar, same line ---- */
-.bottom-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin: 1.5rem 0 0;
+/* 메인 탭의 사진 카드만 제목 + 사진 + 생육 정보 3단 구성으로 씀
+   (AI 리포트 탭의 .report-photo-card는 사진만 있는 기존 구조 그대로 유지) */
+.photo-card--detail {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
 }
 
-.site-name-box {
-    display: inline-flex;
+.photo-frame {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background: rgba(251, 246, 234, 0.7);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    border: 2px solid rgba(139, 94, 60, 0.25);
-    border-radius: 14px;
-    padding: 0.75rem 1.6rem;
-    font-family: "Gaegu", inherit;
+    justify-content: center;
+}
+
+.growth-days-box {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 0.7rem 1.2rem 0;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(139, 94, 60, 0.18);
+    border-radius: 12px;
+    padding: 0.7rem 0.9rem;
+    flex-shrink: 0;
+}
+
+.growth-days-box i {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--sage-600);
+    flex-shrink: 0;
+}
+
+.growth-days-label {
+    font-size: 0.72rem;
+    color: var(--brown-500);
+}
+
+.growth-days-value {
+    font-size: 1rem;
     font-weight: 700;
-    font-size: 1.2rem;
     color: var(--brown-900);
 }
 
-.site-name-box svg {
+.pest-status-card {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    margin: 0.7rem 1.2rem 1.1rem;
+    background: rgba(124, 148, 115, 0.16);
+    border: 1px solid rgba(124, 148, 115, 0.3);
+    border-radius: 12px;
+    padding: 0.7rem 0.9rem;
+    flex-shrink: 0;
+}
+
+.pest-status-card i {
+    width: 1.1rem;
+    height: 1.1rem;
     color: var(--sage-600);
+    flex-shrink: 0;
+}
+
+.pest-status-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--brown-900);
+}
+
+.pest-status-sub {
+    font-size: 0.72rem;
+    color: var(--brown-500);
+}
+
+/* ---- bottom row: action bar (오른쪽 정렬) ---- */
+.bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin: 1.5rem 0 0;
 }
 
 .photo-card img {
@@ -461,15 +519,25 @@ body {
     background: #fff;
     font-size: 0.8rem;
     color: var(--ink);
+    /* 선택된 센서 이름 길이에 따라 트리거(및 그걸 따라가는 드롭다운 메뉴)가
+       매번 다시 커지거나 작아지는 게 이상해서 폭을 고정함 */
+    width: 12rem;
 }
 
-.msh-select--chart .msh-select-menu {
+/* msh-select.js는 드롭다운을 열 때 메뉴를 document.body로 옮겨버려서(reparent),
+   ".msh-select--chart .msh-select-menu" 같은 조상 선택자는 열린 상태에선 더 이상 안 먹힘.
+   메뉴 자체에 직접 붙는 클래스(msh-select-menu--chart)로 지정해야 옮겨진 뒤에도 적용됨. */
+.msh-select-menu--chart {
     left: auto;
     right: 0;
-    /* JS가 열 때마다 트리거 폭에 맞춰 인라인 width를 넣어주는데, 이 드롭다운은 알약 트리거가
-       옵션 텍스트보다 좁아서 일부러 더 넓혀야 함 -> width를 도로 auto로 풀어줌 */
-    width: auto !important;
-    min-width: 8rem;
+    /* 트리거 폭(12rem)과 항상 동일하게 고정 - JS가 매번 넣는 인라인 width를 덮어씀 */
+    width: 12rem !important;
+    min-width: 12rem !important;
+}
+
+.msh-select-menu--chart .msh-select-option {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 환경설정 모달의 flex 안 borderless 드롭다운 */
@@ -509,28 +577,6 @@ body {
     color: var(--brown-900);
 }
 
-/* extra area under sensors: 병충해여부 + 예상수확시기 */
-.sensor-extras {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    gap: 0.7rem;
-}
-
-.pest-badge {
-    display: inline-flex;
-    align-self: flex-start;
-    align-items: center;
-    gap: 6px;
-    background: rgba(124, 148, 115, 0.85);
-    color: #fff;
-    border-radius: 999px;
-    padding: 0.5rem 1rem;
-    font-size: 0.8rem;
-    box-shadow: 0 3px 8px rgba(102, 128, 92, 0.35);
-}
-
 .harvest-mini-card {
     padding: 0.9rem;
 }
@@ -555,7 +601,7 @@ body {
 }
 
 .env-stats-card {
-    flex: 0.8;
+    flex: 0.55;
     display: flex;
     align-items: center;
 }
@@ -604,6 +650,73 @@ body {
     font-weight: 700;
     color: var(--brown-900);
     white-space: nowrap;
+}
+
+/* 메인 탭 환경통계만 아이콘 원형 + 세로 중앙정렬 스타일로 씀
+   (AI 리포트 탭 / 재배종료 모달의 .env-stat-grid는 기존 가로형 박스 스타일 그대로 유지) */
+.env-stats-card--main .env-stat-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+    padding: 0.5rem 1.2rem 1.3rem;
+}
+
+.env-stats-card--main .env-stat-item {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(139, 94, 60, 0.18);
+    border-radius: 14px;
+    padding: 0.9rem 0.6rem;
+}
+
+.env-stats-card--main .env-stat-icon-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.env-stats-card--main .env-stat-icon {
+    width: 1.9rem;
+    height: 1.9rem;
+}
+
+.env-stats-card--main .env-stat-label {
+    flex: none;
+    font-size: 0.78rem;
+}
+
+.env-stats-card--main .env-stat-value {
+    font-size: 1.3rem;
+    white-space: normal;
+}
+
+/* AI 리포트 탭 환경통계: 항목별 박스는 유지하되 아이콘/값 크기만 키움 */
+.env-stats-card--report .env-stat-grid {
+    gap: 0.8rem;
+    padding: 0.7rem 1.2rem 0;
+}
+
+.env-stats-card--report .env-stat-item {
+    gap: 0.8rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+}
+
+.env-stats-card--report .env-stat-icon {
+    width: 1.4rem;
+    height: 1.4rem;
+}
+
+.env-stats-card--report .env-stat-label {
+    font-size: 0.78rem;
+}
+
+.env-stats-card--report .env-stat-value {
+    font-size: 1.15rem;
 }
 
 .chart-card {
@@ -777,11 +890,11 @@ body {
 }
 
 /* ===== bottom action bar ===== */
-/* ---- bottom row: site name box + action bar, same line ---- */
+/* ---- bottom row: action bar, 오른쪽 정렬 ---- */
 .bottom-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     margin: 1.5rem 0 0;
 }
 
@@ -876,7 +989,7 @@ body {
 .dropdown-panel {
     display: none;
     position: absolute;
-    bottom: 60px;
+    top: calc(100% + 10px);
     width: 380px;
     max-height: 460px;
     overflow-y: auto;

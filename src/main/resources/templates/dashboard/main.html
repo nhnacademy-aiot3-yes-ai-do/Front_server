@@ -18,6 +18,7 @@
     <nav class="tabs-nav">
         <button class="tab-btn active" type="button" onclick="switchTab('main')"><i data-lucide="layout-dashboard"></i>Main</button>
         <button class="tab-btn" type="button" onclick="switchTab('report')"><i data-lucide="sparkles"></i>AI report</button>
+        <button class="tab-btn" type="button" onclick="switchTab('chatbot')"><i data-lucide="bot"></i>AI Chatbot</button>
     </nav>
 
     <div class="tab-panels">
@@ -27,19 +28,37 @@
         <div class="main-row">
 
             <!-- 사진 카드 -->
-            <div class="card photo-card">
-                <div class="photo-placeholder" id="photo-placeholder" th:style="${photos != null and !photos.isEmpty()} ? 'display:none;' : ''">
-                    <i data-lucide="image" style="width:48px;height:48px;"></i>
-                    <span>등록된 사진이 없습니다</span>
-                </div>
-                <img id="photo-preview-img"
-                     th:src="${photos != null and !photos.isEmpty()} ? ${photos[0].uri} : ''"
-                     th:style="${photos != null and !photos.isEmpty()} ? 'display:block;' : 'display:none;'"
-                     alt="재배 사진" />
+            <div class="card photo-card photo-card--detail">
+                <div class="photo-frame">
+                    <div class="photo-placeholder" id="photo-placeholder" th:style="${photos != null and !photos.isEmpty()} ? 'display:none;' : ''">
+                        <i data-lucide="image" style="width:48px;height:48px;"></i>
+                        <span>등록된 사진이 없습니다</span>
+                    </div>
+                    <img id="photo-preview-img"
+                         th:src="${photos != null and !photos.isEmpty()} ? ${photos[0].uri} : ''"
+                         th:style="${photos != null and !photos.isEmpty()} ? 'display:block;' : 'display:none;'"
+                         alt="재배 사진" />
 
-                <button class="photo-settings-btn" type="button" onclick="openModal('modal-settings')">
-                    <i data-lucide="settings" style="width:20px;height:20px;"></i>
-                </button>
+                    <button class="photo-settings-btn" type="button" onclick="openModal('modal-settings')">
+                        <i data-lucide="settings" style="width:20px;height:20px;"></i>
+                    </button>
+                </div>
+
+                <div class="growth-days-box" th:if="${growthDays != null}">
+                    <i data-lucide="calendar"></i>
+                    <div>
+                        <div class="growth-days-label">생육 일수</div>
+                        <div class="growth-days-value"><span th:text="${growthDays}">3</span>일차</div>
+                    </div>
+                </div>
+
+                <div class="pest-status-card">
+                    <i data-lucide="shield-check"></i>
+                    <div>
+                        <div class="pest-status-title">병충해 여부 · 안전</div>
+                        <div class="pest-status-sub">현재 환경은 버섯 생육에 적합합니다</div>
+                    </div>
+                </div>
             </div>
 
             <!-- 센서 컬럼 -->
@@ -99,37 +118,80 @@
                     </div>
                 </div>
 
-                <div class="sensor-extras">
-                    <div class="pest-badge">
-                        <i data-lucide="shield-check" style="width:14px;height:14px;"></i>
-                        병충해 여부 : 안전
+                <div class="action-bar">
+
+                    <div class="dropdown-panel" id="member-panel">
+                        <div class="dropdown-panel-title">
+                            담당자 관리
+                            <button type="button" title="추가" th:if="${myRole == 'OWNER'}" onclick="openMemberAddModal()">
+                                <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
+                            </button>
+                        </div>
+                        <div id="member-list"></div>
+                        <div class="panel-pagination" id="member-pagination">
+                            <button type="button" onclick="changeMemberPage(-1)" id="member-prev">
+                                <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
+                            </button>
+                            <span id="member-page-label"></span>
+                            <button type="button" onclick="changeMemberPage(1)" id="member-next">
+                                <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+                            </button>
+                        </div>
                     </div>
+
+                    <div class="dropdown-panel" id="notif-panel">
+                        <div class="dropdown-panel-title">알림</div>
+                        <div id="notif-list"></div>
+                        <div class="panel-pagination" id="notif-pagination">
+                            <button type="button" onclick="changeNotifPage(-1)" id="notif-prev">
+                                <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
+                            </button>
+                            <span id="notif-page-label"></span>
+                            <button type="button" onclick="changeNotifPage(1)" id="notif-next">
+                                <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
+                        <i data-lucide="users"></i>
+                    </button>
+                    <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
+                        <i data-lucide="bell"></i>
+                    </button>
+                    <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openEndAmountModal()">
+                        <i data-lucide="power"></i>
+                    </button>
+                    <button class="icon-btn danger" type="button" title="삭제하기" th:if="${myRole == 'OWNER'}" onclick="openModal('modal-delete')">
+                        <i data-lucide="trash-2"></i>
+                    </button>
                 </div>
+
             </div>
 
             <!-- 환경통계 카드 + 그래프 카드 (분리) -->
             <div class="stats-col">
-                <div class="card env-stats-card">
+                <div class="card env-stats-card env-stats-card--main">
                     <div>
-                        <div class="card-title">환경 통계<span class="env-stats-sub">최근 24시간 평균</span></div>
+                        <div class="card-title"><span class="env-stats-sub">최근 24시간 평균</span></div>
                         <div class="env-stat-grid">
                             <div class="env-stat-item">
-                                <i data-lucide="thermometer" class="env-stat-icon"></i>
+                                <span class="env-stat-icon-circle"><i data-lucide="thermometer" class="env-stat-icon"></i></span>
                                 <span class="env-stat-label">평균 온도</span>
                                 <span class="env-stat-value">19°C</span>
                             </div>
                             <div class="env-stat-item">
-                                <i data-lucide="droplet" class="env-stat-icon"></i>
+                                <span class="env-stat-icon-circle"><i data-lucide="droplet" class="env-stat-icon"></i></span>
                                 <span class="env-stat-label">평균 습도</span>
                                 <span class="env-stat-value">60%</span>
                             </div>
                             <div class="env-stat-item">
-                                <i data-lucide="cloudy" class="env-stat-icon"></i>
+                                <span class="env-stat-icon-circle"><i data-lucide="cloudy" class="env-stat-icon"></i></span>
                                 <span class="env-stat-label">평균 CO2</span>
                                 <span class="env-stat-value">505ppm</span>
                             </div>
                             <div class="env-stat-item">
-                                <i data-lucide="sun" class="env-stat-icon"></i>
+                                <span class="env-stat-icon-circle"><i data-lucide="sun" class="env-stat-icon"></i></span>
                                 <span class="env-stat-label">평균 조도</span>
                                 <span class="env-stat-value">380lux</span>
                             </div>
@@ -144,7 +206,7 @@
                                 <span class="msh-select-value">등록된 센서 없음</span>
                                 <i data-lucide="chevron-down" class="msh-select-chevron"></i>
                             </button>
-                            <div class="msh-select-menu"></div>
+                            <div class="msh-select-menu msh-select-menu--chart"></div>
                         </div>
                     </div>
                     <div class="chart-placeholder" style="position:relative;">
@@ -154,93 +216,6 @@
                 </div>
             </div>
 
-            <!-- AI 챗봇 카드 -->
-            <div class="card chatbot-card">
-                <div class="chatbot-wrap">
-                    <div class="chatbot-header">
-                        <img src="/images/chatbot.png" alt="MushMush 챗봇" class="chatbot-avatar" />
-                        <div>
-                            <div class="chatbot-title">MushMush 챗봇</div>
-                            <div class="chatbot-subtitle">재배 관련 궁금한 점을 물어보세요</div>
-                        </div>
-                    </div>
-
-                    <div class="chatbot-messages" id="chatbot-messages">
-                        <div class="chat-message bot">
-                            <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
-                            <div class="chat-bubble">안녕하세요! 양송이 1번 재배지에 대해 무엇이든 물어보세요 🍄</div>
-                        </div>
-                        <div class="chat-message user">
-                            <div class="chat-bubble">지금 온도는 적당한가요?</div>
-                        </div>
-                        <div class="chat-message bot">
-                            <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
-                            <div class="chat-bubble">네! 현재 20°C로 양송이 재배에 적합한 범위예요.</div>
-                        </div>
-                    </div>
-
-                    <form class="chatbot-input-row" onsubmit="sendChatMessage(event)">
-                        <input type="text" id="chatbot-input" placeholder="메시지를 입력하세요" autocomplete="off" />
-                        <button class="icon-btn" type="submit" title="전송">
-                            <i data-lucide="send"></i>
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="bottom-row">
-            <div class="site-name-box"><i data-lucide="sprout" style="width:18px;height:18px;"></i>양송이 1번 재배지</div>
-
-            <div class="action-bar">
-
-                <div class="dropdown-panel" id="member-panel">
-                    <div class="dropdown-panel-title">
-                        담당자 관리
-                        <button type="button" title="추가" th:if="${myRole == 'OWNER'}" onclick="openMemberAddModal()">
-                            <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
-                        </button>
-                    </div>
-                <div id="member-list"></div>
-                <div class="panel-pagination" id="member-pagination">
-                    <button type="button" onclick="changeMemberPage(-1)" id="member-prev">
-                        <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
-                    </button>
-                    <span id="member-page-label"></span>
-                    <button type="button" onclick="changeMemberPage(1)" id="member-next">
-                        <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="dropdown-panel" id="notif-panel">
-                <div class="dropdown-panel-title">알림</div>
-                <div id="notif-list"></div>
-                <div class="panel-pagination" id="notif-pagination">
-                    <button type="button" onclick="changeNotifPage(-1)" id="notif-prev">
-                        <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
-                    </button>
-                    <span id="notif-page-label"></span>
-                    <button type="button" onclick="changeNotifPage(1)" id="notif-next">
-                        <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
-                    </button>
-                </div>
-            </div>
-
-                <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
-                    <i data-lucide="users"></i>
-                </button>
-                <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
-                    <i data-lucide="bell"></i>
-                </button>
-                <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openEndAmountModal()">
-                    <i data-lucide="power"></i>
-                </button>
-                <button class="icon-btn danger" type="button" title="삭제하기" th:if="${myRole == 'OWNER'}" onclick="openModal('modal-delete')">
-                    <i data-lucide="trash-2"></i>
-                </button>
-            </div>
         </div>
     </section>
 
@@ -267,10 +242,17 @@
             </div>
 
             <div class="report-row">
-                <div class="card env-stats-card">
+                <div class="card env-stats-card env-stats-card--report">
                     <div>
                         <div class="card-title">환경 통계<span class="env-stats-sub">선택한 날짜 평균</span></div>
                         <div class="env-stat-grid" id="report-env-stat-grid"></div>
+                        <div class="pest-status-card">
+                            <i data-lucide="shield-check"></i>
+                            <div>
+                                <div class="pest-status-title">병충해 여부 · 안전</div>
+                                <div class="pest-status-sub">현재까지 병충해 징후는 감지되지 않았습니다.</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -293,6 +275,39 @@
 
         </div>
 
+    </section>
+
+    <section id="tab-chatbot" class="tab-panel">
+        <div class="chatbot-wrap">
+            <div class="chatbot-header">
+                <img src="/images/chatbot.png" alt="MushMush 챗봇" class="chatbot-avatar" />
+                <div>
+                    <div class="chatbot-title">MushMush 챗봇</div>
+                    <div class="chatbot-subtitle">재배 관련 궁금한 점을 물어보세요</div>
+                </div>
+            </div>
+
+            <div class="chatbot-messages" id="chatbot-messages">
+                <div class="chat-message bot">
+                    <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
+                    <div class="chat-bubble">안녕하세요! 양송이 1번 재배지에 대해 무엇이든 물어보세요 🍄</div>
+                </div>
+                <div class="chat-message user">
+                    <div class="chat-bubble">지금 온도는 적당한가요?</div>
+                </div>
+                <div class="chat-message bot">
+                    <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
+                    <div class="chat-bubble">네! 현재 20°C로 양송이 재배에 적합한 범위예요.</div>
+                </div>
+            </div>
+
+            <form class="chatbot-input-row" onsubmit="sendChatMessage(event)">
+                <input type="text" id="chatbot-input" placeholder="메시지를 입력하세요" autocomplete="off" />
+                <button class="icon-btn" type="submit" title="전송">
+                    <i data-lucide="send"></i>
+                </button>
+            </form>
+        </div>
     </section>
 
     </div>
