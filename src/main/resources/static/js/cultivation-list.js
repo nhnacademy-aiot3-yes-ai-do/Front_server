@@ -384,12 +384,6 @@ function registerSensor() {
 }
 
 renderList('cultivation');
-Promise.all([loadSensorTypes(), loadAllSensors()])
-    .then(function () {
-        lucide.createIcons();
-        hideLoadingOverlay();
-    })
-    .catch(function () {
-        lucide.createIcons();
-        hideLoadingOverlay();
-    });
+Promise.all([loadSensorTypes(), loadAllSensors()]).then(function () {
+    lucide.createIcons();
+});
