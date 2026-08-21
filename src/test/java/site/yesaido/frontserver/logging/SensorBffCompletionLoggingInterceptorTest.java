@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.web.method.HandlerMethod;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -36,18 +35,18 @@ class SensorBffCompletionLoggingInterceptorTest {
     }
 
     @Test
-    void logsFinalStatusAndExceptionTypeForSensorBffRequest() throws Exception {
+    void logsFinalStatusAndExceptionTypeForSensorBffRequest() {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/cultivations/sensor-types");
         MockHttpServletResponse response = new MockHttpServletResponse();
         response.setStatus(500);
-        HandlerMethod handler = new HandlerMethod(new TestController(), "sensorTypes");
+        Object handler = new Object();
 
         interceptor.preHandle(request, response, handler);
         interceptor.afterCompletion(request, response, handler, new IllegalStateException("ignored"));
 
         assertTrue(appender.list.stream().map(ILoggingEvent::getFormattedMessage).anyMatch(message ->
                 message.contains("front_bff_completion endpoint=sensor-types status=500")
-                        && message.contains("handler=TestController.sensorTypes")
+                        && message.contains("handler=Object")
                         && message.contains("exception_type=IllegalStateException")
                         && !message.contains("ignored")
         ));
