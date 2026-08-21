@@ -6,16 +6,22 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoResponse;
 
 import java.util.List;
+import java.lang.reflect.Method;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -76,12 +82,75 @@ class FrontResponseLoggingAspectTest {
         ));
     }
 
+    @Test
+    void logsRestControllerStringAsRegularResultInsteadOfView() throws Throwable {
+        aspect.logControllerResponse(joinPointReturning(
+                "plain-text-body",
+                "RestStringController.body()",
+                new RestStringController()
+        ));
+
+        assertTrue(appender.list.stream().map(ILoggingEvent::getFormattedMessage).anyMatch(message ->
+                message.contains("front_controller_response method=RestStringController.body()")
+                        && message.contains("result_type=String")
+                        && message.contains("result_null=false")
+        ));
+        assertFalse(appender.list.stream().map(ILoggingEvent::getFormattedMessage)
+                .anyMatch(message -> message.contains("view=plain-text-body")));
+    }
+
+    @Test
+    void logsResponseBodyStringFromMvcControllerAsRegularResultInsteadOfView() throws Throwable {
+        ResponseBodyStringController target = new ResponseBodyStringController();
+        aspect.logControllerResponse(joinPointReturning(
+                "plain-text-body",
+                "ResponseBodyStringController.body()",
+                target,
+                ResponseBodyStringController.class.getDeclaredMethod("body")
+        ));
+
+        assertTrue(appender.list.stream().map(ILoggingEvent::getFormattedMessage).anyMatch(message ->
+                message.contains("front_controller_response method=ResponseBodyStringController.body()")
+                        && message.contains("result_type=String")
+                        && message.contains("result_null=false")
+        ));
+        assertFalse(appender.list.stream().map(ILoggingEvent::getFormattedMessage)
+                .anyMatch(message -> message.contains("view=plain-text-body")));
+    }
+
     private ProceedingJoinPoint joinPointReturning(Object result, String method) throws Throwable {
+        return joinPointReturning(result, method, null);
+    }
+
+    private ProceedingJoinPoint joinPointReturning(Object result, String method, Object target) throws Throwable {
+        return joinPointReturning(result, method, target, null);
+    }
+
+    private ProceedingJoinPoint joinPointReturning(Object result, String method, Object target, Method targetMethod) throws Throwable {
         ProceedingJoinPoint joinPoint = mock(ProceedingJoinPoint.class);
-        Signature signature = mock(Signature.class);
+        Signature signature = targetMethod == null ? mock(Signature.class) : mock(MethodSignature.class);
         when(joinPoint.getSignature()).thenReturn(signature);
         when(signature.toShortString()).thenReturn(method);
+        if (targetMethod != null) {
+            when(((MethodSignature) signature).getMethod()).thenReturn(targetMethod);
+        }
+        when(joinPoint.getTarget()).thenReturn(target);
         when(joinPoint.proceed()).thenReturn(result);
         return joinPoint;
+    }
+
+    @RestController
+    private static class RestStringController {
+        String body() {
+            return "plain-text-body";
+        }
+    }
+
+    @Controller
+    private static class ResponseBodyStringController {
+        @ResponseBody
+        String body() {
+            return "plain-text-body";
+        }
     }
 }

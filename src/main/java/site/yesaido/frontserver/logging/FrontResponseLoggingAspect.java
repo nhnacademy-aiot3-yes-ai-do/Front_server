@@ -4,8 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.util.ClassUtils;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 
@@ -39,7 +45,8 @@ public class FrontResponseLoggingAspect {
                         response.getStatusCode().value(),
                         elapsedMillis(startedAt),
                         summarize(response.getBody()));
-            } else if (result instanceof String viewName) {
+            } else if (isViewName(joinPoint, result)) {
+                String viewName = (String) result;
                 log.info("{} method={} view={} elapsed_ms={}", event, method, viewName, elapsedMillis(startedAt));
             } else {
                 log.info("{} method={} result_type={} result_null={} elapsed_ms={}",
@@ -68,6 +75,27 @@ public class FrontResponseLoggingAspect {
             return collectionSummary("MushroomReferenceInfoListResponse", "mushroom_reference", response.mushroomReferenceInfoResponses());
         }
         return "body_type=" + body.getClass().getSimpleName() + " body_null=false";
+    }
+
+    private boolean isViewName(ProceedingJoinPoint joinPoint, Object result) {
+        if (!(result instanceof String)) {
+            return false;
+        }
+
+        Object target = joinPoint.getTarget();
+        if (target == null) {
+            return false;
+        }
+
+        Class<?> targetClass = ClassUtils.getUserClass(target);
+        if (!AnnotatedElementUtils.hasAnnotation(targetClass, Controller.class)
+                || AnnotatedElementUtils.hasAnnotation(targetClass, RestController.class)
+                || AnnotatedElementUtils.hasAnnotation(targetClass, ResponseBody.class)) {
+            return false;
+        }
+
+        return !(joinPoint.getSignature() instanceof MethodSignature methodSignature)
+                || !AnnotatedElementUtils.hasAnnotation(methodSignature.getMethod(), ResponseBody.class);
     }
 
     private String collectionSummary(String bodyType, String collectionName, Collection<?> values) {
