@@ -10,15 +10,6 @@ var listState = {
     sensor: { page: 0, data: SENSOR_LIST }
 };
 
-function fetchWithTimeout(url, options, timeoutMs) {
-    var controller = new AbortController();
-    var timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs || 8000);
-    var opts = Object.assign({}, options || {}, { signal: controller.signal });
-    return fetch(url, opts).finally(function () {
-        clearTimeout(timeoutId);
-    });
-}
-
 function formatDate(value) {
     if (!value) return '-';
     var d = new Date(value);
@@ -117,7 +108,7 @@ function switchTab(name) {
 }
 
 function loadSensorTypes() {
-    return fetchWithTimeout('/cultivations/sensor-types', {}, 8000)
+    return fetch('/cultivations/sensor-types')
         .then(function (res) {
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
@@ -130,11 +121,20 @@ function loadSensorTypes() {
         })
         .then(function (data) {
             SENSOR_TYPES = data.sensorTypeInfoResponses || [];
+            refreshOpenSensorTypeCheckList();
         })
-        .catch(function (err) {
-            console.warn('sensor-types 요청 실패/타임아웃:', err && err.name, err && err.message);
-            SENSOR_TYPES = [];
+        .catch(function () {
+            refreshOpenSensorTypeCheckList();
         });
+}
+
+function refreshOpenSensorTypeCheckList() {
+    var sensorModal = document.getElementById('modal-sensor');
+    if (!sensorModal || !sensorModal.classList.contains('is-open')) {
+        return;
+    }
+
+    renderSensorTypeCheckList(captureSensorTypeCheckListState());
 }
 
 // 센서는 재배지 단위 API라, 내가 가진 재배지마다 조회해서 합침
@@ -146,7 +146,7 @@ function loadAllSensors() {
         return Promise.resolve();
     }
     var requests = cultivationData.map(function (c) {
-        return fetchWithTimeout('/cultivations/' + c.cultivationId + '/sensors', {}, 8000)
+        return fetch('/cultivations/' + c.cultivationId + '/sensors')
             .then(function (res) {
                 if (res.status === 401 || res.status === 403) {
                     window.location.href = '/login';
@@ -170,10 +170,7 @@ function loadAllSensors() {
                     };
                 });
             })
-            .catch(function (err) {
-                console.warn('sensors(' + c.cultivationId + ') 요청 실패/타임아웃:', err && err.name, err && err.message);
-                return [];
-            });
+            .catch(function () { return []; });
     });
     return Promise.all(requests).then(function (lists) {
         SENSOR_LIST = lists.reduce(function (acc, l) { return acc.concat(l); }, []);
@@ -203,11 +200,34 @@ function populateCultivationSelect() {
     wrapperEl.querySelector('.msh-select-value').textContent = '재배지를 선택하세요';
 }
 
-function renderSensorTypeCheckList() {
+function captureSensorTypeCheckListState() {
+    var statesBySensorTypeId = {};
+    document.querySelectorAll('#ms-type-list .sensor-type-check-row').forEach(function (row) {
+        var checkbox = row.querySelector('input[data-sensor-type-id]');
+        if (!checkbox) {
+            return;
+        }
+
+        var validationMessage = row.querySelector('.st-validate-msg');
+        statesBySensorTypeId[checkbox.dataset.sensorTypeId] = {
+            checked: checkbox.checked,
+            min: row.querySelector('.st-min').value,
+            max: row.querySelector('.st-max').value,
+            validated: row.dataset.validated === 'true',
+            validationMessage: validationMessage.textContent,
+            validationMessageClass: validationMessage.className
+        };
+    });
+    return statesBySensorTypeId;
+}
+
+function renderSensorTypeCheckList(statesBySensorTypeId) {
+    var states = statesBySensorTypeId || {};
     var wrap = document.getElementById('ms-type-list');
     wrap.innerHTML = '';
     SENSOR_TYPES.forEach(function (t) {
         var row = document.createElement('div');
+        var previousState = states[String(t.id)];
         row.className = 'sensor-type-check-row';
         row.innerHTML =
             '<label class="st-checkbox-label">' +
@@ -218,6 +238,25 @@ function renderSensorTypeCheckList() {
             '<input type="number" class="st-max" placeholder="최대" disabled oninput="clearThresholdValidation(this)" />' +
             '<button type="button" class="st-validate-btn" onclick="validateThreshold(this)" disabled>검증</button>' +
             '<span class="st-validate-msg"></span>';
+
+        if (previousState) {
+            var checkbox = row.querySelector('input[data-sensor-type-id]');
+            var minInput = row.querySelector('.st-min');
+            var maxInput = row.querySelector('.st-max');
+            var validateButton = row.querySelector('.st-validate-btn');
+            var validationMessage = row.querySelector('.st-validate-msg');
+
+            checkbox.checked = previousState.checked;
+            minInput.value = previousState.min;
+            maxInput.value = previousState.max;
+            minInput.disabled = !previousState.checked;
+            maxInput.disabled = !previousState.checked;
+            validateButton.disabled = !previousState.checked;
+            row.dataset.validated = previousState.validated ? 'true' : '';
+            validationMessage.textContent = previousState.validationMessage;
+            validationMessage.className = previousState.validationMessageClass;
+        }
+
         wrap.appendChild(row);
     });
 }
@@ -390,12 +429,6 @@ function registerSensor() {
 }
 
 renderList('cultivation');
-Promise.all([loadSensorTypes(), loadAllSensors()])
-    .then(function () {
-        lucide.createIcons();
-        hideLoadingOverlay();
-    })
-    .catch(function () {
-        lucide.createIcons();
-        hideLoadingOverlay();
-    });
+Promise.all([loadSensorTypes(), loadAllSensors()]).then(function () {
+    lucide.createIcons();
+});
