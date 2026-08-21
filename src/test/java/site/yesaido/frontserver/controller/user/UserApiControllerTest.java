@@ -31,8 +31,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(
         value = UserApiController.class,
@@ -160,9 +159,11 @@ class UserApiControllerTest {
     }
 
     @Test
-    @DisplayName("토큰 시간 연장 (reissue) - refreshToken 없을 때 예외 분기")
-    void reissueWithoutTokenThrowsException() {
-        assertThrows(Exception.class, () -> mockMvc.perform(post("/users/reissue")));
+    @DisplayName("토큰 시간 연장 (reissue) - refreshToken 없을 때 401 반환")
+    void reissueWithoutTokenReturns401() throws Exception {
+        mockMvc.perform(post("/users/reissue"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("로그인이 필요합니다."));
     }
 
     @Test

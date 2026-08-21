@@ -3,8 +3,8 @@ server:
   servlet:
     session:
       cookie:
-        http-only: true
-        secure: true
+        http-only: ${COOKIE_HTTP_ONLY:true}
+        secure: ${COOKIE_SECURE:true}
 
 spring:
   config:

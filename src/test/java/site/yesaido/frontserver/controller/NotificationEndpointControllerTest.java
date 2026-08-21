@@ -85,13 +85,13 @@ class NotificationEndpointControllerTest {
     }
 
     @Test
-    @DisplayName("Endpoint 목록 조회 중 알림 서버 오류를 그대로 전달")
+    @DisplayName("Endpoint 목록 조회 중 알림 서버 오류 발생 시 알림 서비스 안내 메시지 반환")
     void listEndpointsPropagatesNotificationServerError() throws Exception {
         given(notificationClient.getEndpoints()).willThrow(feignException(503));
 
         mockMvc.perform(get("/notifications/endpoints").cookie(LOGGED_IN))
                 .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.detail").value("알림 서버를 사용할 수 없습니다."));
+                .andExpect(jsonPath("$.detail").value("알림 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요."));
     }
 
     @Test
@@ -166,6 +166,6 @@ class NotificationEndpointControllerTest {
                 .headers(Collections.emptyMap())
                 .body("{\"detail\":\"알림 서버를 사용할 수 없습니다.\"}", StandardCharsets.UTF_8)
                 .build();
-        return FeignException.errorStatus("getEndpoints", response);
+        return FeignException.errorStatus("NotificationClient#getEndpoints()", response);
     }
 }

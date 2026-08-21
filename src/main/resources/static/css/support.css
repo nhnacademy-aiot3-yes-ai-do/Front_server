@@ -42,11 +42,7 @@ body {
 
 .btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }
 
-.btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
-.btn-primary:hover { background: var(--sage-600); }
-
-.btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); box-shadow: none; }
-.btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
+.btn-outline { box-shadow: none; }
 
 /* ===== 공통 헤딩 ===== */
 /* 목록/작성/상세를 한 페이지 안에서 패널 전환으로 보여주는 스택 컨테이너 */

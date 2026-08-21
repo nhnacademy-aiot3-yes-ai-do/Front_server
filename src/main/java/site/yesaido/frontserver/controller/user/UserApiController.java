@@ -9,6 +9,7 @@ import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
+import site.yesaido.frontserver.exception.MissingRefreshTokenException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 @RestController
@@ -49,7 +50,7 @@ public class UserApiController {
     public ApiResponse<TokenResponse> reissue(@CookieValue(name = REFRESH_TOKEN, required = false) String refreshToken,
                                               HttpServletResponse response) {
         if (refreshToken == null || refreshToken.isBlank()) {
-            throw new IllegalStateException("refreshToken is null");
+            throw new MissingRefreshTokenException("refreshToken이 없습니다. 다시 로그인해주세요.");
         }
 
         ApiResponse<TokenResponse> apiResponse = userClient.reissue(new ReissueRequest(refreshToken));

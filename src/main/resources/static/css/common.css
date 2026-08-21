@@ -598,6 +598,37 @@ textarea,
 
 .error-actions .btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
 
+/* ===== 버튼 색상 변형 (모든 페이지 공통, .btn 자체 크기/폰트는 페이지별 CSS에서 정의) ===== */
+.btn-primary {
+    background: var(--sage-500);
+    color: #fff;
+    border-color: var(--sage-600);
+}
+
+.btn-primary:hover {
+    background: var(--sage-600);
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger-dark);
+}
+
+.btn-danger:hover {
+    background: var(--danger-dark);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--brown-700);
+    border-color: var(--brown-300);
+}
+
+.btn-outline:hover {
+    background: rgba(139, 94, 60, 0.08);
+}
+
 /* ===== 팝업 공용 컴포넌트 (휴면 계정 안내, 메신저 연동 등에서 재사용) ===== */
 .modal-overlay {
     display: none;
