@@ -40,3 +40,7 @@ feign:
 notification:
   discord:
     channel-type-id: ${NOTIFICATION_DISCORD_CHANNEL_TYPE_ID:2}
+
+logging:
+  level:
+    site.yesaido.frontserver.logging.FrontResponseLoggingAspect: INFO
