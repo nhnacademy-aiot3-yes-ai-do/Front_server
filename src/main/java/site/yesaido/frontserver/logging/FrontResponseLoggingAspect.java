@@ -77,20 +77,23 @@ public class FrontResponseLoggingAspect {
 
         StringBuilder summaryWithCollections = new StringBuilder(summary);
         for (RecordComponent component : body.getClass().getRecordComponents()) {
-            if (!Collection.class.isAssignableFrom(component.getType())) {
-                continue;
-            }
-
-            try {
-                Collection<?> values = (Collection<?>) component.getAccessor().invoke(body);
-                summaryWithCollections.append(' ')
-                        .append(collectionSummary(collectionName(component.getName()), values));
-            } catch (ReflectiveOperationException exception) {
-                continue;
+            if (Collection.class.isAssignableFrom(component.getType())) {
+                appendCollectionSummary(summaryWithCollections, component, body);
             }
         }
 
         return summaryWithCollections.toString();
+    }
+
+    private void appendCollectionSummary(StringBuilder summary, RecordComponent component, Object body) {
+        try {
+            Collection<?> values = (Collection<?>) component.getAccessor().invoke(body);
+            summary.append(' ')
+                    .append(collectionSummary(collectionName(component.getName()), values));
+        } catch (ReflectiveOperationException exception) {
+            log.debug("response_collection_summary_unavailable body_type={} component={}",
+                    body.getClass().getSimpleName(), component.getName());
+        }
     }
 
     private String collectionName(String componentName) {
