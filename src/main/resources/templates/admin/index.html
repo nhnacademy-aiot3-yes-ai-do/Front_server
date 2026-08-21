@@ -67,7 +67,7 @@
                     <a href="/admin/inquiries" class="admin-activity-more">전체보기<i data-lucide="chevron-right"></i></a>
                 </div>
                 <div class="admin-activity-list">
-                    <a class="admin-activity-item" href="/admin/inquiries"
+                    <a class="admin-activity-item" th:href="@{/admin/inquiries(open=${inquiry.id})}"
                        th:each="inquiry : ${pendingInquiries}">
                         <span class="admin-activity-item-icon"><i data-lucide="message-square"></i></span>
                         <div class="admin-activity-item-body">
