@@ -270,10 +270,20 @@
 
     function loadSensorTypes() {
         return fetch('/cultivations/sensor-types')
-            .then(function (res) { return res.json(); })
+            .then(function (res) {
+                if (!res.ok) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '/login';
+                        return Promise.reject(new Error('unauthorized'));
+                    }
+                    return { sensorTypeInfoResponses: [] };
+                }
+                return res.json();
+            })
             .then(function (data) {
                 SENSOR_TYPES = data.sensorTypeInfoResponses || [];
-            });
+            })
+            .catch(function () { SENSOR_TYPES = []; });
     }
 
     // 센서는 재배지 단위 API라, 내가 가진 재배지마다 조회해서 합침
@@ -286,7 +296,13 @@
         }
         var requests = cultivationData.map(function (c) {
             return fetch('/cultivations/' + c.cultivationId + '/sensors')
-                .then(function (res) { return res.ok ? res.json() : { sensors: [] }; })
+                .then(function (res) {
+                    if (res.status === 401 || res.status === 403) {
+                        window.location.href = '/login';
+                        return { sensors: [] };
+                    }
+                    return res.ok ? res.json() : { sensors: [] };
+                })
                 .then(function (data) {
                     return (data.sensors || []).map(function (s) {
                         return {
