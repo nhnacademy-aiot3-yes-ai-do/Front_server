@@ -10,6 +10,15 @@ var listState = {
     sensor: { page: 0, data: SENSOR_LIST }
 };
 
+function fetchWithTimeout(url, options, timeoutMs) {
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function () { controller.abort(); }, timeoutMs || 8000);
+    var opts = Object.assign({}, options || {}, { signal: controller.signal });
+    return fetch(url, opts).finally(function () {
+        clearTimeout(timeoutId);
+    });
+}
+
 function formatDate(value) {
     if (!value) return '-';
     var d = new Date(value);
@@ -108,7 +117,7 @@ function switchTab(name) {
 }
 
 function loadSensorTypes() {
-    return fetch('/cultivations/sensor-types')
+    return fetchWithTimeout('/cultivations/sensor-types', {}, 8000)
         .then(function (res) {
             if (!res.ok) {
                 if (res.status === 401 || res.status === 403) {
@@ -122,7 +131,10 @@ function loadSensorTypes() {
         .then(function (data) {
             SENSOR_TYPES = data.sensorTypeInfoResponses || [];
         })
-        .catch(function () { SENSOR_TYPES = []; });
+        .catch(function (err) {
+            console.warn('sensor-types 요청 실패/타임아웃:', err && err.name, err && err.message);
+            SENSOR_TYPES = [];
+        });
 }
 
 // 센서는 재배지 단위 API라, 내가 가진 재배지마다 조회해서 합침
@@ -134,7 +146,7 @@ function loadAllSensors() {
         return Promise.resolve();
     }
     var requests = cultivationData.map(function (c) {
-        return fetch('/cultivations/' + c.cultivationId + '/sensors')
+        return fetchWithTimeout('/cultivations/' + c.cultivationId + '/sensors', {}, 8000)
             .then(function (res) {
                 if (res.status === 401 || res.status === 403) {
                     window.location.href = '/login';
@@ -158,7 +170,10 @@ function loadAllSensors() {
                     };
                 });
             })
-            .catch(function () { return []; });
+            .catch(function (err) {
+                console.warn('sensors(' + c.cultivationId + ') 요청 실패/타임아웃:', err && err.name, err && err.message);
+                return [];
+            });
     });
     return Promise.all(requests).then(function (lists) {
         SENSOR_LIST = lists.reduce(function (acc, l) { return acc.concat(l); }, []);
