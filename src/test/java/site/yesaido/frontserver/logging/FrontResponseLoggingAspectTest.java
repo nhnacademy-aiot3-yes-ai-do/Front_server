@@ -83,6 +83,38 @@ class FrontResponseLoggingAspectTest {
     }
 
     @Test
+    void logsCollectionSummaryForFutureRecordResponseWithoutTypeSpecificBranch() throws Throwable {
+        ResponseEntity<FutureReferenceListResponse> response = ResponseEntity.ok(
+                new FutureReferenceListResponse(List.of("first", "second"))
+        );
+
+        aspect.logControllerResponse(joinPointReturning(response, "FutureReferenceController.getAll()"));
+
+        assertTrue(appender.list.stream().map(ILoggingEvent::getFormattedMessage).anyMatch(message ->
+                message.contains("body_type=FutureReferenceListResponse")
+                        && message.contains("future_reference_list_null=false")
+                        && message.contains("future_reference_count=2")
+        ));
+    }
+
+    @Test
+    void logsAllCollectionComponentsForFutureRecordResponse() throws Throwable {
+        ResponseEntity<MultiReferenceListResponse> response = ResponseEntity.ok(
+                new MultiReferenceListResponse(List.of("temperature"), List.of("shiitake", "oyster"))
+        );
+
+        aspect.logControllerResponse(joinPointReturning(response, "FutureReferenceController.getAll()"));
+
+        assertTrue(appender.list.stream().map(ILoggingEvent::getFormattedMessage).anyMatch(message ->
+                message.contains("body_type=MultiReferenceListResponse")
+                        && message.contains("sensor_list_null=false")
+                        && message.contains("sensor_count=1")
+                        && message.contains("mushroom_list_null=false")
+                        && message.contains("mushroom_count=2")
+        ));
+    }
+
+    @Test
     void logsRestControllerStringAsRegularResultInsteadOfView() throws Throwable {
         aspect.logControllerResponse(joinPointReturning(
                 "plain-text-body",
@@ -152,5 +184,14 @@ class FrontResponseLoggingAspectTest {
         String body() {
             return "plain-text-body";
         }
+    }
+
+    private record FutureReferenceListResponse(List<String> futureReferenceInfoResponses) {
+    }
+
+    private record MultiReferenceListResponse(
+            List<String> sensorInfoResponses,
+            List<String> mushroomInfoResponses
+    ) {
     }
 }
