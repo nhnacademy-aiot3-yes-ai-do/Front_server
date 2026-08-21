@@ -158,7 +158,8 @@
 <script th:inline="javascript">
     var cultivationListPageData = [(${cultivationListPageJson})];
 </script>
-<script src="/js/cultivation-list.js"></script>
+<!-- SSR bootstrap 계약이 바뀐 JS를 이전 브라우저 캐시와 섞지 않습니다. -->
+<script th:src="@{/js/cultivation-list.js(v=${'ssr-list-v2'})}"></script>
 <script src="/js/msh-select.js"></script>
 
 </body>
