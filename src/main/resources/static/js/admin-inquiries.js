@@ -168,3 +168,11 @@ async function submitAdminReply(event) {
 }
 
 loadInquiries(0);
+
+// 대시보드의 "최근 미답변 문의"에서 특정 문의를 클릭해 들어온 경우 바로 상세 열기
+(function openInquiryFromQueryParam() {
+    var openId = new URLSearchParams(window.location.search).get('open');
+    if (openId) {
+        openInquiryDetail(Number(openId));
+    }
+})();
