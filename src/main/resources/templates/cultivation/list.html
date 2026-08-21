@@ -353,11 +353,13 @@
         var wrap = document.getElementById('ms-type-list');
         wrap.innerHTML = '';
         SENSOR_TYPES.forEach(function (t) {
-            var row = document.createElement('label');
+            var row = document.createElement('div');
             row.className = 'sensor-type-check-row';
             row.innerHTML =
+                '<label class="st-checkbox-label">' +
                 '<input type="checkbox" data-sensor-type-id="' + t.id + '" onchange="toggleSensorTypeRow(this)" />' +
                 '<span>' + t.type + ' (' + t.valueUnit + ')</span>' +
+                '</label>' +
                 '<input type="number" class="st-min" placeholder="최소" disabled oninput="clearThresholdValidation(this)" />' +
                 '<input type="number" class="st-max" placeholder="최대" disabled oninput="clearThresholdValidation(this)" />' +
                 '<button type="button" class="st-validate-btn" onclick="validateThreshold(this)" disabled>검증</button>' +
