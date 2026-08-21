@@ -248,7 +248,7 @@ input:focus {
     box-shadow: 4px 4px 0 var(--cream-200);
 }
 
-.btn-outline {
+.btn.btn-outline {
     box-shadow: none;
 }
 
