@@ -187,9 +187,6 @@ body {
     cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
-.btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
-.btn-primary:hover { background: var(--sage-600); }
-
 /* ---- sensor select list ---- */
 .sensor-select-list {
     display: flex;

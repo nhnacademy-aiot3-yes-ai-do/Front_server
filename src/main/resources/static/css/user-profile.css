@@ -237,11 +237,5 @@ body {
     transition: background 0.15s ease;
 }
 
-.btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
-.btn-primary:hover { background: var(--sage-600); }
-
-.btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); }
-.btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
-
-.btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn-danger { border-color: var(--danger); }
 .btn-danger:hover { background: #a5473c; }
