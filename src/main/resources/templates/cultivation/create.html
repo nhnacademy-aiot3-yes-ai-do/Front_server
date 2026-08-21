@@ -127,7 +127,8 @@
 <script th:inline="javascript">
     var mushroomsData = [(${mushroomsJson})];
 </script>
-<script src="/js/cultivation-create.js"></script>
+<!-- SSR bootstrap 계약이 바뀐 JS를 이전 브라우저 캐시와 섞지 않습니다. -->
+<script th:src="@{/js/cultivation-create.js(v=${'ssr-create-v2'})}"></script>
 
 </body>
 </html>
