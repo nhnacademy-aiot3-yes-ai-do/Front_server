@@ -6,6 +6,7 @@ import org.springframework.http.CacheControl;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import site.yesaido.frontserver.logging.SensorBffCompletionLoggingInterceptor;
 import site.yesaido.frontserver.util.LoginCheckInterceptor;
 
 import java.util.concurrent.TimeUnit;
@@ -14,10 +15,12 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
     private final LoginCheckInterceptor interceptor;
+    private final SensorBffCompletionLoggingInterceptor sensorBffCompletionLoggingInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(interceptor);
+        registry.addInterceptor(sensorBffCompletionLoggingInterceptor);
     }
 
     @Override
