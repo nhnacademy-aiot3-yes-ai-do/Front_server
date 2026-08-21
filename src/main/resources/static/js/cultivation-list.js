@@ -121,8 +121,19 @@ function loadSensorTypes() {
         })
         .then(function (data) {
             SENSOR_TYPES = data.sensorTypeInfoResponses || [];
+            refreshOpenSensorTypeCheckList();
         })
-        .catch(function () { SENSOR_TYPES = []; });
+        .catch(function () {
+            SENSOR_TYPES = [];
+            refreshOpenSensorTypeCheckList();
+        });
+}
+
+function refreshOpenSensorTypeCheckList() {
+    var sensorModal = document.getElementById('modal-sensor');
+    if (sensorModal.classList.contains('is-open')) {
+        renderSensorTypeCheckList();
+    }
 }
 
 // 센서는 재배지 단위 API라, 내가 가진 재배지마다 조회해서 합침
