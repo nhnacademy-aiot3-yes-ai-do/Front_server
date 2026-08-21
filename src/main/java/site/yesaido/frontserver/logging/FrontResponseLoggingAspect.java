@@ -12,10 +12,10 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.ClassUtils;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 
+import java.lang.reflect.RecordComponent;
 import java.util.Collection;
+import java.util.Locale;
 
 @Aspect
 @Component
@@ -68,13 +68,36 @@ public class FrontResponseLoggingAspect {
         if (body == null) {
             return "body_null=true";
         }
-        if (body instanceof SensorTypeInfoListResponse response) {
-            return collectionSummary("SensorTypeInfoListResponse", "sensor_type", response.sensorTypeInfoResponses());
+
+        String bodyType = body.getClass().getSimpleName();
+        String summary = "body_type=" + bodyType + " body_null=false";
+        if (!body.getClass().isRecord()) {
+            return summary;
         }
-        if (body instanceof MushroomReferenceInfoListResponse response) {
-            return collectionSummary("MushroomReferenceInfoListResponse", "mushroom_reference", response.mushroomReferenceInfoResponses());
+
+        StringBuilder summaryWithCollections = new StringBuilder(summary);
+        for (RecordComponent component : body.getClass().getRecordComponents()) {
+            if (!Collection.class.isAssignableFrom(component.getType())) {
+                continue;
+            }
+
+            try {
+                Collection<?> values = (Collection<?>) component.getAccessor().invoke(body);
+                summaryWithCollections.append(' ')
+                        .append(collectionSummary(collectionName(component.getName()), values));
+            } catch (ReflectiveOperationException exception) {
+                continue;
+            }
         }
-        return "body_type=" + body.getClass().getSimpleName() + " body_null=false";
+
+        return summaryWithCollections.toString();
+    }
+
+    private String collectionName(String componentName) {
+        String nameWithoutResponseSuffix = componentName.replaceFirst("(?:Info)?Responses$", "");
+        return nameWithoutResponseSuffix
+                .replaceAll("([a-z0-9])([A-Z])", "$1_$2")
+                .toLowerCase(Locale.ROOT);
     }
 
     private boolean isViewName(ProceedingJoinPoint joinPoint, Object result) {
@@ -98,10 +121,8 @@ public class FrontResponseLoggingAspect {
                 || !AnnotatedElementUtils.hasAnnotation(methodSignature.getMethod(), ResponseBody.class);
     }
 
-    private String collectionSummary(String bodyType, String collectionName, Collection<?> values) {
-        return "body_type=" + bodyType
-                + " body_null=false "
-                + collectionName + "_list_null=" + (values == null)
+    private String collectionSummary(String collectionName, Collection<?> values) {
+        return collectionName + "_list_null=" + (values == null)
                 + " " + collectionName + "_count=" + (values == null ? "null" : values.size());
     }
 
