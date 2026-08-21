@@ -215,7 +215,7 @@ body {
 
 .btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }
 
-.btn-outline { box-shadow: none; }
+.btn.btn-outline { box-shadow: none; }
 
 /* ===== 텔레그램/디스코드 연동 카드 ===== */
 .integration-list .settings-row + .settings-row {

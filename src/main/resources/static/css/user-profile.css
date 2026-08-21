@@ -237,5 +237,5 @@ body {
     transition: background 0.15s ease;
 }
 
-.btn-danger { border-color: var(--danger); }
-.btn-danger:hover { background: #a5473c; }
+.btn.btn-danger { border-color: var(--danger); }
+.btn.btn-danger:hover { background: #a5473c; }
