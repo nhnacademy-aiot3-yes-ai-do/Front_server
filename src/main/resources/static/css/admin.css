@@ -616,7 +616,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 
 .btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }
 
-.btn-outline { box-shadow: none; }
+.btn.btn-outline { box-shadow: none; }
 
 .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 10px; box-shadow: 2px 2px 0 rgba(63, 42, 29, 0.12); }
 .btn-sm:active { box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }

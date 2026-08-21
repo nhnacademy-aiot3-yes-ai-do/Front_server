@@ -42,7 +42,7 @@ body {
 
 .btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }
 
-.btn-outline { box-shadow: none; }
+.btn.btn-outline { box-shadow: none; }
 
 /* ===== 공통 헤딩 ===== */
 /* 목록/작성/상세를 한 페이지 안에서 패널 전환으로 보여주는 스택 컨테이너 */
