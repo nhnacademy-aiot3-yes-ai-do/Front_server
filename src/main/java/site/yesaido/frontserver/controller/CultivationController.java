@@ -25,6 +25,8 @@ import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateRe
 import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @LoginRequired
@@ -106,6 +108,13 @@ public class CultivationController {
         model.addAttribute("membersJson", viewJsonWriter.toJson(members == null ? List.of() : members));
         model.addAttribute("photosJson", viewJsonWriter.toJson(photos == null ? List.of() : photos));
         model.addAttribute("myRole", cultivation != null ? cultivation.myRole() : null);
+
+        // 재배 현황 카드의 "생육 일수" 표시용 (시작일부터 오늘까지, 시작일을 1일차로 계산)
+        Long growthDays = (cultivation != null && cultivation.startedAt() != null)
+                ? ChronoUnit.DAYS.between(cultivation.startedAt().toLocalDate(), LocalDate.now()) + 1
+                : null;
+        model.addAttribute("growthDays", growthDays);
+
         return "dashboard/main";
     }
 
