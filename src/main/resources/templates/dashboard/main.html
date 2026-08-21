@@ -44,6 +44,8 @@
                     </button>
                 </div>
 
+                <div class="cultivation-name" th:if="${cultivation != null}" th:text="${cultivation.name}">양송이 1번 재배지</div>
+
                 <div class="growth-days-box" th:if="${growthDays != null}">
                     <i data-lucide="calendar"></i>
                     <div>
@@ -173,7 +175,7 @@
             <div class="stats-col">
                 <div class="card env-stats-card env-stats-card--main">
                     <div>
-                        <div class="card-title"><span class="env-stats-sub">최근 24시간 평균</span></div>
+                        <div class="card-title">환경 통계<span class="env-stats-sub">최근 24시간 평균</span></div>
                         <div class="env-stat-grid">
                             <div class="env-stat-item">
                                 <span class="env-stat-icon-circle"><i data-lucide="thermometer" class="env-stat-icon"></i></span>
@@ -201,6 +203,7 @@
 
                 <div class="card chart-card">
                     <div class="chart-card-header">
+                        <span class="card-title" style="padding:0;">센서 그래프</span>
                         <div class="msh-select msh-select--chart" id="chart-sensor-select" data-onchange="handleChartSensorChange">
                             <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
                                 <span class="msh-select-value">등록된 센서 없음</span>
