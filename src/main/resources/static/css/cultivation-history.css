@@ -192,12 +192,6 @@ body {
     transition: background 0.15s ease;
 }
 
-.btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
-.btn-primary:hover { background: var(--sage-600); }
-
-.btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); }
-.btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
-
 /* ===== 재배 이력 비교 모달 ===== */
 .modal-overlay {
     display: none;
@@ -208,8 +202,6 @@ body {
     justify-content: center;
     z-index: 100;
 }
-
-.modal-overlay.is-open { display: flex; }
 
 .modal-box {
     background: var(--cream-100);
@@ -250,8 +242,6 @@ body {
     margin: 0 0 16px;
     line-height: 1.6;
 }
-
-.modal-field { margin-bottom: 16px; }
 
 .modal-field label {
     display: block;

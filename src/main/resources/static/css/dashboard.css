@@ -978,26 +978,6 @@ body {
     box-shadow: none;
 }
 
-.btn-primary {
-    background: var(--sage-500);
-    color: #fff;
-    border-color: var(--sage-600);
-}
-
-.btn-primary:hover {
-    background: var(--sage-600);
-}
-
-.btn-outline {
-    background: transparent;
-    color: var(--brown-700);
-    border-color: var(--brown-300);
-}
-
-.btn-outline:hover {
-    background: rgba(139, 94, 60, 0.08);
-}
-
 /* dropdown panel (담당자 관리 / 알림) */
 .dropdown-panel {
     display: none;
@@ -1468,10 +1448,6 @@ body {
     cursor: url("/images/cursor-default.png") 3 2, pointer;
 }
 
-.modal-field {
-    margin-bottom: 16px;
-}
-
 .modal-field label {
     display: block;
     font-size: 13px;
@@ -1489,13 +1465,6 @@ body {
     font-family: inherit;
     background: #fff;
     resize: vertical;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 8px;
 }
 
 .modal-actions .btn {

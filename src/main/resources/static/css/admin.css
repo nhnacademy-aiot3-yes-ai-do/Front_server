@@ -616,14 +616,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 
 .btn:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }
 
-.btn-primary { background: var(--sage-500); color: #fff; border-color: var(--sage-600); }
-.btn-primary:hover { background: var(--sage-600); }
-
-.btn-outline { background: transparent; color: var(--brown-700); border-color: var(--brown-300); box-shadow: none; }
-.btn-outline:hover { background: rgba(139, 94, 60, 0.08); }
-
-.btn-danger { background: var(--danger); color: #fff; border-color: var(--danger-dark); }
-.btn-danger:hover { background: var(--danger-dark); }
+.btn-outline { box-shadow: none; }
 
 .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 10px; box-shadow: 2px 2px 0 rgba(63, 42, 29, 0.12); }
 .btn-sm:active { box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }
@@ -639,23 +632,6 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     z-index: 100;
 }
 
-.modal-overlay.is-open { display: flex; }
-
-.modal-box {
-    background: rgba(251, 246, 234, 0.94);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 2px solid rgba(139, 94, 60, 0.22);
-    border-radius: 20px;
-    padding: 28px;
-    width: 100%;
-    max-width: 420px;
-    max-height: 86vh;
-    overflow-y: auto;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 10px 30px rgba(63, 42, 29, 0.25);
-    position: relative;
-}
-
 .modal-box-wide { max-width: 40rem; }
 .modal-box-xl { max-width: 68rem; }
 
@@ -667,14 +643,6 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     border: none;
     cursor: url("/images/cursor-default.png") 3 2, pointer;
     color: var(--brown-500);
-}
-
-.modal-title {
-    font-family: "Gaegu", inherit;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--brown-900);
-    margin: 0 0 6px;
 }
 
 .modal-sub {
@@ -691,8 +659,6 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 }
 
 /* ===== 버섯 등록/수정 폼 ===== */
-.modal-field { margin-bottom: 16px; }
-
 .modal-field label {
     display: block;
     font-size: 0.85rem;
