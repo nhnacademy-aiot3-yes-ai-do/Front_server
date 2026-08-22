@@ -10,35 +10,26 @@ function latestSensorValuesOf(payload) {
         : [];
 }
 
-function loadSensorPanel() {
-    return Promise.all([
-        fetch('/cultivations/' + CULTIVATION_ID + '/sensors').then(function (res) { return res.ok ? res.json() : { sensors: [] }; }),
-        fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values').then(function (res) {
-            return res.ok ? res.json() : { latestSensorValueResponses: [] };
-        })
-    ]).then(function (results) {
-        var sensorsRes = results[0];
-        var latestList = latestSensorValuesOf(results[1]);
+function initializeSensorBootstrap() {
+    var sensorsRes = SENSORS_BOOTSTRAP || { sensors: [] };
+    var latestList = latestSensorValuesOf(SENSOR_VALUES_BOOTSTRAP);
 
-        SENSOR_DEVICES_BY_TYPE = {};
-        CANONICAL_SENSOR_TYPES.forEach(function (t) { SENSOR_DEVICES_BY_TYPE[t] = []; });
-        (sensorsRes.sensors || []).forEach(function (s) {
-            (s.sensorTypes || []).forEach(function (t) {
-                if (!SENSOR_DEVICES_BY_TYPE[t.type]) SENSOR_DEVICES_BY_TYPE[t.type] = [];
-                SENSOR_DEVICES_BY_TYPE[t.type].push({ deviceEui: s.deviceEui, deviceName: s.deviceName });
-            });
+    SENSOR_DEVICES_BY_TYPE = {};
+    CANONICAL_SENSOR_TYPES.forEach(function (t) { SENSOR_DEVICES_BY_TYPE[t] = []; });
+    (sensorsRes.sensors || []).forEach(function (s) {
+        (s.sensorTypes || []).forEach(function (t) {
+            if (!SENSOR_DEVICES_BY_TYPE[t.type]) SENSOR_DEVICES_BY_TYPE[t.type] = [];
+            SENSOR_DEVICES_BY_TYPE[t.type].push({ deviceEui: s.deviceEui, deviceName: s.deviceName });
         });
-
-        LATEST_VALUES = {};
-        (latestList || []).forEach(function (v) {
-            LATEST_VALUES[v.sensorType + '|' + v.deviceEui] = { value: v.value, unit: v.unit };
-        });
-
-        renderSensorPanel();
-        populateChartSensorSelect();
-    }).catch(function () {
-        // 실패해도 카드가 '등록된 센서 없음' 상태로 남으므로 조용히 무시
     });
+
+    LATEST_VALUES = {};
+    (latestList || []).forEach(function (v) {
+        LATEST_VALUES[v.sensorType + '|' + v.deviceEui] = { value: v.value, unit: v.unit };
+    });
+
+    renderSensorPanel();
+    populateChartSensorSelect();
 }
 
 function formatSensorValue(entry) {
@@ -1007,4 +998,4 @@ function deletePhoto(photoId) {
 
 renderPhotoThumbs();
 renderPhotoUploadPreview();
-loadSensorPanel();
+initializeSensorBootstrap();

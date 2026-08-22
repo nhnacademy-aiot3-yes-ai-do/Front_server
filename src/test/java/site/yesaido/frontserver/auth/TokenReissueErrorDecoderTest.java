@@ -1,8 +1,8 @@
 package site.yesaido.frontserver.auth;
 
+import feign.FeignException;
 import feign.Request;
 import feign.Response;
-import feign.FeignException;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
