@@ -35,7 +35,7 @@
                         <span>등록된 사진이 없습니다</span>
                     </div>
                     <img id="photo-preview-img"
-                         th:src="${photos != null and !photos.isEmpty()} ? ${photos[0].uri} : ''"
+                         th:src="${photos != null and !photos.isEmpty()} ? @{'/cultivations/' + ${cultivation.cultivationId} + '/photos/' + ${photos[0].photoId} + '/raw'} : ''"
                          th:style="${photos != null and !photos.isEmpty()} ? 'display:block;' : 'display:none;'"
                          alt="재배 사진" />
 

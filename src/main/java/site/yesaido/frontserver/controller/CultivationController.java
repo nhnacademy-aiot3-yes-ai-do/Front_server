@@ -224,6 +224,12 @@ public class CultivationController {
         return cultivationClient.deletePhoto(cultivationId, photoId);
     }
 
+    @GetMapping("/{cultivation-id}/photos/{photo-id}/raw")
+    ResponseEntity<byte[]> getPhotoRaw(@PathVariable("cultivation-id") Long cultivationId,
+                                       @PathVariable("photo-id") Long photoId){
+        return cultivationClient.getPhotoRaw(cultivationId, photoId);
+    }
+
     // Helper Method
     private CultivationSensorListResponse fetchSensorsOrEmpty(long cultivationId) {
         try {
