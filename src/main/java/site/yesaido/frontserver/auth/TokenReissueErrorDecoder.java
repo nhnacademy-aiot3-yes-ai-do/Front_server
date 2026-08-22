@@ -62,11 +62,12 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
         }
 
         try (InputStream inputStream = response.body().asInputStream()) {
-            byte[] bytes = readReplayableErrorBody(inputStream);
-            if (bytes == null) {
+            ReplayableBodyRead bodyRead = readReplayableErrorBody(inputStream);
+            if (bodyRead.bodyLimitExceeded()) {
                 return new DormantResponseCheck(null, response.toBuilder().body(new byte[0]).build(), true);
             }
 
+            byte[] bytes = bodyRead.body();
             Response replayableResponse = response.toBuilder().body(bytes).build();
             String body = new String(bytes, StandardCharsets.UTF_8);
 
@@ -86,7 +87,7 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
         }
     }
 
-    private byte[] readReplayableErrorBody(InputStream inputStream) throws IOException {
+    private ReplayableBodyRead readReplayableErrorBody(InputStream inputStream) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream(Math.min(MAX_REPLAYABLE_ERROR_BODY_BYTES, ERROR_BODY_READ_BUFFER_BYTES));
         byte[] buffer = new byte[ERROR_BODY_READ_BUFFER_BYTES];
 
@@ -94,13 +95,16 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
             int remaining = MAX_REPLAYABLE_ERROR_BODY_BYTES - output.size();
             int bytesRead = inputStream.read(buffer, 0, Math.min(buffer.length, remaining + 1));
             if (bytesRead == -1) {
-                return output.toByteArray();
+                return new ReplayableBodyRead(output.toByteArray(), false);
             }
             if (bytesRead > remaining) {
-                return null;
+                return new ReplayableBodyRead(new byte[0], true);
             }
             output.write(buffer, 0, bytesRead);
         }
+    }
+
+    private record ReplayableBodyRead(byte[] body, boolean bodyLimitExceeded) {
     }
 
     private record DormantResponseCheck(
