@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -76,6 +77,9 @@ class CultivationControllerTest {
 
     @MockitoBean
     private AiClient aiClient;
+
+    @MockitoBean
+    private MeterRegistry meterRegistry;
 
     @Test
     @DisplayName("로그인 안 한 상태로 목록 접근 시 로그인 페이지로 리다이렉트")
