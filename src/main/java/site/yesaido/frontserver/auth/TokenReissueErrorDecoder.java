@@ -61,15 +61,14 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
             return new DormantResponseCheck(null, response, false);
         }
 
-        try (InputStream inputStream = response.body().asInputStream()) {
-            ReplayableBodyRead bodyRead = readReplayableErrorBody(inputStream);
+        try {
+            ReplayableBodyRead bodyRead = readReplayableErrorBody(response);
             if (bodyRead.bodyLimitExceeded()) {
-                return new DormantResponseCheck(null, response.toBuilder().body(new byte[0]).build(), true);
+                return new DormantResponseCheck(null, bodyRead.replayableResponse(), true);
             }
 
-            byte[] bytes = bodyRead.body();
-            Response replayableResponse = response.toBuilder().body(bytes).build();
-            String body = new String(bytes, StandardCharsets.UTF_8);
+            Response replayableResponse = bodyRead.replayableResponse();
+            String body = bodyRead.body();
 
             if (body.contains("휴면") || body.contains("DORMANT")) {
                 ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
@@ -87,39 +86,35 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
         }
     }
 
-    private ReplayableBodyRead readReplayableErrorBody(InputStream inputStream) throws IOException {
-        ByteArrayOutputStream output = new ByteArrayOutputStream(Math.min(MAX_REPLAYABLE_ERROR_BODY_BYTES, ERROR_BODY_READ_BUFFER_BYTES));
-        byte[] buffer = new byte[ERROR_BODY_READ_BUFFER_BYTES];
+    private ReplayableBodyRead readReplayableErrorBody(Response response) throws IOException {
+        try (InputStream inputStream = response.body().asInputStream()) {
+            ByteArrayOutputStream output = new ByteArrayOutputStream(Math.min(MAX_REPLAYABLE_ERROR_BODY_BYTES, ERROR_BODY_READ_BUFFER_BYTES));
+            byte[] buffer = new byte[ERROR_BODY_READ_BUFFER_BYTES];
 
-        while (true) {
-            int remaining = MAX_REPLAYABLE_ERROR_BODY_BYTES - output.size();
-            int bytesRead = inputStream.read(buffer, 0, Math.min(buffer.length, remaining + 1));
-            if (bytesRead == -1) {
-                return new ReplayableBodyRead(output.toByteArray(), false);
+            while (true) {
+                int remaining = MAX_REPLAYABLE_ERROR_BODY_BYTES - output.size();
+                int bytesRead = inputStream.read(buffer, 0, Math.min(buffer.length, remaining + 1));
+                if (bytesRead == -1) {
+                    byte[] bytes = output.toByteArray();
+                    return new ReplayableBodyRead(
+                            response.toBuilder().body(bytes).build(),
+                            new String(bytes, StandardCharsets.UTF_8),
+                            false
+                    );
+                }
+                if (bytesRead > remaining) {
+                    return new ReplayableBodyRead(response.toBuilder().body(new byte[0]).build(), "", true);
+                }
+                output.write(buffer, 0, bytesRead);
             }
-            if (bytesRead > remaining) {
-                return new ReplayableBodyRead(new byte[0], true);
-            }
-            output.write(buffer, 0, bytesRead);
         }
     }
 
-    private static final class ReplayableBodyRead {
-        private final byte[] body;
-        private final boolean bodyLimitExceeded;
-
-        private ReplayableBodyRead(byte[] body, boolean bodyLimitExceeded) {
-            this.body = body;
-            this.bodyLimitExceeded = bodyLimitExceeded;
-        }
-
-        private byte[] body() {
-            return body;
-        }
-
-        private boolean bodyLimitExceeded() {
-            return bodyLimitExceeded;
-        }
+    private record ReplayableBodyRead(
+            Response replayableResponse,
+            String body,
+            boolean bodyLimitExceeded
+    ) {
     }
 
     private record DormantResponseCheck(
