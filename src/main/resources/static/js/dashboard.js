@@ -1002,4 +1002,5 @@ function photoRawUrl(photoId) {
 
 renderPhotoThumbs();
 renderPhotoUploadPreview();
+renderMainPhoto();
 initializeSensorBootstrap();
