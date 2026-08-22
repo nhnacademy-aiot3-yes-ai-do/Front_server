@@ -26,17 +26,20 @@ public class SensorController {
 
     @GetMapping("/mushroom-references")
     public ResponseEntity<MushroomReferenceInfoListResponse> getMushroomReferences() {
-        return sensorClient.getAllMushroomReferences();
+        ResponseEntity<MushroomReferenceInfoListResponse> upstream = sensorClient.getAllMushroomReferences();
+        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
     }
 
     @GetMapping("/sensor-types")
     public ResponseEntity<SensorTypeInfoListResponse> getSensorTypes() {
-        return sensorClient.getSensorTypes();
+        ResponseEntity<SensorTypeInfoListResponse> upstream = sensorClient.getSensorTypes();
+        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
     }
 
     @GetMapping("/{cultivation-id}/sensors")
     public ResponseEntity<CultivationSensorListResponse> getSensors(@PathVariable("cultivation-id") Long cultivationId) {
-        return sensorClient.getSensors(cultivationId);
+        ResponseEntity<CultivationSensorListResponse> upstream = sensorClient.getSensors(cultivationId);
+        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
     }
 
     @PostMapping("/{cultivation-id}/sensors")
@@ -53,7 +56,8 @@ public class SensorController {
 
     @GetMapping("/{cultivation-id}/sensor-values")
     public ResponseEntity<LatestSensorValueListResponse> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId) {
-        return sensorClient.getLatestSensorValues(cultivationId);
+        ResponseEntity<LatestSensorValueListResponse> upstream = sensorClient.getLatestSensorValues(cultivationId);
+        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
     }
 
     @PostMapping("/sensor-validation")

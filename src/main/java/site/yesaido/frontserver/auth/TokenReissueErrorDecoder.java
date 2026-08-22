@@ -37,11 +37,11 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
 
     @Override
     public Exception decode(String methodKey, Response response) {
-
-        DormantUserException dormantUserException = checkDormantUser(response);
-        if(dormantUserException != null){
-            return dormantUserException;
+        DormantResponseCheck dormantResponseCheck = inspectDormantResponse(response);
+        if (dormantResponseCheck.exception() != null) {
+            return dormantResponseCheck.exception();
         }
+        response = dormantResponseCheck.replayableResponse();
 
         if (response.status() != 401 || methodKey.contains("#reissue")) {
             return defaultDecoder.decode(methodKey, response);
@@ -50,25 +50,32 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
         return handleReissue(methodKey, response);
     }
 
-
-    private DormantUserException checkDormantUser(Response response){
-        if(response.body() == null) return null;
+    private DormantResponseCheck inspectDormantResponse(Response response) {
+        if (response.body() == null) {
+            return new DormantResponseCheck(null, response);
+        }
 
         try {
             byte[] bytes = feign.Util.toByteArray(response.body().asInputStream());
+            Response replayableResponse = response.toBuilder().body(bytes).build();
             String body = new String(bytes, StandardCharsets.UTF_8);
 
-            if ((body.contains("휴면") || body.contains("DORMANT"))) {
+            if (body.contains("휴면") || body.contains("DORMANT")) {
                 ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
                 String email = attr != null ? attr.getRequest().getParameter("email") : "";
-                return new DormantUserException(email != null ? email : "", "휴면 계정입니다. 이메일 인증을 진행해 주세요.");
+                return new DormantResponseCheck(
+                        new DormantUserException(email != null ? email : "", "휴면 계정입니다. 이메일 인증을 진행해 주세요."),
+                        replayableResponse
+                );
             }
 
-            response.toBuilder().body(bytes).build();
+            return new DormantResponseCheck(null, replayableResponse);
         } catch (Exception ignored) {
-            // Ignore parse error
+            return new DormantResponseCheck(null, response);
         }
-        return null;
+    }
+
+    private record DormantResponseCheck(DormantUserException exception, Response replayableResponse) {
     }
 
     private Exception handleReissue(String methodKey, Response response) {
