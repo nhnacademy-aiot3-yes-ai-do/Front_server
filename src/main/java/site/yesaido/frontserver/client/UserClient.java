@@ -1,7 +1,10 @@
 package site.yesaido.frontserver.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.user.request.*;

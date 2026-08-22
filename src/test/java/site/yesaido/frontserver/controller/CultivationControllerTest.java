@@ -30,12 +30,7 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserS
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorTypeResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.EnvironmentSettingResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.*;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 import tools.jackson.databind.ObjectMapper;
@@ -43,7 +38,6 @@ import tools.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -180,7 +174,7 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("재배 상세 조회 성공 - 멤버·사진 wrapper body가 없는 경우")
+    @DisplayName("재배 상세 조회 성공 - 멤버·사진·센서 wrapper body가 없는 경우")
     void detailReturnsDashboardViewWhenListWrapperBodiesAreNull() throws Exception {
         Long cultivationId = 1L;
         CultivationDetailResponse detail = new CultivationDetailResponse(
@@ -190,13 +184,17 @@ class CultivationControllerTest {
         when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(detail));
         when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(null));
         when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(null));
+        when(sensorClient.getSensors(cultivationId)).thenReturn(ResponseEntity.ok(null));
+        when(sensorClient.getLatestSensorValues(cultivationId)).thenReturn(ResponseEntity.ok(null));
 
         mockMvc.perform(get("/cultivations/{cultivation-id}", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("dashboard/main"))
                 .andExpect(model().attribute("cultivation", detail))
                 .andExpect(model().attribute("membersJson", "[]"))
-                .andExpect(model().attribute("photosJson", "[]"));
+                .andExpect(model().attribute("photosJson", "[]"))
+                .andExpect(model().attribute("sensorsJson", "{\"sensors\":[],\"environmentSettings\":[]}"))
+                .andExpect(model().attribute("sensorValuesJson", "{\"latestSensorValueResponses\":[]}"));
     }
 
     @Test

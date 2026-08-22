@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoResponse;
 
-import java.util.List;
 import java.lang.reflect.Method;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
