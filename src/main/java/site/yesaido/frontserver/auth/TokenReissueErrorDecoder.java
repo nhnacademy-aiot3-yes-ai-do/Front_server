@@ -104,7 +104,22 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
         }
     }
 
-    private record ReplayableBodyRead(byte[] body, boolean bodyLimitExceeded) {
+    private static final class ReplayableBodyRead {
+        private final byte[] body;
+        private final boolean bodyLimitExceeded;
+
+        private ReplayableBodyRead(byte[] body, boolean bodyLimitExceeded) {
+            this.body = body;
+            this.bodyLimitExceeded = bodyLimitExceeded;
+        }
+
+        private byte[] body() {
+            return body;
+        }
+
+        private boolean bodyLimitExceeded() {
+            return bodyLimitExceeded;
+        }
     }
 
     private record DormantResponseCheck(
