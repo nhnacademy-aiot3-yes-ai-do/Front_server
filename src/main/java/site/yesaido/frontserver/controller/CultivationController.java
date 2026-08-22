@@ -25,6 +25,7 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserS
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.ViewJsonWriter;
@@ -115,6 +116,8 @@ public class CultivationController {
 
         MemberListResponse memberListResponse = cultivationClient.getMembers(cultivationId).getBody();
         PhotoListResponse photoListResponse = cultivationClient.getPhoto(cultivationId).getBody();
+        CultivationSensorListResponse sensorListResponse = sensorClient.getSensors(cultivationId).getBody();
+        LatestSensorValueListResponse latestSensorValueListResponse = sensorClient.getLatestSensorValues(cultivationId).getBody();
 
         List<MemberResponse> members = memberListResponse == null
                 ? List.of()
@@ -122,12 +125,20 @@ public class CultivationController {
         List<PhotoResponse> photos = photoListResponse == null
                 ? List.of()
                 : photoListResponse.photoUploadResponses();
+        CultivationSensorListResponse sensors = sensorListResponse == null
+                ? new CultivationSensorListResponse(List.of(), List.of())
+                : sensorListResponse;
+        LatestSensorValueListResponse latestSensorValues = latestSensorValueListResponse == null
+                ? new LatestSensorValueListResponse(List.of())
+                : latestSensorValueListResponse;
 
         // dashboard/main.html도 members/photos를 th:inline="javascript"로 통째로 직렬화함.
         // MemberResponse.joinedAt / PhotoResponse.updatedAt이 LocalDateTime이라 위와 같은 이유로 문자열 변환 필요.
         model.addAttribute("cultivation", cultivation);
         model.addAttribute("membersJson", viewJsonWriter.toJson(members == null ? List.of() : members));
         model.addAttribute("photosJson", viewJsonWriter.toJson(photos == null ? List.of() : photos));
+        model.addAttribute("sensorsJson", viewJsonWriter.toScriptJson(sensors));
+        model.addAttribute("sensorValuesJson", viewJsonWriter.toScriptJson(latestSensorValues));
         model.addAttribute("myRole", cultivation != null ? cultivation.myRole() : null);
 
         // 재배 현황 카드의 "생육 일수" 표시용 (시작일부터 오늘까지, 시작일을 1일차로 계산)
