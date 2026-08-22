@@ -17,11 +17,17 @@ import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.exception.DormantUserException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Component
 public class TokenReissueErrorDecoder implements ErrorDecoder {
+    private static final int MAX_REPLAYABLE_ERROR_BODY_BYTES = 64 * 1024;
+    private static final int ERROR_BODY_READ_BUFFER_BYTES = 4 * 1024;
+
     private final UserClient userClient;
     private final RequestTokenHolder requestTokenHolder;
     private final AuthCookieProvider authCookieProvider;
@@ -37,38 +43,71 @@ public class TokenReissueErrorDecoder implements ErrorDecoder {
 
     @Override
     public Exception decode(String methodKey, Response response) {
-
-        DormantUserException dormantUserException = checkDormantUser(response);
-        if(dormantUserException != null){
-            return dormantUserException;
+        DormantResponseCheck dormantResponseCheck = inspectDormantResponse(response);
+        if (dormantResponseCheck.exception() != null) {
+            return dormantResponseCheck.exception();
         }
+        response = dormantResponseCheck.replayableResponse();
 
-        if (response.status() != 401 || methodKey.contains("#reissue")) {
+        if (dormantResponseCheck.bodyLimitExceeded() || response.status() != 401 || methodKey.contains("#reissue")) {
             return defaultDecoder.decode(methodKey, response);
         }
 
         return handleReissue(methodKey, response);
     }
 
+    private DormantResponseCheck inspectDormantResponse(Response response) {
+        if (response.body() == null) {
+            return new DormantResponseCheck(null, response, false);
+        }
 
-    private DormantUserException checkDormantUser(Response response){
-        if(response.body() == null) return null;
-
-        try {
-            byte[] bytes = feign.Util.toByteArray(response.body().asInputStream());
-            String body = new String(bytes, StandardCharsets.UTF_8);
-
-            if ((body.contains("휴면") || body.contains("DORMANT"))) {
-                ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-                String email = attr != null ? attr.getRequest().getParameter("email") : "";
-                return new DormantUserException(email != null ? email : "", "휴면 계정입니다. 이메일 인증을 진행해 주세요.");
+        try (InputStream inputStream = response.body().asInputStream()) {
+            byte[] bytes = readReplayableErrorBody(inputStream);
+            if (bytes == null) {
+                return new DormantResponseCheck(null, response.toBuilder().body(new byte[0]).build(), true);
             }
 
-            response.toBuilder().body(bytes).build();
-        } catch (Exception ignored) {
-            // Ignore parse error
+            Response replayableResponse = response.toBuilder().body(bytes).build();
+            String body = new String(bytes, StandardCharsets.UTF_8);
+
+            if (body.contains("휴면") || body.contains("DORMANT")) {
+                ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+                String email = attr != null ? attr.getRequest().getParameter("email") : "";
+                return new DormantResponseCheck(
+                        new DormantUserException(email != null ? email : "", "휴면 계정입니다. 이메일 인증을 진행해 주세요."),
+                        replayableResponse,
+                        false
+                );
+            }
+
+            return new DormantResponseCheck(null, replayableResponse, false);
+        } catch (IOException ignored) {
+            return new DormantResponseCheck(null, response.toBuilder().body(new byte[0]).build(), true);
         }
-        return null;
+    }
+
+    private byte[] readReplayableErrorBody(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream(Math.min(MAX_REPLAYABLE_ERROR_BODY_BYTES, ERROR_BODY_READ_BUFFER_BYTES));
+        byte[] buffer = new byte[ERROR_BODY_READ_BUFFER_BYTES];
+
+        while (true) {
+            int remaining = MAX_REPLAYABLE_ERROR_BODY_BYTES - output.size();
+            int bytesRead = inputStream.read(buffer, 0, Math.min(buffer.length, remaining + 1));
+            if (bytesRead == -1) {
+                return output.toByteArray();
+            }
+            if (bytesRead > remaining) {
+                return null;
+            }
+            output.write(buffer, 0, bytesRead);
+        }
+    }
+
+    private record DormantResponseCheck(
+            DormantUserException exception,
+            Response replayableResponse,
+            boolean bodyLimitExceeded
+    ) {
     }
 
     private Exception handleReissue(String methodKey, Response response) {

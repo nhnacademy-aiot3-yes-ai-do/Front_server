@@ -31,6 +31,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 
 @WebMvcTest(
         value = SensorController.class,
@@ -70,6 +71,19 @@ class SensorControllerTest {
     }
 
     @Test
+    void getMushroomReferencesDoesNotRelayUpstreamHeadersToBrowserResponse() throws Exception {
+        when(sensorClient.getAllMushroomReferences())
+                .thenReturn(ResponseEntity.ok()
+                        .header("X-Upstream-Only", "must-not-reach-browser")
+                        .body(new MushroomReferenceInfoListResponse(List.of())));
+
+        mockMvc.perform(get("/cultivations/mushroom-references").cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("X-Upstream-Only"))
+                .andExpect(jsonPath("$.mushroomReferenceInfoResponses").isArray());
+    }
+
+    @Test
     void getSensorTypesDelegatesToSensorClient() throws Exception {
         when(sensorClient.getSensorTypes())
                 .thenReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of())));
@@ -79,6 +93,19 @@ class SensorControllerTest {
                 .andExpect(jsonPath("$.sensorTypeInfoResponses").isArray());
 
         verify(sensorClient).getSensorTypes();
+    }
+
+    @Test
+    void getSensorTypesDoesNotRelayUpstreamHeadersToBrowserResponse() throws Exception {
+        when(sensorClient.getSensorTypes())
+                .thenReturn(ResponseEntity.ok()
+                        .header("X-Upstream-Only", "must-not-reach-browser")
+                        .body(new SensorTypeInfoListResponse(List.of())));
+
+        mockMvc.perform(get("/cultivations/sensor-types").cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("X-Upstream-Only"))
+                .andExpect(jsonPath("$.sensorTypeInfoResponses").isArray());
     }
 
     @Test
@@ -92,6 +119,19 @@ class SensorControllerTest {
                 .andExpect(jsonPath("$.environmentSettings").isArray());
 
         verify(sensorClient).getSensors(10L);
+    }
+
+    @Test
+    void getSensorsDoesNotRelayUpstreamHeadersToBrowserResponse() throws Exception {
+        when(sensorClient.getSensors(10L))
+                .thenReturn(ResponseEntity.ok()
+                        .header("X-Upstream-Only", "must-not-reach-browser")
+                        .body(new CultivationSensorListResponse(List.of(), List.of())));
+
+        mockMvc.perform(get("/cultivations/{cultivation-id}/sensors", 10L).cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("X-Upstream-Only"))
+                .andExpect(jsonPath("$.sensors").isArray());
     }
 
     @Test
@@ -132,5 +172,18 @@ class SensorControllerTest {
                 .andExpect(jsonPath("$.latestSensorValueResponses").isArray());
 
         verify(sensorClient).getLatestSensorValues(10L);
+    }
+
+    @Test
+    void getLatestSensorValuesDoesNotRelayUpstreamHeadersToBrowserResponse() throws Exception {
+        when(sensorClient.getLatestSensorValues(10L))
+                .thenReturn(ResponseEntity.ok()
+                        .header("X-Upstream-Only", "must-not-reach-browser")
+                        .body(new LatestSensorValueListResponse(List.of())));
+
+        mockMvc.perform(get("/cultivations/{cultivation-id}/sensor-values", 10L).cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("X-Upstream-Only"))
+                .andExpect(jsonPath("$.latestSensorValueResponses").isArray());
     }
 }
