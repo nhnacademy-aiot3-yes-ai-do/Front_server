@@ -1,6 +1,9 @@
 package site.yesaido.frontserver.controller;
 
+import feign.FeignException;
+import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -34,6 +37,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+@Slf4j
 @LoginRequired
 @Controller
 @RequiredArgsConstructor
@@ -45,6 +49,8 @@ public class CultivationController {
     private final UserClient userClient;
     private final AiClient aiClient;
     private final ViewJsonWriter viewJsonWriter;
+    // 애플리케이션의 각종 측정값을 등록하고 관리하는 저장소 및 관리자 라이브러리
+    private final MeterRegistry meterRegistry;
 
     @GetMapping
     public String list(Model model) {
@@ -110,14 +116,12 @@ public class CultivationController {
 
     @GetMapping("/{cultivation-id}")
     public String detail(@PathVariable("cultivation-id") Long cultivationId, Model model) {
-
-        // cultivationClient 3번 요청을 하는데, 하나의 meta data로 dto로 묶어서 받을 수 있게 나중에 리팩토링
         CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
 
         MemberListResponse memberListResponse = cultivationClient.getMembers(cultivationId).getBody();
         PhotoListResponse photoListResponse = cultivationClient.getPhoto(cultivationId).getBody();
-        CultivationSensorListResponse sensorListResponse = sensorClient.getSensors(cultivationId).getBody();
-        LatestSensorValueListResponse latestSensorValueListResponse = sensorClient.getLatestSensorValues(cultivationId).getBody();
+        CultivationSensorListResponse sensors = fetchSensorsOrEmpty(cultivationId);
+        LatestSensorValueListResponse latestSensorValues = fetchSensorValuesOrEmpty(cultivationId);
 
         List<MemberResponse> members = memberListResponse == null
                 ? List.of()
@@ -125,15 +129,7 @@ public class CultivationController {
         List<PhotoResponse> photos = photoListResponse == null
                 ? List.of()
                 : photoListResponse.photoUploadResponses();
-        CultivationSensorListResponse sensors = sensorListResponse == null
-                ? new CultivationSensorListResponse(List.of(), List.of())
-                : sensorListResponse;
-        LatestSensorValueListResponse latestSensorValues = latestSensorValueListResponse == null
-                ? new LatestSensorValueListResponse(List.of())
-                : latestSensorValueListResponse;
 
-        // dashboard/main.html도 members/photos를 th:inline="javascript"로 통째로 직렬화함.
-        // MemberResponse.joinedAt / PhotoResponse.updatedAt이 LocalDateTime이라 위와 같은 이유로 문자열 변환 필요.
         model.addAttribute("cultivation", cultivation);
         model.addAttribute("membersJson", viewJsonWriter.toJson(members == null ? List.of() : members));
         model.addAttribute("photosJson", viewJsonWriter.toJson(photos == null ? List.of() : photos));
@@ -141,7 +137,6 @@ public class CultivationController {
         model.addAttribute("sensorValuesJson", viewJsonWriter.toScriptJson(latestSensorValues));
         model.addAttribute("myRole", cultivation != null ? cultivation.myRole() : null);
 
-        // 재배 현황 카드의 "생육 일수" 표시용 (시작일부터 오늘까지, 시작일을 1일차로 계산)
         Long growthDays = (cultivation != null && cultivation.startedAt() != null)
                 ? ChronoUnit.DAYS.between(cultivation.startedAt().toLocalDate(), LocalDate.now()) + 1
                 : null;
@@ -227,5 +222,33 @@ public class CultivationController {
     public ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                             @PathVariable("photo-id") Long photoId) {
         return cultivationClient.deletePhoto(cultivationId, photoId);
+    }
+
+    // Helper Method
+    private CultivationSensorListResponse fetchSensorsOrEmpty(long cultivationId) {
+        try {
+            CultivationSensorListResponse response = sensorClient.getSensors(cultivationId).getBody();
+            return response == null ? new CultivationSensorListResponse(List.of(), List.of()) : response;
+        } catch (FeignException.Unauthorized | FeignException.Forbidden e) {
+            throw e;
+        } catch (FeignException e) {
+            // FeignException이 발생했을 때 대시보드 전체를 터뜨리지 않고 빈 데이터를 보여주면서, 동시에 장애 횟수는 Metric으로 기록하는 구조
+            log.warn("대시보드 센서 목록 조회 실패 (cultivationId={}, status={}): {}", cultivationId, e.status(), e.getMessage());
+            meterRegistry.counter("dashboard.sensor.fetch.failure", "endpoint", "sensors").increment();
+            return new CultivationSensorListResponse(List.of(), List.of());
+        }
+    }
+
+    private LatestSensorValueListResponse fetchSensorValuesOrEmpty(long cultivationId) {
+        try {
+            LatestSensorValueListResponse response = sensorClient.getLatestSensorValues(cultivationId).getBody();
+            return response == null ? new LatestSensorValueListResponse(List.of()) : response;
+        } catch (FeignException.Unauthorized | FeignException.Forbidden e) {
+            throw e;
+        } catch (FeignException e) {
+            log.warn("대시보드 센서 최신값 조회 실패 (cultivationId={}, status={}): {}", cultivationId, e.status(), e.getMessage());
+            meterRegistry.counter("dashboard.sensor.fetch.failure", "endpoint", "sensor-values").increment();
+            return new LatestSensorValueListResponse(List.of());
+        }
     }
 }
