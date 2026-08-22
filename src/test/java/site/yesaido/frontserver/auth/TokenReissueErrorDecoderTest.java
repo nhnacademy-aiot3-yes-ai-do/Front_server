@@ -2,6 +2,7 @@ package site.yesaido.frontserver.auth;
 
 import feign.Request;
 import feign.Response;
+import feign.FeignException;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +25,9 @@ import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.exception.DormantUserException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.stream.Stream;
@@ -32,6 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class TokenReissueErrorDecoderTest {
@@ -105,6 +110,17 @@ class TokenReissueErrorDecoderTest {
     }
 
     @Test
+    @DisplayName("기본 디코더로 넘기는 오류 응답 body를 보존한다")
+    void decodePreservesErrorBodyForDefaultDecoder() {
+        Response feignResponse = createStreamingResponse(500, "upstream-error-body");
+
+        Exception ex = decoder.decode("someMethod", feignResponse);
+
+        FeignException feignException = assertInstanceOf(FeignException.class, ex);
+        assertEquals("upstream-error-body", feignException.contentUTF8());
+    }
+
+    @Test
     @DisplayName("재발급 성공 시 TokenReissueRetryableException 반환 및 쿠키/홀더 갱신 분기")
     void decodeReissueSuccess() {
         request.setCookies(new Cookie("refreshToken", "validRefresh"));
@@ -139,12 +155,86 @@ class TokenReissueErrorDecoderTest {
         verify(authCookieProvider).clearAuthCookies(response);
     }
 
+    @Test
+    @DisplayName("재발급 실패 후 기본 디코더도 one-shot 오류 body를 보존한다")
+    void decodeReissueFailurePreservesStreamingErrorBody() {
+        request.setCookies(new Cookie("refreshToken", "invalidRefresh"));
+        Response feignResponse = createStreamingResponse(401, "original-unauthorized-body");
+        given(userClient.reissue(any())).willThrow(new RuntimeException("Reissue failed"));
+
+        Exception ex = decoder.decode("someMethod", feignResponse);
+
+        FeignException feignException = assertInstanceOf(FeignException.class, ex);
+        assertEquals("original-unauthorized-body", feignException.contentUTF8());
+        verify(authCookieProvider).clearAuthCookies(response);
+    }
+
+    @Test
+    @DisplayName("상한을 초과한 one-shot 오류 응답은 재발급 없이 body를 버리고 기본 오류로 처리한다")
+    void decodeOversizedStreamingErrorBodyFallsBackWithoutReissue() {
+        request.setCookies(new Cookie("refreshToken", "validRefresh"));
+        Response feignResponse = createStreamingResponse(401, "x".repeat(65 * 1024 + 1));
+
+        Exception ex = decoder.decode("someMethod", feignResponse);
+
+        FeignException feignException = assertInstanceOf(FeignException.class, ex);
+        assertEquals("", feignException.contentUTF8());
+        verifyNoInteractions(userClient);
+    }
+
+    @Test
+    @DisplayName("정확히 64KiB인 one-shot 오류 응답은 보존한다")
+    void decodeMaxSizedStreamingErrorBodyPreservesBody() {
+        String body = "x".repeat(64 * 1024);
+
+        Exception ex = decoder.decode("someMethod", createStreamingResponse(500, body));
+
+        FeignException feignException = assertInstanceOf(FeignException.class, ex);
+        assertEquals(body, feignException.contentUTF8());
+    }
+
+    @Test
+    @DisplayName("오류 body 읽기 I/O 실패는 재발급 없이 빈 기본 오류로 처리한다")
+    void decodeBodyReadFailureFallsBackWithoutReissue() {
+        request.setCookies(new Cookie("refreshToken", "validRefresh"));
+
+        Exception ex = decoder.decode("someMethod", createFailingStreamingResponse(401));
+
+        FeignException feignException = assertInstanceOf(FeignException.class, ex);
+        assertEquals("", feignException.contentUTF8());
+        verifyNoInteractions(userClient);
+    }
+
     private Response createResponse(int status, String bodyText) {
         return Response.builder()
                 .status(status)
                 .reason("Reason")
                 .request(Request.create(Request.HttpMethod.GET, "/api/test", Collections.emptyMap(), null, StandardCharsets.UTF_8, null))
                 .body(bodyText, StandardCharsets.UTF_8)
+                .build();
+    }
+
+    private Response createStreamingResponse(int status, String bodyText) {
+        byte[] bytes = bodyText.getBytes(StandardCharsets.UTF_8);
+        return Response.builder()
+                .status(status)
+                .reason("Reason")
+                .request(Request.create(Request.HttpMethod.GET, "/api/test", Collections.emptyMap(), null, StandardCharsets.UTF_8, null))
+                .body(new ByteArrayInputStream(bytes), bytes.length)
+                .build();
+    }
+
+    private Response createFailingStreamingResponse(int status) {
+        return Response.builder()
+                .status(status)
+                .reason("Reason")
+                .request(Request.create(Request.HttpMethod.GET, "/api/test", Collections.emptyMap(), null, StandardCharsets.UTF_8, null))
+                .body(new InputStream() {
+                    @Override
+                    public int read() throws IOException {
+                        throw new IOException("simulated stream failure");
+                    }
+                }, null)
                 .build();
     }
 }
