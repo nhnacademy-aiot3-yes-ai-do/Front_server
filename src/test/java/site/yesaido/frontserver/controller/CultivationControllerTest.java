@@ -323,4 +323,21 @@ class CultivationControllerTest {
         mockMvc.perform(delete("/cultivations/{cultivation-id}/photos/100", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @DisplayName("사진 원본 조회 - Feign 응답을 그대로 반환")
+    void getPhotoRawReturnsRawBytes() throws Exception {
+        Long cultivationId = 1L;
+        Long photoId = 200L;
+        byte[] content = "image-bytes".getBytes();
+
+        when(cultivationClient.getPhotoRaw(cultivationId, photoId))
+                .thenReturn(ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(content));
+
+        mockMvc.perform(get("/cultivations/{cultivation-id}/photos/{photo-id}/raw", cultivationId, photoId)
+                        .cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_JPEG))
+                .andExpect(content().bytes(content));
+    }
 }
