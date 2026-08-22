@@ -916,7 +916,7 @@ function renderMainPhoto() {
     }
     placeholder.style.display = 'none';
     img.style.display = 'block';
-    img.src = PHOTOS[0].uri;
+    img.src = photoRawUrl(PHOTOS[0].photoId);
 }
 
 // 업로드 박스(네모 칸) 자체에 현재 대표 사진(가장 최근 사진)을 미리보기로 보여줌.
@@ -926,7 +926,7 @@ function renderPhotoUploadPreview() {
     if (PHOTOS.length === 0) {
         box.innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
     } else {
-        box.innerHTML = '<img src="' + PHOTOS[0].uri + '" alt="재배 사진" />';
+        box.innerHTML = '<img src="' + photoRawUrl(PHOTOS[0].photoId) + '" alt="재배 사진" />';
     }
     lucide.createIcons();
 }
@@ -938,7 +938,7 @@ function renderPhotoThumbs() {
         var thumb = document.createElement('div');
         thumb.className = 'settings-photo-thumb';
         thumb.innerHTML =
-            '<img src="' + photo.uri + '" alt="재배 사진" />' +
+            '<img src="' + photoRawUrl(photo.photoId) + '" alt="재배 사진" />' +
             '<button type="button" class="settings-photo-thumb-remove" title="삭제">' +
             '<i data-lucide="x"></i></button>';
         thumb.querySelector('.settings-photo-thumb-remove').onclick = function () {
@@ -994,6 +994,10 @@ function deletePhoto(photoId) {
             renderPhotoUploadPreview();
         })
         .catch(function () { alert('사진 삭제에 실패했습니다.'); });
+}
+
+function photoRawUrl(photoId) {
+    return '/cultivations/' + CULTIVATION_ID + '/photos/' + photoId + '/raw';
 }
 
 renderPhotoThumbs();
