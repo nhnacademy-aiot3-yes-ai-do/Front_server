@@ -54,20 +54,24 @@ public class GlobalExceptionHandler {
     private final AuthCookieProvider authCookieProvider;
 
     @ExceptionHandler(FeignException.Unauthorized.class)
-    public void handleUnauthorized(HttpServletResponse response) throws IOException {
-        authCookieProvider.clearAuthCookies(response);
+    public void handleUnauthorized(HttpServletResponse response) {
         try {
+            authCookieProvider.clearAuthCookies(response);
             if (!response.isCommitted()) {
                 response.sendRedirect("/login");
             } else {
                 log.warn("응답이 이미 커밋되어 /login으로 리다이렉트하지 못했습니다.");
             }
-        } catch (Exception e) {
-            log.warn("sendRedirect 실패: {}", e.getMessage());
-            if (!response.isCommitted()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"detail\":\"로그인이 필요합니다.\"}");
+        } catch (Throwable t) {
+            log.error("handleUnauthorized 처리 중 예외 발생: {}", t.getClass().getName(), t);
+            try {
+                if (!response.isCommitted()) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"detail\":\"로그인이 필요합니다.\"}");
+                }
+            } catch (IOException ignored) {
+                // 이 시점엔 응답에 더 이상 쓸 수 있는 게 없음
             }
         }
     }
