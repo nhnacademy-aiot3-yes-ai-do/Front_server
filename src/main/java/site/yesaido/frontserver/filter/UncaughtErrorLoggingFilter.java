@@ -15,6 +15,7 @@ import java.io.IOException;
 public class UncaughtErrorLoggingFilter implements Filter {
 
     @Override
+    @SuppressWarnings("java:S1181")
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         try {
