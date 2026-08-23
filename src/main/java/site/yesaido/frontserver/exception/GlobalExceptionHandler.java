@@ -114,6 +114,13 @@ public class GlobalExceptionHandler {
                 .body(Map.of("detail", "일시적인 오류가 발생했습니다."));
     }
 
+    @ExceptionHandler(Throwable.class)
+    public ResponseEntity<?> handleThrowable(Throwable e) {
+        log.error("처리되지 않은 Error 발생: {}", e.getClass().getName(), e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "internal_server_error", "message", "일시적인 서버 오류가 발생했습니다."));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ErrorResponse handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
         FieldError fieldError = e.getBindingResult().getFieldError();
