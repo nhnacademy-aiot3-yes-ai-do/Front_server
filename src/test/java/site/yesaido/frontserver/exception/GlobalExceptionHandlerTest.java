@@ -32,7 +32,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     @DisplayName("handleUnauthorized - 쿠키 클리어 및 /login 리다이렉트 처리")
-    void handleUnauthorizedTest() throws Exception {
+    void handleUnauthorizedTest() {
         MockHttpServletResponse response = new MockHttpServletResponse();
         handler.handleUnauthorized(response);
 
