@@ -17,7 +17,9 @@ import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.controller.admin.AdminViewController;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
+import site.yesaido.frontserver.util.ViewJsonWriter;
 
 import java.util.List;
 
@@ -34,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         }
 )
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AuthCookieProvider.class)
+@Import({AuthCookieProvider.class, ViewJsonWriter.class})
 class AdminControllerTest {
 
     @Autowired
@@ -53,6 +55,8 @@ class AdminControllerTest {
     void setUp() {
         given(sensorClient.getAllMushroomReferences())
                 .willReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
+        given(sensorClient.getSensorTypes())
+                .willReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of())));
     }
 
     @Test
