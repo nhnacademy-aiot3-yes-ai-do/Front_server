@@ -9,10 +9,12 @@ import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.dto.inquiry.InquiryStatus;
 import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryPageResponse;
 import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryResponse;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.ViewJsonWriter;
 
 import java.util.List;
 
@@ -26,6 +28,7 @@ public class AdminViewController {
 
     private final InquiryClient inquiryClient;
     private final SensorClient sensorClient;
+    private final ViewJsonWriter viewJsonWriter;
 
     @GetMapping("/admin")
     public String admin(Model model) {
@@ -73,13 +76,43 @@ public class AdminViewController {
 
     // 버섯 등록
     @GetMapping("/admin/mushrooms")
-    public String mushrooms() {
+    public String mushrooms(Model model) {
+        SensorTypeInfoListResponse sensorTypes = fetchSensorTypes();
+        MushroomReferenceInfoListResponse mushroomReferences = fetchMushroomReferences();
+
+        model.addAttribute("sensorTypesJson", viewJsonWriter.toScriptJson(sensorTypes));
+        model.addAttribute("mushroomsJson", viewJsonWriter.toScriptJson(mushroomReferences));
+
         return "admin/mushrooms";
     }
 
     // 센서 타입 등록
     @GetMapping("/admin/sensors")
-    public String sensors() {
+    public String sensors(Model model) {
+        SensorTypeInfoListResponse sensorTypes = fetchSensorTypes();
+
+        model.addAttribute("sensorTypesJson", viewJsonWriter.toScriptJson(sensorTypes));
+
         return "admin/sensors";
+    }
+
+    private SensorTypeInfoListResponse fetchSensorTypes() {
+        try {
+            SensorTypeInfoListResponse body = sensorClient.getSensorTypes().getBody();
+            return body != null ? body : new SensorTypeInfoListResponse(List.of());
+        } catch (Exception e) {
+            log.warn("관리자: 센서 타입 조회 실패", e);
+            return new SensorTypeInfoListResponse(List.of());
+        }
+    }
+
+    private MushroomReferenceInfoListResponse fetchMushroomReferences() {
+        try {
+            MushroomReferenceInfoListResponse body = sensorClient.getAllMushroomReferences().getBody();
+            return body != null ? body : new MushroomReferenceInfoListResponse(List.of());
+        } catch (Exception e) {
+            log.warn("관리자: 버섯 기준 정보 조회 실패", e);
+            return new MushroomReferenceInfoListResponse(List.of());
+        }
     }
 }

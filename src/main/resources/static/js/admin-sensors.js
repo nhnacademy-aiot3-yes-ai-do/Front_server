@@ -5,28 +5,10 @@ var sensorTypePage = 1;
 var SENSOR_TYPE_PAGE_SIZE = 8;
 var currentSensorTypeId = null;
 
-function fetchJsonWithRetry(url, options, attempt) {
-    attempt = attempt === undefined ? 0 : attempt;
-    var delays = [500, 1000, 2000];
-
-    return fetch(url, options).then(function (res) {
-        if (!res.ok) {
-            if (attempt < delays.length) {
-                return new Promise(function (resolve) { setTimeout(resolve, delays[attempt]); })
-                    .then(function () { return fetchJsonWithRetry(url, options, attempt + 1); });
-            }
-            throw new Error('http_' + res.status);
-        }
-        return res.json();
-    });
-}
-
-function loadSensorTypes() {
-    return fetchJsonWithRetry('/admin/sensor-types')
-        .then(function (data) {
-            SENSOR_TYPES = data.sensorTypeInfoResponses || [];
-            renderSensorTypes();
-        });
+// 서버가 렌더링 시점에 심어준 SENSOR_TYPES_BOOTSTRAP으로 초기화 (fetch 없음)
+function initializeBootstrap() {
+    SENSOR_TYPES = SENSOR_TYPES_BOOTSTRAP.sensorTypeInfoResponses || [];
+    renderSensorTypes();
 }
 
 function renderSensorTypes() {
@@ -112,10 +94,7 @@ function saveSensorTypeForm() {
     request
         .then(function (res) {
             if (!res.ok) throw new Error('save failed');
-            return loadSensorTypes();
-        })
-        .then(function () {
-            closeModal('modal-sensor-type-form');
+            window.location.reload();
         })
         .catch(function () {
             document.getElementById('sensor-type-form-error').textContent = '이미 등록된 측정 타입/단위 조합이거나 저장에 실패했어요.';
@@ -132,14 +111,11 @@ function confirmDeleteSensorType() {
     fetch('/admin/sensor-types/' + currentSensorTypeId, { method: 'DELETE' })
         .then(function (res) {
             if (!res.ok) throw new Error('delete failed');
-            return loadSensorTypes();
-        })
-        .then(function () {
-            closeModal('modal-sensor-type-delete');
+            window.location.reload();
         })
         .catch(function () {
             alert('센서 타입 삭제에 실패했습니다. 이미 사용 중인 타입일 수 있어요.');
         });
 }
 
-loadSensorTypes();
+initializeBootstrap();
