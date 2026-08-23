@@ -5,9 +5,22 @@ var sensorTypePage = 1;
 var SENSOR_TYPE_PAGE_SIZE = 8;
 var currentSensorTypeId = null;
 
+function fetchJsonWithRetry(url, options, retries) {
+    retries = retries === undefined ? 1 : retries;
+    return fetch(url, options).then(function (res) {
+        if (!res.ok) {
+            if (retries > 0) {
+                return new Promise(function (resolve) { setTimeout(resolve, 300); })
+                    .then(function () { return fetchJsonWithRetry(url, options, retries - 1); });
+            }
+            throw new Error('http_' + res.status);
+        }
+        return res.json();
+    });
+}
+
 function loadSensorTypes() {
-    return fetch('/admin/sensor-types')
-        .then(function (res) { return res.json(); })
+    return fetchJsonWithRetry('/admin/sensor-types')
         .then(function (data) {
             SENSOR_TYPES = data.sensorTypeInfoResponses || [];
             renderSensorTypes();

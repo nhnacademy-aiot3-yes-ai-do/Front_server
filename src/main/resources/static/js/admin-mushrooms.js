@@ -7,6 +7,20 @@ var mushroomPage = 1;
 var MUSHROOM_PAGE_SIZE = 8;
 var currentMushroomId = null;
 
+function fetchJsonWithRetry(url, options, retries) {
+    retries = retries === undefined ? 1 : retries;
+    return fetch(url, options).then(function (res) {
+        if (!res.ok) {
+            if (retries > 0) {
+                return new Promise(function (resolve) { setTimeout(resolve, 300); })
+                    .then(function () { return fetchJsonWithRetry(url, options, retries - 1); });
+            }
+            throw new Error('http_' + res.status);
+        }
+        return res.json();
+    });
+}
+
 function formatDate(iso) {
     if (!iso) return '';
     var d = new Date(iso);
@@ -19,8 +33,7 @@ function thresholdOf(m, type) {
 }
 
 function loadSensorTypes() {
-    return fetch('/admin/sensor-types')
-        .then(function (res) { return res.json(); })
+    return fetchJsonWithRetry('/admin/sensor-types')
         .then(function (data) {
             SENSOR_TYPE_BY_NAME = {};
             (data.sensorTypeInfoResponses || []).forEach(function (st) {
@@ -30,8 +43,7 @@ function loadSensorTypes() {
 }
 
 function loadMushrooms() {
-    return fetch('/admin/mushroom-references')
-        .then(function (res) { return res.json(); })
+    return fetchJsonWithRetry('/admin/mushroom-references')
         .then(function (data) {
             MUSHROOMS = data.mushroomReferenceInfoResponses || [];
             renderMushrooms();
