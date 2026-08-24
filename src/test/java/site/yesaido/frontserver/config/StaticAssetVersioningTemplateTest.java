@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 
 class StaticAssetVersioningTemplateTest {
@@ -19,7 +20,7 @@ class StaticAssetVersioningTemplateTest {
     private static final Path TEMPLATE_DIRECTORY = Path.of("src/main/resources/templates");
     private static final Pattern HTML_TAG = Pattern.compile("<(script|link)\\b[^>]*>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
     private static final Pattern INTERNAL_ASSET_ATTRIBUTE = Pattern.compile(
-            "\\b(src|href)\\s*=\\s*['\"]/(js|css)/[^'\"]*['\"]", Pattern.CASE_INSENSITIVE);
+            "(?<![A-Za-z0-9_:-])(src|href)\\s*=\\s*['\"]/(js|css)/[^'\"]*['\"]", Pattern.CASE_INSENSITIVE);
 
     @Test
     void templatesUseThymeleafResourceUrlsForInternalJavaScriptAndStylesheets() throws IOException {
@@ -33,6 +34,12 @@ class StaticAssetVersioningTemplateTest {
 
         assertEquals(List.of(), unconscionableReferences,
                 "Internal /js and /css resources must use th:src or th:href so Spring can emit a content-versioned URL");
+    }
+
+    @Test
+    void ignoresDataAttributesThatAreNotBrowserResourceReferences() {
+        assertFalse(hasRawInternalAssetReference("<script data-src=\"/js/app.js\"></script>"));
+        assertFalse(hasRawInternalAssetReference("<link data-href='/css/style.css'>"));
     }
 
 
