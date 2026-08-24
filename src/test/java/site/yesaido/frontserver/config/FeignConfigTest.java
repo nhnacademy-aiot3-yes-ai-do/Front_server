@@ -53,7 +53,7 @@ class FeignConfigTest {
     @DisplayName("reissue 요청 URL이면 토큰 조회 없이 그대로 반환한다")
     void authInterceptorSkipsReissueUrl() {
         RequestTemplate template = mock(RequestTemplate.class);
-        given(template.url()).willReturn("/api/auth/reissue");
+        given(template.url()).willReturn("/api/v1/auth/reissue");
 
         feignConfig.authInterceptor().apply(template);
 
