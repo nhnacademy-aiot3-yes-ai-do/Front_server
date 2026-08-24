@@ -40,7 +40,7 @@ body {
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--brown-700);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     border-radius: 14px 14px 0 0;
     transition: background 0.15s ease, color 0.15s ease;
 }
@@ -130,7 +130,7 @@ body {
 
 .list-table tbody tr {
     transition: background 0.15s ease;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .list-table tbody tr:hover {
@@ -138,7 +138,7 @@ body {
 }
 
 #tab-sensor .list-table tbody tr {
-    cursor: url("/images/cursor-default.png") 3 2, default;
+    cursor: default;
 }
 
 #tab-sensor .list-table tbody tr:hover {
@@ -177,7 +177,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -199,7 +199,7 @@ body {
     height: 8px;
     border-radius: 50%;
     background: var(--brown-300);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -217,7 +217,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease;
 }
 
@@ -259,7 +259,7 @@ body {
     right: 16px;
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--brown-500);
 }
 
@@ -311,7 +311,7 @@ body {
     background: none;
     border: none;
     color: var(--brown-500);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     padding: 4px;
     border-radius: 8px;
     transition: background 0.15s ease, color 0.15s ease;
@@ -347,7 +347,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 #ms-type-list .sensor-type-check-row input[type="checkbox"] {
@@ -355,7 +355,7 @@ body {
     height: 18px;
     margin: 0;
     accent-color: var(--sage-500);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 #ms-type-list .sensor-type-check-row span {
@@ -388,7 +388,7 @@ body {
     border: 2px solid var(--sage-500);
     border-radius: 8px;
     white-space: nowrap;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .sensor-type-check-row .st-validate-btn:hover:not(:disabled) {
@@ -399,7 +399,7 @@ body {
     color: var(--brown-300);
     background: rgba(139, 94, 60, 0.06);
     border-color: rgba(139, 94, 60, 0.18);
-    cursor: url("/images/cursor-default.png") 3 2, not-allowed;
+    cursor: not-allowed;
 }
 
 .sensor-type-check-row .st-validate-msg {
