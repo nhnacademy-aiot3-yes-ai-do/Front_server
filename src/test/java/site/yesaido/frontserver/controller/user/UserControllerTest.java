@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import site.yesaido.frontserver.client.CultivationClient;
+import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
@@ -44,6 +47,15 @@ class UserControllerTest {
 
     @MockitoBean
     private AuthCookieProvider authCookieProvider;
+
+    @MockitoBean
+    private NotificationClient notificationClient;
+
+    @MockitoBean
+    private CultivationClient cultivationClient;
+
+    @MockitoBean
+    private MeterRegistry meterRegistry;
 
     @Test
     @DisplayName("회원가입 요청 성공")
