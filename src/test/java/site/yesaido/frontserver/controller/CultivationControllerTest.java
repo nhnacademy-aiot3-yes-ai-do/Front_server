@@ -165,8 +165,8 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("재배 생성 성공 시 목록으로 리다이렉트")
-    void createCultivationRedirectsToList() throws Exception {
+    @DisplayName("HTML form 재배 생성 성공 시 목록으로 리다이렉트")
+    void createCultivationRedirectsToListForNativeFormSubmission() throws Exception {
         mockMvc.perform(post("/cultivations")
                         .cookie(LOGGED_IN)
                         .param("name", "새 재배")

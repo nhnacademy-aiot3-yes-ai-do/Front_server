@@ -10,10 +10,7 @@ import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidationResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.*;
 import site.yesaido.frontserver.util.LoginRequired;
 
 @LoginRequired
@@ -57,6 +54,14 @@ public class SensorController {
     @GetMapping("/{cultivation-id}/sensor-values")
     public ResponseEntity<LatestSensorValueListResponse> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId) {
         ResponseEntity<LatestSensorValueListResponse> upstream = sensorClient.getLatestSensorValues(cultivationId);
+        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
+    }
+
+    @GetMapping("/{cultivation-id}/sensor-values/trend")
+    public ResponseEntity<SensorTrendPointListResponse> getSensorTrend(@PathVariable("cultivation-id") Long cultivationId,
+                                                                       @RequestParam("device-eui") String deviceEui,
+                                                                       @RequestParam("sensor-type") String sensorType) {
+        ResponseEntity<SensorTrendPointListResponse> upstream = sensorClient.getSensorTrend(cultivationId, deviceEui, sensorType);
         return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
     }
 

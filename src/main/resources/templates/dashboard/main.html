@@ -204,16 +204,19 @@
                 <div class="card chart-card">
                     <div class="chart-card-header">
                         <span class="card-title" style="padding:0;">센서 그래프</span>
-                        <div class="msh-select msh-select--chart" id="chart-sensor-select" data-onchange="handleChartSensorChange">
-                            <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                <span class="msh-select-value">등록된 센서 없음</span>
-                                <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                            </button>
-                            <div class="msh-select-menu msh-select-menu--chart"></div>
+                        <div class="chart-card-header-selects">
+                            <span class="chart-live-badge">● 최근 15분</span>
+                            <div class="msh-select msh-select--chart" id="chart-sensor-select" data-onchange="handleChartSensorChange">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">등록된 센서 없음</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu msh-select-menu--chart"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="chart-placeholder" style="position:relative;">
-                        <svg viewBox="0 0 260 110" class="chart-demo-svg" preserveAspectRatio="none" id="chart-svg"></svg>
+                        <svg viewBox="0 0 300 112" class="chart-demo-svg" preserveAspectRatio="none" id="chart-svg"></svg>
                         <div id="chart-empty-msg" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; color:#94a3b8; font-size:0.85rem; text-align:center; padding:0 12px;"></div>
                     </div>
                 </div>
@@ -326,14 +329,14 @@
         <h3 class="modal-title">환경 설정</h3>
 
         <div class="settings-modal-grid">
-            <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
-                <i data-lucide="upload" style="width:28px;height:28px;"></i>
+            <div class="settings-photo-col">
+                <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
+                    <i data-lucide="upload" style="width:28px;height:28px;"></i>
+                </div>
+                <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
             </div>
-            <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
 
-            <div class="settings-photo-thumbs" id="settings-photo-thumbs"></div>
-
-            <div class="settings-sensor-list">
+            <div class="settings-config-col">
                 <div class="settings-sensor-row">
                     <span id="settings-sensor-icon-wrap"><i data-lucide="thermometer" style="width:20px;height:20px;"></i></span>
                     <div class="msh-select msh-select--settings" data-value="온도센서3" data-onchange="updateSettingsSensorIcon">
@@ -358,16 +361,20 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="settings-threshold">
-                <label>최고값</label>
-                <input type="number" value="365" />
-                <label>최저값</label>
-                <input type="number" value="365" />
-                <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
-                    <i data-lucide="circle-check"></i>
-                </button>
+                <div class="settings-threshold-row">
+                    <div class="settings-threshold-field">
+                        <label>최고값</label>
+                        <input type="number" value="365" />
+                    </div>
+                    <div class="settings-threshold-field">
+                        <label>최저값</label>
+                        <input type="number" value="365" />
+                    </div>
+                    <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
+                        <i data-lucide="circle-check"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
