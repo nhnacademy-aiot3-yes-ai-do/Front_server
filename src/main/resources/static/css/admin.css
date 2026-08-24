@@ -93,7 +93,7 @@ body {
     font-weight: 700;
     font-size: 0.92rem;
     color: var(--brown-500);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     border-radius: 10px;
     transition: background 0.15s ease, color 0.15s ease;
 }
@@ -128,7 +128,7 @@ body {
     font-size: 0.98rem;
     color: var(--brown-700);
     text-decoration: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
 
@@ -446,7 +446,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     font-weight: 700;
     font-size: 1.35rem;
     color: var(--brown-900);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .admin-back-link svg { width: 1.3rem; height: 1.3rem; color: var(--sage-600); }
@@ -529,7 +529,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     background: none;
     border: none;
     color: var(--brown-500);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     padding: 0.3rem;
     border-radius: 8px;
     display: inline-flex;
@@ -567,7 +567,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 
 .admin-page-btn.disabled {
     opacity: 0.4;
-    cursor: url("/images/cursor-default.png") 3 2, default;
+    cursor: default;
     pointer-events: none;
 }
 
@@ -610,7 +610,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     box-shadow: 3px 3px 0 rgba(63, 42, 29, 0.12);
     transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.15s ease;
 }
@@ -642,7 +642,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     right: 16px;
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--brown-500);
 }
 
@@ -742,7 +742,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease;
 }
 
@@ -851,7 +851,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     font-size: 0.85rem;
     padding: 0.45rem 0.9rem;
     border-radius: 999px;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .cd-member-toggle-btn svg { width: 0.95rem; height: 0.95rem; color: var(--sage-600); }
@@ -928,7 +928,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     font-size: 1rem;
     font-weight: 700;
     color: var(--brown-500);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     border-bottom: 3px solid transparent;
     margin-bottom: -2px;
     transition: color 0.15s ease, border-color 0.15s ease;
@@ -963,7 +963,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -982,7 +982,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     border: 2px solid rgba(139, 94, 60, 0.28);
     border-radius: 10px;
     background: rgba(251, 246, 234, 0.7);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease;
 }
 
@@ -992,7 +992,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 .cd-report-date-chip.active .cd-chip-dow,
 .cd-report-date-chip.active .cd-chip-day { color: #fff; }
 
-.cd-report-date-chip.disabled { opacity: 0.4; cursor: url("/images/cursor-default.png") 3 2, not-allowed; }
+.cd-report-date-chip.disabled { opacity: 0.4; cursor: not-allowed; }
 
 .cd-chip-dow { font-size: 0.65rem; color: var(--brown-500); }
 .cd-chip-day { font-family: "Gaegu", inherit; font-weight: 700; font-size: 0.85rem; color: var(--brown-900); }
@@ -1138,7 +1138,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     flex-shrink: 0;
 }
 
@@ -1156,29 +1156,3 @@ body.error-page {
 }
 
 .error-actions .btn { flex: 1; justify-content: center; }
-
-/* ===== 관리자 페이지는 커스텀 커서 이미지를 쓰지 않고 브라우저 기본 커서를 사용 =====
-   common.css나 위쪽 규칙들이 개별 요소에 cursor: url(...) 을 지정해두는데,
-   브라우저별 revert 지원 차이를 타지 않도록 요소 종류별로 명시적인 기본 커서를 강제함. */
-body *,
-body *::before,
-body *::after {
-    cursor: auto !important;
-}
-
-body a,
-body button,
-body [onclick],
-body input[type="checkbox"],
-body input[type="radio"],
-body select,
-body label {
-    cursor: pointer !important;
-}
-
-body input[type="text"],
-body input[type="email"],
-body input[type="password"],
-body textarea {
-    cursor: text !important;
-}

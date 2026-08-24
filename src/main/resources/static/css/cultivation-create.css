@@ -168,7 +168,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease;
 }
 
@@ -184,7 +184,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 /* ---- sensor select list ---- */
@@ -219,7 +219,7 @@ body {
     border: 2px solid rgba(139, 94, 60, 0.2);
     border-radius: 12px;
     background: rgba(255, 255, 255, 0.5);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
 }
 
@@ -233,7 +233,7 @@ body {
     height: 1.1rem;
     accent-color: var(--sage-500);
     flex-shrink: 0;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .sensor-select-icon {
@@ -472,7 +472,7 @@ body {
     font-weight: 700;
     font-size: 0.9rem;
     box-shadow: 0 4px 10px rgba(124, 148, 115, 0.35);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -527,7 +527,7 @@ body {
     border-radius: 50%;
     background: rgba(139, 94, 60, 0.12);
     color: var(--brown-700);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .recipe-modal-close svg { width: 1rem; height: 1rem; }

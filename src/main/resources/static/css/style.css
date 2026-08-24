@@ -230,7 +230,7 @@ input:focus {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     text-decoration: none;
     box-shadow: 4px 4px 0 var(--shadow-color);
     transition: transform 0.1s ease, box-shadow 0.1s ease;
@@ -293,7 +293,7 @@ input:focus {
 .auth-links a {
     color: var(--brown-700);
     text-decoration: underline;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .auth-links span {
@@ -336,7 +336,7 @@ body.admin-login-body .auth-links {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--brown-300);
     font-size: 32px;
     overflow: hidden;
