@@ -1335,12 +1335,20 @@ body {
     margin-top: 4px;
 }
 
-/* ---- 환경 설정 모달: 사진 업로드 / 센서 선택 / 임계값 (mockup 레이아웃) ---- */
+
 .settings-modal-grid {
     display: flex;
     align-items: flex-start;
-    gap: 1.1rem;
+    gap: 1.5rem;
     margin-top: 0.4rem;
+}
+
+.settings-photo-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 8.5rem;
+    flex-shrink: 0;
 }
 
 .settings-photo-upload {
@@ -1374,10 +1382,9 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    max-width: 9rem;
-    max-height: 8.5rem;
+    width: 100%;
+    max-height: 5.6rem;
     overflow-y: auto;
-    flex-shrink: 0;
 }
 
 .settings-photo-thumb {
@@ -1387,6 +1394,7 @@ body {
     border-radius: 8px;
     overflow: hidden;
     border: 2px solid var(--brown-300);
+    flex-shrink: 0;
 }
 
 .settings-photo-thumb img {
@@ -1418,13 +1426,13 @@ body {
     height: 0.75rem;
 }
 
-.settings-sensor-list {
+.settings-config-col {
     flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: stretch;
+    flex-direction: column;
+    gap: 0.9rem;
     min-width: 0;
+    padding-top: 0.3rem;
 }
 
 .settings-sensor-row {
@@ -1432,7 +1440,7 @@ body {
     align-items: center;
     gap: 0.6rem;
     width: 100%;
-    max-width: 15rem;
+    max-width: 13rem;
     border: 2px solid var(--brown-300);
     border-radius: 10px;
     padding: 0.6rem 0.8rem;
@@ -1445,20 +1453,27 @@ body {
     flex-shrink: 0;
 }
 
-.settings-threshold {
+.settings-threshold-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    width: 8rem;
-    flex-shrink: 0;
+    align-items: flex-end;
+    gap: 0.8rem;
 }
 
-.settings-threshold label {
+.settings-threshold-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-threshold-field label {
     font-size: 0.75rem;
     color: var(--brown-500);
 }
 
-.settings-threshold input {
+.settings-threshold-field input {
+    width: 100%;
     padding: 0.5rem 0.6rem;
     border: 2px solid var(--brown-300);
     border-radius: 10px;
@@ -1466,8 +1481,11 @@ body {
 }
 
 .settings-confirm {
-    align-self: flex-end;
-    margin-top: 0.4rem;
+    flex-shrink: 0;
+    height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     color: var(--sage-600);

@@ -329,14 +329,14 @@
         <h3 class="modal-title">환경 설정</h3>
 
         <div class="settings-modal-grid">
-            <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
-                <i data-lucide="upload" style="width:28px;height:28px;"></i>
+            <div class="settings-photo-col">
+                <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
+                    <i data-lucide="upload" style="width:28px;height:28px;"></i>
+                </div>
+                <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
             </div>
-            <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
 
-            <div class="settings-photo-thumbs" id="settings-photo-thumbs"></div>
-
-            <div class="settings-sensor-list">
+            <div class="settings-config-col">
                 <div class="settings-sensor-row">
                     <span id="settings-sensor-icon-wrap"><i data-lucide="thermometer" style="width:20px;height:20px;"></i></span>
                     <div class="msh-select msh-select--settings" data-value="온도센서3" data-onchange="updateSettingsSensorIcon">
@@ -361,16 +361,20 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="settings-threshold">
-                <label>최고값</label>
-                <input type="number" value="365" />
-                <label>최저값</label>
-                <input type="number" value="365" />
-                <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
-                    <i data-lucide="circle-check"></i>
-                </button>
+                <div class="settings-threshold-row">
+                    <div class="settings-threshold-field">
+                        <label>최고값</label>
+                        <input type="number" value="365" />
+                    </div>
+                    <div class="settings-threshold-field">
+                        <label>최저값</label>
+                        <input type="number" value="365" />
+                    </div>
+                    <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
+                        <i data-lucide="circle-check"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

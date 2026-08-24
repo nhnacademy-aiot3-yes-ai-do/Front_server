@@ -1136,6 +1136,7 @@ function renderPhotoUploadPreview() {
 
 function renderPhotoThumbs() {
     var wrap = document.getElementById('settings-photo-thumbs');
+    if (!wrap) return; // 환경 설정 모달에서 썸네일 목록(X 삭제 버튼) 자체를 뺐음
     wrap.innerHTML = '';
     PHOTOS.forEach(function (photo) {
         var thumb = document.createElement('div');
