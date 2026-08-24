@@ -1156,3 +1156,31 @@ body.error-page {
 }
 
 .error-actions .btn { flex: 1; justify-content: center; }
+
+/* ===== 반응형: 좁은 화면에서 사이드바 축소 + 카드/테이블 겹침 방지 ===== */
+@media (max-width: 900px) {
+    .admin-sidebar {
+        width: 4.6rem;
+        padding: 1.2rem 0.5rem;
+    }
+
+    .admin-sidebar-brand { padding: 0.2rem 0 1rem; }
+    .admin-sidebar-logo { height: 3.2rem; }
+    .admin-sidebar-group-label { display: none; }
+
+    .admin-sidebar-link { justify-content: center; padding: 0.65rem; }
+    .admin-sidebar-link-label,
+    .admin-sidebar-profile-name,
+    .admin-sidebar-logout-label { display: none; }
+
+    .admin-sidebar-profile { justify-content: center; }
+    .admin-sidebar-logout { justify-content: center; }
+
+    .admin-activity-row { flex-direction: column; }
+    .admin-stat-row { justify-content: flex-start; }
+
+    .page-container.admin-list-page .admin-panel { width: min(96%, 100rem); }
+
+    .list-table-wrap { overflow-x: auto; }
+    .list-table { min-width: 640px; }
+}
