@@ -4,6 +4,7 @@ import feign.FeignException;
 import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -81,26 +82,24 @@ public class UserViewController {
 
     @GetMapping("/mypage/notifications")
     public String notificationSettingsPage(Model model) {
-        List<EndpointResponse> endpoints = fetchOrEmpty("endpoints",
-                () -> notificationClient.getEndpoints().getBody());
-        List<SubscriptionTypeResponse> subscriptionTypes = fetchOrEmpty("subscription-types",
-                () -> notificationClient.getSubscriptionTypes().getBody());
-        List<SubscriptionResponse> subscriptions = fetchOrEmpty("subscriptions",
-                () -> notificationClient.getSubscriptions().getBody());
+        List<EndpointResponse> endpoints = fetchOrEmpty("endpoints", notificationClient::getEndpoints);
+        List<SubscriptionTypeResponse> subscriptionTypes = fetchOrEmpty("subscription-types", notificationClient::getSubscriptionTypes);
+        List<SubscriptionResponse> subscriptions = fetchOrEmpty("subscriptions", notificationClient::getSubscriptions);
         List<CultivationOptionResponse> cultivationOptions = fetchOrEmpty("cultivations",
-                this::fetchOrEmptyOptions);
+                () -> ResponseEntity.ok(fetchCultivationOptions()));
 
         model.addAttribute("endpointsJson", viewJsonWriter.toScriptJson(endpoints));
-        model.addAttribute("subscriptionsTypesJson", viewJsonWriter.toScriptJson(subscriptionTypes));
+        model.addAttribute("subscriptionTypesJson", viewJsonWriter.toScriptJson(subscriptionTypes));
         model.addAttribute("subscriptionsJson", viewJsonWriter.toScriptJson(subscriptions));
         model.addAttribute("cultivationOptionsJson", viewJsonWriter.toScriptJson(cultivationOptions));
         return "user/notification-settings";
     }
 
     // Helper Method
-    private <T> List<T> fetchOrEmpty(String endpoints, Supplier<List<T>> supplier) {
+    private <T> List<T> fetchOrEmpty(String endpoints, Supplier<ResponseEntity<List<T>>> supplier) {
         try {
-            List<T> result = supplier.get();
+            ResponseEntity<List<T>> response = supplier.get();
+            List<T> result = response == null ? null : response.getBody();
             return result == null ? List.of() : result;
         } catch (FeignException.Unauthorized | FeignException.Forbidden e) {
             throw e;
@@ -111,8 +110,9 @@ public class UserViewController {
         }
     }
 
-    private List<CultivationOptionResponse> fetchOrEmptyOptions() {
-        CultivationSummaryListResponse body = cultivationClient.getCultivations().getBody();
+    private List<CultivationOptionResponse> fetchCultivationOptions() {
+        ResponseEntity<CultivationSummaryListResponse> response = cultivationClient.getCultivations();
+        CultivationSummaryListResponse body = response == null ? null : response.getBody();
         if (body == null) {
             return List.of();
         }
