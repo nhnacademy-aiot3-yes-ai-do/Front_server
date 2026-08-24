@@ -612,6 +612,18 @@ function loadAllSettings() {
     return loadDiscordEndpoint().then(loadSubscriptionState);
 }
 
+function initFromBootstrap() {
+    var endpoints = Array.isArray(window.ENDPOINTS_BOOTSTRAP) ? window.ENDPOINTS_BOOTSTRAP : [];
+    discordEndpoint = pickDiscordEndpoint(endpoints);
+    renderDiscordStatus();
+
+    pendingGroups = {};
+    subscriptionTypes = Array.isArray(window.SUBSCRIPTION_TYPES_BOOTSTRAP) ? window.SUBSCRIPTION_TYPES_BOOTSTRAP : [];
+    subscriptions = Array.isArray(window.SUBSCRIPTIONS_BOOTSTRAP) ? window.SUBSCRIPTIONS_BOOTSTRAP : [];
+    cultivations = Array.isArray(window.CULTIVATIONS_BOOTSTRAP) ? window.CULTIVATIONS_BOOTSTRAP : [];
+    refreshSubscriptionUi();
+}
+
 function bindCategoryToggles() {
     [
         ['toggle-sensor', 'sensor'],
@@ -628,6 +640,7 @@ function bindCategoryToggles() {
 
 document.addEventListener('DOMContentLoaded', function () {
     bindCategoryToggles();
-    loadAllSettings();
+    setTogglesBusy(true);
+    initFromBootstrap();
     if (window.lucide) lucide.createIcons();
 });
