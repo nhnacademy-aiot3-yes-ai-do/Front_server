@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.SensorClient;
+import site.yesaido.frontserver.config.MethodOverrideConfig;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
@@ -38,8 +39,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 OAuth2ClientWebSecurityAutoConfiguration.class
         }
 )
-@AutoConfigureMockMvc(addFilters = false)
-@Import(AuthCookieProvider.class)
+@AutoConfigureMockMvc
+@Import({AuthCookieProvider.class, MethodOverrideConfig.class})
 class SensorControllerTest {
 
     private static final Cookie LOGGED_IN = new Cookie("accessToken", "demo-access-token");
@@ -102,6 +103,8 @@ class SensorControllerTest {
 
         mockMvc.perform(get("/cultivations/sensor-types").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
                 .andExpect(header().doesNotExist("X-Upstream-Only"))
                 .andExpect(jsonPath("$.sensorTypeInfoResponses").isArray());
     }
@@ -155,6 +158,19 @@ class SensorControllerTest {
 
         mockMvc.perform(delete("/cultivations/{cultivation-id}/sensors/{sensor-id}", 10L, 20L)
                         .cookie(LOGGED_IN))
+                .andExpect(status().isNoContent());
+
+        verify(sensorClient).deleteSensor(10L, 20L);
+    }
+
+    @Test
+    void hiddenMethodOverrideRoutesFormPostToSensorDelete() throws Exception {
+        when(sensorClient.deleteSensor(10L, 20L)).thenReturn(ResponseEntity.noContent().build());
+
+        mockMvc.perform(post("/cultivations/{cultivation-id}/sensors/{sensor-id}", 10L, 20L)
+                        .cookie(LOGGED_IN)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("_method", "DELETE"))
                 .andExpect(status().isNoContent());
 
         verify(sensorClient).deleteSensor(10L, 20L);

@@ -1099,15 +1099,6 @@ function finishCultivation() {
     location.href = '/';
 }
 
-function deleteCultivation() {
-    fetch('/cultivations/' + CULTIVATION_ID, { method: 'DELETE' })
-        .then(function (res) {
-            if (!res.ok) throw new Error('delete failed');
-            location.href = '/cultivations';
-        })
-        .catch(function () { alert('재배지 삭제에 실패했습니다.'); });
-}
-
 function renderMainPhoto() {
     var placeholder = document.getElementById('photo-placeholder');
     var img = document.getElementById('photo-preview-img');
@@ -1202,6 +1193,11 @@ function deletePhoto(photoId) {
 
 function photoRawUrl(photoId) {
     return '/cultivations/' + CULTIVATION_ID + '/photos/' + photoId + '/raw';
+}
+
+var cultivationDeleteForm = document.getElementById('cultivation-delete-form');
+if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
+    cultivationDeleteForm.action = '/cultivations/' + CULTIVATION_ID;
 }
 
 renderPhotoThumbs();

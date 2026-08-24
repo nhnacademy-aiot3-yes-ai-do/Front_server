@@ -19,6 +19,7 @@ import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.config.MethodOverrideConfig;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddFormRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddRequest;
@@ -54,8 +55,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 OAuth2ClientWebSecurityAutoConfiguration.class
         }
 )
-@AutoConfigureMockMvc(addFilters = false)
-@Import({AuthCookieProvider.class, ViewJsonWriter.class})
+@AutoConfigureMockMvc
+@Import({AuthCookieProvider.class, ViewJsonWriter.class, MethodOverrideConfig.class})
 class CultivationControllerTest {
 
     private static final Cookie LOGGED_IN = new Cookie("accessToken", "demo-access-token");
@@ -162,6 +163,19 @@ class CultivationControllerTest {
         mockMvc.perform(get("/cultivations/history").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("cultivation/history"));
+    }
+
+    @Test
+    @DisplayName("HTML form 재배 삭제 성공 시 목록으로 리다이렉트")
+    void deleteCultivationFormRedirectsToList() throws Exception {
+        mockMvc.perform(post("/cultivations/{cultivation-id}", 5L)
+                        .cookie(LOGGED_IN)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("_method", "DELETE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cultivations"));
+
+        verify(cultivationClient).deleteCultivation(5L);
     }
 
     @Test

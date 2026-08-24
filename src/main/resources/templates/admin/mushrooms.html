@@ -126,14 +126,15 @@
 
 <!-- 버섯 삭제 확인 -->
 <div class="modal-overlay" id="modal-mushroom-delete">
-    <div class="modal-box">
+    <form class="modal-box" id="mushroom-delete-form" method="post">
+        <input name="_method" type="hidden" value="DELETE" />
         <h3 class="modal-title">이 버섯 정보를 삭제하겠습니까?</h3>
         <p class="modal-sub">삭제하면 재배지 등록 화면에서도 더 이상 선택할 수 없어요.</p>
         <div class="modal-actions">
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-mushroom-delete')">취소</button>
-            <button class="btn btn-danger" type="button" onclick="confirmDeleteMushroom()">삭제</button>
+            <button class="btn btn-danger" type="submit">삭제</button>
         </div>
-    </div>
+    </form>
 </div>
 
 <script th:inline="javascript">
