@@ -60,8 +60,10 @@ public class SensorController {
         return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
     }
 
-    @PostMapping("/sensor-validation")
-    public ResponseEntity<ApiResponse<SensorValidationResponse>> validationSensorThreshold(@RequestBody SensorValidationRequest request){
-        return ResponseEntity.ok(aiClient.validationSensorThreshold(request));
+    @PostMapping("/{cultivation-id}/sensor-validation")
+    public ResponseEntity<ApiResponse<SensorValidationResponse>> validationSensorThreshold(
+            @PathVariable("cultivation-id") Long cultivationId,
+            @RequestBody SensorValidationRequest request){
+        return ResponseEntity.ok(aiClient.validationSensorThreshold(cultivationId ,request));
     }
 }
