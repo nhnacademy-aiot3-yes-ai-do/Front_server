@@ -5,9 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배 대시보드 | MushMush</title>
-    <link rel="stylesheet" href="/css/dashboard.css" />
-    <script src="/js/lucide.js"></script>
-    <script src="/js/common.js"></script>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
 </head>
 <body>
 
@@ -479,8 +479,8 @@
     var SENSORS_BOOTSTRAP = [(${sensorsJson})];
     var SENSOR_VALUES_BOOTSTRAP = [(${sensorValuesJson})];
 </script>
-<script src="/js/msh-select.js"></script>
-<script src="/js/dashboard.js"></script>
+<script th:src="@{/js/msh-select.js}"></script>
+<script th:src="@{/js/dashboard.js}"></script>
 
 </body>
 </html>
