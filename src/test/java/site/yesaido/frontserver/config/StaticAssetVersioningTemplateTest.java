@@ -6,6 +6,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.MatchResult;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,6 +17,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class StaticAssetVersioningTemplateTest {
 
     private static final Path TEMPLATE_DIRECTORY = Path.of("src/main/resources/templates");
+    private static final Pattern HTML_TAG = Pattern.compile("<(script|link)\\b[^>]*>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern INTERNAL_ASSET_ATTRIBUTE = Pattern.compile(
+            "\\b(src|href)\\s*=\\s*['\"]/(js|css)/[^'\"]*['\"]", Pattern.CASE_INSENSITIVE);
 
     @Test
     void templatesUseThymeleafResourceUrlsForInternalJavaScriptAndStylesheets() throws IOException {
@@ -32,17 +38,32 @@ class StaticAssetVersioningTemplateTest {
 
     private Stream<String> rawInternalAssetReferences(Path template) {
         try {
-            return Files.readAllLines(template).stream()
-                    .map(String::trim)
+            String templateContent = Files.readString(template);
+            return HTML_TAG.matcher(templateContent).results()
+                    .map(MatchResult::group)
                     .filter(this::hasRawInternalAssetReference)
-                    .map(line -> template + ": " + line);
+                    .map(tag -> template + ": " + tag);
         } catch (IOException exception) {
             throw new IllegalStateException("Could not read template " + template, exception);
         }
     }
 
-    private boolean hasRawInternalAssetReference(String line) {
-        return (line.contains("<script") && line.contains("src=\"/js/"))
-                || (line.contains("<link") && line.contains("href=\"/css/"));
+    private boolean hasRawInternalAssetReference(String tag) {
+        Matcher tagMatcher = HTML_TAG.matcher(tag);
+        if (!tagMatcher.matches()) {
+            return false;
+        }
+
+        Matcher attributeMatcher = INTERNAL_ASSET_ATTRIBUTE.matcher(tag);
+        while (attributeMatcher.find()) {
+            String tagName = tagMatcher.group(1);
+            String attributeName = attributeMatcher.group(1);
+            String assetDirectory = attributeMatcher.group(2);
+            if (("script".equalsIgnoreCase(tagName) && "src".equalsIgnoreCase(attributeName) && "js".equalsIgnoreCase(assetDirectory))
+                    || ("link".equalsIgnoreCase(tagName) && "href".equalsIgnoreCase(attributeName) && "css".equalsIgnoreCase(assetDirectory))) {
+                return true;
+            }
+        }
+        return false;
     }
 }
