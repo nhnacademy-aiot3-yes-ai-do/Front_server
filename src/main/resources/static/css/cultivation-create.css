@@ -536,6 +536,9 @@ body {
     .mushroom-env-grid {
         grid-template-columns: 1fr;
     }
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* ---- step4 2단 레이아웃 ---- */
@@ -572,6 +575,10 @@ body {
     .step4-col-left {
         flex: 1 1 auto;
         width: 100%;
+    }
+    .recommend-grid,
+    .step4-col-right .recommend-grid {
+        grid-template-columns: 1fr;
     }
 }
 

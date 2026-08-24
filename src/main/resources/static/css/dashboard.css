@@ -1527,3 +1527,32 @@ body {
 .compare-diff.flat {
     color: var(--brown-500);
 }
+
+/* ===== 반응형: 창/화면이 좁아지면 3단 그리드를 세로로 쌓아서 겹침·잘림 방지 =====
+   aspect-ratio로 가로 비율을 고정해둔 상태라 좁은 화면에서는 억지로 눌려 찌그러지므로,
+   일정 너비 아래에서는 세로 스택으로 전환하고 비율 고정도 풀어서 내용 높이에 맞게 늘어나게 함. */
+@media (max-width: 1100px) {
+    .page-container { width: min(96vw, 2800px); margin: 1.2rem auto; }
+    .tab-panel { padding: 1.3rem; }
+
+    .main-row {
+        grid-template-columns: 1fr;
+        aspect-ratio: auto;
+    }
+
+    .photo-card { min-height: 22rem; }
+
+    .report-row {
+        grid-template-columns: 1fr;
+        aspect-ratio: auto;
+    }
+
+    .report-row .photo-card { min-height: 18rem; }
+}
+
+@media (max-width: 640px) {
+    .tabs-nav { flex-wrap: wrap; }
+    .tab-btn { padding: 0.55rem 1rem 0.5rem; font-size: 0.95rem; }
+    .tab-panel { padding: 1rem; }
+    .env-stats-card--main .env-stat-grid { grid-template-columns: repeat(2, 1fr); }
+}

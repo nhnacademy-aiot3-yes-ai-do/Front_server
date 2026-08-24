@@ -11,22 +11,22 @@
         <div class="admin-sidebar-group">
             <span class="admin-sidebar-group-label">메인</span>
             <a href="/admin" class="admin-sidebar-link" th:classappend="${active == 'dashboard'} ? ' is-active'">
-                <i data-lucide="layout-dashboard"></i>대시보드
+                <i data-lucide="layout-dashboard"></i><span class="admin-sidebar-link-label">대시보드</span>
             </a>
         </div>
         <div class="admin-sidebar-group">
             <span class="admin-sidebar-group-label">관리</span>
             <a href="/admin/members" class="admin-sidebar-link" th:classappend="${active == 'members'} ? ' is-active'">
-                <i data-lucide="users"></i>회원 관리
+                <i data-lucide="users"></i><span class="admin-sidebar-link-label">회원 관리</span>
             </a>
             <a href="/admin/inquiries" class="admin-sidebar-link" th:classappend="${active == 'inquiries'} ? ' is-active'">
-                <i data-lucide="message-square"></i>회원 문의
+                <i data-lucide="message-square"></i><span class="admin-sidebar-link-label">회원 문의</span>
             </a>
             <a href="/admin/mushrooms" class="admin-sidebar-link" th:classappend="${active == 'mushrooms'} ? ' is-active'">
-                <i data-lucide="package"></i>버섯 등록
+                <i data-lucide="package"></i><span class="admin-sidebar-link-label">버섯 등록</span>
             </a>
             <a href="/admin/sensors" class="admin-sidebar-link" th:classappend="${active == 'sensors'} ? ' is-active'">
-                <i data-lucide="cpu"></i>센서 등록
+                <i data-lucide="cpu"></i><span class="admin-sidebar-link-label">센서 등록</span>
             </a>
         </div>
     </nav>
@@ -37,7 +37,7 @@
             <span class="admin-sidebar-profile-name">관리자</span>
         </div>
         <button class="admin-sidebar-logout" type="button" onclick="handleLogout()">
-            <i data-lucide="log-out"></i>로그아웃
+            <i data-lucide="log-out"></i><span class="admin-sidebar-logout-label">로그아웃</span>
         </button>
     </div>
 </aside>
