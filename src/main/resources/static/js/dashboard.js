@@ -1195,6 +1195,11 @@ function photoRawUrl(photoId) {
     return '/cultivations/' + CULTIVATION_ID + '/photos/' + photoId + '/raw';
 }
 
+var cultivationDeleteForm = document.getElementById('cultivation-delete-form');
+if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
+    cultivationDeleteForm.action = '/cultivations/' + CULTIVATION_ID;
+}
+
 renderPhotoThumbs();
 renderPhotoUploadPreview();
 renderMainPhoto();

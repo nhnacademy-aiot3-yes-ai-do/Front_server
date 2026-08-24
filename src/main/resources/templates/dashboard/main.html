@@ -389,7 +389,7 @@
         </button>
         <h3 class="modal-title">재배지 삭제</h3>
         <p class="modal-desc">정말 이 재배지를 삭제하시겠습니까? 삭제 후에는 재배 이력에서만 확인할 수 있어요.</p>
-        <form class="modal-actions" method="post" th:action="@{/cultivations/{cultivation-id}(cultivation-id=${cultivation.cultivationId})}">
+        <form class="modal-actions" id="cultivation-delete-form" method="post">
             <input name="_method" type="hidden" value="DELETE" />
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-delete')">Cancel</button>
             <button class="btn btn-primary" type="submit">삭제</button>
