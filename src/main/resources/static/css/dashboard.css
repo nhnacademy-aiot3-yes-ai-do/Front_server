@@ -56,7 +56,7 @@ body {
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--brown-500);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     border-radius: 10px 10px 0 0;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
@@ -268,7 +268,7 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     border-width: 2px;
     border-style: solid;
     transition: background 0.15s ease, transform 0.15s ease;
@@ -460,7 +460,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     box-shadow: 0 2px 8px rgba(63, 42, 29, 0.2);
     transition: transform 0.25s ease, color 0.15s ease;
 }
@@ -803,7 +803,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -830,7 +830,7 @@ body {
     border: 2px solid rgba(139, 94, 60, 0.28);
     border-radius: 12px;
     background: rgba(251, 246, 234, 0.7);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
@@ -851,7 +851,7 @@ body {
 
 .report-date-chip.disabled {
     opacity: 0.4;
-    cursor: url("/images/cursor-default.png") 3 2, not-allowed;
+    cursor: not-allowed;
 }
 
 .chip-dow {
@@ -935,7 +935,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -964,7 +964,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -1037,7 +1037,7 @@ body {
 .dropdown-panel-title button {
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--sage-600);
 }
 
@@ -1092,14 +1092,14 @@ body {
 .member-remove {
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--danger);
 }
 
 .member-role-toggle {
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--ink);
 }
 
@@ -1127,7 +1127,7 @@ body {
 .panel-pagination button {
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--sage-600);
     display: flex;
     align-items: center;
@@ -1135,7 +1135,7 @@ body {
 
 .panel-pagination button:disabled {
     color: var(--brown-300);
-    cursor: url("/images/cursor-default.png") 3 2, default;
+    cursor: default;
 }
 
 .panel-pagination span {
@@ -1196,7 +1196,7 @@ body {
     border-radius: 8px;
     padding: 6px 12px;
     font-size: 13px;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     flex-shrink: 0;
 }
 
@@ -1206,7 +1206,7 @@ body {
 
 .member-search-add:disabled {
     background: var(--brown-300);
-    cursor: url("/images/cursor-default.png") 3 2, default;
+    cursor: default;
 }
 
 /* ===== Modal ===== */
@@ -1278,7 +1278,7 @@ body {
     right: 16px;
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--brown-500);
 }
 
@@ -1328,7 +1328,7 @@ body {
     color: var(--brown-300);
     flex-shrink: 0;
     overflow: hidden;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
@@ -1383,7 +1383,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     padding: 0;
 }
 
@@ -1445,7 +1445,7 @@ body {
     background: none;
     border: none;
     color: var(--sage-600);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .modal-field label {
@@ -1526,4 +1526,33 @@ body {
 
 .compare-diff.flat {
     color: var(--brown-500);
+}
+
+/* ===== 반응형: 창/화면이 좁아지면 3단 그리드를 세로로 쌓아서 겹침·잘림 방지 =====
+   aspect-ratio로 가로 비율을 고정해둔 상태라 좁은 화면에서는 억지로 눌려 찌그러지므로,
+   일정 너비 아래에서는 세로 스택으로 전환하고 비율 고정도 풀어서 내용 높이에 맞게 늘어나게 함. */
+@media (max-width: 1100px) {
+    .page-container { width: min(96vw, 2800px); margin: 1.2rem auto; }
+    .tab-panel { padding: 1.3rem; }
+
+    .main-row {
+        grid-template-columns: 1fr;
+        aspect-ratio: auto;
+    }
+
+    .photo-card { min-height: 22rem; }
+
+    .report-row {
+        grid-template-columns: 1fr;
+        aspect-ratio: auto;
+    }
+
+    .report-row .photo-card { min-height: 18rem; }
+}
+
+@media (max-width: 640px) {
+    .tabs-nav { flex-wrap: wrap; }
+    .tab-btn { padding: 0.55rem 1rem 0.5rem; font-size: 0.95rem; }
+    .tab-panel { padding: 1rem; }
+    .env-stats-card--main .env-stat-grid { grid-template-columns: repeat(2, 1fr); }
 }

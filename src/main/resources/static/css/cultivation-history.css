@@ -59,7 +59,7 @@ body {
     border-radius: 12px;
     font-size: 0.95rem;
     color: var(--brown-700);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
@@ -188,7 +188,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease;
 }
 
@@ -224,7 +224,7 @@ body {
     right: 16px;
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--brown-500);
 }
 
@@ -302,4 +302,23 @@ body {
 
 .compare-diff.up { color: var(--sage-600); }
 .compare-diff.down { color: var(--danger); }
+
+/* ===== 반응형: 좁은 화면에서 사이드바+상세 2단 구성을 세로로 전환 ===== */
+@media (max-width: 900px) {
+    .page-container { width: min(96vw, 2800px); margin: 1.2rem auto; }
+
+    .history-box {
+        grid-template-columns: 1fr;
+        aspect-ratio: auto;
+        max-height: none;
+    }
+
+    .history-sidebar {
+        max-height: 12rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .env-stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
 .compare-diff.flat { color: var(--brown-500); }
