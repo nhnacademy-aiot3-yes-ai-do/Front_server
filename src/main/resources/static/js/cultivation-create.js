@@ -176,31 +176,3 @@ function goToStep(n) {
             });
     }
 }
-
-function finishCultivation() {
-    var name = document.getElementById('f-name').value.trim();
-    var mushroomId = document.getElementById('f-mushroom').value;
-
-    if (!name) {
-        alert('재배지 이름을 입력해주세요.');
-        goToStep(1);
-        return;
-    }
-    if (!mushroomId) {
-        alert('버섯 종류를 확인해주세요.');
-        goToStep(1);
-        return;
-    }
-
-    fetch('/cultivations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'name=' + encodeURIComponent(name) + '&mushroomId=' + mushroomId
-    }).then(function (res) {
-        if (res.ok) {
-            window.location.href = '/cultivations';
-        } else {
-            alert('재배지 생성에 실패했습니다.');
-        }
-    });
-}
