@@ -138,6 +138,11 @@
     </div>
 </div>
 
-<script th:src="@{/js/notification-settings.js}"></script>
+<script th:inline="javascript">
+    var ENDPOINTS_BOOTSTRAP = [(${endpointsJson})];
+    var SUBSCRIPTION_TYPES_BOOTSTRAP = [(${subscriptionTypesJson})];
+    var SUBSCRIPTIONS_BOOTSTRAP = [(${subscriptionsJson})];
+    var CULTIVATIONS_BOOTSTRAP = [(${cultivationOptionsJson})];
+</script>
 </body>
 </html>
