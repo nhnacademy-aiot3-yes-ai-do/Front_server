@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>센서 등록 | MushMush</title>
-    <link rel="stylesheet" href="/css/admin.css" />
-    <script src="/js/lucide.js"></script>
-    <script src="/js/admin-common.js"></script>
+    <link rel="stylesheet" th:href="@{/css/admin.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/admin-common.js}"></script>
 </head>
 <body>
 
@@ -90,7 +90,7 @@
 <script th:inline="javascript">
     var SENSOR_TYPES_BOOTSTRAP = [(${sensorTypesJson})];
 </script>
-<script src="/js/admin-sensors.js"></script>
+<script th:src="@{/js/admin-sensors.js}"></script>
 
 </body>
 </html>

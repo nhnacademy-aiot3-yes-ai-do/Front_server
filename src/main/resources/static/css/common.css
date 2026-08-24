@@ -302,6 +302,25 @@
     color: #fff;
 }
 
+/* ===== 헤더 반응형 (창/화면이 좁아질 때 로고·버튼·간격을 줄여서 겹침/잘림 방지) ===== */
+@media (max-width: 900px) {
+    .topbar { height: 68px; }
+    .topbar-logo { height: 58px; }
+    .topbar-right { gap: 6px; }
+    .topbar-link { padding: 6px 8px; font-size: 13px; }
+    .topbar-link-label { display: none; }
+    .topbar-divider { margin: 0 2px; }
+    .topbar-nickname { display: none; }
+}
+
+@media (max-width: 560px) {
+    .topbar { height: 56px; }
+    .topbar-logo { height: 46px; }
+    .topbar-session { padding: 5px 8px; }
+    .topbar-session-timer { font-size: 12px; }
+    .avatar-circle { width: 38px; height: 38px; }
+}
+
 /* ===== 토글 스위치 (알림 설정 등 on/off 항목에서 공용으로 씀) ===== */
 .toggle-switch {
     position: relative;

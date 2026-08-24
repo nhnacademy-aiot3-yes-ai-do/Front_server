@@ -5,9 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>버섯 등록 | MushMush</title>
-    <link rel="stylesheet" href="/css/admin.css" />
-    <script src="/js/lucide.js"></script>
-    <script src="/js/admin-common.js"></script>
+    <link rel="stylesheet" th:href="@{/css/admin.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/admin-common.js}"></script>
 </head>
 <body>
 
@@ -140,7 +140,7 @@
     var SENSOR_TYPES_BOOTSTRAP = [(${sensorTypesJson})];
     var MUSHROOMS_BOOTSTRAP = [(${mushroomsJson})];
 </script>
-<script src="/js/admin-mushrooms.js"></script>
+<script th:src="@{/js/admin-mushrooms.js}"></script>
 
 </body>
 </html>

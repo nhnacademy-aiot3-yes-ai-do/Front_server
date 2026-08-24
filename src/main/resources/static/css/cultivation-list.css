@@ -416,3 +416,29 @@ body {
 
 .sensor-type-check-row .st-validate-msg.valid { color: var(--sage-600); }
 .sensor-type-check-row .st-validate-msg.invalid { color: var(--danger); }
+
+/* ===== 반응형: 좁은 화면에서는 박스 비율 고정을 풀고, 테이블은 가로 스크롤로 전환 =====
+   aspect-ratio로 박스 높이를 고정해두면 좁은 화면에서 테이블이 강제로 눌려 겹치므로,
+   일정 너비 아래에서는 높이를 내용에 맞게 풀고 표는 가로 스크롤 되도록 함 */
+@media (max-width: 900px) {
+    .page-container { width: min(96vw, 2800px); margin: 1.2rem auto; }
+
+    .list-panel {
+        aspect-ratio: auto;
+        max-height: 80vh;
+        padding: 1.2rem;
+    }
+
+    .list-table-wrap {
+        overflow-x: auto;
+    }
+
+    .list-table {
+        min-width: 640px;
+    }
+
+    .list-footer {
+        flex-wrap: wrap;
+        gap: 0.8rem;
+    }
+}
