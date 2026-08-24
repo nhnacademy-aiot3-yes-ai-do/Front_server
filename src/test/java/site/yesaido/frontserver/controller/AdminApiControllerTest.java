@@ -17,10 +17,12 @@ import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.common.ApiResponse;
+import site.yesaido.frontserver.config.MethodOverrideConfig;
 import site.yesaido.frontserver.controller.admin.AdminInquiryController;
 import site.yesaido.frontserver.controller.admin.AdminMushroomReferenceController;
 import site.yesaido.frontserver.controller.admin.AdminSensorTypeController;
 import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
+import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorTypeRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.dto.inquiry.InquiryStatus;
@@ -39,6 +41,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(
@@ -52,8 +55,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 OAuth2ClientWebSecurityAutoConfiguration.class
         }
 )
-@AutoConfigureMockMvc(addFilters = false)
-@Import(AuthCookieProvider.class)
+@AutoConfigureMockMvc
+@Import({AuthCookieProvider.class, MethodOverrideConfig.class})
 class AdminApiControllerTest {
 
     @Autowired
@@ -179,18 +182,6 @@ class AdminApiControllerTest {
     }
 
     @Test
-    @DisplayName("버섯 도감 삭제")
-    void deleteMushroomReferenceSuccess() throws Exception {
-        when(sensorClient.deleteMushroomReference(1L)).thenReturn(ResponseEntity.noContent().build());
-
-        mockMvc.perform(delete("/admin/mushroom-references/{mushroom-reference-id}", 1L)
-                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE))
-                .andExpect(status().isNoContent());
-
-        verify(sensorClient).deleteMushroomReference(1L);
-    }
-
-    @Test
     @DisplayName("센서 타입 목록 조회")
     void getSensorTypesSuccess() throws Exception {
         when(sensorClient.getSensorTypes())
@@ -198,5 +189,60 @@ class AdminApiControllerTest {
 
         mockMvc.perform(get("/admin/sensor-types").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("센서 타입 등록 form은 목록으로 PRG 리다이렉트")
+    void createSensorTypeFormRedirectsToSensorTypePage() throws Exception {
+        mockMvc.perform(post("/admin/sensor-types")
+                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("type", "TEMPERATURE")
+                        .param("valueUnit", "℃"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/sensors"));
+
+        verify(sensorClient).registerSensorType(new SensorTypeRequest("TEMPERATURE", "℃"));
+    }
+
+    @Test
+    @DisplayName("센서 타입 수정 form은 목록으로 PRG 리다이렉트")
+    void updateSensorTypeFormRedirectsToSensorTypePage() throws Exception {
+        mockMvc.perform(post("/admin/sensor-types/{sensor-type-id}", 3L)
+                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("_method", "PUT")
+                        .param("type", "HUMIDITY")
+                        .param("valueUnit", "%"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/sensors"));
+
+        verify(sensorClient).updateSensorType(3L, new SensorTypeRequest("HUMIDITY", "%"));
+    }
+
+    @Test
+    @DisplayName("센서 타입 삭제 form은 목록으로 PRG 리다이렉트")
+    void deleteSensorTypeFormRedirectsToSensorTypePage() throws Exception {
+        mockMvc.perform(post("/admin/sensor-types/{sensor-type-id}", 3L)
+                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("_method", "DELETE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/sensors"));
+
+        verify(sensorClient).deleteSensorType(3L);
+    }
+
+    @Test
+    @DisplayName("버섯 기준정보 삭제 form은 목록으로 PRG 리다이렉트")
+    void deleteMushroomReferenceFormRedirectsToMushroomPage() throws Exception {
+        mockMvc.perform(post("/admin/mushroom-references/{mushroom-reference-id}", 7L)
+                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("_method", "DELETE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/mushrooms"));
+
+        verify(sensorClient).deleteMushroomReference(7L);
     }
 }

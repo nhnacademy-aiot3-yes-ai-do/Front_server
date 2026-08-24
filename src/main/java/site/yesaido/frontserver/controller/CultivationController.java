@@ -34,6 +34,7 @@ import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -138,7 +139,7 @@ public class CultivationController {
         model.addAttribute("myRole", cultivation != null ? cultivation.myRole() : null);
 
         Long growthDays = (cultivation != null && cultivation.startedAt() != null)
-                ? ChronoUnit.DAYS.between(cultivation.startedAt().toLocalDate(), LocalDate.now()) + 1
+                ? ChronoUnit.DAYS.between(cultivation.startedAt().toLocalDate(), LocalDate.now(ZoneId.of("Asia/Seoul"))) + 1
                 : null;
         model.addAttribute("growthDays", growthDays);
 
@@ -152,9 +153,9 @@ public class CultivationController {
     }
 
     @DeleteMapping("/{cultivation-id}")
-    public ResponseEntity<Void> deleteCultivation(@PathVariable("cultivation-id") Long cultivationId) {
+    public String deleteCultivationForm(@PathVariable("cultivation-id") Long cultivationId) {
         cultivationClient.deleteCultivation(cultivationId);
-        return ResponseEntity.noContent().build();
+        return "redirect:/cultivations";
     }
 
     // CultivationMember

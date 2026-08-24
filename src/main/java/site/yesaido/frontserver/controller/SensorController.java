@@ -1,6 +1,7 @@
 package site.yesaido.frontserver.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -21,22 +22,22 @@ public class SensorController {
     private final SensorClient sensorClient;
     private final AiClient aiClient;
 
-    @GetMapping("/mushroom-references")
+    @GetMapping(value = "/mushroom-references", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<MushroomReferenceInfoListResponse> getMushroomReferences() {
         ResponseEntity<MushroomReferenceInfoListResponse> upstream = sensorClient.getAllMushroomReferences();
-        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
+        return jsonResponse(upstream);
     }
 
-    @GetMapping("/sensor-types")
+    @GetMapping(value = "/sensor-types", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SensorTypeInfoListResponse> getSensorTypes() {
         ResponseEntity<SensorTypeInfoListResponse> upstream = sensorClient.getSensorTypes();
-        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
+        return jsonResponse(upstream);
     }
 
-    @GetMapping("/{cultivation-id}/sensors")
+    @GetMapping(value = "/{cultivation-id}/sensors", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<CultivationSensorListResponse> getSensors(@PathVariable("cultivation-id") Long cultivationId) {
         ResponseEntity<CultivationSensorListResponse> upstream = sensorClient.getSensors(cultivationId);
-        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
+        return jsonResponse(upstream);
     }
 
     @PostMapping("/{cultivation-id}/sensors")
@@ -51,18 +52,18 @@ public class SensorController {
         return sensorClient.deleteSensor(cultivationId, sensorId);
     }
 
-    @GetMapping("/{cultivation-id}/sensor-values")
+    @GetMapping(value = "/{cultivation-id}/sensor-values", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<LatestSensorValueListResponse> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId) {
         ResponseEntity<LatestSensorValueListResponse> upstream = sensorClient.getLatestSensorValues(cultivationId);
-        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
+        return jsonResponse(upstream);
     }
 
-    @GetMapping("/{cultivation-id}/sensor-values/trend")
+    @GetMapping(value = "/{cultivation-id}/sensor-values/trend", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SensorTrendPointListResponse> getSensorTrend(@PathVariable("cultivation-id") Long cultivationId,
                                                                        @RequestParam("device-eui") String deviceEui,
                                                                        @RequestParam("sensor-type") String sensorType) {
         ResponseEntity<SensorTrendPointListResponse> upstream = sensorClient.getSensorTrend(cultivationId, deviceEui, sensorType);
-        return ResponseEntity.status(upstream.getStatusCode()).body(upstream.getBody());
+        return jsonResponse(upstream);
     }
 
     @PostMapping("/{cultivation-id}/sensor-validation")
@@ -70,5 +71,16 @@ public class SensorController {
             @PathVariable("cultivation-id") Long cultivationId,
             @RequestBody SensorValidationRequest request){
         return ResponseEntity.ok(aiClient.validationSensorThreshold(cultivationId ,request));
+    }
+
+    /**
+     * Sensor data is JSON only; content type and nosniff prevent HTML execution.
+     */
+    private <T> ResponseEntity<T> jsonResponse(ResponseEntity<T> upstream) {
+        //noinspection UncontrolledDataFlow
+        return ResponseEntity.status(upstream.getStatusCode())
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("X-Content-Type-Options", "nosniff")
+                .body(upstream.getBody());
     }
 }

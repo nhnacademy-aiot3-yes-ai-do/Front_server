@@ -9,6 +9,12 @@ var sensorTypesData = (cultivationListPageData && cultivationListPageData.sensor
 var SENSOR_LIST = [];
 var SENSOR_TYPES = [];
 
+function escapeHtml(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 var listState = {
     cultivation: { page: 0, data: cultivationData },
     sensor: { page: 0, data: SENSOR_LIST }
@@ -37,10 +43,10 @@ function renderCultivationRow(c) {
     var tr = document.createElement('tr');
     tr.onclick = function () { location.href = '/cultivations/' + c.cultivationId; };
     tr.innerHTML =
-        '<td>' + c.name + '</td>' +
+        '<td>' + escapeHtml(c.name) + '</td>' +
         '<td>' + (c.mushroomId != null ? '버섯 #' + c.mushroomId : '-') + '</td>' +
         '<td>' + (c.memberCount != null ? c.memberCount + '명' : '-') + '</td>' +
-        '<td>' + (c.ownerNickname || '-') + '</td>' +
+        '<td>' + escapeHtml(c.ownerNickname || '-') + '</td>' +
         '<td>' + formatDate(c.createdAt) + '</td>';
     return tr;
 }
@@ -55,12 +61,12 @@ function renderSensorRow(s) {
     var tr = document.createElement('tr');
     var typesLabel = (s.sensorTypes || []).map(function (t) { return t.type + '(' + t.valueUnit + ')'; }).join(', ') || '-';
     tr.innerHTML =
-        '<td>' + s.cultivationName + '</td>' +
-        '<td>' + s.location + '</td>' +
-        '<td>' + s.locationDetail + '</td>' +
-        '<td>' + s.deviceModel + '</td>' +
-        '<td>' + s.deviceEui + '</td>' +
-        '<td>' + typesLabel + '</td>' +
+        '<td>' + escapeHtml(s.cultivationName) + '</td>' +
+        '<td>' + escapeHtml(s.location) + '</td>' +
+        '<td>' + escapeHtml(s.locationDetail) + '</td>' +
+        '<td>' + escapeHtml(s.deviceModel) + '</td>' +
+        '<td>' + escapeHtml(s.deviceEui) + '</td>' +
+        '<td>' + escapeHtml(typesLabel) + '</td>' +
         '<td>' + statusLabel(s.sensorStatus) + '</td>' +
         '<td></td>';
     var actionTd = tr.lastElementChild;
@@ -160,7 +166,7 @@ function populateCultivationSelect() {
     var wrapperEl = document.getElementById('ms-cultivation');
     var menu = document.getElementById('ms-cultivation-menu');
     menu.innerHTML = cultivationData.map(function (c) {
-        return '<div class="msh-select-option" data-value="' + c.cultivationId + '" onclick="selectMshOption(this)">' + c.name + '</div>';
+        return '<div class="msh-select-option" data-value="' + Number(c.cultivationId) + '" onclick="selectMshOption(this)">' + escapeHtml(c.name) + '</div>';
     }).join('');
     wrapperEl.dataset.value = '';
     wrapperEl.querySelector('.msh-select-value').textContent = '재배지를 선택하세요';
@@ -174,8 +180,8 @@ function renderSensorTypeCheckList() {
         row.className = 'sensor-type-check-row';
         row.innerHTML =
             '<label class="st-checkbox-label">' +
-            '<input type="checkbox" data-sensor-type-id="' + t.id + '" onchange="toggleSensorTypeRow(this)" />' +
-            '<span>' + t.type + ' (' + t.valueUnit + ')</span>' +
+            '<input type="checkbox" data-sensor-type-id="' + Number(t.id) + '" onchange="toggleSensorTypeRow(this)" />' +
+            '<span>' + escapeHtml(t.type) + ' (' + escapeHtml(t.valueUnit) + ')</span>' +
             '</label>' +
             '<input type="number" class="st-min" placeholder="최소" disabled oninput="clearThresholdValidation(this)" />' +
             '<input type="number" class="st-max" placeholder="최대" disabled oninput="clearThresholdValidation(this)" />' +
