@@ -247,11 +247,10 @@ function validateThreshold(button) {
     }
     showResult(false, 'AI 검증 중...');
 
-    fetch('/cultivations/sensor-validation', {
+    fetch('/cultivations/' + cultivationId + '/sensor-validation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            cultivationId: Number(cultivationId),
             sensorTypeId: sensorTypeId,
             sensorTypeName: sensorTypeName,
             sensorUnit: sensorUnit,
