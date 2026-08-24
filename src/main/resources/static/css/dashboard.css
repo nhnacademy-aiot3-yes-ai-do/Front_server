@@ -744,6 +744,21 @@ body {
     padding: 1.1rem 1.2rem 0;
 }
 
+.chart-card-header-selects {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--sage-500);
+    font-weight: 600;
+}
+
 .chart-placeholder {
     flex: 1;
     display: flex;
@@ -775,6 +790,17 @@ body {
     fill: var(--sage-600);
     stroke: var(--cream-100);
     stroke-width: 2;
+}
+
+/* ---- 그래프 눈금 라벨 (값 축 / 시간 축, 센서마다 단위가 달라서 JS가 값에 단위를 붙여서 넣어줌) ---- */
+.chart-axis-label {
+    font-family: "Gowun Dodum", inherit;
+    font-size: 6.4px;
+    fill: var(--brown-500);
+}
+
+.chart-axis-label-x {
+    font-size: 5.6px;
 }
 
 /* ===== AI report tab ===== */
