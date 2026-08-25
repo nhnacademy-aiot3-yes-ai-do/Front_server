@@ -6,6 +6,12 @@ var cultivationItemsData = (cultivationListPageData && cultivationListPageData.c
 var cultivationData = cultivationItemsData.map(function (item) { return item.cultivation; });
 var sensorTypesData = (cultivationListPageData && cultivationListPageData.sensorTypes) || [];
 
+// mushroomId -> 한글 품종명 매핑 ("버섯 #1" 대신 "느타리버섯" 등으로 보여주기 위함)
+var MUSHROOM_NAME_MAP = {};
+(mushroomRefsData || []).forEach(function (m) {
+    MUSHROOM_NAME_MAP[m.id] = m.mushroomNameKo;
+});
+
 var SENSOR_LIST = [];
 var SENSOR_TYPES = [];
 
@@ -44,7 +50,7 @@ function renderCultivationRow(c) {
     tr.onclick = function () { location.href = '/cultivations/' + c.cultivationId; };
     tr.innerHTML =
         '<td>' + escapeHtml(c.name) + '</td>' +
-        '<td>' + (c.mushroomId != null ? '버섯 #' + c.mushroomId : '-') + '</td>' +
+        '<td>' + (c.mushroomId != null ? (MUSHROOM_NAME_MAP[c.mushroomId] || '버섯 #' + c.mushroomId) : '-') + '</td>' +
         '<td>' + (c.memberCount != null ? c.memberCount + '명' : '-') + '</td>' +
         '<td>' + escapeHtml(c.ownerNickname || '-') + '</td>' +
         '<td>' + formatDate(c.createdAt) + '</td>';

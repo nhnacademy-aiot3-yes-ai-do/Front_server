@@ -28,9 +28,12 @@ body {
     display: grid;
     grid-template-columns: 14rem 1fr;
     gap: 1.3rem;
-    /* 고정 height 대신 aspect-ratio를 써서, page-container 너비가 화면 크기에 맞춰
-       커질 때 세로 높이도 같은 비율로 같이 커지도록 함 */
-    aspect-ratio: 2.2 / 1;
+    /* min/max-height만으로는 grid의 "auto" 트랙 높이가 내부 콘텐츠(특히 flex:1인
+       .history-name-list)의 계산 방식에 따라 여전히 크게 잡히는 문제가 있었음(브라우저의
+       grid auto-track 계산이 flex-grow 자식의 intrinsic 크기를 기대만큼 작게 안 잡음).
+       그래서 아예 height를 명시적으로 고정해 컨텐츠 양과 무관하게 박스 크기가 일정하게 만들고,
+       그 안에서 목록/상세 각각 자기 영역만 스크롤되게 함 */
+    height: clamp(420px, 68vh, 760px);
 }
 
 .history-sidebar {
@@ -43,6 +46,10 @@ body {
     padding: 1.3rem 1rem;
     display: flex;
     flex-direction: column;
+    /* 그리드 아이템은 기본적으로 자기 콘텐츠 크기보다 작게 못 줄어들어서(min-height:auto),
+       .history-box에 max-height를 걸어도 목록이 길면 이 박스가 그만큼 계속 커져버림.
+       0으로 풀어줘야 안쪽 .history-name-list가 실제로 스크롤 영역을 갖게 됨 */
+    min-height: 0;
 }
 
 .history-name-list {
@@ -83,7 +90,18 @@ body {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.15);
     border-radius: 20px;
     padding: 1.8rem;
+    /* 비교하기 버튼을 항상 우측 하단에 고정으로 붙여두기 때문에, 스크롤되는 본문 내용이
+       버튼 밑으로 가려지지 않도록 아래쪽 여백을 넉넉히 확보함 */
+    padding-bottom: 4.4rem;
+    min-height: 0;
     overflow-y: auto;
+    /* 상세 내용이 짧으면 위쪽에 몰려있어 휑해 보이는 문제가 있었음. flex column +
+       justify-content:center로 내용 전체를 세로 중앙에 모아주고, 내용이 많아지면(overflow)
+       자연스럽게 위부터 스크롤됨. 비교하기 버튼은 position:absolute라 이 흐름과 무관하게
+       항상 우측 하단에 고정됨 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .history-empty {
@@ -99,20 +117,30 @@ body {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    margin-bottom: 1.1rem;
+    margin-bottom: 1.3rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid rgba(139, 94, 60, 0.15);
 }
 
 .history-detail-title {
     font-family: "Gaegu", inherit;
     font-weight: 700;
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     color: var(--brown-900);
 }
 
 .history-detail-period {
+    display: flex;
+    align-items: center;
+    gap: 5px;
     font-size: 0.82rem;
     color: var(--brown-500);
-    margin-top: 4px;
+    margin-top: 6px;
+}
+
+.history-detail-period i {
+    width: 0.85rem;
+    height: 0.85rem;
 }
 
 .history-badge {
@@ -121,15 +149,27 @@ body {
     color: var(--sage-600);
     font-size: 0.72rem;
     font-weight: 700;
-    padding: 0.3rem 0.7rem;
+    padding: 0.35rem 0.8rem;
     border-radius: 999px;
 }
 
 .history-summary {
-    margin: 1rem 0 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin: 0 0 0;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(139, 94, 60, 0.14);
+    border-radius: 14px;
+    padding: 1rem 1.2rem;
     font-size: 0.88rem;
     line-height: 1.7;
     color: var(--brown-700);
+}
+
+.history-summary i {
+    flex-shrink: 0;
+    margin-top: 3px;
 }
 
 .history-compare-btn {
@@ -138,40 +178,56 @@ body {
     bottom: 1.5rem;
 }
 
-/* ===== 환경 통계 그리드 (dashboard.css 와 동일 스타일) ===== */
+/* ===== 환경 통계 그리드 =====
+   항목이 항상 3개(총 재배량/상품 등급/병충해 감지일)인데 4열 그리드를 써서
+   오른쪽에 빈 칸 하나가 남아 허전해 보였음 -> 실제 항목 수에 맞춰 3열로 변경.
+   가로로 나열된 아이콘+라벨+값 한 줄짜리 대신, 아이콘을 원형 배지로 얹고
+   라벨/값을 세로로 쌓는 카드 형태로 바꿔 여백을 더 잘 채우고 시각적으로 강조되게 함 */
 .env-stat-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.6rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.9rem;
+    margin-bottom: 1.4rem;
 }
 
 .env-stat-item {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
     background: rgba(255, 255, 255, 0.5);
     border: 1px solid rgba(139, 94, 60, 0.18);
-    border-radius: 12px;
-    padding: 0.5rem 0.6rem;
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
     min-width: 0;
 }
 
+.env-stat-icon-wrap {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    background: rgba(124, 148, 115, 0.16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
 .env-stat-icon {
-    width: 1rem;
-    height: 1rem;
+    width: 1.05rem;
+    height: 1.05rem;
     color: var(--sage-600);
     flex-shrink: 0;
 }
 
 .env-stat-label {
-    flex: 1;
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     color: var(--brown-500);
     min-width: 0;
 }
 
 .env-stat-value {
-    font-size: 0.8rem;
+    font-size: 1.2rem;
     font-weight: 700;
     color: var(--brown-900);
     white-space: nowrap;
@@ -309,12 +365,15 @@ body {
 
     .history-box {
         grid-template-columns: 1fr;
-        aspect-ratio: auto;
-        max-height: none;
+        height: auto;
     }
 
     .history-sidebar {
         max-height: 12rem;
+    }
+
+    .history-detail {
+        max-height: 60vh;
     }
 }
 

@@ -47,11 +47,20 @@
 
 <script th:inline="javascript">
     var pageData = [(${historyJson})];
+    var mushroomRefs = /*[(${mushroomsJson})]*/ [];
+
+    // mushroomId -> 한글 품종명 매핑 ("버섯 #1" 대신 "느타리버섯" 등으로 보여주기 위함)
+    var MUSHROOM_NAME_MAP = {};
+    mushroomRefs.forEach(function (m) {
+        MUSHROOM_NAME_MAP[m.id] = m.mushroomNameKo;
+    });
+
     var CULTIVATION_HISTORY = pageData.content.map(function (c) {
         return {
             id: c.cultivationId,
             name: c.name,
             mushroomId: c.mushroomId,
+            mushroomName: c.mushroomId != null ? MUSHROOM_NAME_MAP[c.mushroomId] : null,
             amount: c.harvestWeight,
             grade: c.productGrade,
             finishedAt: c.finishedAt

@@ -703,6 +703,8 @@ textarea,
     line-height: 1.6;
     color: var(--brown-700);
     margin: 0 0 20px;
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 .modal-field {
