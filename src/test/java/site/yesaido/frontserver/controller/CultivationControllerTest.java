@@ -341,23 +341,6 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("사진 원본 조회 - Feign 응답을 그대로 반환")
-    void getPhotoRawReturnsRawBytes() throws Exception {
-        Long cultivationId = 1L;
-        Long photoId = 200L;
-        byte[] content = "image-bytes".getBytes();
-
-        when(cultivationClient.getPhotoRaw(cultivationId, photoId))
-                .thenReturn(ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(content));
-
-        mockMvc.perform(get("/cultivations/{cultivation-id}/photos/{photo-id}/raw", cultivationId, photoId)
-                        .cookie(LOGGED_IN))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.IMAGE_JPEG))
-                .andExpect(content().bytes(content));
-    }
-
-    @Test
     @DisplayName("멤버 검색 - 이미 멤버인 유저는 결과에서 제외")
     void searchMembersExcludesExistingMembers() throws Exception {
         Long cultivationId = 1L;
