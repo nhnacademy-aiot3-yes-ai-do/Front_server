@@ -6,7 +6,7 @@ import java.util.List;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record MemberSummaryPageResponse(
-        List<MemberSummaryResponse> memberSummaryResponse,
+        List<MemberSummaryResponse> content,
         Integer totalPages,
         Long totalElements,
         Integer number,
