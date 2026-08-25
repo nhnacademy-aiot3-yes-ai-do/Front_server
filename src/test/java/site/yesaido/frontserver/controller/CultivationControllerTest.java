@@ -245,6 +245,8 @@ class CultivationControllerTest {
         Long cultivationId = 1L;
         UserSearchResponse searchResult = new UserSearchResponse(200L, "검색된유저");
         when(userClient.search("검색")).thenReturn(List.of(searchResult));
+        when(cultivationClient.getMembers(cultivationId))
+                .thenReturn(ResponseEntity.ok(new MemberListResponse(List.of())));
 
         mockMvc.perform(get("/cultivations/{cultivation-id}/members/search", cultivationId)
                         .cookie(LOGGED_IN)
@@ -353,5 +355,26 @@ class CultivationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.IMAGE_JPEG))
                 .andExpect(content().bytes(content));
+    }
+
+    @Test
+    @DisplayName("멤버 검색 - 이미 멤버인 유저는 결과에서 제외")
+    void searchMembersExcludesExistingMembers() throws Exception {
+        Long cultivationId = 1L;
+        UserSearchResponse alreadyMember = new UserSearchResponse(100L, "기존멤버");
+        UserSearchResponse newCandidate = new UserSearchResponse(200L, "검색된유저");
+        when(userClient.search("검색")).thenReturn(List.of(alreadyMember, newCandidate));
+        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(
+                new MemberListResponse(List.of(
+                        new MemberResponse(1L, 100L, "기존멤버", "MEMBER", LocalDateTime.now())
+                ))
+        ));
+
+        mockMvc.perform(get("/cultivations/{cultivation-id}/members/search", cultivationId)
+                        .cookie(LOGGED_IN)
+                        .param("keyword", "검색"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].nickname").value("검색된유저"));
     }
 }

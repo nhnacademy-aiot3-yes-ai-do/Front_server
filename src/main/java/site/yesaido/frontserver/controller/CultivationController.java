@@ -37,6 +37,8 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @LoginRequired
@@ -167,7 +169,18 @@ public class CultivationController {
     @GetMapping("/{cultivation-id}/members/search")
     public ResponseEntity<List<UserSearchResponse>> searchMembers(@PathVariable("cultivation-id") Long cultivationId,
                                                                   @RequestParam("keyword") String keyword) {
-        return ResponseEntity.ok(userClient.search(keyword));
+        List<UserSearchResponse> candidates = userClient.search(keyword);
+        MemberListResponse memberListResponse = cultivationClient.getMembers(cultivationId).getBody();
+        Set<Long> existingMemberIds = memberListResponse == null
+                ? Set.of()
+                : memberListResponse.memberResponses().stream()
+                .map(MemberResponse::userId)
+                .collect(Collectors.toSet());
+
+        List<UserSearchResponse> filtered = candidates.stream()
+                .filter(candidate -> !existingMemberIds.contains(candidate.userId()))
+                .toList();
+        return ResponseEntity.ok(filtered);
     }
 
     @PostMapping("/{cultivation-id}/members")

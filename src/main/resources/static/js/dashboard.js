@@ -712,12 +712,18 @@ function openMemberAddModal() {
     openModal('modal-member-add');
 }
 
+function handleMemberSearchKeydown(event) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    searchMemberCandidates();
+}
+
 function searchMemberCandidates() {
     var query = document.getElementById('member-search-input').value.trim();
     var resultsEl = document.getElementById('member-search-results');
 
     if (!query) {
-        resultsEl.innerHTML = '<div class="member-search-hint">이메일 전체 또는 닉네임 일부를 입력해서 검색해 보세요.</div>';
+        resultsEl.innerHTML = '<div class="member-search-hint">이메일 전체 또는 닉네임 일부를 입력 후 Enter</div>';
         return;
     }
 
