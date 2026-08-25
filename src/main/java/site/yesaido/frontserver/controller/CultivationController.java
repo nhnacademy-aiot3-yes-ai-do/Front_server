@@ -46,6 +46,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping("/cultivations")
 public class CultivationController {
+    private static final String MUSHROOMS_JSON = "mushroomsJson";
 
     private final CultivationClient cultivationClient;
     private final SensorClient sensorClient;
@@ -81,7 +82,7 @@ public class CultivationController {
 
         // 목록의 mushroomId만으로는 품종명을 알 수 없어 "버섯 #1"로 표시되던 문제 -> 기준정보를 같이 내려줌
         MushroomReferenceInfoListResponse mushrooms = sensorClient.getAllMushroomReferences().getBody();
-        model.addAttribute("mushroomsJson", viewJsonWriter.toScriptJson(
+        model.addAttribute(MUSHROOMS_JSON, viewJsonWriter.toScriptJson(
                 mushrooms == null ? List.of() : mushrooms.mushroomReferenceInfoResponses()
         ));
 
@@ -91,7 +92,7 @@ public class CultivationController {
     @GetMapping("/new")
     public String createForm(Model model) {
         MushroomReferenceInfoListResponse mushrooms = sensorClient.getAllMushroomReferences().getBody();
-        model.addAttribute("mushroomsJson", viewJsonWriter.toScriptJson(
+        model.addAttribute(MUSHROOMS_JSON, viewJsonWriter.toScriptJson(
                 mushrooms == null ? List.of() : mushrooms.mushroomReferenceInfoResponses()
         ));
         return "cultivation/create";
@@ -117,7 +118,7 @@ public class CultivationController {
         // history 응답엔 mushroomId만 있고 품종명이 없어서, "버섯 #1"처럼 뜨는 걸 막으려고
         // 버섯 기준정보 목록(id -> 한글명)을 같이 내려줘서 프론트에서 매핑해 보여줌
         MushroomReferenceInfoListResponse mushrooms = sensorClient.getAllMushroomReferences().getBody();
-        model.addAttribute("mushroomsJson", viewJsonWriter.toScriptJson(
+        model.addAttribute(MUSHROOMS_JSON, viewJsonWriter.toScriptJson(
                 mushrooms == null ? List.of() : mushrooms.mushroomReferenceInfoResponses()
         ));
 
