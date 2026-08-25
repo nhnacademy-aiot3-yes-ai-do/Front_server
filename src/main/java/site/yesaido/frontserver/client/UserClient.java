@@ -1,6 +1,9 @@
 package site.yesaido.frontserver.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -9,6 +12,7 @@ import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
+import site.yesaido.frontserver.dto.user.response.MemberSummaryPageResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
 
@@ -70,4 +74,9 @@ public interface UserClient {
 
     @PostMapping("/api/v1/auth/oauth2/google")
     ApiResponse<TokenResponse> loginWithGoogle(@RequestBody GoogleLoginRequest request);
+
+    // 15. 관리자용 회원 목록 조회
+    @GetMapping("/api/v1/admin/members")
+    ApiResponse<MemberSummaryPageResponse> getMembers(@RequestParam("status") String status,
+                                                      @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable);
 }
