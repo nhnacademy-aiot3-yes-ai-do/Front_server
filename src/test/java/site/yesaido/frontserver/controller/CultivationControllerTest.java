@@ -106,6 +106,7 @@ class CultivationControllerTest {
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(List.of(summary))));
         when(sensorClient.getSensorTypes()).thenReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of(sensorType))));
         when(sensorClient.getSensors(1L)).thenReturn(ResponseEntity.ok(sensors));
+        when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
         String expectedJson = objectMapper.writeValueAsString(new CultivationListPageView(
                 List.of(new CultivationListItemView(summary, sensors)), List.of(sensorType)
@@ -122,6 +123,7 @@ class CultivationControllerTest {
     void listReturnsEmptyCultivationsWhenWrapperBodyIsNull() throws Exception {
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(null));
         when(sensorClient.getSensorTypes()).thenReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of())));
+        when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
@@ -149,6 +151,7 @@ class CultivationControllerTest {
         CultivationHistoryResponse contentItem = new CultivationHistoryResponse(1L, "재배명", 10L, "FINISHED", new BigDecimal("5.0"), "A", LocalDateTime.now());
         CultivationHistoryPageResponse history = new CultivationHistoryPageResponse(List.of(contentItem), 1, 1L, 0, 20);
         when(cultivationClient.getHistory(0, 20)).thenReturn(ResponseEntity.ok(history));
+        when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
         mockMvc.perform(get("/cultivations/history").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
@@ -159,6 +162,7 @@ class CultivationControllerTest {
     @DisplayName("재배 이력 조회 성공 - null 응답 분기")
     void cultivationHistoryReturnsNullView() throws Exception {
         when(cultivationClient.getHistory(0, 20)).thenReturn(ResponseEntity.ok(null));
+        when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
         mockMvc.perform(get("/cultivations/history").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
