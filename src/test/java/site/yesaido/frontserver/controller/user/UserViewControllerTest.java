@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
+import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,11 +9,19 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAu
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import site.yesaido.frontserver.client.CultivationClient;
+import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
+import site.yesaido.frontserver.util.ViewJsonWriter;
 
+import java.util.List;
+
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -24,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         }
 )
 @AutoConfigureMockMvc(addFilters = false)
-@Import(AuthCookieProvider.class)
+@Import({AuthCookieProvider.class, ViewJsonWriter.class})
 class UserViewControllerTest {
 
     @Autowired
@@ -32,6 +41,15 @@ class UserViewControllerTest {
 
     @MockitoBean
     private UserClient userClient;
+
+    @MockitoBean
+    private NotificationClient notificationClient;
+
+    @MockitoBean
+    private CultivationClient cultivationClient;
+
+    @MockitoBean
+    private MeterRegistry meterRegistry;
 
     @Test
     @DisplayName("마이페이지 요청 시 user/profile 뷰 반환")
@@ -76,9 +94,15 @@ class UserViewControllerTest {
     @Test
     @DisplayName("알림 설정 페이지 요청 시 user/notification-settings 뷰 반환")
     void notificationSettingsPageReturnsView() throws Exception {
+        when(notificationClient.getEndpoints()).thenReturn(ResponseEntity.ok(List.of()));
+        when(notificationClient.getSubscriptionTypes()).thenReturn(ResponseEntity.ok(List.of()));
+        when(notificationClient.getSubscriptions()).thenReturn(ResponseEntity.ok(List.of()));
+        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(List.of())));
+
         mockMvc.perform(get("/mypage/notifications"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("user/notification-settings"));
+                .andExpect(view().name("user/notification-settings"))
+                .andExpect(model().attributeExists("endpointsJson", "subscriptionTypesJson", "subscriptionsJson", "cultivationOptionsJson"));
     }
 
     @Test

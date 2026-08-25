@@ -5,9 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배 대시보드 | MushMush</title>
-    <link rel="stylesheet" href="/css/dashboard.css" />
-    <script src="/js/lucide.js"></script>
-    <script src="/js/common.js"></script>
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
 </head>
 <body>
 
@@ -204,16 +204,19 @@
                 <div class="card chart-card">
                     <div class="chart-card-header">
                         <span class="card-title" style="padding:0;">센서 그래프</span>
-                        <div class="msh-select msh-select--chart" id="chart-sensor-select" data-onchange="handleChartSensorChange">
-                            <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                <span class="msh-select-value">등록된 센서 없음</span>
-                                <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                            </button>
-                            <div class="msh-select-menu msh-select-menu--chart"></div>
+                        <div class="chart-card-header-selects">
+                            <span class="chart-live-badge">● 최근 15분</span>
+                            <div class="msh-select msh-select--chart" id="chart-sensor-select" data-onchange="handleChartSensorChange">
+                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                                    <span class="msh-select-value">등록된 센서 없음</span>
+                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                                </button>
+                                <div class="msh-select-menu msh-select-menu--chart"></div>
+                            </div>
                         </div>
                     </div>
                     <div class="chart-placeholder" style="position:relative;">
-                        <svg viewBox="0 0 260 110" class="chart-demo-svg" preserveAspectRatio="none" id="chart-svg"></svg>
+                        <svg viewBox="0 0 300 112" class="chart-demo-svg" preserveAspectRatio="none" id="chart-svg"></svg>
                         <div id="chart-empty-msg" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; color:#94a3b8; font-size:0.85rem; text-align:center; padding:0 12px;"></div>
                     </div>
                 </div>
@@ -326,14 +329,14 @@
         <h3 class="modal-title">환경 설정</h3>
 
         <div class="settings-modal-grid">
-            <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
-                <i data-lucide="upload" style="width:28px;height:28px;"></i>
+            <div class="settings-photo-col">
+                <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
+                    <i data-lucide="upload" style="width:28px;height:28px;"></i>
+                </div>
+                <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
             </div>
-            <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
 
-            <div class="settings-photo-thumbs" id="settings-photo-thumbs"></div>
-
-            <div class="settings-sensor-list">
+            <div class="settings-config-col">
                 <div class="settings-sensor-row">
                     <span id="settings-sensor-icon-wrap"><i data-lucide="thermometer" style="width:20px;height:20px;"></i></span>
                     <div class="msh-select msh-select--settings" data-value="온도센서3" data-onchange="updateSettingsSensorIcon">
@@ -358,16 +361,20 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="settings-threshold">
-                <label>최고값</label>
-                <input type="number" value="365" />
-                <label>최저값</label>
-                <input type="number" value="365" />
-                <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
-                    <i data-lucide="circle-check"></i>
-                </button>
+                <div class="settings-threshold-row">
+                    <div class="settings-threshold-field">
+                        <label>최고값</label>
+                        <input type="number" value="365" />
+                    </div>
+                    <div class="settings-threshold-field">
+                        <label>최저값</label>
+                        <input type="number" value="365" />
+                    </div>
+                    <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
+                        <i data-lucide="circle-check"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -382,10 +389,11 @@
         </button>
         <h3 class="modal-title">재배지 삭제</h3>
         <p class="modal-desc">정말 이 재배지를 삭제하시겠습니까? 삭제 후에는 재배 이력에서만 확인할 수 있어요.</p>
-        <div class="modal-actions">
+        <form class="modal-actions" id="cultivation-delete-form" method="post">
+            <input name="_method" type="hidden" value="DELETE" />
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-delete')">Cancel</button>
-            <button class="btn btn-primary" type="button" onclick="deleteCultivation()">삭제</button>
-        </div>
+            <button class="btn btn-primary" type="submit">삭제</button>
+        </form>
     </div>
 </div>
 
@@ -463,10 +471,10 @@
         <h3 class="modal-title">담당자 추가</h3>
         <div class="modal-field">
             <label>이메일 또는 닉네임으로 검색</label>
-            <input type="text" id="member-search-input" placeholder="이메일 전체 또는 닉네임 일부를 입력하세요" oninput="searchMemberCandidates()" />
+            <input type="text" id="member-search-input" placeholder="이메일 전체 또는 닉네임 일부를 입력 후 Enter" onkeydown="handleMemberSearchKeydown(event)" />
         </div>
         <div class="member-search-results" id="member-search-results">
-            <div class="member-search-hint">이메일 전체 또는 닉네임 일부를 입력해서 검색해 보세요.</div>
+            <div class="member-search-hint">이메일 전체를 입력해서 검색해 보세요.</div>
         </div>
     </div>
 </div>
@@ -479,8 +487,8 @@
     var SENSORS_BOOTSTRAP = [(${sensorsJson})];
     var SENSOR_VALUES_BOOTSTRAP = [(${sensorValuesJson})];
 </script>
-<script src="/js/msh-select.js"></script>
-<script src="/js/dashboard.js"></script>
+<script th:src="@{/js/msh-select.js}"></script>
+<script th:src="@{/js/dashboard.js}"></script>
 
 </body>
 </html>

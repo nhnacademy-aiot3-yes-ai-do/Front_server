@@ -19,6 +19,7 @@ import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.client.UserClient;
+import site.yesaido.frontserver.config.MethodOverrideConfig;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddFormRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddRequest;
@@ -54,8 +55,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 OAuth2ClientWebSecurityAutoConfiguration.class
         }
 )
-@AutoConfigureMockMvc(addFilters = false)
-@Import({AuthCookieProvider.class, ViewJsonWriter.class})
+@AutoConfigureMockMvc
+@Import({AuthCookieProvider.class, ViewJsonWriter.class, MethodOverrideConfig.class})
 class CultivationControllerTest {
 
     private static final Cookie LOGGED_IN = new Cookie("accessToken", "demo-access-token");
@@ -165,8 +166,21 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("재배 생성 성공 시 목록으로 리다이렉트")
-    void createCultivationRedirectsToList() throws Exception {
+    @DisplayName("HTML form 재배 삭제 성공 시 목록으로 리다이렉트")
+    void deleteCultivationFormRedirectsToList() throws Exception {
+        mockMvc.perform(post("/cultivations/{cultivation-id}", 5L)
+                        .cookie(LOGGED_IN)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("_method", "DELETE"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cultivations"));
+
+        verify(cultivationClient).deleteCultivation(5L);
+    }
+
+    @Test
+    @DisplayName("HTML form 재배 생성 성공 시 목록으로 리다이렉트")
+    void createCultivationRedirectsToListForNativeFormSubmission() throws Exception {
         mockMvc.perform(post("/cultivations")
                         .cookie(LOGGED_IN)
                         .param("name", "새 재배")
@@ -231,6 +245,8 @@ class CultivationControllerTest {
         Long cultivationId = 1L;
         UserSearchResponse searchResult = new UserSearchResponse(200L, "검색된유저");
         when(userClient.search("검색")).thenReturn(List.of(searchResult));
+        when(cultivationClient.getMembers(cultivationId))
+                .thenReturn(ResponseEntity.ok(new MemberListResponse(List.of())));
 
         mockMvc.perform(get("/cultivations/{cultivation-id}/members/search", cultivationId)
                         .cookie(LOGGED_IN)
@@ -325,19 +341,23 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("사진 원본 조회 - Feign 응답을 그대로 반환")
-    void getPhotoRawReturnsRawBytes() throws Exception {
+    @DisplayName("멤버 검색 - 이미 멤버인 유저는 결과에서 제외")
+    void searchMembersExcludesExistingMembers() throws Exception {
         Long cultivationId = 1L;
-        Long photoId = 200L;
-        byte[] content = "image-bytes".getBytes();
+        UserSearchResponse alreadyMember = new UserSearchResponse(100L, "기존멤버");
+        UserSearchResponse newCandidate = new UserSearchResponse(200L, "검색된유저");
+        when(userClient.search("검색")).thenReturn(List.of(alreadyMember, newCandidate));
+        when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(
+                new MemberListResponse(List.of(
+                        new MemberResponse(1L, 100L, "기존멤버", "MEMBER", LocalDateTime.now())
+                ))
+        ));
 
-        when(cultivationClient.getPhotoRaw(cultivationId, photoId))
-                .thenReturn(ResponseEntity.ok().contentType(MediaType.IMAGE_JPEG).body(content));
-
-        mockMvc.perform(get("/cultivations/{cultivation-id}/photos/{photo-id}/raw", cultivationId, photoId)
-                        .cookie(LOGGED_IN))
+        mockMvc.perform(get("/cultivations/{cultivation-id}/members/search", cultivationId)
+                        .cookie(LOGGED_IN)
+                        .param("keyword", "검색"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.IMAGE_JPEG))
-                .andExpect(content().bytes(content));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].nickname").value("검색된유저"));
     }
 }

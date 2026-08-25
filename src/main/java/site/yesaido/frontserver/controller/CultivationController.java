@@ -34,8 +34,11 @@ import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @LoginRequired
@@ -75,6 +78,13 @@ public class CultivationController {
         );
 
         model.addAttribute("cultivationListPageJson", viewJsonWriter.toScriptJson(pageView));
+
+        // 목록의 mushroomId만으로는 품종명을 알 수 없어 "버섯 #1"로 표시되던 문제 -> 기준정보를 같이 내려줌
+        MushroomReferenceInfoListResponse mushrooms = sensorClient.getAllMushroomReferences().getBody();
+        model.addAttribute("mushroomsJson", viewJsonWriter.toScriptJson(
+                mushrooms == null ? List.of() : mushrooms.mushroomReferenceInfoResponses()
+        ));
+
         return "cultivation/list";
     }
 
@@ -103,6 +113,13 @@ public class CultivationController {
         if (history == null) {
             history = new CultivationHistoryPageResponse(List.of(), 0, 0, 0, size);
         }
+
+        // history 응답엔 mushroomId만 있고 품종명이 없어서, "버섯 #1"처럼 뜨는 걸 막으려고
+        // 버섯 기준정보 목록(id -> 한글명)을 같이 내려줘서 프론트에서 매핑해 보여줌
+        MushroomReferenceInfoListResponse mushrooms = sensorClient.getAllMushroomReferences().getBody();
+        model.addAttribute("mushroomsJson", viewJsonWriter.toScriptJson(
+                mushrooms == null ? List.of() : mushrooms.mushroomReferenceInfoResponses()
+        ));
 
         model.addAttribute("historyJson", viewJsonWriter.toJson(history));
         return "cultivation/history";
@@ -138,7 +155,7 @@ public class CultivationController {
         model.addAttribute("myRole", cultivation != null ? cultivation.myRole() : null);
 
         Long growthDays = (cultivation != null && cultivation.startedAt() != null)
-                ? ChronoUnit.DAYS.between(cultivation.startedAt().toLocalDate(), LocalDate.now()) + 1
+                ? ChronoUnit.DAYS.between(cultivation.startedAt().toLocalDate(), LocalDate.now(ZoneId.of("Asia/Seoul"))) + 1
                 : null;
         model.addAttribute("growthDays", growthDays);
 
@@ -152,9 +169,9 @@ public class CultivationController {
     }
 
     @DeleteMapping("/{cultivation-id}")
-    public ResponseEntity<Void> deleteCultivation(@PathVariable("cultivation-id") Long cultivationId) {
+    public String deleteCultivationForm(@PathVariable("cultivation-id") Long cultivationId) {
         cultivationClient.deleteCultivation(cultivationId);
-        return ResponseEntity.noContent().build();
+        return "redirect:/cultivations";
     }
 
     // CultivationMember
@@ -166,7 +183,18 @@ public class CultivationController {
     @GetMapping("/{cultivation-id}/members/search")
     public ResponseEntity<List<UserSearchResponse>> searchMembers(@PathVariable("cultivation-id") Long cultivationId,
                                                                   @RequestParam("keyword") String keyword) {
-        return ResponseEntity.ok(userClient.search(keyword));
+        List<UserSearchResponse> candidates = userClient.search(keyword);
+        MemberListResponse memberListResponse = cultivationClient.getMembers(cultivationId).getBody();
+        Set<Long> existingMemberIds = memberListResponse == null
+                ? Set.of()
+                : memberListResponse.memberResponses().stream()
+                .map(MemberResponse::userId)
+                .collect(Collectors.toSet());
+
+        List<UserSearchResponse> filtered = candidates.stream()
+                .filter(candidate -> !existingMemberIds.contains(candidate.userId()))
+                .toList();
+        return ResponseEntity.ok(filtered);
     }
 
     @PostMapping("/{cultivation-id}/members")
@@ -222,12 +250,6 @@ public class CultivationController {
     public ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                             @PathVariable("photo-id") Long photoId) {
         return cultivationClient.deletePhoto(cultivationId, photoId);
-    }
-
-    @GetMapping("/{cultivation-id}/photos/{photo-id}/raw")
-    ResponseEntity<byte[]> getPhotoRaw(@PathVariable("cultivation-id") Long cultivationId,
-                                       @PathVariable("photo-id") Long photoId){
-        return cultivationClient.getPhotoRaw(cultivationId, photoId);
     }
 
     // Helper Method

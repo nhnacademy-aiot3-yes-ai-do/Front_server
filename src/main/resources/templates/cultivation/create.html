@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배지 생성 | MushMush</title>
-    <link rel="stylesheet" href="/css/cultivation-create.css" />
-    <script src="/js/lucide.js"></script>
-    <script src="/js/common.js"></script>
+    <link rel="stylesheet" th:href="@{/css/cultivation-create.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
 </head>
 <body>
 
@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <div class="wizard-panels">
+        <form class="wizard-panels" method="post" th:action="@{/cultivations}">
 
             <!-- STEP 1 : 재배지 정보 입력 -->
             <section class="wizard-panel active" id="step-1">
@@ -42,11 +42,11 @@
                 <div class="form-grid">
                     <div class="form-field">
                         <label>재배지 이름</label>
-                        <input type="text" id="f-name" placeholder="예: 양송이 1번 재배지" />
+                        <input type="text" id="f-name" name="name" required placeholder="예: 양송이 1번 재배지" />
                     </div>
                     <div class="form-field">
                         <label>버섯 종류</label>
-                        <select id="f-mushroom"></select>
+                        <select id="f-mushroom" name="mushroomId" required></select>
                     </div>
                 </div>
 
@@ -114,13 +114,13 @@
                     <button class="step-next" type="button" onclick="goToStep(1)" title="이전">
                         <i data-lucide="circle-arrow-left"></i>
                     </button>
-                    <button class="btn btn-primary" type="button" onclick="finishCultivation()">
+                    <button class="btn btn-primary" id="cultivation-submit" type="submit">
                         <i data-lucide="check"></i>재배 시작하기
                     </button>
                 </div>
             </section>
 
-        </div>
+        </form>
     </div>
 </div>
 

@@ -5,9 +5,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>버섯 등록 | MushMush</title>
-    <link rel="stylesheet" href="/css/admin.css" />
-    <script src="/js/lucide.js"></script>
-    <script src="/js/admin-common.js"></script>
+    <link rel="stylesheet" th:href="@{/css/admin.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/admin-common.js}"></script>
 </head>
 <body>
 
@@ -126,17 +126,22 @@
 
 <!-- 버섯 삭제 확인 -->
 <div class="modal-overlay" id="modal-mushroom-delete">
-    <div class="modal-box">
+    <form class="modal-box" id="mushroom-delete-form" method="post">
+        <input name="_method" type="hidden" value="DELETE" />
         <h3 class="modal-title">이 버섯 정보를 삭제하겠습니까?</h3>
         <p class="modal-sub">삭제하면 재배지 등록 화면에서도 더 이상 선택할 수 없어요.</p>
         <div class="modal-actions">
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-mushroom-delete')">취소</button>
-            <button class="btn btn-danger" type="button" onclick="confirmDeleteMushroom()">삭제</button>
+            <button class="btn btn-danger" type="submit">삭제</button>
         </div>
-    </div>
+    </form>
 </div>
 
-<script src="/js/admin-mushrooms.js"></script>
+<script th:inline="javascript">
+    var SENSOR_TYPES_BOOTSTRAP = [(${sensorTypesJson})];
+    var MUSHROOMS_BOOTSTRAP = [(${mushroomsJson})];
+</script>
+<script th:src="@{/js/admin-mushrooms.js}"></script>
 
 </body>
 </html>

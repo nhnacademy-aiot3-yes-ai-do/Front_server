@@ -2,18 +2,21 @@ package site.yesaido.frontserver.controller.admin;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorTypeRequest;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
-@RestController
+@Controller
 @LoginRequired(adminOnly = true)
 @RequiredArgsConstructor
 @RequestMapping("/admin/sensor-types")
 public class AdminSensorTypeController {
     private final SensorClient sensorClient;
+
+    private static final String REDIRECT_ADMIN_SENSORS = "redirect:/admin/sensors";
 
     @GetMapping
     public ResponseEntity<SensorTypeInfoListResponse> getSensorTypes() {
@@ -21,18 +24,23 @@ public class AdminSensorTypeController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createSensorType(@RequestBody SensorTypeRequest request) {
-        return sensorClient.registerSensorType(request);
+    public String createSensorTypeForm(@RequestParam String type, @RequestParam String valueUnit) {
+        sensorClient.registerSensorType(new SensorTypeRequest(type, valueUnit));
+        return REDIRECT_ADMIN_SENSORS;
     }
 
     @PutMapping("/{sensor-type-id}")
-    public ResponseEntity<Void> updateSensorType(@PathVariable("sensor-type-id") Long id,
-                                                 @RequestBody SensorTypeRequest request) {
-        return sensorClient.updateSensorType(id, request);
+    public String updateSensorTypeForm(@PathVariable("sensor-type-id") Long id,
+                                       @RequestParam String type,
+                                       @RequestParam String valueUnit) {
+        sensorClient.updateSensorType(id, new SensorTypeRequest(type, valueUnit));
+        return REDIRECT_ADMIN_SENSORS;
     }
 
     @DeleteMapping("/{sensor-type-id}")
-    public ResponseEntity<Void> deleteSensorType(@PathVariable("sensor-type-id") Long id) {
-        return sensorClient.deleteSensorType(id);
+    public String deleteSensorTypeForm(@PathVariable("sensor-type-id") Long id) {
+        sensorClient.deleteSensorType(id);
+        return REDIRECT_ADMIN_SENSORS;
     }
+
 }

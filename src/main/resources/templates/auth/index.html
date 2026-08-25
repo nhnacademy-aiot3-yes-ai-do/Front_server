@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MushMush | 로그인 성공</title>
-    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
     <style>
         :root {
             --primary-gradient: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
@@ -170,7 +170,7 @@
     </div>
 </div>
 
-<script src="/js/auth-index.js"></script>
+<script th:src="@{/js/auth-index.js}"></script>
 
 </body>
 </html>

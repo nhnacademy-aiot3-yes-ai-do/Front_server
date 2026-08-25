@@ -72,10 +72,55 @@ function updateSensor(wrapperEl, optionEl, sensorType) {
 }
 var SENSOR_TYPE_LABELS = { TEMPERATURE: '온도', HUMIDITY: '습도', CO2: 'CO2', LIGHT: '조도' };
 var CHART_SELECTED = null;      // { sensorType, deviceEui }
-var CHART_HISTORY = [];
-var CHART_MAX_POINTS = 30;      // 최근 30개 샘플만 유지
+var CHART_STORE = {};           // 센서별(키: "타입|deviceEui") 실시간 값 버퍼 — 다른 센서로 바꿨다가 돌아와도
+                                 // 그동안 백그라운드 폴링으로 쌓인 값이 남아있어서 그래프가 새로 시작되지 않고 이어짐
+var CHART_HISTORY = [];         // 현재 선택된 센서의 버퍼(CHART_STORE[key].history)를 가리키는 참조
+var CHART_TIMES = [];           // CHART_HISTORY와 같은 길이로 유지되는 타임스탬프(ms) 배열
+var CHART_UNIT = '';            // 현재 선택된 센서의 단위 (°C, %, ppm, lux 등 — 센서마다 다름)
+var CHART_MAX_POINTS = 3000;    // 버퍼 하나당 안전장치용 개수 상한
+var CHART_RETENTION_MS = 24 * 60 * 60 * 1000; // 버퍼 자체는 최대 24시간치까지 보관 (화면엔 아래 실시간 구간만 표시)
 var CHART_POLL_INTERVAL_MS = 3000; // 3초마다 최신값 폴링
+var CHART_DISPLAY_WINDOW_MS = 15 * 60 * 1000; // 화면엔 항상 최근 15분만 — 24h/15분평균 추이 API 조회 결과와 맞춰봄 (실험용, B안)
 var chartPollTimer = null;
+
+function chartKey(sensorType, deviceEui) {
+    return sensorType + '|' + deviceEui;
+}
+
+function getChartBucket(key) {
+    if (!CHART_STORE[key]) {
+        CHART_STORE[key] = { history: [], times: [], unit: '' };
+    }
+    return CHART_STORE[key];
+}
+
+// 버퍼 하나(history/times 쌍)에 24시간 보관 + 개수 상한만 적용 (화면 표시 구간은 항상 최근 2분 고정)
+function trimChartBucket(bucket) {
+    if (bucket.times.length === 0) return;
+    var cutoff = Date.now() - CHART_RETENTION_MS;
+    while (bucket.times.length > 1 && bucket.times[0] < cutoff) {
+        bucket.times.shift();
+        bucket.history.shift();
+    }
+    if (bucket.history.length > CHART_MAX_POINTS) {
+        var excess = bucket.history.length - CHART_MAX_POINTS;
+        bucket.history.splice(0, excess);
+        bucket.times.splice(0, excess);
+    }
+}
+
+function getWindowedChartData() {
+    var cutoff = Date.now() - CHART_DISPLAY_WINDOW_MS;
+    var values = [];
+    var times = [];
+    for (var i = 0; i < CHART_TIMES.length; i++) {
+        if (CHART_TIMES[i] >= cutoff) {
+            values.push(CHART_HISTORY[i]);
+            times.push(CHART_TIMES[i]);
+        }
+    }
+    return { values: values, times: times };
+}
 
 function populateChartSensorSelect() {
     var wrapperEl = document.getElementById('chart-sensor-select');
@@ -120,17 +165,88 @@ function handleChartSensorChange(wrapperEl) {
     selectChartSensor(parts[0], parts[1]);
 }
 
-function selectChartSensor(sensorType, deviceEui) {
-    CHART_SELECTED = { sensorType: sensorType, deviceEui: deviceEui };
-    CHART_HISTORY = [];
+// (B안 실험) 기존 24시간/15분-평균 추이 API를 그대로 써서, 버퍼가 비어있을 때(=처음 보는 센서이거나
+// 새로고침 직후)만 그 값으로 미리 채워둠. 15분 평균값이라 최근 15분 창 안엔 많아야 1~2개 점만 들어오고,
+// 그마저도 평균값이라 실측치와는 다를 수 있음 — 어떻게 보이는지 확인해보기 위한 실험.
+function fetchSensorTrend(sensorType, deviceEui) {
+    var url = '/cultivations/' + CULTIVATION_ID + '/sensor-values/trend'
+        + '?device-eui=' + encodeURIComponent(deviceEui)
+        + '&sensor-type=' + encodeURIComponent(sensorType);
+    return fetch(url).then(function (res) {
+        if (!res.ok) throw new Error('sensor trend request failed: ' + res.status);
+        return res.json();
+    });
+}
 
-    var entry = LATEST_VALUES[sensorType + '|' + deviceEui];
-    if (entry && entry.value != null) {
-        CHART_HISTORY.push(entry.value);
-        renderChartTrend(CHART_HISTORY);
+function sortChartBucket(bucket) {
+    var paired = bucket.times.map(function (t, i) { return { t: t, v: bucket.history[i] }; });
+    paired.sort(function (a, b) { return a.t - b.t; });
+    bucket.times = paired.map(function (p) { return p.t; });
+    bucket.history = paired.map(function (p) { return p.v; });
+}
+
+function finishSelectingChart(bucket) {
+    CHART_HISTORY = bucket.history;
+    CHART_TIMES = bucket.times;
+    CHART_UNIT = bucket.unit || CHART_UNIT;
+    if (CHART_HISTORY.length > 0) {
+        renderChartTrend();
     } else {
         renderChartEmpty('아직 수신된 값이 없습니다');
     }
+}
+
+function selectChartSensor(sensorType, deviceEui) {
+    CHART_SELECTED = { sensorType: sensorType, deviceEui: deviceEui };
+    var key = chartKey(sensorType, deviceEui);
+    var bucket = getChartBucket(key);
+    var latestEntry = LATEST_VALUES[key];
+    CHART_UNIT = bucket.unit || (latestEntry && latestEntry.unit) || '';
+
+    // 이미 이 세션에서(폴링을 통해서든, 이전 시드를 통해서든) 값이 쌓여있으면 다시 불러올 필요 없음
+    if (bucket.history.length > 0) {
+        CHART_HISTORY = bucket.history;
+        CHART_TIMES = bucket.times;
+        renderChartTrend();
+        startChartPolling();
+        return;
+    }
+
+    renderChartEmpty('그래프 불러오는 중...');
+
+    fetchSensorTrend(sensorType, deviceEui)
+        .then(function (trend) {
+            // 응답이 오는 사이에 사용자가 다른 센서로 바꿨으면 그 결과는 무시
+            if (!CHART_SELECTED || CHART_SELECTED.sensorType !== sensorType || CHART_SELECTED.deviceEui !== deviceEui) return;
+
+            bucket.unit = (trend && trend.unit) || bucket.unit;
+            (trend && trend.responses || []).forEach(function (p) {
+                if (p.value == null) return;
+                bucket.history.push(p.value);
+                bucket.times.push(new Date(p.measuredAt).getTime());
+            });
+
+            if (bucket.history.length === 0 && latestEntry && latestEntry.value != null) {
+                bucket.history.push(latestEntry.value);
+                bucket.times.push(Date.now());
+                bucket.unit = latestEntry.unit || bucket.unit;
+            }
+
+            // 응답을 기다리는 사이에 폴링이 먼저 값을 넣었을 수도 있어서(드물지만), 시간순으로 다시 정렬
+            sortChartBucket(bucket);
+            trimChartBucket(bucket);
+            finishSelectingChart(bucket);
+        })
+        .catch(function () {
+            // 조회 실패 시엔 최소한 최신값 1개라도 보여줌 (기존 동작과 동일한 안전망)
+            if (!CHART_SELECTED || CHART_SELECTED.sensorType !== sensorType || CHART_SELECTED.deviceEui !== deviceEui) return;
+            if (bucket.history.length === 0 && latestEntry && latestEntry.value != null) {
+                bucket.history.push(latestEntry.value);
+                bucket.times.push(Date.now());
+                bucket.unit = latestEntry.unit || bucket.unit;
+            }
+            finishSelectingChart(bucket);
+        });
 
     startChartPolling();
 }
@@ -147,6 +263,8 @@ function stopChartPolling() {
     }
 }
 
+// 응답엔 등록된 센서 전체의 최신값이 같이 내려오므로, 지금 화면에 보이는 센서뿐 아니라
+// 모든 센서의 버퍼를 같이 채워둠 — 나중에 다른 센서로 바꿔도 끊김 없이 이어지게 하기 위함
 function pollChartValue() {
     if (!CHART_SELECTED) return;
     fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values')
@@ -159,20 +277,28 @@ function pollChartValue() {
         .then(function (payload) {
             if (!CHART_SELECTED) return;
 
+            var now = Date.now();
             latestSensorValuesOf(payload).forEach(function (v) {
-                LATEST_VALUES[v.sensorType + '|' + v.deviceEui] = { value: v.value, unit: v.unit };
+                var key = chartKey(v.sensorType, v.deviceEui);
+                LATEST_VALUES[key] = { value: v.value, unit: v.unit };
+                if (v.value == null) return;
+
+                var bucket = getChartBucket(key);
+                bucket.history.push(v.value);
+                bucket.times.push(now);
+                bucket.unit = v.unit || bucket.unit;
+                trimChartBucket(bucket);
             });
             updateVisibleSensorValues();
 
-            var key = CHART_SELECTED.sensorType + '|' + CHART_SELECTED.deviceEui;
-            var entry = LATEST_VALUES[key];
-            if (!entry || entry.value == null) return;
-
-            CHART_HISTORY.push(entry.value);
-            if (CHART_HISTORY.length > CHART_MAX_POINTS) {
-                CHART_HISTORY = CHART_HISTORY.slice(CHART_HISTORY.length - CHART_MAX_POINTS);
+            var selectedKey = chartKey(CHART_SELECTED.sensorType, CHART_SELECTED.deviceEui);
+            var selectedBucket = CHART_STORE[selectedKey];
+            if (selectedBucket) {
+                CHART_HISTORY = selectedBucket.history;
+                CHART_TIMES = selectedBucket.times;
+                CHART_UNIT = selectedBucket.unit || CHART_UNIT;
+                renderChartTrend();
             }
-            renderChartTrend(CHART_HISTORY);
         })
         .catch(function () {
             // 폴링 실패는 조용히 무시하고 다음 주기에 재시도
@@ -193,7 +319,10 @@ function updateVisibleSensorValues() {
 
 function renderChartEmpty(message) {
     var svg = document.getElementById('chart-svg');
-    if (svg) svg.innerHTML = '';
+    if (svg) {
+        svg.setAttribute('viewBox', '0 0 300 112');
+        svg.innerHTML = '';
+    }
     var emptyEl = document.getElementById('chart-empty-msg');
     if (emptyEl) {
         emptyEl.textContent = message;
@@ -201,10 +330,30 @@ function renderChartEmpty(message) {
     }
 }
 
-function renderChartTrend(values) {
+// 그래프 좌/아래에 눈금(값/시간)을 그릴 여백을 뺀 실제 그래프 영역
+var CHART_PLOT_X0 = 34;
+var CHART_PLOT_X1 = 296;
+var CHART_PLOT_Y0 = 8;
+var CHART_PLOT_Y1 = 92;
+
+function formatChartValue(v) {
+    var rounded = Math.round(v * 10) / 10;
+    return rounded + (CHART_UNIT || '');
+}
+
+function formatChartTime(ts) {
+    var d = new Date(ts);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+}
+
+function renderChartTrend() {
+    var windowed = getWindowedChartData();
+    var values = windowed.values;
+    var times = windowed.times;
+
     var emptyEl = document.getElementById('chart-empty-msg');
     if (!values || values.length === 0) {
-        renderChartEmpty('아직 수신된 값이 없습니다');
+        renderChartEmpty('이 구간엔 아직 값이 없습니다');
         return;
     }
     if (emptyEl) emptyEl.style.display = 'none';
@@ -212,33 +361,87 @@ function renderChartTrend(values) {
     var minVal = Math.min.apply(null, values);
     var maxVal = Math.max.apply(null, values);
     var range = maxVal - minVal;
+    var plotHeight = CHART_PLOT_Y1 - CHART_PLOT_Y0;
+    var plotWidth = CHART_PLOT_X1 - CHART_PLOT_X0;
 
     function scaleY(v) {
-        if (range === 0) return 55;
-        return 95 - ((v - minVal) / range) * 80;
+        if (range === 0) return CHART_PLOT_Y0 + plotHeight / 2;
+        return CHART_PLOT_Y1 - ((v - minVal) / range) * plotHeight;
     }
 
     var n = values.length;
+
+    // x축은 "몇 번째 점이냐"가 아니라 실제 경과 시간 비율로 배치해야 함 —
+    // 히스토리는 점이 드문드문(15분 간격)인데 실시간 폴링은 3초마다 점이 계속 쌓이므로,
+    // 인덱스 기준으로 간격을 나누면 과거 데이터가 왼쪽에 눌려붙고 최근 값만 그래프 대부분을 차지해 왜곡돼 보임.
+    var t0 = times[0];
+    var t1 = times[n - 1];
+    var timeRange = t1 - t0;
+
     var coords = values.map(function (v, i) {
-        var x = n === 1 ? 0 : (i * (260 / (n - 1)));
+        var x;
+        if (n === 1 || timeRange <= 0) {
+            x = n === 1 ? (CHART_PLOT_X0 + plotWidth / 2) : (CHART_PLOT_X0 + i * (plotWidth / (n - 1)));
+        } else {
+            x = CHART_PLOT_X0 + ((times[i] - t0) / timeRange) * plotWidth;
+        }
         return { x: x, y: scaleY(v) };
     });
 
     var linePoints = coords.map(function (c) { return c.x + ',' + c.y; }).join(' ');
-    var polygonPoints = linePoints + ' ' + coords[coords.length - 1].x + ',110 ' + coords[0].x + ',110';
+    var polygonPoints = linePoints + ' ' + coords[coords.length - 1].x + ',' + CHART_PLOT_Y1 + ' ' + coords[0].x + ',' + CHART_PLOT_Y1;
     var last = coords[coords.length - 1];
 
+    // ---- Y축(값) 눈금: 위/가운데/아래 3줄, 센서마다 단위가 달라서 CHART_UNIT을 그대로 붙여줌 ----
+    var gridRows = [
+        { y: CHART_PLOT_Y0, value: range === 0 ? values[0] : maxVal },
+        { y: CHART_PLOT_Y0 + plotHeight / 2, value: range === 0 ? values[0] : (minVal + maxVal) / 2 },
+        { y: CHART_PLOT_Y1, value: range === 0 ? values[0] : minVal }
+    ];
+    var gridLinesHtml = gridRows.map(function (row) {
+        return '<polyline class="chart-grid-line" points="' + CHART_PLOT_X0 + ',' + row.y + ' ' + CHART_PLOT_X1 + ',' + row.y + '" />' +
+            '<text class="chart-axis-label chart-axis-label-y" x="' + (CHART_PLOT_X0 - 5) + '" y="' + (row.y + 3) + '" text-anchor="end">' + formatChartValue(row.value) + '</text>';
+    }).join('');
+
+    // ---- X축(시간) 눈금: 값이 2개 이상일 때 처음/마지막 시각만 표시 ----
+    // 예전엔 중간 라벨도 같이 그렸는데, 그래프 폭(300)에 비해 "HH:MM:SS" 라벨 자체가 꽤 넓어서
+    // 세 라벨 중 두 개가 픽셀상 가까워지면(특히 데이터가 최근 시점에 몰려있을 때) 텍스트가 겹쳐 보이는 문제가
+    // 여러 번 재발했음. 라벨 개수를 처음/마지막 두 개로 고정하면 그 겹침 경우의 수 자체가 사라짐.
+    var timeLabelsHtml = '';
+    if (n >= 2) {
+        var firstX = coords[0].x;
+        var lastX = coords[n - 1].x;
+        // "HH:MM:SS" 라벨 하나가 대략 26~28 유닛 폭을 차지함(5.6px 폰트 기준) —
+        // 처음 라벨은 시작점에서 오른쪽으로, 마지막 라벨은 끝점에서 왼쪽으로 텍스트가 뻗어나가므로
+        // 두 점이 라벨 폭의 2배(약 56)보다 가까우면 겹칠 수 있어 그럴 땐 마지막 라벨 하나만 표시
+        var minLabelGap = 56;
+        var timeRows;
+
+        if (lastX - firstX < minLabelGap) {
+            timeRows = [{ x: lastX, t: times[n - 1], anchor: 'end' }];
+        } else {
+            timeRows = [
+                { x: firstX, t: times[0], anchor: 'start' },
+                { x: lastX, t: times[n - 1], anchor: 'end' }
+            ];
+        }
+
+        timeLabelsHtml = timeRows.map(function (row) {
+            return '<text class="chart-axis-label chart-axis-label-x" x="' + row.x + '" y="' + (CHART_PLOT_Y1 + 12) + '" text-anchor="' + row.anchor + '">' + formatChartTime(row.t) + '</text>';
+        }).join('');
+    }
+
     var svg = document.getElementById('chart-svg');
+    svg.setAttribute('viewBox', '0 0 300 112');
     svg.innerHTML =
         '<defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">' +
         '<stop offset="0%" stop-color="var(--sage-500)" stop-opacity="0.35" />' +
         '<stop offset="100%" stop-color="var(--sage-500)" stop-opacity="0" /></linearGradient></defs>' +
-        '<polyline class="chart-grid-line" points="0,20 260,20" />' +
-        '<polyline class="chart-grid-line" points="0,55 260,55" />' +
-        '<polyline class="chart-grid-line" points="0,90 260,90" />' +
+        gridLinesHtml +
         '<polygon fill="url(#chartFill)" points="' + polygonPoints + '" />' +
         '<polyline class="chart-demo-line" fill="none" points="' + linePoints + '" />' +
-        '<circle class="chart-demo-dot" cx="' + last.x + '" cy="' + last.y + '" r="4.5" />';
+        '<circle class="chart-demo-dot" cx="' + last.x + '" cy="' + last.y + '" r="4.5" />' +
+        timeLabelsHtml;
 }
 // 커스텀 드롭다운(.msh-select) 관련 공통 로직은 /js/msh-select.js로 옮겼음 (관리자 페이지랑 같이 씀).
 
@@ -509,12 +712,18 @@ function openMemberAddModal() {
     openModal('modal-member-add');
 }
 
+function handleMemberSearchKeydown(event) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    searchMemberCandidates();
+}
+
 function searchMemberCandidates() {
     var query = document.getElementById('member-search-input').value.trim();
     var resultsEl = document.getElementById('member-search-results');
 
     if (!query) {
-        resultsEl.innerHTML = '<div class="member-search-hint">이메일 전체 또는 닉네임 일부를 입력해서 검색해 보세요.</div>';
+        resultsEl.innerHTML = '<div class="member-search-hint">이메일 전체 또는 닉네임 일부를 입력 후 Enter</div>';
         return;
     }
 
@@ -896,15 +1105,6 @@ function finishCultivation() {
     location.href = '/';
 }
 
-function deleteCultivation() {
-    fetch('/cultivations/' + CULTIVATION_ID, { method: 'DELETE' })
-        .then(function (res) {
-            if (!res.ok) throw new Error('delete failed');
-            location.href = '/cultivations';
-        })
-        .catch(function () { alert('재배지 삭제에 실패했습니다.'); });
-}
-
 function renderMainPhoto() {
     var placeholder = document.getElementById('photo-placeholder');
     var img = document.getElementById('photo-preview-img');
@@ -916,7 +1116,7 @@ function renderMainPhoto() {
     }
     placeholder.style.display = 'none';
     img.style.display = 'block';
-    img.src = photoRawUrl(PHOTOS[0].photoId);
+    img.src = PHOTOS[0].uri;
 }
 
 // 업로드 박스(네모 칸) 자체에 현재 대표 사진(가장 최근 사진)을 미리보기로 보여줌.
@@ -926,19 +1126,20 @@ function renderPhotoUploadPreview() {
     if (PHOTOS.length === 0) {
         box.innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
     } else {
-        box.innerHTML = '<img src="' + photoRawUrl(PHOTOS[0].photoId) + '" alt="재배 사진" />';
+        box.innerHTML = '<img src="' + PHOTOS[0].uri + '" alt="재배 사진" />';
     }
     lucide.createIcons();
 }
 
 function renderPhotoThumbs() {
     var wrap = document.getElementById('settings-photo-thumbs');
+    if (!wrap) return; // 환경 설정 모달에서 썸네일 목록(X 삭제 버튼) 자체를 뺐음
     wrap.innerHTML = '';
     PHOTOS.forEach(function (photo) {
         var thumb = document.createElement('div');
         thumb.className = 'settings-photo-thumb';
         thumb.innerHTML =
-            '<img src="' + photoRawUrl(photo.photoId) + '" alt="재배 사진" />' +
+            '<img src="' + photo.uri + '" alt="재배 사진" />' +
             '<button type="button" class="settings-photo-thumb-remove" title="삭제">' +
             '<i data-lucide="x"></i></button>';
         thumb.querySelector('.settings-photo-thumb-remove').onclick = function () {
@@ -996,8 +1197,9 @@ function deletePhoto(photoId) {
         .catch(function () { alert('사진 삭제에 실패했습니다.'); });
 }
 
-function photoRawUrl(photoId) {
-    return '/cultivations/' + CULTIVATION_ID + '/photos/' + photoId + '/raw';
+var cultivationDeleteForm = document.getElementById('cultivation-delete-form');
+if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
+    cultivationDeleteForm.action = '/cultivations/' + CULTIVATION_ID;
 }
 
 renderPhotoThumbs();

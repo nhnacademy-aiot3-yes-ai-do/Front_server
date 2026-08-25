@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>센서 등록 | MushMush</title>
-    <link rel="stylesheet" href="/css/admin.css" />
-    <script src="/js/lucide.js"></script>
-    <script src="/js/admin-common.js"></script>
+    <link rel="stylesheet" th:href="@{/css/admin.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/admin-common.js}"></script>
 </head>
 <body>
 
@@ -48,7 +48,8 @@
 
 <!-- 센서 타입 등록 / 수정 -->
 <div class="modal-overlay" id="modal-sensor-type-form">
-    <div class="modal-box">
+    <form class="modal-box" id="sensor-type-form" method="post" th:action="@{/admin/sensor-types}">
+        <input id="sensor-type-method" name="_method" type="hidden" value="POST" />
         <button class="modal-close" type="button" onclick="closeModal('modal-sensor-type-form')">
             <i data-lucide="x"></i>
         </button>
@@ -57,37 +58,41 @@
 
         <div class="modal-field">
             <label>측정 타입</label>
-            <input type="text" id="st-type" placeholder="예: TEMPERATURE" />
+            <input type="text" id="st-type" name="type" required placeholder="예: TEMPERATURE" />
             <span class="modal-field-hint">영문 대문자로 입력해주세요.<br />(예: TEMPERATURE, HUMIDITY, CO2, LIGHT)</span>
         </div>
 
         <div class="modal-field">
             <label>단위</label>
-            <input type="text" id="st-unit" placeholder="예: ℃" />
+            <input type="text" id="st-unit" name="valueUnit" required placeholder="예: ℃" />
         </div>
 
         <p class="modal-form-error" id="sensor-type-form-error" style="display:none;">측정 타입과 단위를 모두 입력해 주세요.</p>
 
         <div class="modal-actions">
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-sensor-type-form')">취소</button>
-            <button class="btn btn-primary" type="button" onclick="saveSensorTypeForm()">저장</button>
+            <button class="btn btn-primary" type="submit">저장</button>
         </div>
-    </div>
+    </form>
 </div>
 
 <!-- 센서 타입 삭제 확인 -->
 <div class="modal-overlay" id="modal-sensor-type-delete">
-    <div class="modal-box">
+    <form class="modal-box" id="sensor-type-delete-form" method="post">
+        <input name="_method" type="hidden" value="DELETE" />
         <h3 class="modal-title">이 센서 타입을 삭제하겠습니까?</h3>
         <p class="modal-sub">삭제하면 센서 등록 화면에서도 더 이상 선택할 수 없어요. 이미 이 타입을 쓰고 있는 센서/버섯 정보가 있으면 삭제가 실패할 수 있어요.</p>
         <div class="modal-actions">
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-sensor-type-delete')">취소</button>
-            <button class="btn btn-danger" type="button" onclick="confirmDeleteSensorType()">삭제</button>
+            <button class="btn btn-danger" type="submit">삭제</button>
         </div>
-    </div>
+    </form>
 </div>
 
-<script src="/js/admin-sensors.js"></script>
+<script th:inline="javascript">
+    var SENSOR_TYPES_BOOTSTRAP = [(${sensorTypesJson})];
+</script>
+<script th:src="@{/js/admin-sensors.js}"></script>
 
 </body>
 </html>

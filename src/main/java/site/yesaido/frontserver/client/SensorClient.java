@@ -8,10 +8,7 @@ import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferen
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorTypeRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.*;
 
 @FeignClient(name = "sensor-client", url = "${feign.client.gateway.url}")
 public interface SensorClient {
@@ -64,4 +61,10 @@ public interface SensorClient {
     // 실시간 센서값
     @GetMapping("/api/v1/cultivations/{cultivation-id}/sensor-values")
     ResponseEntity<LatestSensorValueListResponse> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId);
+
+    // 센서 추이 (최근 24시간, 15분 단위 평균 — 그래프가 새로 시작되지 않고 이어지도록 과거 데이터를 같이 내려줌)
+    @GetMapping("/api/v1/cultivations/{cultivation-id}/sensor-values/trend")
+    ResponseEntity<SensorTrendPointListResponse> getSensorTrend(@PathVariable("cultivation-id") Long cultivationId,
+                                                                @RequestParam("device-eui") String deviceEui,
+                                                                @RequestParam("sensor-type") String sensorType);
 }

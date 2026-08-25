@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>내 재배지 | MushMush</title>
-    <link rel="stylesheet" href="/css/cultivation-list.css" />
-    <script src="/js/lucide.js"></script>
-    <script src="/js/common.js"></script>
+    <link rel="stylesheet" th:href="@{/css/cultivation-list.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/common.js}"></script>
 </head>
 <body>
 
@@ -157,10 +157,11 @@
 
 <script th:inline="javascript">
     var cultivationListPageData = [(${cultivationListPageJson})];
+    var mushroomRefsData = /*[(${mushroomsJson})]*/ [];
 </script>
 <!-- SSR bootstrap 계약이 바뀐 JS를 이전 브라우저 캐시와 섞지 않습니다. -->
 <script th:src="@{/js/cultivation-list.js(v=${'ssr-list-v2'})}"></script>
-<script src="/js/msh-select.js"></script>
+<script th:src="@{/js/msh-select.js}"></script>
 
 </body>
 </html>

@@ -7,6 +7,12 @@ var mushroomPage = 1;
 var MUSHROOM_PAGE_SIZE = 8;
 var currentMushroomId = null;
 
+function escapeHtml(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function formatDate(iso) {
     if (!iso) return '';
     var d = new Date(iso);
@@ -18,24 +24,15 @@ function thresholdOf(m, type) {
     return t ? { min: t.thresholdMin, max: t.thresholdMax } : null;
 }
 
-function loadSensorTypes() {
-    return fetch('/admin/sensor-types')
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            SENSOR_TYPE_BY_NAME = {};
-            (data.sensorTypeInfoResponses || []).forEach(function (st) {
-                SENSOR_TYPE_BY_NAME[st.type] = st;
-            });
-        });
-}
+// 서버가 렌더링 시점에 심어준 SENSOR_TYPES_BOOTSTRAP / MUSHROOMS_BOOTSTRAP으로 초기화 (fetch 없음)
+function initializeBootstrap() {
+    SENSOR_TYPE_BY_NAME = {};
+    (SENSOR_TYPES_BOOTSTRAP.sensorTypeInfoResponses || []).forEach(function (st) {
+        SENSOR_TYPE_BY_NAME[st.type] = st;
+    });
 
-function loadMushrooms() {
-    return fetch('/admin/mushroom-references')
-        .then(function (res) { return res.json(); })
-        .then(function (data) {
-            MUSHROOMS = data.mushroomReferenceInfoResponses || [];
-            renderMushrooms();
-        });
+    MUSHROOMS = MUSHROOMS_BOOTSTRAP.mushroomReferenceInfoResponses || [];
+    renderMushrooms();
 }
 
 function renderMushrooms() {
@@ -53,15 +50,15 @@ function renderMushrooms() {
         var tr = document.createElement('tr');
         tr.className = 'readonly';
         tr.innerHTML =
-            '<td>' + m.mushroomNameKo + '</td>' +
-            '<td>' + (m.mushroomNameEn || '') + '</td>' +
-            '<td style="font-style:italic;color:var(--brown-500);">' + (m.mushroomScientificName || '') + '</td>' +
+            '<td>' + escapeHtml(m.mushroomNameKo) + '</td>' +
+            '<td>' + escapeHtml(m.mushroomNameEn) + '</td>' +
+            '<td style="font-style:italic;color:var(--brown-500);">' + escapeHtml(m.mushroomScientificName) + '</td>' +
             '<td>' + (temp ? temp.min + '~' + temp.max + '°C' : '-') + '</td>' +
             '<td>' + (humidity ? humidity.min + '~' + humidity.max + '%' : '-') + '</td>' +
             '<td>' + formatDate(m.createdAt) + '</td>' +
             '<td>' +
-            '<button class="row-action-btn" type="button" title="수정" onclick="openMushroomForm(' + m.id + ')"><i data-lucide="pencil"></i></button>' +
-            '<button class="row-action-btn" type="button" title="삭제" onclick="openDeleteMushroom(' + m.id + ')"><i data-lucide="shield-alert"></i></button>' +
+            '<button class="row-action-btn" type="button" title="수정" onclick="openMushroomForm(' + Number(m.id) + ')"><i data-lucide="pencil"></i></button>' +
+            '<button class="row-action-btn" type="button" title="삭제" onclick="openDeleteMushroom(' + Number(m.id) + ')"><i data-lucide="shield-alert"></i></button>' +
             '</td>';
         tbody.appendChild(tr);
     });
@@ -163,10 +160,7 @@ function saveMushroomForm() {
     request
         .then(function (res) {
             if (!res.ok) throw new Error('save failed');
-            return loadMushrooms();
-        })
-        .then(function () {
-            closeModal('modal-mushroom-form');
+            window.location.reload();
         })
         .catch(function () {
             alert('버섯 정보 저장에 실패했습니다.');
@@ -175,21 +169,8 @@ function saveMushroomForm() {
 
 function openDeleteMushroom(id) {
     currentMushroomId = id;
+    document.getElementById('mushroom-delete-form').action = '/admin/mushroom-references/' + id;
     openModal('modal-mushroom-delete');
 }
 
-function confirmDeleteMushroom() {
-    fetch('/admin/mushroom-references/' + currentMushroomId, { method: 'DELETE' })
-        .then(function (res) {
-            if (!res.ok) throw new Error('delete failed');
-            return loadMushrooms();
-        })
-        .then(function () {
-            closeModal('modal-mushroom-delete');
-        })
-        .catch(function () {
-            alert('버섯 정보 삭제에 실패했습니다.');
-        });
-}
-
-loadSensorTypes().then(loadMushrooms);
+initializeBootstrap();

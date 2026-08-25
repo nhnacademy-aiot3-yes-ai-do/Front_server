@@ -56,7 +56,7 @@ body {
     font-size: 1.05rem;
     font-weight: 700;
     color: var(--brown-500);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     border-radius: 10px 10px 0 0;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
@@ -268,7 +268,7 @@ body {
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     border-width: 2px;
     border-style: solid;
     transition: background 0.15s ease, transform 0.15s ease;
@@ -460,7 +460,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     box-shadow: 0 2px 8px rgba(63, 42, 29, 0.2);
     transition: transform 0.25s ease, color 0.15s ease;
 }
@@ -744,6 +744,21 @@ body {
     padding: 1.1rem 1.2rem 0;
 }
 
+.chart-card-header-selects {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-live-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--sage-500);
+    font-weight: 600;
+}
+
 .chart-placeholder {
     flex: 1;
     display: flex;
@@ -777,6 +792,17 @@ body {
     stroke-width: 2;
 }
 
+/* ---- 그래프 눈금 라벨 (값 축 / 시간 축, 센서마다 단위가 달라서 JS가 값에 단위를 붙여서 넣어줌) ---- */
+.chart-axis-label {
+    font-family: "Gowun Dodum", inherit;
+    font-size: 6.4px;
+    fill: var(--brown-500);
+}
+
+.chart-axis-label-x {
+    font-size: 5.6px;
+}
+
 /* ===== AI report tab ===== */
 #tab-report {
     display: flex;
@@ -803,7 +829,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -830,7 +856,7 @@ body {
     border: 2px solid rgba(139, 94, 60, 0.28);
     border-radius: 12px;
     background: rgba(251, 246, 234, 0.7);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 
@@ -851,7 +877,7 @@ body {
 
 .report-date-chip.disabled {
     opacity: 0.4;
-    cursor: url("/images/cursor-default.png") 3 2, not-allowed;
+    cursor: not-allowed;
 }
 
 .chip-dow {
@@ -935,7 +961,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -964,7 +990,7 @@ body {
     font-weight: 700;
     border-radius: 12px;
     border: 2px solid var(--brown-900);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -1037,7 +1063,7 @@ body {
 .dropdown-panel-title button {
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--sage-600);
 }
 
@@ -1092,14 +1118,14 @@ body {
 .member-remove {
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--danger);
 }
 
 .member-role-toggle {
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--ink);
 }
 
@@ -1127,7 +1153,7 @@ body {
 .panel-pagination button {
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--sage-600);
     display: flex;
     align-items: center;
@@ -1135,7 +1161,7 @@ body {
 
 .panel-pagination button:disabled {
     color: var(--brown-300);
-    cursor: url("/images/cursor-default.png") 3 2, default;
+    cursor: default;
 }
 
 .panel-pagination span {
@@ -1196,7 +1222,7 @@ body {
     border-radius: 8px;
     padding: 6px 12px;
     font-size: 13px;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     flex-shrink: 0;
 }
 
@@ -1206,7 +1232,7 @@ body {
 
 .member-search-add:disabled {
     background: var(--brown-300);
-    cursor: url("/images/cursor-default.png") 3 2, default;
+    cursor: default;
 }
 
 /* ===== Modal ===== */
@@ -1278,7 +1304,7 @@ body {
     right: 16px;
     background: none;
     border: none;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     color: var(--brown-500);
 }
 
@@ -1309,12 +1335,20 @@ body {
     margin-top: 4px;
 }
 
-/* ---- 환경 설정 모달: 사진 업로드 / 센서 선택 / 임계값 (mockup 레이아웃) ---- */
+
 .settings-modal-grid {
     display: flex;
     align-items: flex-start;
-    gap: 1.1rem;
+    gap: 1.5rem;
     margin-top: 0.4rem;
+}
+
+.settings-photo-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    width: 8.5rem;
+    flex-shrink: 0;
 }
 
 .settings-photo-upload {
@@ -1328,7 +1362,7 @@ body {
     color: var(--brown-300);
     flex-shrink: 0;
     overflow: hidden;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
 }
 
@@ -1348,10 +1382,9 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    max-width: 9rem;
-    max-height: 8.5rem;
+    width: 100%;
+    max-height: 5.6rem;
     overflow-y: auto;
-    flex-shrink: 0;
 }
 
 .settings-photo-thumb {
@@ -1361,6 +1394,7 @@ body {
     border-radius: 8px;
     overflow: hidden;
     border: 2px solid var(--brown-300);
+    flex-shrink: 0;
 }
 
 .settings-photo-thumb img {
@@ -1383,7 +1417,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
     padding: 0;
 }
 
@@ -1392,13 +1426,13 @@ body {
     height: 0.75rem;
 }
 
-.settings-sensor-list {
+.settings-config-col {
     flex: 1;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    align-self: stretch;
+    flex-direction: column;
+    gap: 0.9rem;
     min-width: 0;
+    padding-top: 0.3rem;
 }
 
 .settings-sensor-row {
@@ -1406,7 +1440,7 @@ body {
     align-items: center;
     gap: 0.6rem;
     width: 100%;
-    max-width: 15rem;
+    max-width: 13rem;
     border: 2px solid var(--brown-300);
     border-radius: 10px;
     padding: 0.6rem 0.8rem;
@@ -1419,20 +1453,27 @@ body {
     flex-shrink: 0;
 }
 
-.settings-threshold {
+.settings-threshold-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-    width: 8rem;
-    flex-shrink: 0;
+    align-items: flex-end;
+    gap: 0.8rem;
 }
 
-.settings-threshold label {
+.settings-threshold-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-threshold-field label {
     font-size: 0.75rem;
     color: var(--brown-500);
 }
 
-.settings-threshold input {
+.settings-threshold-field input {
+    width: 100%;
     padding: 0.5rem 0.6rem;
     border: 2px solid var(--brown-300);
     border-radius: 10px;
@@ -1440,12 +1481,15 @@ body {
 }
 
 .settings-confirm {
-    align-self: flex-end;
-    margin-top: 0.4rem;
+    flex-shrink: 0;
+    height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: none;
     border: none;
     color: var(--sage-600);
-    cursor: url("/images/cursor-default.png") 3 2, pointer;
+    cursor: pointer;
 }
 
 .modal-field label {
@@ -1526,4 +1570,33 @@ body {
 
 .compare-diff.flat {
     color: var(--brown-500);
+}
+
+/* ===== 반응형: 창/화면이 좁아지면 3단 그리드를 세로로 쌓아서 겹침·잘림 방지 =====
+   aspect-ratio로 가로 비율을 고정해둔 상태라 좁은 화면에서는 억지로 눌려 찌그러지므로,
+   일정 너비 아래에서는 세로 스택으로 전환하고 비율 고정도 풀어서 내용 높이에 맞게 늘어나게 함. */
+@media (max-width: 1100px) {
+    .page-container { width: min(96vw, 2800px); margin: 1.2rem auto; }
+    .tab-panel { padding: 1.3rem; }
+
+    .main-row {
+        grid-template-columns: 1fr;
+        aspect-ratio: auto;
+    }
+
+    .photo-card { min-height: 22rem; }
+
+    .report-row {
+        grid-template-columns: 1fr;
+        aspect-ratio: auto;
+    }
+
+    .report-row .photo-card { min-height: 18rem; }
+}
+
+@media (max-width: 640px) {
+    .tabs-nav { flex-wrap: wrap; }
+    .tab-btn { padding: 0.55rem 1rem 0.5rem; font-size: 0.95rem; }
+    .tab-panel { padding: 1rem; }
+    .env-stats-card--main .env-stat-grid { grid-template-columns: repeat(2, 1fr); }
 }

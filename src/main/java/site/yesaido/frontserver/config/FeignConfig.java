@@ -27,7 +27,7 @@ public class FeignConfig {
     @Bean
     public RequestInterceptor authInterceptor() {
         return requestTemplate -> {
-            if (requestTemplate.url().contains("/api/auth/reissue")) {
+            if (requestTemplate.url().contains("/api/v1/auth/reissue")) {
                 return;
             }
             ServletRequestAttributes attrs =

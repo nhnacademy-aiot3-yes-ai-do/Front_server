@@ -73,8 +73,4 @@ public interface CultivationClient {
     @DeleteMapping("/api/v1/cultivations/{cultivation-id}/photos/{photo-id}")
     ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                      @PathVariable("photo-id") Long photoId);
-
-    @GetMapping("/api/v1/cultivations/{cultivation-id}/photos/{photo-id}/raw")
-    ResponseEntity<byte[]> getPhotoRaw(@PathVariable("cultivation-id") Long cultivationId,
-                                       @PathVariable("photo-id") Long photoId);
 }

@@ -14,9 +14,11 @@ import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidation
 public interface AiClient {
 
 
-    @GetMapping("/api/mushrooms/{mushroom-id}/guide")
+    @GetMapping("/api/v1/mushrooms/{mushroom-id}/guide")
     ApiResponse<MushGuideResponse> getMushroomGuide(@PathVariable("mushroom-id") Long mushroomId);
 
-    @PostMapping("/api/ai/sensor-validation")
-    ApiResponse<SensorValidationResponse> validationSensorThreshold(@RequestBody SensorValidationRequest request);
+    @PostMapping("/api/v1/ai/cultivations/{cultivation-id}/sensor-validation")
+    ApiResponse<SensorValidationResponse> validationSensorThreshold(
+            @PathVariable("cultivation-id") Long cultivationId,
+            @RequestBody SensorValidationRequest request);
 }

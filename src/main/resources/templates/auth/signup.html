@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>회원가입 | MushMush</title>
-    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" th:href="@{/css/style.css}" />
 </head>
 <body>
 <div class="auth-wrap">
@@ -52,7 +52,7 @@
 </div>
 
 
-<script src="/js/auth-signup.js"></script>
+<script th:src="@{/js/auth-signup.js}"></script>
 
 </body>
 </html>

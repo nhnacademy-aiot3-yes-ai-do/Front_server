@@ -2,13 +2,14 @@ package site.yesaido.frontserver.controller.admin;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
-@RestController
+@Controller
 @LoginRequired(adminOnly = true)
 @RequiredArgsConstructor
 @RequestMapping("/admin/mushroom-references")
@@ -32,7 +33,9 @@ public class AdminMushroomReferenceController {
     }
 
     @DeleteMapping("/{mushroom-reference-id}")
-    public ResponseEntity<Void> deleteMushroomReference(@PathVariable("mushroom-reference-id") Long id) {
-        return sensorClient.deleteMushroomReference(id);
+    public String deleteMushroomReferenceForm(@PathVariable("mushroom-reference-id") Long id) {
+        sensorClient.deleteMushroomReference(id);
+        return "redirect:/admin/mushrooms";
     }
+
 }

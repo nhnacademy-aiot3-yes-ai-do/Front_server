@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.io.IOException;
@@ -54,20 +55,24 @@ public class GlobalExceptionHandler {
     private final AuthCookieProvider authCookieProvider;
 
     @ExceptionHandler(FeignException.Unauthorized.class)
-    public void handleUnauthorized(HttpServletResponse response) throws IOException {
-        authCookieProvider.clearAuthCookies(response);
+    public void handleUnauthorized(HttpServletResponse response) {
         try {
+            authCookieProvider.clearAuthCookies(response);
             if (!response.isCommitted()) {
                 response.sendRedirect("/login");
             } else {
                 log.warn("응답이 이미 커밋되어 /login으로 리다이렉트하지 못했습니다.");
             }
-        } catch (Exception e) {
-            log.warn("sendRedirect 실패: {}", e.getMessage());
-            if (!response.isCommitted()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("{\"detail\":\"로그인이 필요합니다.\"}");
+        } catch (Throwable t) {
+            log.error("handleUnauthorized 처리 중 예외 발생: {}", t.getClass().getName(), t);
+            try {
+                if (!response.isCommitted()) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"detail\":\"로그인이 필요합니다.\"}");
+                }
+            } catch (IOException ignored) {
+                // 이 시점엔 응답에 더 이상 쓸 수 있는 게 없음
             }
         }
     }
@@ -106,12 +111,29 @@ public class GlobalExceptionHandler {
                 .body(Map.of("detail", "로그인이 필요합니다."));
     }
 
+    // css/js 정적 리소스는 파일 내용 해시가 URL에 붙는 캐시버스팅 방식(WebConfig의 VersionResourceResolver)을
+    // 쓰고 있어서, 파일을 수정한 뒤 서버를 재시작해도 브라우저가 예전 HTML에 박혀있던 옛날 해시 URL로
+    // 요청하면 매치되는 리소스를 못 찾아 이 예외가 던져짐. 아래 catch-all(Exception.class)이 이걸 잡아서
+    // JSON 500으로 감싸버리면 브라우저가 "이건 CSS/JS가 아니잖아" 하며 아예 적용을 거부해서 스타일이
+    // 통째로 깨져 보이는 문제가 있었음 — 그래서 정적 리소스 미존재는 평범한 404로 내려보냄.
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException exception) {
+        return ResponseEntity.notFound().build();
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleUnexpected(Exception exception) {
         log.error("처리되지 않은 예외 발생: {}", exception.getClass().getName(), exception);
         return ResponseEntity.status(500)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("detail", "일시적인 오류가 발생했습니다."));
+    }
+
+    @ExceptionHandler(Throwable.class)
+    public ResponseEntity<Object> handleThrowable(Throwable e) {
+        log.error("처리되지 않은 Error 발생: {}", e.getClass().getName(), e);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "internal_server_error", "message", "일시적인 서버 오류가 발생했습니다."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
