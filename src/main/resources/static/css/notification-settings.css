@@ -247,15 +247,27 @@ body {
     color: var(--brown-700);
 }
 
+/* common.css의 .integration-code-input은 6자리 인증코드 같은 짧은 입력칸용 스타일(모노스페이스,
+   글자 간격 넓힘, 가운데 정렬, 대문자 변환)이라, 이름/Webhook URL처럼 긴 값을 넣는 이 모달에 그대로
+   쓰면 글자가 이상하게 벌어져 보임. 여기서 그 스타일을 일반 입력창처럼 되돌림. */
 .integration-code-input {
     width: 100%;
     box-sizing: border-box;
     padding: 0.65rem 0.8rem;
     border: 2px solid rgba(139, 94, 60, 0.25);
     border-radius: 10px;
+    max-width: none;
     font-family: inherit;
     font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: normal;
+    text-align: left;
+    text-transform: none;
     background: rgba(255, 255, 255, 0.7);
+}
+
+.integration-code-input::placeholder {
+    letter-spacing: normal;
 }
 
 .btn:disabled,
