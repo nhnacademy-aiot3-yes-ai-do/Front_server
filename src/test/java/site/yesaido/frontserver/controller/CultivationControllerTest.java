@@ -208,6 +208,8 @@ class CultivationControllerTest {
         when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(null));
         when(sensorClient.getSensors(cultivationId)).thenReturn(ResponseEntity.ok(null));
         when(sensorClient.getLatestSensorValues(cultivationId)).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getHistory(0, 20)).thenReturn(ResponseEntity.ok(new CultivationHistoryPageResponse(List.of(), 0, 0L, 0, 20)));
+        when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
         mockMvc.perform(get("/cultivations/{cultivation-id}", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
