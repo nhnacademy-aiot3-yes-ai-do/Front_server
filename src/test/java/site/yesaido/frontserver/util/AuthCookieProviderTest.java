@@ -3,6 +3,7 @@ package site.yesaido.frontserver.util;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 
@@ -20,10 +21,14 @@ class AuthCookieProviderTest {
         authCookieProvider.setAuthCookies(response, "accessVal", "refreshVal", "USER", 1_755_671_400_000L);
 
         List<String> cookies = response.getHeaders("Set-Cookie");
-        assertEquals(4, cookies.size());
+        assertEquals(5, cookies.size());
 
         assertTrue(cookies.stream().anyMatch(c -> c.contains("accessToken=accessVal") && c.contains("HttpOnly") && c.contains("SameSite=Lax")));
-        assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=refreshVal")));
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=")
+                && c.contains("Path=/")
+                && c.contains("Max-Age=0")));
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=refreshVal")
+                && c.contains("Path=/users/reissue")));
         assertTrue(cookies.stream().anyMatch(c -> c.contains("role=USER")));
         assertTrue(cookies.stream().anyMatch(c -> c.contains("accessTokenExpiresAt=1755671400000")
                 && !c.contains("HttpOnly")));
@@ -47,7 +52,21 @@ class AuthCookieProviderTest {
         authCookieProvider.clearAuthCookies(response);
 
         List<String> cookies = response.getHeaders("Set-Cookie");
-        assertEquals(4, cookies.size());
+        assertEquals(5, cookies.size());
         assertTrue(cookies.stream().allMatch(c -> c.contains("Max-Age=0")));
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=") && c.contains("Path=/")));
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=") && c.contains("Path=/users/reissue")));
+    }
+
+    @Test
+    @DisplayName("쿠키 도메인이 설정되면 하위 도메인 요청에도 전송할 수 있다")
+    void setAuthCookiesWithDomain() {
+        ReflectionTestUtils.setField(authCookieProvider, "cookieDomain", ".yes-nhn.site");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        authCookieProvider.setAuthCookies(response, "accessVal", "refreshVal", "USER", 1_755_671_400_000L);
+
+        List<String> cookies = response.getHeaders("Set-Cookie");
+        assertTrue(cookies.stream().allMatch(cookie -> cookie.contains("Domain=.yes-nhn.site")));
     }
 }

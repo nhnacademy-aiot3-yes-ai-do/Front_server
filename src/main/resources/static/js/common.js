@@ -87,7 +87,9 @@ function initTopbarSessionTimer() {
             timerEl.textContent = '0:00';
 
             if (!sessionReissueInProgress) {
-                extendLoginSession(true);
+                clearInterval(sessionTimerInterval);
+                sessionTimerInterval = null;
+                logout();
             }
             return;
         }
@@ -106,7 +108,7 @@ function initTopbarSessionTimer() {
     sessionTimerInterval = setInterval(tick, 1000);
 }
 
-function extendLoginSession(isAutomatic) {
+function extendLoginSession() {
     if(sessionReissueInProgress){
         return;
     }
@@ -140,10 +142,7 @@ function extendLoginSession(isAutomatic) {
         })
         .catch(function () {
             sessionReissueInProgress = false;
-
-            if(!isAutomatic){
-                alert('로그인 연장에 실패했어요. 다시 로그인해주세요.');
-            }
+            alert('로그인 연장에 실패했어요. 다시 로그인해주세요.');
             logout();
         });
 }

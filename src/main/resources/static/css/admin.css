@@ -26,8 +26,8 @@ body {
 .admin-sidebar {
     width: 14.5rem;
     flex-shrink: 0;
-    background: var(--cream-100);
-    border-right: 2px solid rgba(139, 94, 60, 0.22);
+    background: linear-gradient(180deg, #3f2a1d, #2c1c12);
+    border-right: 1px solid rgba(0, 0, 0, 0.25);
     padding: 1.6rem 1.1rem;
     display: flex;
     flex-direction: column;
@@ -40,8 +40,9 @@ body {
     padding: 0.4rem 0 1.6rem;
 }
 
+
 .admin-sidebar-logo {
-    height: 8.2rem;
+    height: 10.5rem;
     width: auto;
     display: block;
 }
@@ -54,7 +55,7 @@ body {
 }
 
 .admin-sidebar-footer {
-    border-top: 2px solid rgba(139, 94, 60, 0.18);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
     padding-top: 1rem;
     margin-top: 1rem;
     display: flex;
@@ -73,13 +74,15 @@ body {
     width: 2.1rem;
     height: 2.1rem;
     box-shadow: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
 }
 
 .admin-sidebar-profile-name {
     font-family: "Gaegu", inherit;
     font-weight: 700;
     font-size: 0.98rem;
-    color: var(--brown-900);
+    color: #fff;
 }
 
 .admin-sidebar-logout {
@@ -92,14 +95,14 @@ body {
     font-family: "Gaegu", inherit;
     font-weight: 700;
     font-size: 0.92rem;
-    color: var(--brown-500);
+    color: rgba(255, 255, 255, 0.6);
     cursor: pointer;
     border-radius: 10px;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
 .admin-sidebar-logout svg { width: 1.05rem; height: 1.05rem; }
-.admin-sidebar-logout:hover { background: rgba(139, 94, 60, 0.08); color: var(--brown-900); }
+.admin-sidebar-logout:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 
 .admin-sidebar-group {
     display: flex;
@@ -111,7 +114,7 @@ body {
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: var(--brown-500);
+    color: rgba(255, 255, 255, 0.4);
     text-transform: uppercase;
     padding: 0 0.7rem;
     margin-bottom: 0.2rem;
@@ -122,26 +125,23 @@ body {
     align-items: center;
     gap: 0.7rem;
     padding: 0.65rem 0.9rem;
-    border-radius: 999px;
+    border-radius: 10px;
     font-family: "Gaegu", inherit;
     font-weight: 700;
     font-size: 0.98rem;
-    color: var(--brown-700);
+    color: rgba(255, 255, 255, 0.72);
     text-decoration: none;
     cursor: pointer;
-    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
 }
 
-.admin-sidebar-link svg { width: 1.15rem; height: 1.15rem; flex-shrink: 0; color: var(--brown-500); transition: transform 0.15s ease; }
+.admin-sidebar-link svg { width: 1.15rem; height: 1.15rem; flex-shrink: 0; color: rgba(255, 255, 255, 0.5); transition: color 0.15s ease; }
 
-.admin-sidebar-link:hover { background: rgba(124, 148, 115, 0.14); color: var(--brown-900); transform: translateX(2px); }
-.admin-sidebar-link:hover svg { transform: scale(1.12) rotate(-6deg); }
+.admin-sidebar-link:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.admin-sidebar-link:hover svg { color: #fff; }
 
-.admin-sidebar-link.is-active { background: var(--sage-500); color: #fff; box-shadow: 3px 3px 0 rgba(63, 42, 29, 0.14); }
+.admin-sidebar-link.is-active { background: var(--sage-500); color: #fff; }
 .admin-sidebar-link.is-active svg { color: #fff; }
-
-.admin-sidebar-brand:hover .admin-sidebar-logo { transform: rotate(-4deg) scale(1.04); }
-.admin-sidebar-logo { transition: transform 0.2s ease; }
 
 /* ===== page container ===== */
 .page-container {
@@ -191,42 +191,62 @@ body {
 
 .admin-heading svg { width: 1.4rem; height: 1.4rem; color: var(--sage-600); }
 
-/* ===== 허브: 인사말 + 요약 통계 + 큰 아이콘 타일 3개 ===== */
+/* ===== 허브: 인사말 + 요약 통계 + 큰 아이콘 타일 3개 =====
+   블롭 모양 아이콘, 삐뚤어진 그림자, hover 회전 등 장식적인 요소를 다 걷어내고
+   테두리 얇게 + 그림자 은은하게 + 여백 넉넉하게 쓰는 깔끔한 스타일로 재설계 */
+/* .page-container(admin 테마)가 flex-direction:column이라, 가로 중앙 정렬은 align-items가 담당.
+   justify-content는 세로 정렬 담당 — center로 둬야 화면이 넉넉할 때 위쪽에만 쏠리지 않고
+   콘텐츠 블록 전체가 세로로도 가운데 위치함 */
 .admin-hub-page {
     flex: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 2.4rem 0;
 }
 
 .admin-hub-content {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 2.2rem;
+    gap: 1.6rem;
     width: 100%;
+    max-width: 68rem;
 }
 
-.admin-welcome { text-align: center; }
+.admin-welcome {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.2rem;
+}
 
 .admin-welcome-title {
     font-family: "Gaegu", inherit;
     font-weight: 700;
-    font-size: 1.9rem;
+    font-size: 1.7rem;
     color: var(--brown-900);
 }
 
-.admin-welcome-date {
+.admin-welcome-title::after { content: "👋"; margin-left: 0.4rem; }
+
+.admin-welcome-sub {
     font-size: 0.85rem;
     color: var(--brown-500);
-    margin-top: 0.35rem;
+    margin: 0.3rem 0 0;
+}
+
+.admin-welcome-date {
+    font-size: 0.82rem;
+    color: var(--brown-500);
 }
 
 .admin-stat-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1.2rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
     width: 100%;
 }
 
@@ -234,121 +254,112 @@ body {
     display: flex;
     align-items: center;
     gap: 0.9rem;
-    background: var(--cream-100);
-    border: 2px solid rgba(139, 94, 60, 0.18);
-    border-radius: 22px 26px 22px 26px;
-    padding: 1rem 1.6rem;
-    box-shadow: 4px 4px 0 rgba(63, 42, 29, 0.1);
-    min-width: 11.5rem;
-    flex: 1;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    background: #fff;
+    border: 1px solid rgba(139, 94, 60, 0.14);
+    border-radius: 14px;
+    padding: 1.1rem 1.3rem;
+    box-shadow: 0 1px 2px rgba(63, 42, 29, 0.04);
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .admin-stat-card:hover {
-    transform: translateY(-3px) rotate(-0.6deg);
-    box-shadow: 5px 6px 0 rgba(63, 42, 29, 0.14);
+    box-shadow: 0 4px 14px rgba(63, 42, 29, 0.08);
+    border-color: rgba(139, 94, 60, 0.24);
 }
 
+/* 카드 3개를 색으로 구분해서(세이지/코랄/골드) 한눈에 알아보기 쉽게 함 */
+.admin-stat-row .admin-stat-card:nth-child(1) .admin-stat-icon-wrap { background: rgba(124, 148, 115, 0.16); color: var(--sage-600); }
+.admin-stat-row .admin-stat-card:nth-child(2) .admin-stat-icon-wrap { background: rgba(192, 87, 74, 0.14); color: var(--danger); }
+.admin-stat-row .admin-stat-card:nth-child(3) .admin-stat-icon-wrap { background: rgba(201, 154, 63, 0.18); color: #a97c1f; }
+
 .admin-stat-icon-wrap {
-    width: 2.6rem;
-    height: 2.6rem;
-    border-radius: 55% 45% 60% 40% / 45% 55% 45% 55%;
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 10px;
     background: var(--cream-200);
     color: var(--sage-600);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: transform 0.2s ease;
 }
 
-.admin-stat-card:hover .admin-stat-icon-wrap { transform: rotate(-8deg) scale(1.08); }
-
-.admin-stat-icon-wrap svg { width: 1.4rem; height: 1.4rem; }
+.admin-stat-icon-wrap svg { width: 1.25rem; height: 1.25rem; }
 
 .admin-stat-value {
-    font-family: "Gaegu", inherit;
     font-weight: 700;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     color: var(--brown-900);
-    line-height: 1;
+    line-height: 1.2;
 }
 
-.admin-stat-label { font-size: 0.78rem; color: var(--brown-500); margin-top: 0.2rem; }
+.admin-stat-label { font-size: 0.78rem; color: var(--brown-500); margin-top: 0.15rem; }
 
 /* ===== 대시보드: 오늘 요약 히어로 패널 ===== */
 .admin-hero-panel {
     position: relative;
     width: 100%;
-    background: var(--cream-100);
-    border: 2px solid rgba(139, 94, 60, 0.18);
-    box-shadow: 5px 5px 0 rgba(63, 42, 29, 0.1);
-    border-radius: 30px 30px 30px 8px;
-    padding: 1.8rem 2rem;
+    background: #fff;
+    border: 1px solid rgba(139, 94, 60, 0.14);
+    border-left: 3px solid var(--sage-500);
+    box-shadow: 0 1px 2px rgba(63, 42, 29, 0.04);
+    border-radius: 14px;
+    padding: 1.5rem 1.7rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 0.8rem;
-    overflow: hidden;
-}
-
-.admin-hero-panel::after {
-    content: "🍄";
-    position: absolute;
-    top: -0.6rem;
-    right: 1.4rem;
-    font-size: 3.6rem;
-    transform: rotate(14deg);
-    opacity: 0.16;
-    pointer-events: none;
+    gap: 0.7rem;
 }
 
 .admin-hero-title {
     font-family: "Gaegu", inherit;
     font-weight: 700;
-    font-size: 1.35rem;
+    font-size: 1.2rem;
     color: var(--brown-900);
 }
 
 .admin-hero-desc {
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     line-height: 1.65;
     color: var(--brown-500);
 }
 
-.admin-hero-actions { display: flex; gap: 0.7rem; margin-top: 0.4rem; flex-wrap: wrap; }
+.admin-hero-actions { display: flex; gap: 0.7rem; margin-top: 0.3rem; flex-wrap: wrap; }
 
 /* ===== 대시보드: 최근 미답변 문의 / 최근 가입 회원 ===== */
 .admin-activity-row {
     display: flex;
     align-items: stretch;
-    gap: 1.4rem;
+    gap: 1.2rem;
     width: 100%;
 }
 
 .admin-activity-panel {
     flex: 1;
     min-width: 0;
-    background: var(--cream-100);
-    border: 2px solid rgba(139, 94, 60, 0.18);
-    box-shadow: 5px 5px 0 rgba(63, 42, 29, 0.1);
-    border-radius: 8px 30px 30px 30px;
-    padding: 1.5rem 1.7rem;
+    background: #fff;
+    border: 1px solid rgba(139, 94, 60, 0.14);
+    box-shadow: 0 1px 2px rgba(63, 42, 29, 0.04);
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
+    gap: 0.5rem;
 }
 
 .admin-activity-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    padding-bottom: 0.8rem;
+    margin-bottom: 0.2rem;
+    border-bottom: 1px solid rgba(139, 94, 60, 0.12);
 }
 
 .admin-activity-title {
     font-family: "Gaegu", inherit;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     color: var(--brown-900);
 }
 
@@ -356,7 +367,7 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.15rem;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 700;
     color: var(--brown-500);
     text-decoration: none;
@@ -368,33 +379,32 @@ body {
 .admin-activity-list {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
 }
 
 .admin-activity-item {
     display: flex;
     align-items: center;
     gap: 0.8rem;
-    padding: 0.55rem 0.7rem;
-    border-radius: 999px;
+    padding: 0.75rem 0.2rem;
+    border-bottom: 1px solid rgba(139, 94, 60, 0.1);
     text-decoration: none;
-    transition: background 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease;
 }
 
-a.admin-activity-item:hover { background: rgba(124, 148, 115, 0.12); transform: translateX(3px); }
-a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg) scale(1.1); }
+.admin-activity-list .admin-activity-item:last-child { border-bottom: none; }
+
+a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 
 .admin-activity-item-icon {
-    width: 2.2rem;
-    height: 2.2rem;
-    border-radius: 55% 45% 60% 40% / 45% 55% 45% 55%;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
     background: var(--cream-200);
     color: var(--sage-600);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    transition: transform 0.2s ease;
 }
 
 .admin-activity-item-icon svg { width: 1.05rem; height: 1.05rem; }
@@ -402,7 +412,7 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 .admin-activity-item-body { flex: 1; min-width: 0; }
 
 .admin-activity-item-title {
-    font-size: 0.88rem;
+    font-size: 0.87rem;
     font-weight: 700;
     color: var(--brown-900);
     white-space: nowrap;
@@ -425,6 +435,371 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 .admin-panel {
     padding: 0.4rem 0;
 }
+
+/* =========================================================
+   회원 관리 페이지: 사용자가 준 참고 디자인(member-admin.html/css)을
+   기존 브랜드 톤(--brown-900/--sage-500 등)에 맞춰 옮겨온 전용 스타일.
+   이 블록의 클래스들은 admin/members.html에서만 사용됨.
+========================================================= */
+
+/* ----- 상단 인사말 바 (사이드바 옆, 페이지 콘텐츠 맨 위) ----- */
+/* 부모(.page-container.admin-list-page)가 align-items:center라서 폭을 안 주면
+   콘텐츠 크기만큼 줄어들어 justify-content:space-between이 무력화됨 -> .admin-panel과
+   같은 폭으로 명시해서 양쪽 끝(제목/액션)이 실제로 좌우로 벌어지게 함 */
+.admin-topbar {
+    width: min(90%, 100rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.4rem 0;
+    border-bottom: 1px solid rgba(112, 87, 60, 0.1);
+    margin-bottom: 1.4rem;
+}
+
+.admin-topbar-title {
+    margin: 0;
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--brown-900);
+}
+
+.admin-topbar-desc {
+    margin: 0.4rem 0 0;
+    font-size: 0.82rem;
+    color: var(--brown-500);
+}
+
+.admin-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    flex-shrink: 0;
+}
+
+.admin-topbar-bell {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 50%;
+    border: none;
+    background: var(--cream-200);
+    color: var(--brown-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.admin-topbar-bell:hover { background: rgba(124, 148, 115, 0.18); color: var(--sage-600); }
+.admin-topbar-bell svg { width: 1.15rem; height: 1.15rem; }
+
+.admin-topbar-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--brown-900);
+}
+
+.admin-topbar-profile .avatar-circle { width: 2.2rem; height: 2.2rem; box-shadow: none; }
+.admin-topbar-profile svg:last-child { width: 1rem; height: 1rem; color: var(--brown-500); }
+
+/* ----- 페이지 제목 영역: 아이콘 배지 + 제목/설명 + 우하단 버섯 장식 ----- */
+.admin-page-heading {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 1.2rem 0 1.6rem;
+    overflow: hidden;
+}
+
+.admin-page-heading-icon {
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 50%;
+    background: var(--cream-200);
+    color: var(--brown-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.admin-page-heading-icon svg { width: 1.7rem; height: 1.7rem; }
+
+.admin-page-heading h2 {
+    margin: 0;
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--brown-900);
+}
+
+.admin-page-heading p {
+    margin: 0.4rem 0 0;
+    font-size: 0.85rem;
+    color: var(--brown-500);
+}
+
+.mushroom-decoration {
+    position: absolute;
+    right: 0.5rem;
+    bottom: -0.8rem;
+    font-size: 2.6rem;
+    letter-spacing: -0.6rem;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* ----- 회원 카드: 툴바 + 테이블 ----- */
+.member-card {
+    background: rgba(255, 253, 248, 0.92);
+    border: 1px solid rgba(139, 94, 60, 0.16);
+    border-radius: 20px;
+    padding: 1.5rem 1.4rem 1.1rem;
+    box-shadow: 0 10px 30px rgba(83, 62, 39, 0.06);
+}
+
+.member-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.2rem;
+    margin-bottom: 1.3rem;
+    flex-wrap: wrap;
+}
+
+.member-count {
+    font-family: "Gaegu", inherit;
+    font-size: 1.05rem;
+    color: var(--brown-700);
+    white-space: nowrap;
+}
+
+.member-count strong {
+    color: var(--sage-600);
+    font-size: 1.3rem;
+    margin: 0 0.1rem;
+}
+
+.toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.toolbar-actions select {
+    height: 2.6rem;
+    min-width: 7.5rem;
+    padding: 0 0.8rem;
+    border: 1px solid rgba(139, 94, 60, 0.22);
+    background: #fff;
+    color: var(--brown-700);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.search-box {
+    height: 2.6rem;
+    width: 14rem;
+    display: flex;
+    align-items: center;
+    padding-left: 0.8rem;
+    border: 1px solid rgba(139, 94, 60, 0.22);
+    background: #fff;
+    border-radius: 10px;
+}
+
+.search-box input {
+    flex: 1;
+    height: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.85rem;
+}
+
+.search-box input::placeholder { color: var(--brown-300); }
+
+.search-box button {
+    width: 2.6rem;
+    height: 100%;
+    border: 0;
+    background: transparent;
+    color: var(--brown-500);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.search-box button svg { width: 1rem; height: 1rem; }
+
+.add-button {
+    height: 2.6rem;
+    padding: 0 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: none;
+    border-radius: 10px;
+    background: var(--sage-500);
+    color: #fff;
+    font-family: "Gaegu", inherit;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.add-button:hover { background: var(--sage-600); }
+.add-button svg { width: 1rem; height: 1rem; }
+
+.table-wrap {
+    overflow-x: auto;
+    border: 1px solid rgba(139, 94, 60, 0.16);
+    border-radius: 14px;
+}
+
+.member-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 50rem;
+}
+
+.member-table th {
+    height: 3rem;
+    padding: 0 1.1rem;
+    background: var(--sage-500);
+    color: #fff;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.82rem;
+}
+
+.member-table th:last-child { text-align: center; }
+
+.member-table td {
+    height: 3.6rem;
+    padding: 0 1.1rem;
+    border-bottom: 1px solid rgba(139, 94, 60, 0.12);
+    color: var(--ink);
+    font-size: 0.88rem;
+    white-space: nowrap;
+}
+
+.member-table td:last-child { text-align: center; }
+
+.member-table tbody tr { background: #fff; transition: background 0.15s ease; }
+.member-table tbody tr:hover { background: var(--cream-200); }
+.member-table tbody tr:last-child td { border-bottom: 0; }
+
+.user-cell { display: flex; align-items: center; gap: 0.7rem; }
+.user-cell strong { font-weight: 700; }
+
+.user-avatar {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    background: var(--cream-200);
+    color: var(--sage-600);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.user-avatar svg { width: 1.2rem; height: 1.2rem; }
+
+/* 아바타 색을 몇 가지로 순환시켜서 목록이 다 똑같아 보이지 않게 함 */
+.avatar-tone-0 { background: rgba(124, 148, 115, 0.18); color: var(--sage-600); }
+.avatar-tone-1 { background: rgba(201, 154, 63, 0.2); color: #a97c1f; }
+.avatar-tone-2 { background: rgba(192, 87, 74, 0.14); color: var(--danger); }
+.avatar-tone-3 { background: rgba(91, 107, 120, 0.16); color: #56718a; }
+.avatar-tone-4 { background: var(--cream-200); color: var(--brown-700); }
+.avatar-tone-5 { background: rgba(124, 148, 115, 0.14); color: var(--sage-600); }
+.avatar-tone-6 { background: rgba(201, 154, 63, 0.14); color: #a97c1f; }
+.avatar-tone-7 { background: rgba(139, 94, 60, 0.14); color: var(--brown-700); }
+
+.grade,
+.status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 3.4rem;
+    height: 1.7rem;
+    padding: 0 0.7rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+}
+
+.grade.normal { background: rgba(139, 94, 60, 0.12); color: var(--brown-500); }
+.grade.bronze { background: rgba(165, 100, 47, 0.16); color: #a5642f; }
+.grade.silver { background: rgba(91, 107, 120, 0.14); color: #56718a; }
+.grade.gold { background: rgba(201, 154, 63, 0.22); color: #a97c1f; }
+
+.status.active-status { background: rgba(124, 148, 115, 0.18); color: var(--sage-600); }
+.status.inactive-status { background: rgba(139, 94, 60, 0.1); color: var(--brown-500); }
+
+.row-actions { display: flex; justify-content: center; gap: 0.4rem; }
+
+.row-actions button {
+    width: 2.1rem;
+    height: 2.1rem;
+    border: 1px solid rgba(139, 94, 60, 0.18);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--brown-500);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.row-actions button svg { width: 0.95rem; height: 0.95rem; }
+
+.row-actions button:hover { background: var(--sage-500); border-color: var(--sage-500); color: #fff; }
+
+/* ----- 페이지네이션 (회원 관리 전용, 숫자 버튼형) ----- */
+.pagination {
+    margin-top: 1.4rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.page,
+.page-arrow {
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 1px solid rgba(139, 94, 60, 0.2);
+    background: #fff;
+    color: var(--brown-700);
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.page svg, .page-arrow svg { width: 0.95rem; height: 0.95rem; }
+
+.page:hover, .page-arrow:hover { background: var(--cream-200); }
+
+.page.active { background: var(--sage-500); border-color: var(--sage-500); color: #fff; }
+
+.page-arrow.disabled { opacity: 0.4; cursor: default; pointer-events: none; }
 
 .admin-page-head {
     display: flex;
@@ -470,28 +845,24 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
 
 .msh-select--admin-filter .msh-select-menu { min-width: 100%; }
 
-/* ===== table =====
-   민트빛 세이지 톤을 넓은 면적(헤더/줄무늬)에 쓰니 크림/브라운 톤과 겉돌아서,
-   기존 카드들과 같은 --cream-100 바탕 + 브라운 계열 톤으로 통일하고,
-   세이지는 원래처럼 hover 같은 포인트에만 남김. */
+/* ===== table ===== */
 .list-table-wrap {
-    background: var(--cream-100);
-    border: 2px solid rgba(139, 94, 60, 0.22);
-    border-radius: 26px;
-    box-shadow: 5px 5px 0 rgba(63, 42, 29, 0.08);
+    background: #fff;
+    border: 1px solid rgba(139, 94, 60, 0.14);
+    border-radius: 16px;
+    box-shadow: 0 1px 2px rgba(63, 42, 29, 0.04);
     overflow: hidden;
 }
 
 .list-table { width: 100%; border-collapse: collapse; }
 
 .list-table thead th {
-    background: rgba(139, 94, 60, 0.12);
-    color: var(--brown-900);
+    background: var(--sage-500);
+    color: #fff;
     font-size: 0.85rem;
     font-weight: 700;
     text-align: left;
     padding: 1rem 1.1rem;
-    border-bottom: 2px solid rgba(139, 94, 60, 0.2);
 }
 
 .list-table tbody td {
@@ -555,15 +926,19 @@ a.admin-activity-item:hover .admin-activity-item-icon { transform: rotate(-8deg)
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
     color: var(--brown-700);
-    background: var(--cream-100);
-    border: 2px solid rgba(139, 94, 60, 0.22);
-    box-shadow: 2px 2px 0 rgba(63, 42, 29, 0.08);
-    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    background: #fff;
+    border: 1px solid rgba(139, 94, 60, 0.18);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .admin-page-btn svg { width: 1rem; height: 1rem; }
-.admin-page-btn:hover { background: rgba(124, 148, 115, 0.16); color: var(--sage-600); }
+.admin-page-btn:hover { background: rgba(124, 148, 115, 0.14); color: var(--sage-600); }
+
+.admin-page-btn.active { background: var(--sage-500); border-color: var(--sage-500); color: #fff; }
 
 .admin-page-btn.disabled {
     opacity: 0.4;
@@ -1177,7 +1552,8 @@ body.error-page {
     .admin-sidebar-logout { justify-content: center; }
 
     .admin-activity-row { flex-direction: column; }
-    .admin-stat-row { justify-content: flex-start; }
+    .admin-stat-row { grid-template-columns: 1fr; }
+    .admin-welcome { flex-direction: column; }
 
     .page-container.admin-list-page .admin-panel { width: min(96%, 100rem); }
 

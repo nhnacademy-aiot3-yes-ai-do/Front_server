@@ -16,6 +16,9 @@ public class AuthCookieProvider {
     @Value("${auth.cookie.secure:false}")
     private boolean cookieSecure;
 
+    @Value("${auth.cookie.domain:}")
+    private String cookieDomain;
+
     public void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken, String role) {
         setAuthCookies(response, accessToken, refreshToken, role, null);
     }
@@ -23,8 +26,10 @@ public class AuthCookieProvider {
     public void setAuthCookies(HttpServletResponse response, String accessToken, String refreshToken, String role, Long accessTokenExpiresAt){
         addHttpOnlyCookie(response, ACCESS_TOKEN, accessToken, -1);
 
+
         if(refreshToken != null){
-            addHttpOnlyCookie(response, REFRESH_TOKEN, refreshToken, -1);
+            addHttpOnlyCookie(response, REFRESH_TOKEN, "", 0);
+            addRefreshTokenCookie(response, refreshToken, -1);
         }
         if(role != null){
             addHttpOnlyCookie(response, ROLE, role, -1);
@@ -41,25 +46,35 @@ public class AuthCookieProvider {
             String value,
             int maxAgeSeconds
     ) {
-        addCookie(response, name, value, maxAgeSeconds, false);
+        addCookie(response, name, value, maxAgeSeconds, false, "/");
     }
 
     public void clearAuthCookies(HttpServletResponse response) {
         addHttpOnlyCookie(response, ACCESS_TOKEN, "", 0);
         addHttpOnlyCookie(response, REFRESH_TOKEN, "", 0);
+        addRefreshTokenCookie(response, "", 0);
         addHttpOnlyCookie(response, ROLE, "", 0);
         addReadableCookie(response, ACCESS_TOKEN_EXPIRES_AT, "", 0);
     }
 
-    private void addCookie(HttpServletResponse response, String name, String value, int maxAgeSeconds, boolean httpOnly) {
+    private void addCookie(HttpServletResponse response, String name, String value, int maxAgeSeconds, boolean httpOnly, String path) {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(name, value)
-                .path("/").httpOnly(httpOnly).secure(cookieSecure).sameSite("Lax");
+                .path(path).httpOnly(httpOnly).secure(cookieSecure).sameSite("Lax");
+
+        if (cookieDomain != null && !cookieDomain.isBlank()) {
+            builder.domain(cookieDomain);
+        }
+
         if (maxAgeSeconds >= 0) {
             builder.maxAge(maxAgeSeconds);
         }
         response.addHeader(HttpHeaders.SET_COOKIE, builder.build().toString());
     }
     private void addHttpOnlyCookie(HttpServletResponse response, String name, String value, int maxAgeSeconds){
-        addCookie(response, name, value, maxAgeSeconds, true);
+        addCookie(response, name, value, maxAgeSeconds, true, "/");
+    }
+
+    private void addRefreshTokenCookie(HttpServletResponse response, String value, int maxAgeSeconds){
+        addCookie(response, REFRESH_TOKEN, value, maxAgeSeconds, true, "/users/reissue");
     }
 }

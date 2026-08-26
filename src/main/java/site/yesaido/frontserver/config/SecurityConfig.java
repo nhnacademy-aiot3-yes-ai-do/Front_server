@@ -40,6 +40,7 @@ public class SecurityConfig {
                     .csrf(AbstractHttpConfigurer::disable)
                     .formLogin(AbstractHttpConfigurer::disable)
                     .httpBasic(AbstractHttpConfigurer::disable)
+                    .logout(AbstractHttpConfigurer::disable)
                     .authorizeHttpRequests(auth -> auth
                             .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
                             .anyRequest().permitAll()
