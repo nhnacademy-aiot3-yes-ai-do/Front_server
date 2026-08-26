@@ -11,6 +11,8 @@ import site.yesaido.frontserver.dto.notification.response.DeliveryPageResponse;
 import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
 import site.yesaido.frontserver.dto.notification.response.SubscriptionResponse;
 import site.yesaido.frontserver.dto.notification.response.SubscriptionTypeResponse;
+import site.yesaido.frontserver.dto.notification.response.TelegramLinkSessionResponse;
+import site.yesaido.frontserver.dto.notification.response.TelegramLinkStatusResponse;
 
 import java.util.List;
 
@@ -37,6 +39,12 @@ public interface NotificationClient {
 
     @DeleteMapping("/api/v1/notification-endpoints/{endpointId}")
     ResponseEntity<Void> deleteEndpoint(@PathVariable("endpointId") Long endpointId);
+
+    @PostMapping("/api/v1/telegram-link-sessions")
+    ResponseEntity<TelegramLinkSessionResponse> createTelegramLinkSession();
+
+    @GetMapping("/api/v1/telegram-link-sessions/{session-id}")
+    ResponseEntity<TelegramLinkStatusResponse> getTelegramLinkSession(@PathVariable("session-id") java.util.UUID sessionId);
 
     @GetMapping("/api/v1/notification-subscription-types")
     ResponseEntity<List<SubscriptionTypeResponse>> getSubscriptionTypes();
