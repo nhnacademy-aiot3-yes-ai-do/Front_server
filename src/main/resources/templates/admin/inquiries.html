@@ -16,41 +16,45 @@
 <div class="page-container admin-list-page">
 
     <div class="admin-panel">
-        <div class="admin-page-head">
-            <button class="admin-back-link" type="button" onclick="location.href='/admin'">
-                <i data-lucide="chevron-left"></i>회원 문의
-            </button>
-            <div class="admin-filters">
-                <div class="msh-select msh-select--admin-filter" id="inquiry-status-select" data-value="all" data-onchange="handleInquiryFilterChange">
-                    <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                        <span class="msh-select-value">전체 답변여부</span>
-                        <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                    </button>
-                    <div class="msh-select-menu">
-                        <div class="msh-select-option selected" data-value="all" onclick="selectMshOption(this)">전체 답변여부</div>
-                        <div class="msh-select-option" data-value="답변완료" onclick="selectMshOption(this)">답변완료</div>
-                        <div class="msh-select-option" data-value="답변대기" onclick="selectMshOption(this)">답변대기</div>
+        <section class="admin-page-heading">
+            <span class="admin-page-heading-icon"><i data-lucide="message-square"></i></span>
+            <div><h2>회원 문의</h2><p>회원이 남긴 문의를 확인하고 답변할 수 있어요.</p></div>        </section>
+
+        <section class="member-card">
+            <div class="member-toolbar">
+                <div class="member-count">전체 문의 <strong id="inquiry-total-count">0</strong>건</div>
+                <div class="toolbar-actions">
+                    <div class="msh-select msh-select--admin-filter" id="inquiry-status-select" data-value="all" data-onchange="handleInquiryFilterChange">
+                        <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                            <span class="msh-select-value">전체 답변여부</span>
+                            <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                        </button>
+                        <div class="msh-select-menu">
+                            <div class="msh-select-option selected" data-value="all" onclick="selectMshOption(this)">전체 답변여부</div>
+                            <div class="msh-select-option" data-value="답변완료" onclick="selectMshOption(this)">답변완료</div>
+                            <div class="msh-select-option" data-value="답변대기" onclick="selectMshOption(this)">답변대기</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="list-table-wrap">
-            <table class="list-table">
-                <thead>
-                <tr>
-                    <th>구분</th>
-                    <th>제목</th>
-                    <th>작성자</th>
-                    <th>작성일</th>
-                    <th>답변여부</th>
-                </tr>
-                </thead>
-                <tbody id="inquiry-tbody"></tbody>
-            </table>
-        </div>
+            <div class="table-wrap">
+                <table class="member-table">
+                    <thead>
+                    <tr>
+                        <th>구분</th>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>작성일</th>
+                        <th>답변여부</th>
+                    </tr>
+                    </thead>
+                    <tbody id="inquiry-tbody"></tbody>
+                </table>
+            </div>
+        </section>
 
-        <div class="admin-pagination" id="inquiry-pagination"></div>
+        <div class="pagination" id="inquiry-pagination"></div>
     </div>
 
 </div>

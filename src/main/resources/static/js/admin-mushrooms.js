@@ -39,6 +39,8 @@ function renderMushrooms() {
     var totalPages = Math.max(1, Math.ceil(MUSHROOMS.length / MUSHROOM_PAGE_SIZE));
     if (mushroomPage > totalPages) mushroomPage = totalPages;
 
+    document.getElementById('mushroom-total-count').textContent = MUSHROOMS.length;
+
     var start = (mushroomPage - 1) * MUSHROOM_PAGE_SIZE;
     var pageData = MUSHROOMS.slice(start, start + MUSHROOM_PAGE_SIZE);
 
@@ -48,7 +50,6 @@ function renderMushrooms() {
         var temp = thresholdOf(m, 'TEMPERATURE');
         var humidity = thresholdOf(m, 'HUMIDITY');
         var tr = document.createElement('tr');
-        tr.className = 'readonly';
         tr.innerHTML =
             '<td>' + escapeHtml(m.mushroomNameKo) + '</td>' +
             '<td>' + escapeHtml(m.mushroomNameEn) + '</td>' +
@@ -56,10 +57,10 @@ function renderMushrooms() {
             '<td>' + (temp ? temp.min + '~' + temp.max + '°C' : '-') + '</td>' +
             '<td>' + (humidity ? humidity.min + '~' + humidity.max + '%' : '-') + '</td>' +
             '<td>' + formatDate(m.createdAt) + '</td>' +
-            '<td>' +
-            '<button class="row-action-btn" type="button" title="수정" onclick="openMushroomForm(' + Number(m.id) + ')"><i data-lucide="pencil"></i></button>' +
-            '<button class="row-action-btn" type="button" title="삭제" onclick="openDeleteMushroom(' + Number(m.id) + ')"><i data-lucide="shield-alert"></i></button>' +
-            '</td>';
+            '<td><div class="row-actions">' +
+            '<button type="button" title="수정" onclick="openMushroomForm(' + Number(m.id) + ')"><i data-lucide="pencil"></i></button>' +
+            '<button type="button" title="삭제" onclick="openDeleteMushroom(' + Number(m.id) + ')"><i data-lucide="trash-2"></i></button>' +
+            '</div></td>';
         tbody.appendChild(tr);
     });
 
@@ -78,10 +79,17 @@ function renderMushroomPagination(totalPages) {
 
     var prevDisabled = mushroomPage === 1 ? ' disabled' : '';
     var nextDisabled = mushroomPage === totalPages ? ' disabled' : '';
+
+    var pageBtns = '';
+    for (var p = 1; p <= totalPages; p++) {
+        pageBtns += '<button class="page' + (p === mushroomPage ? ' active' : '') + '" type="button" onclick="goToMushroomPage(' + p + ')">' + p + '</button>';
+    }
+
     wrap.innerHTML =
-        '<button class="admin-page-btn' + prevDisabled + '" type="button" onclick="goToMushroomPage(' + (mushroomPage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
-        '<span class="admin-page-label">' + mushroomPage + ' / ' + totalPages + '</span>' +
-        '<button class="admin-page-btn' + nextDisabled + '" type="button" onclick="goToMushroomPage(' + (mushroomPage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+        '<button class="page-arrow' + prevDisabled + '" type="button" onclick="goToMushroomPage(' + (mushroomPage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
+        pageBtns +
+        '<button class="page-arrow' + nextDisabled + '" type="button" onclick="goToMushroomPage(' + (mushroomPage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+    lucide.createIcons();
 }
 
 function openMushroomForm(id) {
