@@ -67,9 +67,15 @@
             <div>
                 <div class="iq-detail-meta">
                     <span class="iq-category-badge" id="iq-category">계정/로그인</span>
-                    <span class="iq-cultivation-tag" id="iq-cultivation" style="display:none;">
+                    <a class="iq-cultivation-tag" id="iq-cultivation" href="#" target="_blank" style="display:none;">
                         <span id="iq-cultivation-label"></span>
-                    </span>
+                    </a>
+                    <button type="button"
+                            id="iq-cultivation-delete"
+                            style="display:none; margin-left:6px; color:#d9534f; border:1px solid #d9534f; background:transparent; border-radius:6px; padding:2px 8px; font-size:12px; cursor:pointer;"
+                            onclick="deleteCultivationFromInquiry()">
+                        경작지 삭제
+                    </button>
                 </div>
                 <div class="iq-detail-title" id="iq-title">문의 제목</div>
                 <div class="iq-detail-date" id="iq-date">2026.07.29 작성 · nickname</div>
