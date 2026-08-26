@@ -179,27 +179,27 @@
             <div class="stats-col">
                 <div class="card env-stats-card env-stats-card--main">
                     <div>
-                        <div class="card-title">환경 통계<span class="env-stats-sub">최근 24시간 평균</span></div>
+                        <div class="card-title">환경 통계<span class="env-stats-sub">최근 측정값</span></div>
                         <div class="env-stat-grid">
                             <div class="env-stat-item">
                                 <span class="env-stat-icon-circle"><i data-lucide="thermometer" class="env-stat-icon"></i></span>
-                                <span class="env-stat-label">평균 온도</span>
-                                <span class="env-stat-value">19°C</span>
+                                <span class="env-stat-label">온도</span>
+                                <span class="env-stat-value" id="main-env-stat-temp">-</span>
                             </div>
                             <div class="env-stat-item">
                                 <span class="env-stat-icon-circle"><i data-lucide="droplet" class="env-stat-icon"></i></span>
-                                <span class="env-stat-label">평균 습도</span>
-                                <span class="env-stat-value">60%</span>
+                                <span class="env-stat-label">습도</span>
+                                <span class="env-stat-value" id="main-env-stat-humidity">-</span>
                             </div>
                             <div class="env-stat-item">
                                 <span class="env-stat-icon-circle"><i data-lucide="cloudy" class="env-stat-icon"></i></span>
-                                <span class="env-stat-label">평균 CO2</span>
-                                <span class="env-stat-value">505ppm</span>
+                                <span class="env-stat-label">CO2</span>
+                                <span class="env-stat-value" id="main-env-stat-co2">-</span>
                             </div>
                             <div class="env-stat-item">
                                 <span class="env-stat-icon-circle"><i data-lucide="sun" class="env-stat-icon"></i></span>
-                                <span class="env-stat-label">평균 조도</span>
-                                <span class="env-stat-value">380lux</span>
+                                <span class="env-stat-label">조도</span>
+                                <span class="env-stat-value" id="main-env-stat-light">-</span>
                             </div>
                         </div>
                     </div>
@@ -230,61 +230,12 @@
     </section>
 
     <section id="tab-report" class="tab-panel">
-
-        <div class="report-date-nav">
-            <button class="report-nav-btn" type="button" title="이전 주" onclick="shiftReportWeek(-1)">
-                <i data-lucide="chevron-left"></i>
-            </button>
-            <div class="report-date-strip" id="report-date-strip"></div>
-            <button class="report-nav-btn" type="button" title="다음 주" onclick="shiftReportWeek(1)">
-                <i data-lucide="chevron-right"></i>
-            </button>
-        </div>
-
-        <div class="report-body">
-
-            <div class="card report-summary-card">
-                <div class="card-title">
-                    <span><i data-lucide="sparkles" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--sage-600);"></i>AI 요약</span>
-                    <span class="env-stats-sub" id="report-selected-date-label"></span>
-                </div>
-                <p class="report-summary-text" id="report-summary-text"></p>
+        <div class="card report-summary-card">
+            <div class="photo-placeholder" style="padding:2.4rem 0;">
+                <i data-lucide="sparkles" style="width:36px;height:36px;"></i>
+                <span>AI 리포트는 아직 준비 중인 기능이에요.<br />조금만 기다려 주세요!</span>
             </div>
-
-            <div class="report-row">
-                <div class="card env-stats-card env-stats-card--report">
-                    <div>
-                        <div class="card-title">환경 통계<span class="env-stats-sub">선택한 날짜 평균</span></div>
-                        <div class="env-stat-grid" id="report-env-stat-grid"></div>
-                        <div class="pest-status-card">
-                            <i data-lucide="shield-check"></i>
-                            <div>
-                                <div class="pest-status-title">병충해 여부 · 안전</div>
-                                <div class="pest-status-sub">현재까지 병충해 징후는 감지되지 않았습니다.</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card chart-card">
-                    <div class="chart-card-header">
-                        <span class="card-title" style="padding:0;">일간 추이</span>
-                    </div>
-                    <div class="chart-placeholder">
-                        <svg viewBox="0 0 260 110" class="chart-demo-svg" preserveAspectRatio="none" id="report-chart-svg"></svg>
-                    </div>
-                </div>
-
-                <div class="card photo-card report-photo-card">
-                    <div class="photo-placeholder">
-                        <i data-lucide="image" style="width:36px;height:36px;"></i>
-                        <span>이 날짜에 등록된 사진이 없습니다</span>
-                    </div>
-                </div>
-            </div>
-
         </div>
-
     </section>
 
     <section id="tab-chatbot" class="tab-panel">
@@ -300,14 +251,7 @@
             <div class="chatbot-messages" id="chatbot-messages">
                 <div class="chat-message bot">
                     <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
-                    <div class="chat-bubble">안녕하세요! 양송이 1번 재배지에 대해 무엇이든 물어보세요 🍄</div>
-                </div>
-                <div class="chat-message user">
-                    <div class="chat-bubble">지금 온도는 적당한가요?</div>
-                </div>
-                <div class="chat-message bot">
-                    <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
-                    <div class="chat-bubble">네! 현재 20°C로 양송이 재배에 적합한 범위예요.</div>
+                    <div class="chat-bubble">안녕하세요! AI 챗봇은 아직 준비 중인 기능이에요. 조금만 기다려 주세요 🍄</div>
                 </div>
             </div>
 
@@ -449,7 +393,7 @@
         </button>
         <h3 class="modal-title">재배 이력 비교</h3>
         <p class="modal-desc">비교하고 싶은 이전 재배를 선택해보세요.</p>
-        <div class="modal-field">
+        <div class="modal-field" id="end-compare-field">
             <label>비교할 재배 이력</label>
             <div class="msh-select msh-select--modal-field" id="end-compare-select" data-onchange="handleCompareSelectChange">
                 <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
@@ -460,6 +404,7 @@
             </div>
         </div>
         <div class="compare-rows" id="end-compare-rows"></div>
+        <div class="compare-empty" id="end-compare-empty" style="display:none;">비교할 이전 재배 이력이 없어요.</div>
         <div class="modal-actions">
             <button class="btn btn-primary" type="button" onclick="finishCultivation()">홈으로</button>
         </div>
@@ -539,6 +484,24 @@
     var MY_ROLE = /*[[${myRole}]]*/ null;
     var SENSORS_BOOTSTRAP = [(${sensorsJson})];
     var SENSOR_VALUES_BOOTSTRAP = [(${sensorValuesJson})];
+    var GROWTH_DAYS = /*[[${growthDays}]]*/ 0;
+
+    // 재배 종료 후 "이전 재배와 비교" 목록: history.html과 동일하게 mushroomId를 한글 품종명으로 매핑
+    var pastCultivationsRaw = [(${pastCultivationsJson})];
+    var mushroomRefsForCompare = /*[(${mushroomsJson})]*/ [];
+    var MUSHROOM_NAME_MAP_FOR_COMPARE = {};
+    mushroomRefsForCompare.forEach(function (m) {
+        MUSHROOM_NAME_MAP_FOR_COMPARE[m.id] = m.mushroomNameKo;
+    });
+    var PAST_CULTIVATIONS = pastCultivationsRaw.map(function (c) {
+        return {
+            id: c.cultivationId,
+            name: c.name,
+            mushroomName: c.mushroomId != null ? MUSHROOM_NAME_MAP_FOR_COMPARE[c.mushroomId] : null,
+            amount: c.harvestWeight,
+            finishedAt: c.finishedAt
+        };
+    });
 </script>
 <script th:src="@{/js/msh-select.js}"></script>
 <script th:src="@{/js/dashboard.js}"></script>
