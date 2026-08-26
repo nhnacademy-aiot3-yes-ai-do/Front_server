@@ -1,7 +1,6 @@
 package site.yesaido.frontserver.controller;
 
 import feign.FeignException;
-import io.micrometer.core.instrument.MeterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -53,8 +52,6 @@ public class CultivationController {
     private final UserClient userClient;
     private final AiClient aiClient;
     private final ViewJsonWriter viewJsonWriter;
-    // 애플리케이션의 각종 측정값을 등록하고 관리하는 저장소 및 관리자 라이브러리
-    private final MeterRegistry meterRegistry;
 
     @GetMapping
     public String list(Model model) {
@@ -281,9 +278,6 @@ public class CultivationController {
         } catch (FeignException.Unauthorized | FeignException.Forbidden e) {
             throw e;
         } catch (FeignException e) {
-            // FeignException이 발생했을 때 대시보드 전체를 터뜨리지 않고 빈 데이터를 보여주면서, 동시에 장애 횟수는 Metric으로 기록하는 구조
-            log.warn("대시보드 센서 목록 조회 실패 (cultivationId={}, status={}): {}", cultivationId, e.status(), e.getMessage());
-            meterRegistry.counter("dashboard.sensor.fetch.failure", "endpoint", "sensors").increment();
             return new CultivationSensorListResponse(List.of(), List.of());
         }
     }
@@ -295,8 +289,6 @@ public class CultivationController {
         } catch (FeignException.Unauthorized | FeignException.Forbidden e) {
             throw e;
         } catch (FeignException e) {
-            log.warn("대시보드 센서 최신값 조회 실패 (cultivationId={}, status={}): {}", cultivationId, e.status(), e.getMessage());
-            meterRegistry.counter("dashboard.sensor.fetch.failure", "endpoint", "sensor-values").increment();
             return new LatestSensorValueListResponse(List.of());
         }
     }
