@@ -396,6 +396,7 @@ body {
 .sensor-type-check-row .st-validate-msg {
     grid-column: 1 / -1;
     display: none;
+    font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
     font-size: 12px;
     white-space: normal;      /* 줄바꿈 허용 */
     word-break: keep-all;     /* 한글 단어 단위 줄바꿈 */

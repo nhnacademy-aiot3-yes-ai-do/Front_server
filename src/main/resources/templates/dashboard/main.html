@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배 대시보드 | MushMush</title>
     <link rel="stylesheet" th:href="@{/css/dashboard.css}" />
+    <link rel="stylesheet" th:href="@{/css/cultivation-create.css}" />
     <script th:src="@{/js/lucide.js}"></script>
     <script th:src="@{/js/common.js}"></script>
 </head>
@@ -155,6 +156,9 @@
                         </div>
                     </div>
 
+                    <button class="icon-btn" type="button" title="AI 버섯 가이드" onclick="openMushroomGuideModal()">
+                        <i data-lucide="sparkles"></i>
+                    </button>
                     <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
                         <i data-lucide="users"></i>
                     </button>
@@ -478,9 +482,58 @@
         </div>
     </div>
 </div>
+<!-- 버섯 AI 재배 가이드 -->
+<div class="modal-overlay" id="modal-mushroom-guide">
+    <!-- 👇 max-width: 52rem 및 padding을 주어 생성 화면과 동일한 크기/비율로 맞춤 -->
+    <div class="modal-box" style="max-width: 52rem; width: 90vw; max-height: 85vh; overflow-y: auto; padding: 1.8rem 2.2rem;">
+        <button class="modal-close" type="button" onclick="closeModal('modal-mushroom-guide')">
+            <i data-lucide="x"></i>
+        </button>
+
+        <div class="mushroom-info-card" id="mushroom-info-card" style="margin-bottom: 0;">
+            <div class="mushroom-info-title">
+                <i data-lucide="sparkles"></i><span id="mushroom-info-name">버섯</span> AI 재배 가이드
+            </div>
+
+            <div class="mushroom-badges" id="mushroom-badges"></div>
+
+            <p class="mushroom-info-summary" id="mushroom-info-summary"></p>
+
+            <div class="mushroom-info-note mushroom-info-caution" id="mushroom-info-caution-wrap">
+                <i data-lucide="alert-triangle"></i>
+                <span id="mushroom-info-caution"></span>
+            </div>
+
+            <div class="mushroom-info-note mushroom-info-tip" id="mushroom-info-tip-wrap">
+                <i data-lucide="lightbulb"></i>
+                <span id="mushroom-info-tip"></span>
+            </div>
+
+            <div class="mushroom-env-grid" id="mushroom-env-grid"></div>
+
+            <button type="button" class="mushroom-recipe-btn" id="mushroom-recipe-btn" onclick="openRecipeModal()">
+                <i data-lucide="chef-hat"></i>추천 요리법 보기
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- 추천 요리법 -->
+<div class="recipe-modal-overlay" id="recipe-modal-overlay" onclick="closeRecipeModal(event)">
+    <div class="recipe-modal">
+        <div class="recipe-modal-header">
+            <div class="mushroom-info-subtitle"><i data-lucide="chef-hat"></i>추천 요리법</div>
+            <button type="button" class="recipe-modal-close" onclick="closeRecipeModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="mushroom-recipe-list" id="mushroom-recipe-list"></div>
+    </div>
+</div>
 
 <script th:inline="javascript">
     var CULTIVATION_ID = /*[[${cultivation?.cultivationId}]]*/ 0;
+    var MUSHROOM_ID = /*[[${cultivation?.mushroomId}]]*/ null;
     var PHOTOS = [(${photosJson})];
     var memberData = [(${membersJson})];
     var MY_ROLE = /*[[${myRole}]]*/ null;
