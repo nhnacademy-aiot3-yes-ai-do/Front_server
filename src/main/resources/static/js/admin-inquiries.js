@@ -98,11 +98,15 @@ function renderInquiryDetail(inquiry) {
     document.getElementById('iq-category').textContent = inquiry.categoryName;
 
     var cultivationEl = document.getElementById('iq-cultivation');
-    if (inquiry.cultivationName) {
-        document.getElementById('iq-cultivation-label').textContent = inquiry.cultivationName;
+    var cultivationDeleteBtn = document.getElementById('iq-cultivation-delete');
+    if (inquiry.cultivationId) {
+        document.getElementById('iq-cultivation-label').textContent = inquiry.cultivationName || ('경작지 #' + inquiry.cultivationId);
+        cultivationEl.href = '/cultivations/' + inquiry.cultivationId;
         cultivationEl.style.display = 'inline-flex';
+        cultivationDeleteBtn.style.display = 'inline-flex';
     } else {
         cultivationEl.style.display = 'none';
+        cultivationDeleteBtn.style.display = 'none';
     }
 
     document.getElementById('iq-title').textContent = inquiry.title;
