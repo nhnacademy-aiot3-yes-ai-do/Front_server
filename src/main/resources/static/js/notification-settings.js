@@ -10,6 +10,9 @@ var EVENT_GROUPS = {
 };
 
 var discordEndpoint = null;
+var telegramEndpoint = null;
+var telegramLinkPollTimer = null;
+var telegramLinkFlow = null;
 var discordModalMode = 'create';
 var subscriptionTypes = [];
 var subscriptions = [];
@@ -99,9 +102,15 @@ function typesForGroup(groupKey) {
     });
 }
 
+function selectedNotificationEndpoint() {
+    return telegramEndpoint || discordEndpoint;
+}
+
 function enabledSubscriptions() {
+    var endpoint = selectedNotificationEndpoint();
+    if (!endpoint || !endpoint.id) return [];
     return subscriptions.filter(function (item) {
-        return item && item.enabled;
+        return item && item.enabled && sameId(item.endpointId, endpoint.id);
     });
 }
 
@@ -165,18 +174,19 @@ function findSubscription(typeId, cultivationId, endpointId) {
     }) || null;
 }
 
-function ensureDiscordReady() {
-    if (discordEndpoint && discordEndpoint.id) return true;
-    showSaveStatus('디스코드를 먼저 연결해주세요.', true);
-    setSubscriptionHint('알림을 받으려면 먼저 디스코드 웹후크를 연결해주세요.');
+function ensureNotificationChannelReady() {
+    if (selectedNotificationEndpoint()) return true;
+    showSaveStatus('Telegram 또는 디스코드를 먼저 연결해주세요.', true);
+    setSubscriptionHint('알림을 받으려면 먼저 Telegram 또는 디스코드를 연결해주세요.');
     return false;
 }
 
 function ensureSubscription(typeId, cultivationId) {
-    if (!discordEndpoint || !discordEndpoint.id) {
-        return Promise.reject(new Error('디스코드 연결이 필요합니다.'));
+    var endpoint = selectedNotificationEndpoint();
+    if (!endpoint || !endpoint.id) {
+        return Promise.reject(new Error('Telegram 또는 디스코드 연결이 필요합니다.'));
     }
-    var existing = findSubscription(typeId, cultivationId, discordEndpoint.id);
+    var existing = findSubscription(typeId, cultivationId, endpoint.id);
     if (existing && existing.enabled) {
         return Promise.resolve(existing);
     }
@@ -195,7 +205,7 @@ function ensureSubscription(typeId, cultivationId) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             subscriptionTypeId: typeId,
-            endpointId: discordEndpoint.id,
+            endpointId: endpoint.id,
             targetId: cultivationId
         })
     }).then(function (created) {
@@ -265,9 +275,9 @@ function disableTarget(cultivationId) {
 function setTogglesBusy(busy) {
     ['toggle-sensor', 'toggle-harvest', 'toggle-ai'].forEach(function (id) {
         var el = document.getElementById(id);
-        if (el) el.disabled = busy || !discordEndpoint;
+        if (el) el.disabled = busy || !selectedNotificationEndpoint();
     });
-    var lockCultivations = busy || !discordEndpoint || !hasSelectedType();
+    var lockCultivations = busy || !selectedNotificationEndpoint() || !hasSelectedType();
     document.querySelectorAll('#cultivation-toggle-list input[type="checkbox"]').forEach(function (el) {
         el.disabled = lockCultivations;
     });
@@ -306,7 +316,7 @@ function renderCultivationList() {
             '<label class="toggle-switch">' +
             '<input type="checkbox" data-cultivation-id="' + Number(item.cultivationId) + '"' +
             (checked ? ' checked' : '') +
-            (discordEndpoint ? '' : ' disabled') + ' />' +
+            (selectedNotificationEndpoint() ? '' : ' disabled') + ' />' +
             '<span class="toggle-track"><span class="toggle-thumb"></span></span>' +
             '</label>' +
             '</div>'
@@ -326,8 +336,8 @@ function refreshSubscriptionUi() {
     renderCategoryToggles();
     renderCultivationList();
     setTogglesBusy(false);
-    if (!discordEndpoint) {
-        setSubscriptionHint('알림을 받으려면 먼저 디스코드 웹후크를 연결해주세요.');
+    if (!selectedNotificationEndpoint()) {
+        setSubscriptionHint('알림을 받으려면 먼저 Telegram 또는 디스코드를 연결해주세요.');
         return;
     }
     if (cultivations.length === 0) {
@@ -381,7 +391,7 @@ function enqueueSave(task) {
 }
 
 function handleCategoryToggle(key, checked) {
-    if (!ensureDiscordReady()) {
+    if (!ensureNotificationChannelReady()) {
         refreshSubscriptionUi();
         return;
     }
@@ -410,7 +420,7 @@ function handleCategoryToggle(key, checked) {
 }
 
 function handleCultivationToggle(id, checked) {
-    if (!ensureDiscordReady()) {
+    if (!ensureNotificationChannelReady()) {
         refreshSubscriptionUi();
         return;
     }
@@ -447,6 +457,170 @@ function pickDiscordEndpoint(endpoints) {
     if (discords.length === 0) return null;
     var enabled = discords.find(function (item) { return item.enabled; });
     return enabled || discords[0];
+}
+
+function pickTelegramEndpoint(endpoints) {
+    if (!Array.isArray(endpoints)) return null;
+    var telegrams = endpoints.filter(function (item) {
+        return item && item.channelCode === 'TELEGRAM';
+    });
+    if (telegrams.length === 0) return null;
+    return telegrams.find(function (item) { return item.enabled; }) || telegrams[0];
+}
+
+function setTelegramStatus(text, connected) {
+    var statusEl = document.getElementById('telegram-status');
+    var btnEl = document.getElementById('telegram-action-btn');
+    if (!statusEl || !btnEl) return;
+    statusEl.textContent = text;
+    statusEl.classList.toggle('connected', !!connected);
+    btnEl.disabled = !!connected || !!telegramLinkFlow;
+    btnEl.textContent = connected ? '연결됨' : 'Telegram에서 연결';
+    btnEl.onclick = connected ? null : handleTelegramConnect;
+}
+
+function renderTelegramStatus() {
+    if (!telegramEndpoint) {
+        setTelegramStatus('연결 안 됨', false);
+        return;
+    }
+    setTelegramStatus('연결됨', true);
+}
+
+function isTelegramDeepLink(value) {
+    try {
+        var url = new URL(value);
+        return url.protocol === 'https:' && url.hostname.toLowerCase() === 't.me' && url.searchParams.has('start');
+    } catch (e) {
+        return false;
+    }
+}
+
+function isActiveTelegramLinkFlow(flow) {
+    return telegramLinkFlow === flow;
+}
+
+function stopTelegramLinkPolling(flow) {
+    var activeFlow = flow || telegramLinkFlow;
+    if (activeFlow && activeFlow.pollTimer) {
+        window.clearTimeout(activeFlow.pollTimer);
+        activeFlow.pollTimer = null;
+    }
+    if (telegramLinkPollTimer) {
+        window.clearTimeout(telegramLinkPollTimer);
+        telegramLinkPollTimer = null;
+    }
+}
+
+function finishTelegramLinkFlow(flow) {
+    stopTelegramLinkPolling(flow);
+    if (flow && flow.popupWatchTimer) {
+        window.clearTimeout(flow.popupWatchTimer);
+        flow.popupWatchTimer = null;
+    }
+    if (isActiveTelegramLinkFlow(flow)) telegramLinkFlow = null;
+}
+
+function watchTelegramPopup(flow) {
+    if (!flow.popup) return;
+
+    function checkPopup() {
+        if (!isActiveTelegramLinkFlow(flow)) return;
+        if (flow.popup.closed) {
+            finishTelegramLinkFlow(flow);
+            setTelegramStatus('Telegram 창을 닫아 연결을 중단했습니다', false);
+            showSaveStatus('Telegram 창이 닫혔습니다. 연동 세션은 만료될 때까지 서버에 남아 있습니다.', true);
+            return;
+        }
+        flow.popupWatchTimer = window.setTimeout(checkPopup, 500);
+    }
+
+    flow.popupWatchTimer = window.setTimeout(checkPopup, 500);
+}
+
+function pollTelegramLink(sessionId, expiresAt, flow) {
+    var deadline = Date.parse(expiresAt);
+    function schedule(delay) {
+        if (!isActiveTelegramLinkFlow(flow)) return;
+        flow.pollTimer = window.setTimeout(poll, delay);
+        telegramLinkPollTimer = flow.pollTimer;
+    }
+    function poll() {
+        if (!isActiveTelegramLinkFlow(flow)) return;
+        if (!isNaN(deadline) && Date.now() >= deadline) {
+            finishTelegramLinkFlow(flow);
+            setTelegramStatus('연동 시간이 만료되었습니다', false);
+            showSaveStatus('Telegram 연동 시간이 만료되었습니다. 다시 시도해주세요.', true);
+            return;
+        }
+        apiRequest('/notifications/endpoints/telegram-link-sessions/' + encodeURIComponent(sessionId))
+            .then(function (session) {
+                if (!isActiveTelegramLinkFlow(flow)) return;
+                if (session && session.status === 'LINKED') {
+                    finishTelegramLinkFlow(flow);
+                    showSaveStatus('Telegram 연결이 완료되었습니다.', false);
+                    return loadTelegramEndpoint();
+                }
+                if (session && session.status === 'EXPIRED') {
+                    finishTelegramLinkFlow(flow);
+                    setTelegramStatus('연동 시간이 만료되었습니다', false);
+                    return;
+                }
+                schedule(2000);
+            })
+            .catch(function (error) {
+                if (!isActiveTelegramLinkFlow(flow) || (error && error.message === 'login')) return;
+                schedule(4000);
+            });
+    }
+    poll();
+}
+
+function handleTelegramConnect() {
+    if (telegramLinkFlow) return;
+
+    var actionBtn = document.getElementById('telegram-action-btn');
+    var popup = window.open('about:blank', '_blank');
+    if (popup) popup.opener = null;
+    var flow = { popup: popup, pollTimer: null, popupWatchTimer: null };
+    telegramLinkFlow = flow;
+    if (actionBtn) actionBtn.disabled = true;
+    setTelegramStatus('Telegram을 여는 중...', false);
+
+    apiRequest('/notifications/endpoints/telegram-link-sessions', { method: 'POST' })
+        .then(function (session) {
+            if (!isActiveTelegramLinkFlow(flow)) return;
+            if (!session || !session.sessionId || !isTelegramDeepLink(session.deepLink)) {
+                throw new Error('Telegram 연결 링크를 만들지 못했습니다.');
+            }
+            if (popup && popup.closed) {
+                finishTelegramLinkFlow(flow);
+                setTelegramStatus('Telegram 창을 닫아 연결을 중단했습니다', false);
+                return;
+            }
+            if (popup) {
+                popup.location.replace(session.deepLink);
+            } else {
+                window.location.assign(session.deepLink);
+            }
+            setTelegramStatus('Telegram에서 Start를 눌러주세요', false);
+            watchTelegramPopup(flow);
+            pollTelegramLink(session.sessionId, session.expiresAt, flow);
+        })
+        .catch(function (error) {
+            if (!isActiveTelegramLinkFlow(flow)) return;
+            var popupWasClosed = popup && popup.closed;
+            if (popup && !popupWasClosed) popup.close();
+            finishTelegramLinkFlow(flow);
+            if (error && error.message === 'login') return;
+            if (popupWasClosed) {
+                setTelegramStatus('Telegram 창을 닫아 연결을 중단했습니다', false);
+                showSaveStatus('Telegram 창이 닫혔습니다. 연동 세션은 만료될 때까지 서버에 남아 있습니다.', true);
+                return;
+            }
+            setTelegramStatus('연결을 시작하지 못했습니다', false);
+            showSaveStatus(error && error.message ? error.message : 'Telegram 연결을 시작하지 못했습니다.', true);
+        });
 }
 
 function setDiscordStatus(text, connected) {
@@ -587,6 +761,19 @@ function loadJson(url) {
     });
 }
 
+function loadTelegramEndpoint() {
+    return loadJson('/notifications/endpoints')
+        .then(function (endpoints) {
+            telegramEndpoint = pickTelegramEndpoint(endpoints);
+            renderTelegramStatus();
+        })
+        .catch(function (error) {
+            if (error && error.message === 'login') return Promise.reject(error);
+            telegramEndpoint = null;
+            setTelegramStatus('연결 상태를 불러오지 못했습니다', false);
+        });
+}
+
 function loadDiscordEndpoint() {
     return loadJson('/notifications/endpoints')
         .then(function (endpoints) {
@@ -633,13 +820,15 @@ function loadSubscriptionState() {
 
 function loadAllSettings() {
     setTogglesBusy(true);
-    return loadDiscordEndpoint().then(loadSubscriptionState);
+    return loadDiscordEndpoint().then(loadTelegramEndpoint).then(loadSubscriptionState);
 }
 
 function initFromBootstrap() {
     var endpoints = Array.isArray(window.ENDPOINTS_BOOTSTRAP) ? window.ENDPOINTS_BOOTSTRAP : [];
     discordEndpoint = pickDiscordEndpoint(endpoints);
+    telegramEndpoint = pickTelegramEndpoint(endpoints);
     renderDiscordStatus();
+    renderTelegramStatus();
 
     pendingGroups = {};
     subscriptionTypes = Array.isArray(window.SUBSCRIPTION_TYPES_BOOTSTRAP) ? window.SUBSCRIPTION_TYPES_BOOTSTRAP : [];

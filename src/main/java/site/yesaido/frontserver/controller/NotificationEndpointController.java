@@ -10,9 +10,12 @@ import site.yesaido.frontserver.dto.notification.request.DiscordEndpointFormRequ
 import site.yesaido.frontserver.dto.notification.request.EndpointCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.EndpointUpdateRequest;
 import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
+import site.yesaido.frontserver.dto.notification.response.TelegramLinkSessionResponse;
+import site.yesaido.frontserver.dto.notification.response.TelegramLinkStatusResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
 import java.util.List;
+import java.util.UUID;
 
 @LoginRequired
 @RestController
@@ -37,6 +40,16 @@ public class NotificationEndpointController {
         EndpointCreateRequest request = new EndpointCreateRequest(
                 discordChannelTypeId, form.destination(), form.displayName());
         return notificationClient.createEndpoint(request);
+    }
+
+    @PostMapping("/telegram-link-sessions")
+    public ResponseEntity<TelegramLinkSessionResponse> createTelegramLinkSession() {
+        return notificationClient.createTelegramLinkSession();
+    }
+
+    @GetMapping("/telegram-link-sessions/{sessionId}")
+    public ResponseEntity<TelegramLinkStatusResponse> getTelegramLinkSession(@PathVariable UUID sessionId) {
+        return notificationClient.getTelegramLinkSession(sessionId);
     }
 
     @PatchMapping("/{endpointId}")
