@@ -144,7 +144,13 @@
         </div>
 
         <div class="modal-field">
-            <label>측정 타입 및 임계값</label>
+            <label>측정 타입 선택 및 임계값 설정</label>
+            <div class="sensor-type-add-row" style="display:flex; gap:8px; margin-bottom:8px;">
+                <select id="ms-type-select" style="flex:1; padding:8px 12px; border:2px solid var(--brown-300); border-radius:8px; font-family:inherit; background:#fff;">
+                    <option value="">추가할 측정 타입을 선택하세요</option>
+                </select>
+                <button type="button" class="btn btn-outline" style="padding:6px 14px; white-space:nowrap;" onclick="addSensorTypeRow()">+ 추가</button>
+            </div>
             <div class="sensor-type-check-list" id="ms-type-list"></div>
         </div>
 

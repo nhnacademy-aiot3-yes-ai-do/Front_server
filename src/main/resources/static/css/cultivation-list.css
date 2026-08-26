@@ -335,33 +335,19 @@ body {
 
 #ms-type-list .sensor-type-check-row {
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto; /* 5칸: 라벨, 최소, 최대, 검증, 삭제 */
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     padding: 10px 12px;
     border: 2px solid rgba(139, 94, 60, 0.18);
     border-radius: 10px;
+    background: #fff;
 }
 
-#ms-type-list .st-checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
-}
-
-#ms-type-list .sensor-type-check-row input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    margin: 0;
-    accent-color: var(--sage-500);
-    cursor: pointer;
-}
-
-#ms-type-list .sensor-type-check-row span {
+#ms-type-list .st-type-label {
     font-size: 13px;
+    font-weight: 600;
     color: var(--ink);
-    white-space: nowrap;
 }
 
 #ms-type-list .sensor-type-check-row .st-min,
@@ -371,11 +357,6 @@ body {
     border: 2px solid var(--brown-300);
     border-radius: 8px;
     font-family: inherit;
-}
-
-.sensor-type-check-row .st-min:disabled,
-.sensor-type-check-row .st-max:disabled {
-    background: rgba(139, 94, 60, 0.06);
 }
 
 .sensor-type-check-row .st-validate-btn {
@@ -391,27 +372,40 @@ body {
     cursor: pointer;
 }
 
-.sensor-type-check-row .st-validate-btn:hover:not(:disabled) {
+.sensor-type-check-row .st-validate-btn:hover {
     background: rgba(124, 148, 115, 0.26);
 }
 
-.sensor-type-check-row .st-validate-btn:disabled {
-    color: var(--brown-300);
-    background: rgba(139, 94, 60, 0.06);
-    border-color: rgba(139, 94, 60, 0.18);
-    cursor: not-allowed;
+/* 개별 행 삭제 버튼 (✕) */
+.sensor-type-check-row .st-remove-btn {
+    padding: 4px 8px;
+    font-size: 14px;
+    color: #94a3b8;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
+.sensor-type-check-row .st-remove-btn:hover {
+    color: var(--danger);
+    background: rgba(187, 68, 58, 0.1);
+}
+
+/* 텍스트 줄바꿈 및 크기 */
 .sensor-type-check-row .st-validate-msg {
     grid-column: 1 / -1;
     display: none;
     font-size: 12px;
+    white-space: normal;      /* 줄바꿈 허용 */
+    word-break: keep-all;     /* 한글 단어 단위 줄바꿈 */
+    line-height: 1.4;
+    margin-top: 4px;
 }
 
 .sensor-type-check-row .st-validate-msg.valid,
 .sensor-type-check-row .st-validate-msg.invalid {
     display: block;
-    margin-top: 2px;
 }
 
 .sensor-type-check-row .st-validate-msg.valid { color: var(--sage-600); }

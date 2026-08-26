@@ -178,36 +178,59 @@ function populateCultivationSelect() {
     wrapperEl.querySelector('.msh-select-value').textContent = '재배지를 선택하세요';
 }
 
-function renderSensorTypeCheckList() {
-    var wrap = document.getElementById('ms-type-list');
-    wrap.innerHTML = '';
-    SENSOR_TYPES.forEach(function (t) {
-        var row = document.createElement('div');
-        row.className = 'sensor-type-check-row';
-        row.innerHTML =
-            '<label class="st-checkbox-label">' +
-            '<input type="checkbox" data-sensor-type-id="' + Number(t.id) + '" onchange="toggleSensorTypeRow(this)" />' +
-            '<span>' + escapeHtml(t.type) + ' (' + escapeHtml(t.valueUnit) + ')</span>' +
-            '</label>' +
-            '<input type="number" class="st-min" placeholder="최소" disabled oninput="clearThresholdValidation(this)" />' +
-            '<input type="number" class="st-max" placeholder="최대" disabled oninput="clearThresholdValidation(this)" />' +
-            '<button type="button" class="st-validate-btn" onclick="validateThreshold(this)" disabled>검증</button>' +
-            '<span class="st-validate-msg"></span>';
-        wrap.appendChild(row);
-    });
+// 모달 열 때 드롭다운에 측정 타입 옵션 채우기
+function populateSensorTypeSelect() {
+    var select = document.getElementById('ms-type-select');
+    select.innerHTML = '<option value="">추가할 측정 타입을 선택하세요</option>' +
+        SENSOR_TYPES.map(function (t) {
+            return '<option value="' + Number(t.id) + '" data-name="' + escapeHtml(t.type) + '" data-unit="' + escapeHtml(t.valueUnit) + '">' +
+                escapeHtml(t.type) + ' (' + escapeHtml(t.valueUnit) + ')</option>';
+        }).join('');
 }
 
-function toggleSensorTypeRow(checkbox) {
-    var row = checkbox.closest('.sensor-type-check-row');
-    var disabled = !checkbox.checked;
-    row.querySelector('.st-min').disabled = disabled;
-    row.querySelector('.st-max').disabled = disabled;
-    row.querySelector('.st-validate-btn').disabled = disabled;
-    if (disabled) {
-        row.querySelector('.st-min').value = '';
-        row.querySelector('.st-max').value = '';
+// [+ 추가] 버튼 클릭 시 측정 타입 행 동적 생성
+function addSensorTypeRow() {
+    var select = document.getElementById('ms-type-select');
+    var selectedOption = select.options[select.selectedIndex];
+    var sensorTypeId = Number(select.value);
+
+    if (!sensorTypeId) {
+        alert('추가할 측정 타입을 선택해주세요.');
+        return;
     }
-    clearThresholdValidation(checkbox);
+
+    // 중복 추가 방지 검사
+    var alreadyExists = document.querySelector('#ms-type-list .sensor-type-check-row[data-sensor-type-id="' + sensorTypeId + '"]');
+    if (alreadyExists) {
+        alert('이미 추가된 측정 타입입니다.');
+        return;
+    }
+
+    var sensorTypeName = selectedOption.dataset.name;
+    var sensorUnit = selectedOption.dataset.unit;
+
+    var wrap = document.getElementById('ms-type-list');
+    var row = document.createElement('div');
+    row.className = 'sensor-type-check-row';
+    row.dataset.sensorTypeId = sensorTypeId;
+    row.dataset.sensorTypeName = sensorTypeName;
+    row.dataset.sensorUnit = sensorUnit;
+    row.innerHTML =
+        '<span class="st-type-label">' + escapeHtml(sensorTypeName) + ' (' + escapeHtml(sensorUnit) + ')</span>' +
+        '<input type="number" class="st-min" placeholder="최소" oninput="clearThresholdValidation(this)" />' +
+        '<input type="number" class="st-max" placeholder="최대" oninput="clearThresholdValidation(this)" />' +
+        '<button type="button" class="st-validate-btn" onclick="validateThreshold(this)">검증</button>' +
+        '<button type="button" class="st-remove-btn" title="삭제" onclick="removeSensorTypeRow(this)">✕</button>' +
+        '<span class="st-validate-msg"></span>';
+
+    wrap.appendChild(row);
+    select.value = ''; // 선택 초기화
+}
+
+// ✕ 버튼 클릭 시 행 삭제
+function removeSensorTypeRow(button) {
+    var row = button.closest('.sensor-type-check-row');
+    if (row) row.remove();
 }
 
 function clearThresholdValidation(el) {
@@ -224,12 +247,9 @@ function validateThreshold(button) {
     var min = row.querySelector('.st-min').value;
     var max = row.querySelector('.st-max').value;
 
-    var checkbox = row.querySelector('input[type="checkbox"]');
-    var sensorTypeId = Number(checkbox.dataset.sensorTypeId);
-    var labelText = (checkbox.nextElementSibling ? checkbox.nextElementSibling.textContent : '');
-    var match = labelText.match(/^(.*?)\s*\((.*?)\)$/);
-    var sensorTypeName = match ? match[1].trim() : labelText;
-    var sensorUnit = match ? match[2].trim() : '';
+    var sensorTypeId = Number(row.dataset.sensorTypeId);
+    var sensorTypeName = row.dataset.sensorTypeName;
+    var sensorUnit = row.dataset.sensorUnit;
     var cultivationId = document.getElementById('ms-cultivation').dataset.value;
 
     function showResult(valid, text) {
@@ -286,7 +306,8 @@ function validateThreshold(button) {
 
 function openSensorModal() {
     populateCultivationSelect();
-    renderSensorTypeCheckList();
+    populateSensorTypeSelect(); // 드롭다운 채우기 호출
+    document.getElementById('ms-type-list').innerHTML = ''; // 이전 추가 목록 비우기
     ['ms-name', 'ms-model', 'ms-location', 'ms-location-detail', 'ms-serial'].forEach(function (id) {
         document.getElementById(id).value = '';
     });
@@ -310,9 +331,9 @@ function registerSensor() {
     var sensorSettings = [];
     var invalidRange = false;
     var unvalidated = false;
+
+    // 추가되어 있는 행들만 순회
     document.querySelectorAll('#ms-type-list .sensor-type-check-row').forEach(function (row) {
-        var checkbox = row.querySelector('input[type="checkbox"]');
-        if (!checkbox.checked) return;
         if (row.dataset.validated !== 'true') {
             unvalidated = true;
             return;
@@ -321,23 +342,25 @@ function registerSensor() {
         var max = row.querySelector('.st-max').value;
         if (min === '' || max === '') return;
         if (Number(min) >= Number(max)) { invalidRange = true; return; }
+
         sensorSettings.push({
-            sensorTypeId: Number(checkbox.dataset.sensorTypeId),
+            sensorTypeId: Number(row.dataset.sensorTypeId),
             thresholdMin: Number(min),
             thresholdMax: Number(max)
         });
     });
-    if (unvalidated) {
-        alert('선택하신 모든 센서의 임계값 검증을 먼저 완료(통과)해주세요.');
-        return;
-    }
 
     if (invalidRange) {
         alert('최소값은 최대값보다 작아야 해요. 검증 버튼으로 다시 확인해주세요.');
         return;
     }
-    if (sensorSettings.length === 0) {
-        alert('측정 타입을 하나 이상 선택하고 임계값을 입력해주세요.');
+
+    if (sensorSettings.length === 0 && !unvalidated) {
+        alert('측정 타입을 하나 이상 추가해주세요.');
+        return;
+    }
+    if (unvalidated) {
+        alert('추가하신 모든 센서의 임계값 검증을 먼저 완료(통과)해주세요.');
         return;
     }
 
