@@ -47,8 +47,8 @@ public class NotificationEndpointController {
         return notificationClient.createTelegramLinkSession();
     }
 
-    @GetMapping("/telegram-link-sessions/{sessionId}")
-    public ResponseEntity<TelegramLinkStatusResponse> getTelegramLinkSession(@PathVariable UUID sessionId) {
+    @GetMapping("/telegram-link-sessions/{session-id}")
+    public ResponseEntity<TelegramLinkStatusResponse> getTelegramLinkSession(@PathVariable("session-id") UUID sessionId) {
         return notificationClient.getTelegramLinkSession(sessionId);
     }
 

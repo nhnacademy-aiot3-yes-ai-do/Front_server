@@ -43,8 +43,8 @@ public interface NotificationClient {
     @PostMapping("/api/v1/telegram-link-sessions")
     ResponseEntity<TelegramLinkSessionResponse> createTelegramLinkSession();
 
-    @GetMapping("/api/v1/telegram-link-sessions/{sessionId}")
-    ResponseEntity<TelegramLinkStatusResponse> getTelegramLinkSession(@PathVariable("sessionId") java.util.UUID sessionId);
+    @GetMapping("/api/v1/telegram-link-sessions/{session-id}")
+    ResponseEntity<TelegramLinkStatusResponse> getTelegramLinkSession(@PathVariable("session-id") java.util.UUID sessionId);
 
     @GetMapping("/api/v1/notification-subscription-types")
     ResponseEntity<List<SubscriptionTypeResponse>> getSubscriptionTypes();
