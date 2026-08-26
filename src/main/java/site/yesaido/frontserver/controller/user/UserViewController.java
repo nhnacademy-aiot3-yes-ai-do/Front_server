@@ -19,6 +19,8 @@ import site.yesaido.frontserver.dto.notification.response.SubscriptionTypeRespon
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -82,21 +84,24 @@ public class UserViewController {
 
     @GetMapping("/mypage/notifications")
     public String notificationSettingsPage(Model model) {
-        List<EndpointResponse> endpoints = fetchOrEmpty("endpoints", notificationClient::getEndpoints);
-        List<SubscriptionTypeResponse> subscriptionTypes = fetchOrEmpty("subscription-types", notificationClient::getSubscriptionTypes);
-        List<SubscriptionResponse> subscriptions = fetchOrEmpty("subscriptions", notificationClient::getSubscriptions);
+        Map<String, Boolean> fetchErrors = new LinkedHashMap<>();
+        List<EndpointResponse> endpoints = fetchOrEmpty("endpoints", notificationClient::getEndpoints, fetchErrors);
+        List<SubscriptionTypeResponse> subscriptionTypes = fetchOrEmpty("subscription-types", notificationClient::getSubscriptionTypes, fetchErrors);
+        List<SubscriptionResponse> subscriptions = fetchOrEmpty("subscriptions", notificationClient::getSubscriptions, fetchErrors);
         List<CultivationOptionResponse> cultivationOptions = fetchOrEmpty("cultivations",
-                () -> ResponseEntity.ok(fetchCultivationOptions()));
+                () -> ResponseEntity.ok(fetchCultivationOptions()), fetchErrors);
 
         model.addAttribute("endpointsJson", viewJsonWriter.toScriptJson(endpoints));
         model.addAttribute("subscriptionTypesJson", viewJsonWriter.toScriptJson(subscriptionTypes));
         model.addAttribute("subscriptionsJson", viewJsonWriter.toScriptJson(subscriptions));
         model.addAttribute("cultivationOptionsJson", viewJsonWriter.toScriptJson(cultivationOptions));
+        model.addAttribute("notificationFetchErrorsJson", viewJsonWriter.toScriptJson(fetchErrors));
         return "user/notification-settings";
     }
 
     // Helper Method
-    private <T> List<T> fetchOrEmpty(String endpoints, Supplier<ResponseEntity<List<T>>> supplier) {
+    private <T> List<T> fetchOrEmpty(String endpoints, Supplier<ResponseEntity<List<T>>> supplier,
+                                     Map<String, Boolean> fetchErrors) {
         try {
             ResponseEntity<List<T>> response = supplier.get();
             List<T> result = response == null ? null : response.getBody();
@@ -104,6 +109,7 @@ public class UserViewController {
         } catch (FeignException.Unauthorized | FeignException.Forbidden e) {
             throw e;
         } catch (FeignException e) {
+            fetchErrors.put(endpoints, true);
             log.warn("알림 설정 페이지 데이터 조회 실패 (endpoint={}, status={}): {}", endpoints, e.status(), e.getMessage());
             meterRegistry.counter("notification-settings.fetch.failure", "endpoints", endpoints).increment();
             return List.of();
