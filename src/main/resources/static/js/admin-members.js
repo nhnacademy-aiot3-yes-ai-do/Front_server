@@ -42,20 +42,10 @@ function goToMemberPage(page) {
     loadMembers(page);
 }
 
-// TODO: User_server에 /api/v1/admin/members 가 아직 구현되어 있지 않고(2026-08-26 기준),
-// Gateway 라우팅에도 등록되어 있지 않아서 실제 API 호출은 항상 404가 남. 백엔드가 준비될 때까지
-// 임시로 목데이터(mockMemberPage)를 대신 보여줌. 백엔드 배포되면 아래 try/catch의 fallback과
-// mockMemberPage()/buildMockMembers() 전체를 지우면 됨.
 async function loadMembers(page) {
     try {
         var url = '/admin/members/list?status=' + memberState.sub + '&page=' + page + '&size=' + MEMBER_PAGE_SIZE;
-        var data;
-        try {
-            data = await fetchJson(url);
-        } catch (apiError) {
-            console.warn('[admin-members] 실제 API 응답 실패, 임시 목데이터로 대체합니다:', apiError.message);
-            data = mockMemberPage(memberState.sub, page);
-        }
+        var data = await fetchJson(url);
         memberState.page = data.number || 0;
         memberState.totalPages = Math.max(1, data.totalPages || 1);
         memberState.totalElements = data.totalElements || 0;
@@ -65,47 +55,6 @@ async function loadMembers(page) {
     } catch (e) {
         alert(e.message);
     }
-}
-
-var MOCK_NICKNAMES = ['버섯요정', '표고사랑', '느타리언니', '팽이버섯', '균사체', '양송이맘', '송이킹', '목이버섯',
-    '새송이짱', '갈색양송이', '버섯농부', '균듬뿍', '차가버섯', '표고아빠', '버섯왕국', '뽕나무버섯',
-    '싸리버섯', '노루궁뎅이', '영지버섯', '동충하초', '만가닥', '잎새버섯', '상황버섯', '풀버섯'];
-
-function buildMockMembers(sub, count) {
-    var list = [];
-    for (var i = 0; i < count; i++) {
-        var d = new Date(2026, 0, 1 + i * 5);
-        var createdAt = d.toISOString();
-        var lastLoginAt = sub === 'active' ? new Date(2026, 7, 20 - (i % 20)).toISOString() : null;
-        var deletedAt = sub === 'withdrawn' ? new Date(2026, 7, 10 - (i % 10)).toISOString() : null;
-        list.push({
-            userId: 1000 + i,
-            nickname: MOCK_NICKNAMES[i % MOCK_NICKNAMES.length] + (i >= MOCK_NICKNAMES.length ? (i + 1) : ''),
-            email: 'user' + (1000 + i) + '@yesaido.site',
-            createdAt: createdAt,
-            updatedAt: createdAt,
-            lastLoginAt: lastLoginAt,
-            deletedAt: deletedAt
-        });
-    }
-    return list;
-}
-
-var MOCK_MEMBERS = {
-    active: buildMockMembers('active', 18),
-    withdrawn: buildMockMembers('withdrawn', 6)
-};
-
-function mockMemberPage(sub, page) {
-    var all = MOCK_MEMBERS[sub] || [];
-    var start = page * MEMBER_PAGE_SIZE;
-    return {
-        content: all.slice(start, start + MEMBER_PAGE_SIZE),
-        totalElements: all.length,
-        totalPages: Math.max(1, Math.ceil(all.length / MEMBER_PAGE_SIZE)),
-        number: page,
-        size: MEMBER_PAGE_SIZE
-    };
 }
 
 function renderMemberRows() {

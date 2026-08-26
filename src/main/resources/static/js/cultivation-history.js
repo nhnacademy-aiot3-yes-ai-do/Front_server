@@ -4,34 +4,15 @@ function findCultivation(id) {
     return CULTIVATION_HISTORY.filter(function (c) { return c.id === id; })[0];
 }
 
-function hashSeed(str) {
-    var hash = 0;
-    if (!str) return 0;
-    for (var i = 0; i < str.length; i++) {
-        hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
-    }
-    return hash;
-}
-
 function buildHistorySummary(c) {
-    var seed = hashSeed(c.name);
-    // hashSeed는 >>> 0으로 부호 없는 32비트 값을 반환하지만, 그 값이 2^31을 넘으면(최상위 비트가 1)
-    // 이후 비트 연산(>>)에서 JS가 피연산자를 다시 부호 있는 32비트로 취급해 음수가 튀어나옴
-    // (예: 병충해 감지일이 "-2일"로 표시되던 버그) -> 부호 없는 시프트(>>>)로 통일
-    var avgTemp = 17 + (seed % 6);
-    var avgHumidity = 52 + ((seed >>> 3) % 18);
-    var pestDays = (seed >>> 12) % 3;
+    // c.amount/c.grade가 없는(수확량·등급을 기록하지 않고 종료된) 재배도 있을 수 있어서,
+    // 그냥 이어붙이면 문자열 "null"이 그대로 노출됨 — 없을 때는 문장 자체를 다르게 구성.
+    // 온도/습도/병충해 감지일은 백엔드가 재배 이력에 내려주는 값이 아니라서(임의로 만들어내지
+    // 않기로 함) 여기서 다루지 않음 — 실제로 값이 오면 그때 추가.
+    var amountText = c.amount != null ? '총 ' + c.amount + 'g을 수확했어요.' : '수확량 기록이 없어요.';
+    var gradeText = c.grade ? ' 상품 등급은 ' + c.grade + '이었습니다.' : '';
 
-    // c.amount가 없는(수확량을 기록하지 않고 종료된) 재배도 있을 수 있어서, 그냥 이어붙이면
-    // 문자열 "null"이 그대로 노출됨("총 nullg을 수확했어요") — 없을 때는 문장 자체를 다르게 구성
-    var amountText = c.amount != null ? '총 ' + c.amount + 'g을 수확했어요. ' : '수확량 기록이 없어요. ';
-
-    var summary =
-        amountText +
-        '평균 온도 ' + avgTemp + '°C, 평균 습도 ' + avgHumidity + '%를 유지했고, ' +
-        (pestDays === 0 ? '병충해 없이 잘 마무리된 재배였습니다.' : '병충해 징후가 ' + pestDays + '일 감지되었어요.');
-
-    return { avgTemp: avgTemp, avgHumidity: avgHumidity, pestDays: pestDays, summary: summary };
+    return { summary: amountText + gradeText };
 }
 
 function renderHistorySidebar() {
@@ -77,7 +58,6 @@ function renderHistoryDetail(id) {
         '<div class="env-stat-grid">' +
         '<div class="env-stat-item"><div class="env-stat-icon-wrap"><i data-lucide="package" class="env-stat-icon"></i></div><span class="env-stat-label">총 재배량</span><span class="env-stat-value">' + (c.amount != null ? c.amount + 'g' : '-') + '</span></div>' +
         '<div class="env-stat-item"><div class="env-stat-icon-wrap"><i data-lucide="crown" class="env-stat-icon"></i></div><span class="env-stat-label">상품 등급</span><span class="env-stat-value">' + (c.grade || '-') + '</span></div>' +
-        '<div class="env-stat-item"><div class="env-stat-icon-wrap"><i data-lucide="shield-alert" class="env-stat-icon"></i></div><span class="env-stat-label">병충해 감지일</span><span class="env-stat-value">' + info.pestDays + '일</span></div>' +
         '</div>' +
         '<p class="history-summary">' +
         '<i data-lucide="sparkles" style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;color:var(--sage-600);"></i>' +

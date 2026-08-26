@@ -29,6 +29,7 @@ function initializeSensorBootstrap() {
     });
 
     renderSensorPanel();
+    renderMainEnvStats();
     populateChartSensorSelect();
 }
 
@@ -62,6 +63,25 @@ function renderSensorPanel() {
         wrapperEl.querySelector('.msh-select-value').textContent = first.deviceName;
         menu.querySelector('.msh-select-option').classList.add('selected');
         valueEl.textContent = formatSensorValue(LATEST_VALUES[type + '|' + first.deviceEui]);
+    });
+}
+
+// 메인 탭 "환경 통계" 카드: 센서 타입별 첫 번째 기기의 최신 측정값을 그대로 보여줌.
+// (renderSensorPanel과 동일한 LATEST_VALUES를 재사용, 없으면 "-")
+var MAIN_ENV_STAT_IDS = {
+    TEMPERATURE: 'main-env-stat-temp',
+    HUMIDITY: 'main-env-stat-humidity',
+    CO2: 'main-env-stat-co2',
+    LIGHT: 'main-env-stat-light'
+};
+
+function renderMainEnvStats() {
+    Object.keys(MAIN_ENV_STAT_IDS).forEach(function (type) {
+        var el = document.getElementById(MAIN_ENV_STAT_IDS[type]);
+        if (!el) return;
+        var devices = SENSOR_DEVICES_BY_TYPE[type] || [];
+        var first = devices[0];
+        el.textContent = first ? formatSensorValue(LATEST_VALUES[type + '|' + first.deviceEui]) : '-';
     });
 }
 
@@ -445,12 +465,9 @@ function renderChartTrend() {
 }
 // 커스텀 드롭다운(.msh-select) 관련 공통 로직은 /js/msh-select.js로 옮겼음 (관리자 페이지랑 같이 씀).
 
-var CHATBOT_REPLIES = [
-    '음... 조금 더 지켜봐야 할 것 같아요 🍄',
-    '좋은 질문이네요! 조만간 더 자세히 알려드릴게요.',
-    '현재 재배 환경은 전반적으로 안정적이에요.',
-    '알겠어요, 계속 모니터링해서 알려드릴게요!'
-];
+// AI 챗봇 답변을 생성해줄 백엔드가 아직 없어서(Ai_server에 대화형 엔드포인트 없음),
+// 그럴듯한 답변을 무작위로 지어내던 CHATBOT_REPLIES는 없애고 항상 같은 안내 문구만 보냄.
+var CHATBOT_PLACEHOLDER_REPLY = 'AI 챗봇은 아직 준비 중인 기능이에요. 조금만 기다려 주세요 🍄';
 
 function sendChatMessage(event) {
     event.preventDefault();
@@ -470,11 +487,10 @@ function sendChatMessage(event) {
     list.scrollTop = list.scrollHeight;
 
     window.setTimeout(function () {
-        var reply = CHATBOT_REPLIES[Math.floor(Math.random() * CHATBOT_REPLIES.length)];
         var botMsg = document.createElement('div');
         botMsg.className = 'chat-message bot';
         botMsg.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble"></div>';
-        botMsg.querySelector('.chat-bubble').textContent = reply;
+        botMsg.querySelector('.chat-bubble').textContent = CHATBOT_PLACEHOLDER_REPLY;
         list.appendChild(botMsg);
         list.scrollTop = list.scrollHeight;
     }, 500);
@@ -800,187 +816,49 @@ function changeMemberRole(userId, newRole) {
         .catch(function () { alert('역할 변경에 실패했습니다.'); });
 }
 
-// ===== AI report 탭: 일자별 리포트 =====
-var DOW_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-var REPORT_AVAILABLE_DAYS = 14; // 오늘 포함 최근 14일치만 리포트 제공 (데모)
-
-function toDateKey(date) {
-    var y = date.getFullYear();
-    var m = String(date.getMonth() + 1).padStart(2, '0');
-    var d = String(date.getDate()).padStart(2, '0');
-    return y + '-' + m + '-' + d;
-}
-
-function addDays(date, days) {
-    var result = new Date(date);
-    result.setDate(result.getDate() + days);
-    return result;
-}
-
-function startOfDay(date) {
-    var result = new Date(date);
-    result.setHours(0, 0, 0, 0);
-    return result;
-}
-
-// 일요일부터 시작하는 주의 첫 날짜를 반환 (일월화수목금토 순서 고정)
-function startOfWeek(date) {
-    return addDays(startOfDay(date), -date.getDay());
-}
-
-var reportToday = startOfDay(new Date());
-var reportOldestAvailable = addDays(reportToday, -(REPORT_AVAILABLE_DAYS - 1));
-var reportState = {
-    selectedDate: toDateKey(reportToday),
-    stripStart: startOfWeek(reportToday)
-};
-
-function hashSeed(str) {
-    var h = 0;
-    for (var i = 0; i < str.length; i++) {
-        h = (h * 31 + str.charCodeAt(i)) >>> 0;
-    }
-    return h;
-}
-
-function generateReportData(dateKey) {
-    var seed = hashSeed(dateKey);
-
-    var temp = 17 + (seed % 6);
-    var humidity = 52 + ((seed >> 3) % 18);
-    var co2 = 440 + ((seed >> 6) % 140);
-    var light = 300 + ((seed >> 9) % 160);
-    var pestSafe = ((seed >> 12) % 10) !== 0;
-
-    var points = [];
-    for (var i = 0; i < 9; i++) {
-        points.push(20 + ((seed >> (i * 3)) % 70));
-    }
-
-    var tempComment = temp <= 21 ? '재배에 적합한 온도' : '평소보다 다소 높은 온도';
-    var humidComment = (humidity >= 55 && humidity <= 65) ? '적정 습도 범위' : '습도 관리가 필요한 범위';
-
-    var summary =
-        '이 날 평균 온도는 ' + temp + '°C, 습도는 ' + humidity + '%로 ' + tempComment + '였고, ' + humidComment + '였어요. ' +
-        'CO2 농도는 ' + co2 + 'ppm, 조도는 ' + light + 'lux를 기록했습니다. ' +
-        (pestSafe ? '병충해 징후는 발견되지 않아 안전한 하루였습니다.' : '병충해 징후가 일부 감지되어 관찰이 필요해요.');
-
-    return { temp: temp, humidity: humidity, co2: co2, light: light, pestSafe: pestSafe, points: points, summary: summary };
-}
-
-function renderReportChart(points) {
-    var xs = [0, 32, 65, 98, 130, 163, 195, 228, 260];
-    var linePoints = xs.map(function (x, i) { return x + ',' + points[i]; }).join(' ');
-    var polygonPoints = linePoints + ' 260,110 0,110';
-    var last = xs.length - 1;
-
-    var svg = document.getElementById('report-chart-svg');
-    svg.innerHTML =
-        '<defs><linearGradient id="reportChartFill" x1="0" y1="0" x2="0" y2="1">' +
-        '<stop offset="0%" stop-color="var(--sage-500)" stop-opacity="0.35" />' +
-        '<stop offset="100%" stop-color="var(--sage-500)" stop-opacity="0" /></linearGradient></defs>' +
-        '<polyline class="chart-grid-line" points="0,20 260,20" />' +
-        '<polyline class="chart-grid-line" points="0,55 260,55" />' +
-        '<polyline class="chart-grid-line" points="0,90 260,90" />' +
-        '<polygon fill="url(#reportChartFill)" points="' + polygonPoints + '" />' +
-        '<polyline class="chart-demo-line" fill="none" points="' + linePoints + '" />' +
-        '<circle class="chart-demo-dot" cx="' + xs[last] + '" cy="' + points[last] + '" r="4.5" />';
-}
-
-function renderReportBody(dateKey) {
-    var data = generateReportData(dateKey);
-    var parts = dateKey.split('-');
-    var labelDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-
-    document.getElementById('report-selected-date-label').textContent =
-        labelDate.getFullYear() + '년 ' + (labelDate.getMonth() + 1) + '월 ' + labelDate.getDate() + '일 (' + DOW_LABELS[labelDate.getDay()] + ')';
-    document.getElementById('report-summary-text').textContent = data.summary;
-
-    var statGrid = document.getElementById('report-env-stat-grid');
-    statGrid.innerHTML =
-        '<div class="env-stat-item"><i data-lucide="thermometer" class="env-stat-icon"></i><span class="env-stat-label">평균 온도</span><span class="env-stat-value">' + data.temp + '°C</span></div>' +
-        '<div class="env-stat-item"><i data-lucide="droplet" class="env-stat-icon"></i><span class="env-stat-label">평균 습도</span><span class="env-stat-value">' + data.humidity + '%</span></div>' +
-        '<div class="env-stat-item"><i data-lucide="cloudy" class="env-stat-icon"></i><span class="env-stat-label">평균 CO2</span><span class="env-stat-value">' + data.co2 + 'ppm</span></div>' +
-        '<div class="env-stat-item"><i data-lucide="sun" class="env-stat-icon"></i><span class="env-stat-label">평균 조도</span><span class="env-stat-value">' + data.light + 'lux</span></div>';
-
-    renderReportChart(data.points);
-    lucide.createIcons();
-}
-
-function renderReportDateStrip() {
-    var strip = document.getElementById('report-date-strip');
-    strip.innerHTML = '';
-
-    for (var i = 0; i < 7; i++) {
-        var date = addDays(reportState.stripStart, i);
-        if (date > reportToday) continue; // 내일 이후는 아예 표시하지 않음
-
-        var dateKey = toDateKey(date);
-        var isToday = dateKey === toDateKey(reportToday);
-        var disabled = date < reportOldestAvailable;
-
-        var chip = document.createElement('div');
-        chip.className = 'report-date-chip' +
-            (dateKey === reportState.selectedDate ? ' active' : '') +
-            (disabled ? ' disabled' : '') +
-            (isToday ? ' today' : '');
-        chip.innerHTML =
-            '<span class="chip-dow">' + DOW_LABELS[date.getDay()] + '</span>' +
-            '<span class="chip-day">' + (isToday ? '오늘' : date.getDate()) + '</span>';
-
-        if (!disabled) {
-            chip.onclick = (function (key) {
-                return function () { selectReportDate(key); };
-            })(dateKey);
-        }
-        strip.appendChild(chip);
-    }
-}
-
-function selectReportDate(dateKey) {
-    reportState.selectedDate = dateKey;
-    renderReportDateStrip();
-    renderReportBody(dateKey);
-}
-
-function shiftReportWeek(delta) {
-    var next = addDays(reportState.stripStart, delta * 7);
-    var currentWeekStart = startOfWeek(reportToday);
-    if (next > currentWeekStart) next = currentWeekStart; // 오늘이 포함된 주 이후로는 넘어가지 않음
-    reportState.stripStart = next;
-    renderReportDateStrip();
-}
-
-renderReportDateStrip();
-renderReportBody(reportState.selectedDate);
+// AI report 탭: Ai_server에 일자별 리포트를 만들어주는 API가 아직 없어서(가이드/센서 임계값
+// 검증 엔드포인트만 존재), 날짜 문자열을 해시해서 온도/습도/CO2/조도를 지어내던 기존 코드를
+// 걷어냄. 지금은 main.html에서 "준비 중" 안내만 보여줌. 실제 API가 생기면 여기서 fetch해서 채우면 됨.
 
 // 재배량 (재배 종료 시 한 번만 입력, 실제로는 서버에서 받아와야 함)
 var harvestState = { totalAmount: 0 };
 
 // ===== 재배 종료 흐름: 최종 재배량 -> AI 재배 리포트 -> 재배 이력 비교 -> 홈 =====
-var CULTIVATION_START_DATE_KEY = toDateKey(addDays(reportToday, -21)); // 데모: 21일 전 시작
 
-// 이전에 재배했던 이력 목록 (데모 데이터, 실제로는 서버에서 사용자의 재배 이력을 받아와야 함)
-var PAST_CULTIVATION_CYCLES = [
-    { id: 1, name: 'Cultivation1', type: '느타리버섯', period: '2027.01 ~ 2027.02', amount: 340, days: 24 },
-    { id: 2, name: 'Cultivation2', type: '양송이버섯', period: '2027.03 ~ 2027.04', amount: 410, days: 26 },
-    { id: 3, name: 'Cultivation3', type: '표고버섯', period: '2027.05 ~ 2027.06', amount: 295, days: 22 }
-];
+// PAST_CULTIVATIONS는 main.html에서 실제 재배 이력(finished cultivations)을 내려받아 채움 (site.yesaido.frontserver.controller.CultivationController#detail)
 var endReportStats = null;
 
+function compareOptionLabel(c) {
+    var finishedLabel = c.finishedAt ? c.finishedAt.split('T')[0] : '-';
+    var typeLabel = c.mushroomName ? ' · ' + c.mushroomName : '';
+    return c.name + typeLabel + ' (' + finishedLabel + ' 종료)';
+}
+
 function populateCompareSelect() {
+    var fieldEl = document.getElementById('end-compare-field');
+    var rowsEl = document.getElementById('end-compare-rows');
+    var emptyEl = document.getElementById('end-compare-empty');
     var wrapperEl = document.getElementById('end-compare-select');
+
+    if (!PAST_CULTIVATIONS || PAST_CULTIVATIONS.length === 0) {
+        fieldEl.style.display = 'none';
+        rowsEl.style.display = 'none';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    fieldEl.style.display = '';
+    rowsEl.style.display = '';
+    emptyEl.style.display = 'none';
+
     var menu = wrapperEl.querySelector('.msh-select-menu');
-    menu.innerHTML = PAST_CULTIVATION_CYCLES.map(function (c, i) {
+    menu.innerHTML = PAST_CULTIVATIONS.map(function (c, i) {
         return '<div class="msh-select-option' + (i === 0 ? ' selected' : '') + '" data-value="' + c.id + '" onclick="selectMshOption(this)">' +
-            c.name + ' · ' + c.type + ' (' + c.period + ')</div>';
+            compareOptionLabel(c) + '</div>';
     }).join('');
 
-    var first = PAST_CULTIVATION_CYCLES[0];
-    if (first) {
-        wrapperEl.dataset.value = first.id;
-        wrapperEl.querySelector('.msh-select-value').textContent = first.name + ' · ' + first.type + ' (' + first.period + ')';
-    }
+    var first = PAST_CULTIVATIONS[0];
+    wrapperEl.dataset.value = first.id;
+    wrapperEl.querySelector('.msh-select-value').textContent = compareOptionLabel(first);
 }
 populateCompareSelect();
 
@@ -1031,25 +909,11 @@ function submitEndAmount() {
 }
 
 function computeEndReportStats() {
-    var parts = CULTIVATION_START_DATE_KEY.split('-');
-    var start = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    var totalDays = Math.round((reportToday - start) / (1000 * 60 * 60 * 24)) + 1;
-
-    var tempSum = 0, humiditySum = 0, pestDays = 0, dayCount = 0;
-    for (var d = new Date(start); d <= reportToday; d = addDays(d, 1)) {
-        var data = generateReportData(toDateKey(d));
-        tempSum += data.temp;
-        humiditySum += data.humidity;
-        if (!data.pestSafe) pestDays++;
-        dayCount++;
-    }
-
+    // 환경 평균/병충해 감지일은 리포트 API가 없어 지어내던 값이라 제거하고,
+    // 실제로 서버가 계산해주는 재배 일수(GROWTH_DAYS)와 수확량만 사용함.
     return {
-        totalDays: totalDays,
-        totalAmount: harvestState.totalAmount,
-        avgTemp: Math.round(tempSum / dayCount),
-        avgHumidity: Math.round(humiditySum / dayCount),
-        pestDays: pestDays
+        totalDays: GROWTH_DAYS,
+        totalAmount: harvestState.totalAmount
     };
 }
 
@@ -1057,15 +921,10 @@ function renderEndReport(stats) {
     var grid = document.getElementById('end-report-stat-grid');
     grid.innerHTML =
         '<div class="env-stat-item"><i data-lucide="calendar-days" class="env-stat-icon"></i><span class="env-stat-label">총 재배기간</span><span class="env-stat-value">' + stats.totalDays + '일</span></div>' +
-        '<div class="env-stat-item"><i data-lucide="package" class="env-stat-icon"></i><span class="env-stat-label">총 재배량</span><span class="env-stat-value">' + stats.totalAmount + 'g</span></div>' +
-        '<div class="env-stat-item"><i data-lucide="thermometer" class="env-stat-icon"></i><span class="env-stat-label">평균 온도</span><span class="env-stat-value">' + stats.avgTemp + '°C</span></div>' +
-        '<div class="env-stat-item"><i data-lucide="droplet" class="env-stat-icon"></i><span class="env-stat-label">평균 습도</span><span class="env-stat-value">' + stats.avgHumidity + '%</span></div>' +
-        '<div class="env-stat-item"><i data-lucide="shield-alert" class="env-stat-icon"></i><span class="env-stat-label">병충해 감지일</span><span class="env-stat-value">' + stats.pestDays + '일</span></div>';
+        '<div class="env-stat-item"><i data-lucide="package" class="env-stat-icon"></i><span class="env-stat-label">총 재배량</span><span class="env-stat-value">' + stats.totalAmount + 'g</span></div>';
 
     document.getElementById('end-report-summary').textContent =
-        '총 ' + stats.totalDays + '일 동안 재배해서 총 ' + stats.totalAmount + 'g을 수확했어요. ' +
-        '평균 온도 ' + stats.avgTemp + '°C, 평균 습도 ' + stats.avgHumidity + '%로 재배 환경은 대체로 안정적이었어요. ' +
-        (stats.pestDays === 0 ? '병충해 없이 재배를 마쳤습니다.' : '병충해 징후가 ' + stats.pestDays + '일 감지되었으니 다음 재배 시 참고해 주세요.');
+        '총 ' + stats.totalDays + '일 동안 재배해서 총 ' + stats.totalAmount + 'g을 수확했어요.';
 
     lucide.createIcons();
 }
@@ -1091,13 +950,15 @@ function buildCompareRow(label, currentValue, targetValue, unit) {
 }
 
 function renderEndCompare(stats) {
-    var selectedId = Number(document.getElementById('end-compare-select').dataset.value);
-    var target = PAST_CULTIVATION_CYCLES.filter(function (c) { return c.id === selectedId; })[0]
-        || PAST_CULTIVATION_CYCLES[0];
+    if (!PAST_CULTIVATIONS || PAST_CULTIVATIONS.length === 0) return;
 
+    var selectedId = Number(document.getElementById('end-compare-select').dataset.value);
+    var target = PAST_CULTIVATIONS.filter(function (c) { return c.id === selectedId; })[0]
+        || PAST_CULTIVATIONS[0];
+
+    // 이전 재배 이력에는 시작일이 내려오지 않아 재배 기간은 비교할 수 없음 -> 재배량만 비교
     document.getElementById('end-compare-rows').innerHTML =
-        buildCompareRow('총 재배량', stats.totalAmount, target.amount, 'g') +
-        buildCompareRow('재배 기간', stats.totalDays, target.days, '일');
+        buildCompareRow('총 재배량', stats.totalAmount, target.amount || 0, 'g');
 }
 
 function finishCultivation() {
