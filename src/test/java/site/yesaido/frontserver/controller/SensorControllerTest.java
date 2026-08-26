@@ -18,7 +18,7 @@ import site.yesaido.frontserver.config.MethodOverrideConfig;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import tools.jackson.databind.ObjectMapper;
@@ -136,6 +136,28 @@ class SensorControllerTest {
     }
 
     @Test
+    void getSensorTrendDelegatesQueryParametersAndReturnsJson() throws Exception {
+        SensorTrendPointListResponse trend = new SensorTrendPointListResponse(
+                10L, "device-eui", "temperature", "°C", List.of()
+        );
+        when(sensorClient.getSensorTrend(10L, "device-eui", "temperature"))
+                .thenReturn(ResponseEntity.ok(trend));
+
+        mockMvc.perform(get("/cultivations/{cultivation-id}/sensor-values/trend", 10L)
+                        .cookie(LOGGED_IN)
+                        .param("device-eui", "device-eui")
+                        .param("sensor-type", "temperature"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                .andExpect(jsonPath("$.cultivationId").value(10))
+                .andExpect(jsonPath("$.deviceEui").value("device-eui"))
+                .andExpect(jsonPath("$.sensorType").value("temperature"));
+
+        verify(sensorClient).getSensorTrend(10L, "device-eui", "temperature");
+    }
+
+    @Test
     void registerSensorDelegatesRequestAndPreservesNoContentStatus() throws Exception {
         CreateCultivationSensorRequest request = new CreateCultivationSensorRequest(
                 "device-eui", "model", "name", "location", "detail", List.of()
@@ -176,28 +198,4 @@ class SensorControllerTest {
         verify(sensorClient).deleteSensor(10L, 20L);
     }
 
-    @Test
-    void getLatestSensorValuesPreservesWrapperContract() throws Exception {
-        when(sensorClient.getLatestSensorValues(10L))
-                .thenReturn(ResponseEntity.ok(new LatestSensorValueListResponse(List.of())));
-
-        mockMvc.perform(get("/cultivations/{cultivation-id}/sensor-values", 10L).cookie(LOGGED_IN))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.latestSensorValueResponses").isArray());
-
-        verify(sensorClient).getLatestSensorValues(10L);
-    }
-
-    @Test
-    void getLatestSensorValuesDoesNotRelayUpstreamHeadersToBrowserResponse() throws Exception {
-        when(sensorClient.getLatestSensorValues(10L))
-                .thenReturn(ResponseEntity.ok()
-                        .header("X-Upstream-Only", "must-not-reach-browser")
-                        .body(new LatestSensorValueListResponse(List.of())));
-
-        mockMvc.perform(get("/cultivations/{cultivation-id}/sensor-values", 10L).cookie(LOGGED_IN))
-                .andExpect(status().isOk())
-                .andExpect(header().doesNotExist("X-Upstream-Only"))
-                .andExpect(jsonPath("$.latestSensorValueResponses").isArray());
-    }
 }

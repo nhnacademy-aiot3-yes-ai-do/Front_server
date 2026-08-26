@@ -11,7 +11,10 @@ import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.*;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidationResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
 @LoginRequired
@@ -52,11 +55,6 @@ public class SensorController {
         return sensorClient.deleteSensor(cultivationId, sensorId);
     }
 
-    @GetMapping(value = "/{cultivation-id}/sensor-values", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<LatestSensorValueListResponse> getLatestSensorValues(@PathVariable("cultivation-id") Long cultivationId) {
-        ResponseEntity<LatestSensorValueListResponse> upstream = sensorClient.getLatestSensorValues(cultivationId);
-        return jsonResponse(upstream);
-    }
 
     @GetMapping(value = "/{cultivation-id}/sensor-values/trend", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SensorTrendPointListResponse> getSensorTrend(@PathVariable("cultivation-id") Long cultivationId,

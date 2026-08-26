@@ -1,29 +1,20 @@
 package site.yesaido.frontserver.config;
 
 import feign.RequestInterceptor;
-import feign.Retryer;
 import feign.codec.Encoder;
-import feign.codec.ErrorDecoder;
 import feign.form.spring.SpringFormEncoder;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.openfeign.support.FeignHttpMessageConverters;
 import org.springframework.cloud.openfeign.support.SpringEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
-import site.yesaido.frontserver.auth.RequestTokenHolder;
-import site.yesaido.frontserver.auth.TokenReissueErrorDecoder;
-import site.yesaido.frontserver.auth.TokenReissueOnlyRetryer;
 
 @Configuration
-@RequiredArgsConstructor
 public class FeignConfig {
-    private final RequestTokenHolder requestTokenHolder;
-    private final TokenReissueErrorDecoder tokenReissueErrorDecoder;
-
     @Bean
     public RequestInterceptor authInterceptor() {
         return requestTemplate -> {
@@ -35,22 +26,15 @@ public class FeignConfig {
             if (attrs == null) return;
 
             HttpServletRequest request = attrs.getRequest();
-            String token = requestTokenHolder.resolveAccessToken(request);
-            if (token != null) {
-                requestTemplate.removeHeader("Authorization");
-                requestTemplate.header("Authorization", "Bearer " + token);
+            String cookieHeader = request.getHeader(HttpHeaders.COOKIE);
+
+            if (cookieHeader == null || cookieHeader.isBlank()) {
+               return;
             }
+
+            requestTemplate.removeHeader(HttpHeaders.COOKIE);
+            requestTemplate.header(HttpHeaders.COOKIE, cookieHeader);
         };
-    }
-
-    @Bean
-    public ErrorDecoder errorDecoder() {
-        return tokenReissueErrorDecoder;
-    }
-
-    @Bean
-    public Retryer retryer() {
-        return new TokenReissueOnlyRetryer();
     }
 
     @Bean

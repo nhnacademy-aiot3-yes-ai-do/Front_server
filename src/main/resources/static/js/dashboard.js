@@ -267,15 +267,25 @@ function stopChartPolling() {
 // 모든 센서의 버퍼를 같이 채워둠 — 나중에 다른 센서로 바꿔도 끊김 없이 이어지게 하기 위함
 function pollChartValue() {
     if (!CHART_SELECTED) return;
-    fetch('/cultivations/' + CULTIVATION_ID + '/sensor-values')
+    var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    var gatewayOrigin = isLocal ? 'http://localhost:8080' : 'https://api.yes-nhn.site';
+
+    fetch(gatewayOrigin + '/api/v1/cultivations/' + CULTIVATION_ID + '/sensor-values', {
+        credentials: 'include'
+    })
         .then(function (res) {
+            if (res.status === 401) {
+                stopChartPolling();
+                logout();
+                return null;
+            }
             if (!res.ok) {
                 throw new Error('sensor-values request failed: ' + res.status);
             }
             return res.json();
         })
         .then(function (payload) {
-            if (!CHART_SELECTED) return;
+            if (!payload || !CHART_SELECTED) return;
 
             var now = Date.now();
             latestSensorValuesOf(payload).forEach(function (v) {
