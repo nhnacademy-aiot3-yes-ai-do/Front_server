@@ -42,6 +42,8 @@ async function loadInquiries(page) {
         var data = await fetchJson(url);
         inquiryState.page = data.number;
         inquiryState.totalPages = Math.max(1, data.totalPages);
+        inquiryState.totalElements = data.totalElements || 0;
+        document.getElementById('inquiry-total-count').textContent = inquiryState.totalElements;
 
         var tbody = document.getElementById('inquiry-tbody');
         tbody.innerHTML = '';
@@ -68,16 +70,22 @@ async function loadInquiries(page) {
 
 function renderInquiryPagination() {
     var wrap = document.getElementById('inquiry-pagination');
-    if (inquiryState.totalPages <= 1) { wrap.innerHTML = ''; return; }
+    var totalPages = inquiryState.totalPages;
+    if (totalPages <= 1) { wrap.innerHTML = ''; return; }
 
     var page = inquiryState.page;
-    var totalPages = inquiryState.totalPages;
     var prevDisabled = page === 0 ? ' disabled' : '';
     var nextDisabled = page >= totalPages - 1 ? ' disabled' : '';
+
+    var pageBtns = '';
+    for (var p = 0; p < totalPages; p++) {
+        pageBtns += '<button class="page' + (p === page ? ' active' : '') + '" type="button" onclick="loadInquiries(' + p + ')">' + (p + 1) + '</button>';
+    }
+
     wrap.innerHTML =
-        '<button class="admin-page-btn' + prevDisabled + '" type="button" onclick="loadInquiries(' + (page - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
-        '<span class="admin-page-label">' + (page + 1) + ' / ' + totalPages + '</span>' +
-        '<button class="admin-page-btn' + nextDisabled + '" type="button" onclick="loadInquiries(' + (page + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+        '<button class="page-arrow' + prevDisabled + '" type="button" onclick="loadInquiries(' + (page - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
+        pageBtns +
+        '<button class="page-arrow' + nextDisabled + '" type="button" onclick="loadInquiries(' + (page + 1) + ')"><i data-lucide="chevron-right"></i></button>';
     lucide.createIcons();
 }
 
