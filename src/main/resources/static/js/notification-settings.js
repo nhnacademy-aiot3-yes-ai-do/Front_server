@@ -20,6 +20,8 @@ var cultivations = [];
 var fetchErrors = {};
 var pendingGroups = {};
 var saveQueue = Promise.resolve();
+var interactionBusy = false;
+var pendingSaveCount = 0;
 
 function showSaveStatus(message, isError) {
     var el = document.getElementById('save-status');
@@ -102,8 +104,37 @@ function typesForGroup(groupKey) {
     });
 }
 
+function availableNotificationEndpoints() {
+    return [telegramEndpoint, discordEndpoint].filter(function (endpoint) {
+        return endpoint && endpoint.id && endpoint.enabled;
+    });
+}
+
 function selectedNotificationEndpoint() {
-    return telegramEndpoint || discordEndpoint;
+    var endpoints = availableNotificationEndpoints();
+    if (endpoints.length === 0) return null;
+    var selector = document.getElementById('notification-channel-select');
+    var selectedId = selector && selector.value;
+    return endpoints.find(function (endpoint) { return sameId(endpoint.id, selectedId); }) || endpoints[0];
+}
+
+function renderNotificationChannelSelector() {
+    var selector = document.getElementById('notification-channel-select');
+    if (!selector) return;
+    var endpoints = availableNotificationEndpoints();
+    var previous = selector.value;
+    selector.innerHTML = endpoints.map(function (endpoint) {
+        var label = endpoint.channelCode === 'TELEGRAM' ? 'Telegram' : 'Discord';
+        return '<option value="' + Number(endpoint.id) + '">' + label + '</option>';
+    }).join('');
+    selector.disabled = endpoints.length === 0 || interactionBusy;
+    if (endpoints.some(function (endpoint) { return sameId(endpoint.id, previous); })) {
+        selector.value = previous;
+    }
+}
+
+function handleNotificationChannelChange() {
+    refreshSubscriptionUi();
 }
 
 function enabledSubscriptions() {
@@ -129,8 +160,19 @@ function isCultivationOn(cultivationId) {
     });
 }
 
+function pendingGroupsForEndpoint(endpoint) {
+    if (!endpoint || !endpoint.id) return {};
+    var key = String(endpoint.id);
+    if (!pendingGroups[key]) pendingGroups[key] = {};
+    return pendingGroups[key];
+}
+
+function pendingGroupsForSelectedEndpoint() {
+    return pendingGroupsForEndpoint(selectedNotificationEndpoint());
+}
+
 function isCategoryChecked(groupKey) {
-    return isCategoryOn(groupKey) || !!pendingGroups[groupKey];
+    return isCategoryOn(groupKey) || !!pendingGroupsForSelectedEndpoint()[groupKey];
 }
 
 function selectedGroups() {
@@ -181,8 +223,7 @@ function ensureNotificationChannelReady() {
     return false;
 }
 
-function ensureSubscription(typeId, cultivationId) {
-    var endpoint = selectedNotificationEndpoint();
+function ensureSubscription(typeId, cultivationId, endpoint) {
     if (!endpoint || !endpoint.id) {
         return Promise.reject(new Error('Telegram 또는 디스코드 연결이 필요합니다.'));
     }
@@ -232,24 +273,26 @@ function runSequentially(tasks) {
     }, Promise.resolve());
 }
 
-function ensureGroupForTargets(groupKey, targetIds) {
+function ensureGroupForTargets(groupKey, targetIds, endpoint) {
     var types = typesForGroup(groupKey);
     var tasks = [];
     targetIds.forEach(function (targetId) {
         types.forEach(function (type) {
             tasks.push(function () {
-                return ensureSubscription(type.id, targetId);
+                return ensureSubscription(type.id, targetId, endpoint);
             });
         });
     });
     return runSequentially(tasks);
 }
 
-function disableGroup(groupKey) {
+function disableGroup(groupKey, endpoint) {
     var typeIds = typesForGroup(groupKey).map(function (type) {
         return Number(type.id);
     });
-    return runSequentially(enabledSubscriptions()
+    return runSequentially(subscriptions.filter(function (item) {
+        return item && item.enabled && sameId(item.endpointId, endpoint.id);
+    })
         .filter(function (item) {
             return typeIds.indexOf(Number(item.subscriptionTypeId)) !== -1;
         })
@@ -260,8 +303,10 @@ function disableGroup(groupKey) {
         }));
 }
 
-function disableTarget(cultivationId) {
-    return runSequentially(enabledSubscriptions()
+function disableTarget(cultivationId, endpoint) {
+    return runSequentially(subscriptions.filter(function (item) {
+        return item && item.enabled && sameId(item.endpointId, endpoint.id);
+    })
         .filter(function (item) {
             return item.targetType === 'CULTIVATION' && sameId(item.targetId, cultivationId);
         })
@@ -273,6 +318,19 @@ function disableTarget(cultivationId) {
 }
 
 function setTogglesBusy(busy) {
+    if (!busy && pendingSaveCount > 0) return;
+    interactionBusy = busy;
+    if (busy) {
+        ['telegram-action-btn', 'discord-action-btn'].forEach(function (id) {
+            var action = document.getElementById(id);
+            if (action) action.disabled = true;
+        });
+    } else {
+        renderTelegramStatus();
+        renderDiscordStatus();
+    }
+    var channelSelector = document.getElementById('notification-channel-select');
+    if (channelSelector) channelSelector.disabled = busy || availableNotificationEndpoints().length === 0;
     ['toggle-sensor', 'toggle-harvest', 'toggle-ai'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el) el.disabled = busy || !selectedNotificationEndpoint();
@@ -316,7 +374,7 @@ function renderCultivationList() {
             '<label class="toggle-switch">' +
             '<input type="checkbox" data-cultivation-id="' + Number(item.cultivationId) + '"' +
             (checked ? ' checked' : '') +
-            (selectedNotificationEndpoint() ? '' : ' disabled') + ' />' +
+            (selectedNotificationEndpoint() && !interactionBusy ? '' : ' disabled') + ' />' +
             '<span class="toggle-track"><span class="toggle-thumb"></span></span>' +
             '</label>' +
             '</div>'
@@ -348,7 +406,7 @@ function refreshSubscriptionUi() {
         setSubscriptionHint('알림 유형을 먼저 켠 다음, 받을 재배지를 선택하세요.');
         return;
     }
-    if (Object.keys(pendingGroups).length > 0 && checkedCultivationIds().length === 0) {
+    if (Object.keys(pendingGroupsForSelectedEndpoint()).length > 0 && checkedCultivationIds().length === 0) {
         setSubscriptionHint('받을 재배지를 켜면 서버에 저장됩니다.');
         return;
     }
@@ -374,6 +432,7 @@ function renderFetchErrors() {
 }
 
 function enqueueSave(task) {
+    pendingSaveCount += 1;
     setTogglesBusy(true);
     saveQueue = saveQueue
         .then(task)
@@ -385,6 +444,7 @@ function enqueueSave(task) {
             showSaveStatus(error && error.message ? error.message : '저장 실패', true);
         })
         .then(function () {
+            pendingSaveCount -= 1;
             refreshSubscriptionUi();
         });
     return saveQueue;
@@ -395,32 +455,42 @@ function handleCategoryToggle(key, checked) {
         refreshSubscriptionUi();
         return;
     }
+    var endpoint = selectedNotificationEndpoint();
+    if (!endpoint) {
+        refreshSubscriptionUi();
+        return;
+    }
     if (checked) {
         var targets = checkedCultivationIds();
         if (targets.length === 0) {
-            pendingGroups[key] = true;
+            pendingGroupsForEndpoint(endpoint)[key] = true;
             refreshSubscriptionUi();
             return;
         }
         enqueueSave(function () {
-            return ensureGroupForTargets(key, targets).then(function () {
-                delete pendingGroups[key];
+            return ensureGroupForTargets(key, targets, endpoint).then(function () {
+                delete pendingGroupsForEndpoint(endpoint)[key];
             });
         });
         return;
     }
-    delete pendingGroups[key];
+    delete pendingGroupsForEndpoint(endpoint)[key];
     if (!isCategoryOn(key)) {
         refreshSubscriptionUi();
         return;
     }
     enqueueSave(function () {
-        return disableGroup(key);
+        return disableGroup(key, endpoint);
     });
 }
 
 function handleCultivationToggle(id, checked) {
     if (!ensureNotificationChannelReady()) {
+        refreshSubscriptionUi();
+        return;
+    }
+    var endpoint = selectedNotificationEndpoint();
+    if (!endpoint) {
         refreshSubscriptionUi();
         return;
     }
@@ -432,18 +502,18 @@ function handleCultivationToggle(id, checked) {
     }
     if (!checked) {
         enqueueSave(function () {
-            return disableTarget(id);
+            return disableTarget(id, endpoint);
         });
         return;
     }
     enqueueSave(function () {
         return runSequentially(groups.map(function (key) {
             return function () {
-                return ensureGroupForTargets(key, [id]);
+                return ensureGroupForTargets(key, [id], endpoint);
             };
         })).then(function () {
             groups.forEach(function (key) {
-                delete pendingGroups[key];
+                delete pendingGroupsForEndpoint(endpoint)[key];
             });
         });
     });
@@ -465,7 +535,7 @@ function pickTelegramEndpoint(endpoints) {
         return item && item.channelCode === 'TELEGRAM';
     });
     if (telegrams.length === 0) return null;
-    return telegrams.find(function (item) { return item.enabled; }) || telegrams[0];
+    return telegrams.find(function (item) { return item.enabled; }) || null;
 }
 
 function setTelegramStatus(text, connected) {
@@ -474,7 +544,7 @@ function setTelegramStatus(text, connected) {
     if (!statusEl || !btnEl) return;
     statusEl.textContent = text;
     statusEl.classList.toggle('connected', !!connected);
-    btnEl.disabled = !!connected || !!telegramLinkFlow;
+    btnEl.disabled = interactionBusy || !!connected || !!telegramLinkFlow;
     btnEl.textContent = connected ? '연결됨' : 'Telegram에서 연결';
     btnEl.onclick = connected ? null : handleTelegramConnect;
 }
@@ -559,7 +629,7 @@ function pollTelegramLink(sessionId, expiresAt, flow) {
                 if (session && session.status === 'LINKED') {
                     finishTelegramLinkFlow(flow);
                     showSaveStatus('Telegram 연결이 완료되었습니다.', false);
-                    return loadTelegramEndpoint();
+                    return loadTelegramEndpoint().then(loadSubscriptionState);
                 }
                 if (session && session.status === 'EXPIRED') {
                     finishTelegramLinkFlow(flow);
@@ -630,7 +700,7 @@ function setDiscordStatus(text, connected) {
 
     statusEl.textContent = text;
     statusEl.classList.toggle('connected', !!connected);
-    btnEl.disabled = false;
+    btnEl.disabled = interactionBusy;
     btnEl.textContent = connected ? '연결 해제' : '연결하기';
     btnEl.onclick = connected ? handleDiscordDisconnect : openDiscordModal;
 }
@@ -741,18 +811,24 @@ function handleDiscordDisconnect() {
         return;
     }
 
-    apiRequest('/notifications/endpoints/' + discordEndpoint.id, { method: 'DELETE' })
-        .then(function () {
-            discordEndpoint = null;
-            pendingGroups = {};
-            renderDiscordStatus();
-            showSaveStatus('저장됨', false);
-            return loadSubscriptionState();
-        })
-        .catch(function (error) {
-            if (error && error.message === 'login') return;
-            setDiscordStatus('연결 해제에 실패했습니다', true);
-        });
+    var endpoint = discordEndpoint;
+    var disconnectedEndpointId = String(endpoint.id);
+    enqueueSave(function () {
+        return apiRequest('/notifications/endpoints/' + endpoint.id, { method: 'DELETE' })
+            .then(function () {
+                if (discordEndpoint && sameId(discordEndpoint.id, endpoint.id)) {
+                    discordEndpoint = null;
+                }
+                delete pendingGroups[disconnectedEndpointId];
+                renderDiscordStatus();
+                return loadSubscriptionState();
+            })
+            .catch(function (error) {
+                if (error && error.message === 'login') throw error;
+                setDiscordStatus('연결 해제에 실패했습니다', true);
+                throw error;
+            });
+    });
 }
 
 function loadJson(url) {
@@ -766,6 +842,7 @@ function loadTelegramEndpoint() {
         .then(function (endpoints) {
             telegramEndpoint = pickTelegramEndpoint(endpoints);
             renderTelegramStatus();
+            renderNotificationChannelSelector();
         })
         .catch(function (error) {
             if (error && error.message === 'login') return Promise.reject(error);
@@ -779,6 +856,7 @@ function loadDiscordEndpoint() {
         .then(function (endpoints) {
             discordEndpoint = pickDiscordEndpoint(endpoints);
             renderDiscordStatus();
+            renderNotificationChannelSelector();
         })
         .catch(function (error) {
             if (error && error.message === 'login') return Promise.reject(error);
@@ -793,7 +871,6 @@ function loadDiscordEndpoint() {
 }
 
 function loadSubscriptionState() {
-    pendingGroups = {};
     return Promise.all([
         loadJson('/notifications/subscription-types'),
         loadJson('/notifications/subscriptions'),
@@ -829,6 +906,7 @@ function initFromBootstrap() {
     telegramEndpoint = pickTelegramEndpoint(endpoints);
     renderDiscordStatus();
     renderTelegramStatus();
+    renderNotificationChannelSelector();
 
     pendingGroups = {};
     subscriptionTypes = Array.isArray(window.SUBSCRIPTION_TYPES_BOOTSTRAP) ? window.SUBSCRIPTION_TYPES_BOOTSTRAP : [];

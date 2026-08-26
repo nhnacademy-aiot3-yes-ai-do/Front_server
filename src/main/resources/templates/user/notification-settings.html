@@ -49,6 +49,10 @@
 
             <div class="settings-section">
                 <h3 class="settings-section-title">알림 유형</h3>
+                <label class="settings-field-label" for="notification-channel-select">설정할 알림 채널</label>
+                <select class="integration-code-input" id="notification-channel-select" onchange="handleNotificationChannelChange()" disabled>
+                    <option>연결된 채널이 없습니다</option>
+                </select>
                 <p class="settings-section-desc" id="subscription-hint" aria-live="polite">설정을 불러오는 중이에요.</p>
 
                 <div class="settings-row">

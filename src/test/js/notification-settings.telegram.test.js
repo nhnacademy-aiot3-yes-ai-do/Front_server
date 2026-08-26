@@ -14,6 +14,8 @@ function element() {
 const elements = {
     'telegram-status': element(),
     'telegram-action-btn': element(),
+    'discord-action-btn': element(),
+    'notification-channel-select': element(),
     'save-status': element()
 };
 const requests = [];
@@ -32,7 +34,8 @@ const context = {
     },
     document: {
         addEventListener() {},
-        getElementById(id) { return elements[id] || null; }
+        getElementById(id) { return elements[id] || null; },
+        querySelectorAll() { return []; }
     },
     window: {
         clearTimeout,
@@ -59,4 +62,25 @@ context.handleTelegramConnect();
 assert.equal(popups.length, 1, 'a second click must not open a second Telegram popup');
 assert.equal(requests.length, 1, 'a second click must not create a second link session');
 assert.equal(elements['telegram-action-btn'].disabled, true, 'the action remains disabled while session creation is in flight');
+assert.equal(context.pickTelegramEndpoint([{ channelCode: 'TELEGRAM', id: 1, enabled: false }]), null,
+    'a disabled Telegram endpoint must not be presented as connected');
+context.telegramEndpoint = { channelCode: 'TELEGRAM', id: 1, enabled: true };
+context.discordEndpoint = { channelCode: 'DISCORD', id: 2, enabled: true };
+elements['notification-channel-select'].value = '2';
+assert.equal(context.selectedNotificationEndpoint().id, 2,
+    'the selected channel controls which endpoint subscriptions are displayed and changed');
+context.pendingGroups = { '1': { harvest: true } };
+assert.equal(Object.keys(context.pendingGroupsForSelectedEndpoint()).length, 0,
+    'pending selections for Telegram must not appear in Discord settings');
+elements['notification-channel-select'].value = '1';
+assert.equal(context.pendingGroupsForSelectedEndpoint().harvest, true,
+    'a subscription reload or channel change must retain the selected endpoint pending state');
+context.setTogglesBusy(true);
+assert.equal(elements['notification-channel-select'].disabled, true,
+    'the channel selector must be locked while a subscription save is in flight');
+assert.equal(elements['discord-action-btn'].disabled, true,
+    'disconnect must be locked while a subscription save is in flight');
+assert.match(fs.readFileSync('src/main/resources/static/js/notification-settings.js', 'utf8'),
+    /loadTelegramEndpoint\(\)\.then\(loadSubscriptionState\)/,
+    'a successful Telegram link must reload subscription state before returning control to the UI');
 console.log('notification-settings Telegram single-flight test passed');

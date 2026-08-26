@@ -143,7 +143,7 @@ class NotificationEndpointControllerTest {
     void createsTelegramLinkSession() throws Exception {
         given(notificationClient.createTelegramLinkSession()).willReturn(ResponseEntity.status(201).body(
                 new TelegramLinkSessionResponse(java.util.UUID.fromString("11111111-1111-1111-1111-111111111111"),
-                        "PENDING", "https://t.me/bot?start=opaque", java.time.LocalDateTime.of(2026, 8, 25, 3, 0))
+                        "PENDING", "https://t.me/bot?start=opaque", java.time.Instant.parse("2026-08-25T03:00:00Z"))
         ));
 
         mockMvc.perform(post("/notifications/endpoints/telegram-link-sessions").cookie(LOGGED_IN))
