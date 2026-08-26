@@ -103,4 +103,105 @@ class LoginCheckInterceptorTest {
         boolean result = interceptor.preHandle(request, response, handlerMethod);
         assertTrue(result);
     }
+
+    @Test
+    @DisplayName("관리자가 GET /cultivations(목록)에 접근하면 /admin으로 리다이렉트")
+    void adminBlockedFromCultivationList() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/cultivations");
+        request.setCookies(new Cookie("accessToken", "tokenVal"), new Cookie("role", "ADMIN"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        TestUserClass target = new TestUserClass();
+        Method method = TestUserClass.class.getMethod("requiredMethod");
+        HandlerMethod handlerMethod = new HandlerMethod(target, method);
+
+        boolean result = interceptor.preHandle(request, response, handlerMethod);
+        assertFalse(result);
+        assertEquals("/admin", response.getRedirectedUrl());
+    }
+
+    @Test
+    @DisplayName("관리자가 POST /cultivations(생성)에 접근하면 /admin으로 리다이렉트")
+    void adminBlockedFromCultivationCreate() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/cultivations");
+        request.setCookies(new Cookie("accessToken", "tokenVal"), new Cookie("role", "ADMIN"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        TestUserClass target = new TestUserClass();
+        Method method = TestUserClass.class.getMethod("requiredMethod");
+        HandlerMethod handlerMethod = new HandlerMethod(target, method);
+
+        boolean result = interceptor.preHandle(request, response, handlerMethod);
+        assertFalse(result);
+        assertEquals("/admin", response.getRedirectedUrl());
+    }
+
+    @Test
+    @DisplayName("관리자가 GET /cultivations/{id}(상세 조회)에 접근하면 통과")
+    void adminAllowedForCultivationDetailGet() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/cultivations/100");
+        request.setCookies(new Cookie("accessToken", "tokenVal"), new Cookie("role", "ADMIN"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        TestUserClass target = new TestUserClass();
+        Method method = TestUserClass.class.getMethod("requiredMethod");
+        HandlerMethod handlerMethod = new HandlerMethod(target, method);
+
+        boolean result = interceptor.preHandle(request, response, handlerMethod);
+        assertTrue(result);
+    }
+
+    @Test
+    @DisplayName("관리자가 GET /cultivations/{id}/sensor-values(폴링) 등 하위 조회 API에 접근하면 통과")
+    void adminAllowedForCultivationDetailSubPathGet() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/cultivations/100/sensor-values");
+        request.setCookies(new Cookie("accessToken", "tokenVal"), new Cookie("role", "ADMIN"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        TestUserClass target = new TestUserClass();
+        Method method = TestUserClass.class.getMethod("requiredMethod");
+        HandlerMethod handlerMethod = new HandlerMethod(target, method);
+
+        boolean result = interceptor.preHandle(request, response, handlerMethod);
+        assertTrue(result);
+    }
+
+    @Test
+    @DisplayName("관리자가 DELETE /cultivations/{id}(경작지 삭제)에 접근하면 통과")
+    void adminAllowedForCultivationDelete() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("DELETE", "/cultivations/100");
+        request.setCookies(new Cookie("accessToken", "tokenVal"), new Cookie("role", "ADMIN"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        TestUserClass target = new TestUserClass();
+        Method method = TestUserClass.class.getMethod("requiredMethod");
+        HandlerMethod handlerMethod = new HandlerMethod(target, method);
+
+        boolean result = interceptor.preHandle(request, response, handlerMethod);
+        assertTrue(result);
+    }
+
+    @Test
+    @DisplayName("관리자가 DELETE /cultivations/{id}/members/{userId}(멤버 제거)에 접근하면 /admin으로 리다이렉트")
+    void adminBlockedFromMemberRemoval() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("DELETE", "/cultivations/100/members/5");
+        request.setCookies(new Cookie("accessToken", "tokenVal"), new Cookie("role", "ADMIN"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        TestUserClass target = new TestUserClass();
+        Method method = TestUserClass.class.getMethod("requiredMethod");
+        HandlerMethod handlerMethod = new HandlerMethod(target, method);
+
+        boolean result = interceptor.preHandle(request, response, handlerMethod);
+        assertFalse(result);
+        assertEquals("/admin", response.getRedirectedUrl());
+    }
+
+    @Test
+    @DisplayName("일반 유저(role=USER)는 /cultivations 목록에 접근해도 차단되지 않음")
+    void nonAdminNotBlockedFromCultivationList() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/cultivations");
+        request.setCookies(new Cookie("accessToken", "tokenVal"), new Cookie("role", "USER"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        TestUserClass target = new TestUserClass();
+        Method method = TestUserClass.class.getMethod("requiredMethod");
+        HandlerMethod handlerMethod = new HandlerMethod(target, method);
+
+        boolean result = interceptor.preHandle(request, response, handlerMethod);
+        assertTrue(result);
+    }
 }
