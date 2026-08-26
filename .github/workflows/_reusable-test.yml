@@ -1,0 +1,26 @@
+name: reusable-test
+
+on:
+  workflow_call:
+
+jobs:
+  test-and-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: maven
+
+      - uses: ./.github/actions/setup-test-env
+
+      - name: Test and JaCoCo coverage check
+        run: ./mvnw -B clean verify

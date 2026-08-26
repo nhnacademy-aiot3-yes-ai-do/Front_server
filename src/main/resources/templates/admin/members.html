@@ -17,40 +17,58 @@
 <div class="page-container admin-list-page">
 
     <div class="admin-panel">
-        <div class="admin-page-head">
-            <button class="admin-back-link" type="button" onclick="location.href='/admin'">
-                <i data-lucide="chevron-left"></i>회원 관리
-            </button>
-            <div class="admin-filters">
-                <div class="msh-select msh-select--admin-filter" id="member-sub-select" data-value="active" data-onchange="switchMemberSub">
-                    <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                        <span class="msh-select-value">활성 회원</span>
-                        <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                    </button>
-                    <div class="msh-select-menu">
-                        <div class="msh-select-option selected" data-value="active" onclick="selectMshOption(this)">활성 회원</div>
-                        <div class="msh-select-option" data-value="withdrawn" onclick="selectMshOption(this)">탈퇴 회원</div>
+
+        <section class="admin-page-heading">
+            <span class="admin-page-heading-icon"><i data-lucide="users"></i></span>
+            <div>
+                <h2>회원 관리</h2>
+                <p>플랫폼에 가입한 회원 정보를 확인하고 관리할 수 있습니다.</p>
+            </div>
+            <div class="mushroom-decoration">
+                <span>🌿</span><span>🍄</span><span>🍄</span>
+            </div>
+        </section>
+
+        <section class="member-card">
+            <div class="member-toolbar">
+                <div class="member-count">전체 회원 <strong id="member-total-count">0</strong>명</div>
+
+                <div class="toolbar-actions">
+                    <div class="msh-select msh-select--admin-filter" id="member-sub-select" data-value="active" data-onchange="switchMemberSub">
+                        <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                            <span class="msh-select-value">활성 회원</span>
+                            <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                        </button>
+                        <div class="msh-select-menu">
+                            <div class="msh-select-option selected" data-value="active" onclick="selectMshOption(this)">활성 회원</div>
+                            <div class="msh-select-option" data-value="withdrawn" onclick="selectMshOption(this)">탈퇴 회원</div>
+                        </div>
+                    </div>
+
+                    <div class="search-box">
+                        <input type="text" id="member-search-input" placeholder="닉네임, 이메일 검색" oninput="handleMemberSearch(this.value)" />
+                        <button type="button" aria-label="검색"><i data-lucide="search"></i></button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="list-table-wrap">
-            <table class="list-table">
-                <thead>
-                <tr id="member-thead-row">
-                    <th>닉네임</th>
-                    <th>이메일</th>
-                    <th>회원가입일자</th>
-                    <th>회원수정일자</th>
-                    <th id="member-last-col">마지막 로그인 일자</th>
-                </tr>
-                </thead>
-                <tbody id="member-tbody"></tbody>
-            </table>
-        </div>
+            <div class="table-wrap">
+                <table class="member-table">
+                    <thead>
+                    <tr id="member-thead-row">
+                        <th>닉네임</th>
+                        <th>이메일</th>
+                        <th>가입일자</th>
+                        <th id="member-last-col">최근 로그인</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="member-tbody"></tbody>
+                </table>
+            </div>
+        </section>
 
-        <div class="admin-pagination" id="member-pagination"></div>
+        <div class="pagination" id="member-pagination"></div>
     </div>
 
 </div>
