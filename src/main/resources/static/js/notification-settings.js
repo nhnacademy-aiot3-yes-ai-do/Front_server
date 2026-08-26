@@ -14,6 +14,7 @@ var discordModalMode = 'create';
 var subscriptionTypes = [];
 var subscriptions = [];
 var cultivations = [];
+var fetchErrors = {};
 var pendingGroups = {};
 var saveQueue = Promise.resolve();
 
@@ -285,6 +286,11 @@ function renderCultivationList() {
     var listEl = document.getElementById('cultivation-toggle-list');
     if (!listEl) return;
 
+    if (fetchErrors.cultivations) {
+        listEl.innerHTML = '<p class="settings-error">재배지 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>';
+        return;
+    }
+
     if (!Array.isArray(cultivations) || cultivations.length === 0) {
         listEl.innerHTML = '<p class="settings-empty">참여 중인 재배지가 없어요.</p>';
         return;
@@ -337,6 +343,24 @@ function refreshSubscriptionUi() {
         return;
     }
     setSubscriptionHint('켠 유형의 알림을 선택한 재배지로 받아요.');
+}
+
+function renderFetchErrors() {
+    var failed = Object.keys(fetchErrors).filter(function (key) { return fetchErrors[key]; });
+    if (failed.length === 0) return;
+    var endpointFailed = failed.indexOf('endpoints') !== -1;
+    var subscriptionFailed = failed.indexOf('subscriptions') !== -1
+        || failed.indexOf('subscription-types') !== -1;
+    var cultivationFailed = failed.indexOf('cultivations') !== -1;
+    if (endpointFailed) {
+        setDiscordStatus('연결 상태를 불러오지 못했습니다', false);
+    }
+    if (cultivationFailed) {
+        setSubscriptionHint('재배지 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } else if (subscriptionFailed) {
+        setSubscriptionHint('구독 설정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    setTogglesBusy(true);
 }
 
 function enqueueSave(task) {
@@ -621,7 +645,9 @@ function initFromBootstrap() {
     subscriptionTypes = Array.isArray(window.SUBSCRIPTION_TYPES_BOOTSTRAP) ? window.SUBSCRIPTION_TYPES_BOOTSTRAP : [];
     subscriptions = Array.isArray(window.SUBSCRIPTIONS_BOOTSTRAP) ? window.SUBSCRIPTIONS_BOOTSTRAP : [];
     cultivations = Array.isArray(window.CULTIVATIONS_BOOTSTRAP) ? window.CULTIVATIONS_BOOTSTRAP : [];
+    fetchErrors = window.NOTIFICATION_FETCH_ERRORS_BOOTSTRAP || {};
     refreshSubscriptionUi();
+    renderFetchErrors();
 }
 
 function bindCategoryToggles() {
