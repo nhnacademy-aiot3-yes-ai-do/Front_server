@@ -11,6 +11,7 @@ runs:
         # CI-only placeholders: these are not production OAuth credentials.
         echo "GOOGLE_CLIENT_ID=ci-google-client-id" >> "$GITHUB_ENV"
         echo "GOOGLE_SECRET=ci-google-client-secret" >> "$GITHUB_ENV"
+        echo "GOOGLE_REDIRECT_URI=http://localhost:8080/login/oauth2/code/google" >> "$GITHUB_ENV"
 
         # Tests must not issue Secure cookies over the GitHub runner's HTTP test requests.
         echo "COOKIE_SECURE=false" >> "$GITHUB_ENV"

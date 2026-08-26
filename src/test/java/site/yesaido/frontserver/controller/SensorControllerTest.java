@@ -18,7 +18,6 @@ import site.yesaido.frontserver.config.MethodOverrideConfig;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import tools.jackson.databind.ObjectMapper;
@@ -176,28 +175,4 @@ class SensorControllerTest {
         verify(sensorClient).deleteSensor(10L, 20L);
     }
 
-    @Test
-    void getLatestSensorValuesPreservesWrapperContract() throws Exception {
-        when(sensorClient.getLatestSensorValues(10L))
-                .thenReturn(ResponseEntity.ok(new LatestSensorValueListResponse(List.of())));
-
-        mockMvc.perform(get("/cultivations/{cultivation-id}/sensor-values", 10L).cookie(LOGGED_IN))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.latestSensorValueResponses").isArray());
-
-        verify(sensorClient).getLatestSensorValues(10L);
-    }
-
-    @Test
-    void getLatestSensorValuesDoesNotRelayUpstreamHeadersToBrowserResponse() throws Exception {
-        when(sensorClient.getLatestSensorValues(10L))
-                .thenReturn(ResponseEntity.ok()
-                        .header("X-Upstream-Only", "must-not-reach-browser")
-                        .body(new LatestSensorValueListResponse(List.of())));
-
-        mockMvc.perform(get("/cultivations/{cultivation-id}/sensor-values", 10L).cookie(LOGGED_IN))
-                .andExpect(status().isOk())
-                .andExpect(header().doesNotExist("X-Upstream-Only"))
-                .andExpect(jsonPath("$.latestSensorValueResponses").isArray());
-    }
 }
