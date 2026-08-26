@@ -1,4 +1,29 @@
-@import url("https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Gowun+Dodum&display=swap");
+/* 외부 CDN(Google Fonts) 의존성 제거를 위해 로컬로 자체 호스팅함.
+   (lucide.js를 로컬 아이콘 셋으로 자체 호스팅한 것과 같은 이유)
+   폰트 파일은 /static/fonts/, 서빙 경로는 WebConfig의 "/fonts/**" 핸들러 참고. */
+@font-face {
+    font-family: "Gaegu";
+    src: url("/fonts/Gaegu-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Gaegu";
+    src: url("/fonts/Gaegu-Bold.woff2") format("woff2");
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Gowun Dodum";
+    src: url("/fonts/GowunDodum-Regular.woff2") format("woff2");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
 :root {
     --brown-900: #3f2a1d;
