@@ -15,6 +15,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.client.SensorClient;
+import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.controller.admin.AdminViewController;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
@@ -47,6 +48,9 @@ class AdminControllerTest {
 
     @MockitoBean
     private SensorClient sensorClient;
+
+    @MockitoBean
+    private UserClient userClient;
 
     private static final Cookie ADMIN_COOKIE = new Cookie("role", "ADMIN");
     private static final Cookie ACCESS_COOKIE = new Cookie("accessToken", "adminToken");

@@ -2,17 +2,23 @@ package site.yesaido.frontserver.controller.admin;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.client.SensorClient;
+import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.dto.inquiry.InquiryStatus;
 import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryPageResponse;
 import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryResponse;
+import site.yesaido.frontserver.dto.user.response.MemberSummaryPageResponse;
+import site.yesaido.frontserver.dto.user.response.MemberSummaryResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
@@ -25,9 +31,11 @@ import java.util.List;
 public class AdminViewController {
 
     private static final int DASHBOARD_INQUIRY_PREVIEW_SIZE = 4;
+    private static final int DASHBOARD_MEMBER_PREVIEW_SIZE = 4;
 
     private final InquiryClient inquiryClient;
     private final SensorClient sensorClient;
+    private final UserClient userClient;
     private final ViewJsonWriter viewJsonWriter;
 
     @GetMapping("/admin")
@@ -56,9 +64,25 @@ public class AdminViewController {
             log.warn("관리자 대시보드: 버섯 종류 조회 실패", e);
         }
 
+        List<MemberSummaryResponse> recentMembers = List.of();
+        long totalMemberCount = 0;
+        try {
+            Pageable pageable = PageRequest.of(0, DASHBOARD_MEMBER_PREVIEW_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
+            ApiResponse<MemberSummaryPageResponse> response = userClient.getMembers("active", pageable);
+            MemberSummaryPageResponse page = response != null ? response.data() : null;
+            if (page != null) {
+                recentMembers = page.content() != null ? page.content() : List.of();
+                totalMemberCount = page.totalElements() != null ? page.totalElements() : 0;
+            }
+        } catch (Exception e) {
+            log.warn("관리자 대시보드: 회원 정보 조회 실패", e);
+        }
+
         model.addAttribute("pendingInquiries", pendingInquiries);
         model.addAttribute("pendingInquiryCount", pendingInquiryCount);
         model.addAttribute("mushroomCount", mushroomCount);
+        model.addAttribute("recentMembers", recentMembers);
+        model.addAttribute("totalMemberCount", totalMemberCount);
 
         return "admin/index";
     }

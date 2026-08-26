@@ -21,6 +21,8 @@ function renderSensorTypes() {
     var totalPages = Math.max(1, Math.ceil(SENSOR_TYPES.length / SENSOR_TYPE_PAGE_SIZE));
     if (sensorTypePage > totalPages) sensorTypePage = totalPages;
 
+    document.getElementById('sensor-type-total-count').textContent = SENSOR_TYPES.length;
+
     var start = (sensorTypePage - 1) * SENSOR_TYPE_PAGE_SIZE;
     var pageData = SENSOR_TYPES.slice(start, start + SENSOR_TYPE_PAGE_SIZE);
 
@@ -28,14 +30,13 @@ function renderSensorTypes() {
     tbody.innerHTML = '';
     pageData.forEach(function (t) {
         var tr = document.createElement('tr');
-        tr.className = 'readonly';
         tr.innerHTML =
             '<td>' + escapeHtml(t.type) + '</td>' +
             '<td>' + escapeHtml(t.valueUnit) + '</td>' +
-            '<td>' +
-            '<button class="row-action-btn" type="button" title="수정" onclick="openSensorTypeForm(' + Number(t.id) + ')"><i data-lucide="pencil"></i></button>' +
-            '<button class="row-action-btn" type="button" title="삭제" onclick="openDeleteSensorType(' + Number(t.id) + ')"><i data-lucide="shield-alert"></i></button>' +
-            '</td>';
+            '<td><div class="row-actions">' +
+            '<button type="button" title="수정" onclick="openSensorTypeForm(' + Number(t.id) + ')"><i data-lucide="pencil"></i></button>' +
+            '<button type="button" title="삭제" onclick="openDeleteSensorType(' + Number(t.id) + ')"><i data-lucide="trash-2"></i></button>' +
+            '</div></td>';
         tbody.appendChild(tr);
     });
 
@@ -54,10 +55,17 @@ function renderSensorTypePagination(totalPages) {
 
     var prevDisabled = sensorTypePage === 1 ? ' disabled' : '';
     var nextDisabled = sensorTypePage === totalPages ? ' disabled' : '';
+
+    var pageBtns = '';
+    for (var p = 1; p <= totalPages; p++) {
+        pageBtns += '<button class="page' + (p === sensorTypePage ? ' active' : '') + '" type="button" onclick="goToSensorTypePage(' + p + ')">' + p + '</button>';
+    }
+
     wrap.innerHTML =
-        '<button class="admin-page-btn' + prevDisabled + '" type="button" onclick="goToSensorTypePage(' + (sensorTypePage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
-        '<span class="admin-page-label">' + sensorTypePage + ' / ' + totalPages + '</span>' +
-        '<button class="admin-page-btn' + nextDisabled + '" type="button" onclick="goToSensorTypePage(' + (sensorTypePage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+        '<button class="page-arrow' + prevDisabled + '" type="button" onclick="goToSensorTypePage(' + (sensorTypePage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
+        pageBtns +
+        '<button class="page-arrow' + nextDisabled + '" type="button" onclick="goToSensorTypePage(' + (sensorTypePage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+    lucide.createIcons();
 }
 
 function openSensorTypeForm(id) {

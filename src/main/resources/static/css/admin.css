@@ -26,8 +26,8 @@ body {
 .admin-sidebar {
     width: 14.5rem;
     flex-shrink: 0;
-    background: linear-gradient(180deg, #3f2a1d, #2c1c12);
-    border-right: 1px solid rgba(0, 0, 0, 0.25);
+    background: linear-gradient(180deg, var(--cream-100), var(--cream-200));
+    border-right: 1px solid rgba(139, 94, 60, 0.16);
     padding: 1.6rem 1.1rem;
     display: flex;
     flex-direction: column;
@@ -37,7 +37,8 @@ body {
 .admin-sidebar-brand {
     display: flex;
     justify-content: center;
-    padding: 0.4rem 0 1.6rem;
+    padding: 0 0 1.6rem;
+    margin-top: -0.6rem;
 }
 
 
@@ -55,7 +56,7 @@ body {
 }
 
 .admin-sidebar-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(139, 94, 60, 0.16);
     padding-top: 1rem;
     margin-top: 1rem;
     display: flex;
@@ -74,15 +75,15 @@ body {
     width: 2.1rem;
     height: 2.1rem;
     box-shadow: none;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: rgba(139, 94, 60, 0.1);
+    color: var(--brown-700);
 }
 
 .admin-sidebar-profile-name {
     font-family: "Gaegu", inherit;
     font-weight: 700;
     font-size: 0.98rem;
-    color: #fff;
+    color: var(--brown-900);
 }
 
 .admin-sidebar-logout {
@@ -95,14 +96,14 @@ body {
     font-family: "Gaegu", inherit;
     font-weight: 700;
     font-size: 0.92rem;
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--brown-500);
     cursor: pointer;
     border-radius: 10px;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
 .admin-sidebar-logout svg { width: 1.05rem; height: 1.05rem; }
-.admin-sidebar-logout:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.admin-sidebar-logout:hover { background: rgba(139, 94, 60, 0.08); color: var(--brown-900); }
 
 .admin-sidebar-group {
     display: flex;
@@ -114,7 +115,7 @@ body {
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.08em;
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--brown-300);
     text-transform: uppercase;
     padding: 0 0.7rem;
     margin-bottom: 0.2rem;
@@ -129,16 +130,16 @@ body {
     font-family: "Gaegu", inherit;
     font-weight: 700;
     font-size: 0.98rem;
-    color: rgba(255, 255, 255, 0.72);
+    color: var(--brown-700);
     text-decoration: none;
     cursor: pointer;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
-.admin-sidebar-link svg { width: 1.15rem; height: 1.15rem; flex-shrink: 0; color: rgba(255, 255, 255, 0.5); transition: color 0.15s ease; }
+.admin-sidebar-link svg { width: 1.15rem; height: 1.15rem; flex-shrink: 0; color: var(--brown-500); transition: color 0.15s ease; }
 
-.admin-sidebar-link:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
-.admin-sidebar-link:hover svg { color: #fff; }
+.admin-sidebar-link:hover { background: rgba(139, 94, 60, 0.08); color: var(--brown-900); }
+.admin-sidebar-link:hover svg { color: var(--brown-900); }
 
 .admin-sidebar-link.is-active { background: var(--sage-500); color: #fff; }
 .admin-sidebar-link.is-active svg { color: #fff; }
@@ -437,9 +438,11 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 }
 
 /* =========================================================
-   회원 관리 페이지: 사용자가 준 참고 디자인(member-admin.html/css)을
-   기존 브랜드 톤(--brown-900/--sage-500 등)에 맞춰 옮겨온 전용 스타일.
-   이 블록의 클래스들은 admin/members.html에서만 사용됨.
+   관리자 목록 페이지 공통 스타일: 사용자가 준 참고 디자인(member-admin.html/css)을
+   기존 브랜드 톤(--brown-900/--sage-500 등)에 맞춰 옮겨온 것. 원래 회원 관리 페이지만
+   위해 만들었지만, 문의/버섯/센서 관리 페이지도 같은 톤으로 통일하면서 함께 재사용 중.
+   (구 .list-table/.admin-pagination/.row-action-btn 계열은 cultivation/list.html에서
+   아직 쓰고 있어서 그대로 남겨둠 — 여기서 지우지 말 것)
 ========================================================= */
 
 /* ----- 상단 인사말 바 (사이드바 옆, 페이지 콘텐츠 맨 위) ----- */
@@ -542,16 +545,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
     margin: 0.4rem 0 0;
     font-size: 0.85rem;
     color: var(--brown-500);
-}
-
-.mushroom-decoration {
-    position: absolute;
-    right: 0.5rem;
-    bottom: -0.8rem;
-    font-size: 2.6rem;
-    letter-spacing: -0.6rem;
-    opacity: 0.5;
-    pointer-events: none;
 }
 
 /* ----- 회원 카드: 툴바 + 테이블 ----- */

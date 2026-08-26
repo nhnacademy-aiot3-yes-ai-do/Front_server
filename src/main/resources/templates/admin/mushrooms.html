@@ -17,35 +17,39 @@
 <div class="page-container admin-list-page">
 
     <div class="admin-panel">
-        <div class="admin-page-head">
-            <button class="admin-back-link" type="button" onclick="location.href='/admin'">
-                <i data-lucide="chevron-left"></i>버섯 등록
-            </button>
-            <div class="admin-filters">
-                <button class="btn btn-primary btn-sm" type="button" onclick="openMushroomForm()">
-                    <i data-lucide="plus" style="width:14px;height:14px;"></i>새 버섯 등록
-                </button>
+        <section class="admin-page-heading">
+            <span class="admin-page-heading-icon"><i data-lucide="sprout"></i></span>
+            <div><h2>버섯 등록</h2><p>재배 가능한 버섯 종류와 적정 생육 환경을 관리해요.</p></div>        </section>
+
+        <section class="member-card">
+            <div class="member-toolbar">
+                <div class="member-count">전체 버섯 <strong id="mushroom-total-count">0</strong>종</div>
+                <div class="toolbar-actions">
+                    <button class="add-button" type="button" onclick="openMushroomForm()">
+                        <i data-lucide="plus"></i>새 버섯 등록
+                    </button>
+                </div>
             </div>
-        </div>
 
-        <div class="list-table-wrap">
-            <table class="list-table">
-                <thead>
-                <tr>
-                    <th>국문명</th>
-                    <th>영문명</th>
-                    <th>학명</th>
-                    <th>적정 온도</th>
-                    <th>적정 습도</th>
-                    <th>등록일</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody id="mushroom-tbody"></tbody>
-            </table>
-        </div>
+            <div class="table-wrap">
+                <table class="member-table">
+                    <thead>
+                    <tr>
+                        <th>국문명</th>
+                        <th>영문명</th>
+                        <th>학명</th>
+                        <th>적정 온도</th>
+                        <th>적정 습도</th>
+                        <th>등록일</th>
+                        <th>관리</th>
+                    </tr>
+                    </thead>
+                    <tbody id="mushroom-tbody"></tbody>
+                </table>
+            </div>
+        </section>
 
-        <div class="admin-pagination" id="mushroom-pagination"></div>
+        <div class="pagination" id="mushroom-pagination"></div>
     </div>
 
 </div>
