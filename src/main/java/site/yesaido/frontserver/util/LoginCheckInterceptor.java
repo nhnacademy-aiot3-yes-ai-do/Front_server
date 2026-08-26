@@ -71,9 +71,6 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
         if ("GET".equalsIgnoreCase(method) && CULTIVATION_DETAIL_PATH.matcher(path).matches()) {
             return false;
         }
-        if ("DELETE".equalsIgnoreCase(method) && CULTIVATION_ID_ONLY_PATH.matcher(path).matches()) {
-            return false;
-        }
-        return true;
+        return !"DELETE".equalsIgnoreCase(method) || !CULTIVATION_ID_ONLY_PATH.matcher(path).matches();
     }
 }
