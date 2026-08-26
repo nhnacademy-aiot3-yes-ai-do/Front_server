@@ -1,6 +1,8 @@
 lucide.createIcons();
 
-var PAGE_SIZE = 6;
+// 센서 탭은 컬럼이 8개라 재배지 탭(5개)보다 줄바꿈에 취약해서, 같은 영역에서
+// 스크롤 없이 페이지네이션만으로 꽉 차게 보이도록 탭별로 다른 페이지 크기를 둠.
+var PAGE_SIZES = { cultivation: 7, sensor: 6 };
 
 var cultivationItemsData = (cultivationListPageData && cultivationListPageData.cultivations) || [];
 var cultivationData = cultivationItemsData.map(function (item) { return item.cultivation; });
@@ -48,11 +50,13 @@ function formatDate(value) {
 function renderCultivationRow(c) {
     var tr = document.createElement('tr');
     tr.onclick = function () { location.href = '/cultivations/' + c.cultivationId; };
+    // 컬럼 너비를 고정(table-layout: fixed)했더니 긴 이름은 말줄임표로 잘리게 됨 ->
+    // title 속성으로 hover 시 전체 텍스트를 볼 수 있게 함
     tr.innerHTML =
-        '<td>' + escapeHtml(c.name) + '</td>' +
+        '<td title="' + escapeHtml(c.name) + '">' + escapeHtml(c.name) + '</td>' +
         '<td>' + (c.mushroomId != null ? (MUSHROOM_NAME_MAP[c.mushroomId] || '버섯 #' + c.mushroomId) : '-') + '</td>' +
         '<td>' + (c.memberCount != null ? c.memberCount + '명' : '-') + '</td>' +
-        '<td>' + escapeHtml(c.ownerNickname || '-') + '</td>' +
+        '<td title="' + escapeHtml(c.ownerNickname || '-') + '">' + escapeHtml(c.ownerNickname || '-') + '</td>' +
         '<td>' + formatDate(c.createdAt) + '</td>';
     return tr;
 }
@@ -63,17 +67,25 @@ function statusLabel(status) {
     return '오프라인';
 }
 
+function statusBadgeClass(status) {
+    if (status === 'ONLINE') return 'online';
+    if (status === 'ERROR') return 'error';
+    return 'offline';
+}
+
 function renderSensorRow(s) {
     var tr = document.createElement('tr');
     var typesLabel = (s.sensorTypes || []).map(function (t) { return t.type + '(' + t.valueUnit + ')'; }).join(', ') || '-';
+    // 컬럼 너비를 고정(table-layout: fixed)했더니 긴 값은 말줄임표로 잘리게 됨 ->
+    // title 속성으로 hover 시 전체 텍스트를 볼 수 있게 함
     tr.innerHTML =
-        '<td>' + escapeHtml(s.cultivationName) + '</td>' +
-        '<td>' + escapeHtml(s.location) + '</td>' +
-        '<td>' + escapeHtml(s.locationDetail) + '</td>' +
-        '<td>' + escapeHtml(s.deviceModel) + '</td>' +
-        '<td>' + escapeHtml(s.deviceEui) + '</td>' +
-        '<td>' + escapeHtml(typesLabel) + '</td>' +
-        '<td>' + statusLabel(s.sensorStatus) + '</td>' +
+        '<td title="' + escapeHtml(s.cultivationName) + '">' + escapeHtml(s.cultivationName) + '</td>' +
+        '<td title="' + escapeHtml(s.location) + '">' + escapeHtml(s.location) + '</td>' +
+        '<td title="' + escapeHtml(s.locationDetail) + '">' + escapeHtml(s.locationDetail) + '</td>' +
+        '<td title="' + escapeHtml(s.deviceModel) + '">' + escapeHtml(s.deviceModel) + '</td>' +
+        '<td title="' + escapeHtml(s.deviceEui) + '">' + escapeHtml(s.deviceEui) + '</td>' +
+        '<td title="' + escapeHtml(typesLabel) + '">' + escapeHtml(typesLabel) + '</td>' +
+        '<td><span class="sensor-status-badge ' + statusBadgeClass(s.sensorStatus) + '">' + statusLabel(s.sensorStatus) + '</span></td>' +
         '<td></td>';
     var actionTd = tr.lastElementChild;
     var btn = document.createElement('button');
@@ -93,13 +105,14 @@ var ROW_RENDERERS = { cultivation: renderCultivationRow, sensor: renderSensorRow
 
 function renderList(key) {
     var state = listState[key];
-    var totalPages = Math.max(1, Math.ceil(state.data.length / PAGE_SIZE));
+    var pageSize = PAGE_SIZES[key];
+    var totalPages = Math.max(1, Math.ceil(state.data.length / pageSize));
     state.page = Math.min(state.page, totalPages - 1);
 
     var tbody = document.getElementById(key + '-tbody');
     tbody.innerHTML = '';
-    var start = state.page * PAGE_SIZE;
-    state.data.slice(start, start + PAGE_SIZE).forEach(function (item) {
+    var start = state.page * pageSize;
+    state.data.slice(start, start + pageSize).forEach(function (item) {
         tbody.appendChild(ROW_RENDERERS[key](item));
     });
 
@@ -120,7 +133,7 @@ function renderList(key) {
 
 function changePage(key, delta) {
     var state = listState[key];
-    var totalPages = Math.max(1, Math.ceil(state.data.length / PAGE_SIZE));
+    var totalPages = Math.max(1, Math.ceil(state.data.length / PAGE_SIZES[key]));
     state.page = Math.max(0, Math.min(totalPages - 1, state.page + delta));
     renderList(key);
 }

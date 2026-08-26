@@ -160,6 +160,26 @@ public class CultivationController {
                 : null;
         model.addAttribute("growthDays", growthDays);
 
+        // 재배 종료 후 "이전 재배와 비교" 모달에서 쓸 실제 이력 목록. 현재 재배 건은 비교 대상에서 제외.
+        List<CultivationHistoryResponse> pastCultivations = List.of();
+        try {
+            CultivationHistoryPageResponse history = cultivationClient.getHistory(0, 20).getBody();
+            if (history != null && history.content() != null) {
+                pastCultivations = history.content().stream()
+                        .filter(h -> !h.cultivationId().equals(cultivationId))
+                        .toList();
+            }
+        } catch (Exception e) {
+            log.warn("재배 이력 비교용 목록 조회 실패", e);
+        }
+        model.addAttribute("pastCultivationsJson", viewJsonWriter.toJson(pastCultivations));
+
+        // 비교 목록에 "버섯 #1" 대신 한글 품종명을 보여주기 위한 기준정보 (history 페이지와 동일 패턴)
+        MushroomReferenceInfoListResponse mushroomRefs = sensorClient.getAllMushroomReferences().getBody();
+        model.addAttribute(MUSHROOMS_JSON, viewJsonWriter.toScriptJson(
+                mushroomRefs == null ? List.of() : mushroomRefs.mushroomReferenceInfoResponses()
+        ));
+
         return "dashboard/main";
     }
 
