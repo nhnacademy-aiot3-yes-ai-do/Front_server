@@ -40,50 +40,9 @@ public class AdminViewController {
 
     @GetMapping("/admin")
     public String admin(Model model) {
-        List<InquirySummaryResponse> pendingInquiries = List.of();
-        long pendingInquiryCount = 0;
-        try {
-            ApiResponse<InquirySummaryPageResponse> response =
-                    inquiryClient.getAllInquiries(InquiryStatus.PENDING, 0, DASHBOARD_INQUIRY_PREVIEW_SIZE);
-            InquirySummaryPageResponse page = response != null ? response.data() : null;
-            if (page != null) {
-                pendingInquiries = page.content() != null ? page.content() : List.of();
-                pendingInquiryCount = page.totalElements() != null ? page.totalElements() : 0;
-            }
-        } catch (Exception e) {
-            log.warn("관리자 대시보드: 미답변 문의 조회 실패", e);
-        }
-
-        int mushroomCount = 0;
-        try {
-            MushroomReferenceInfoListResponse mushroomReferences = sensorClient.getAllMushroomReferences().getBody();
-            if (mushroomReferences != null && mushroomReferences.mushroomReferenceInfoResponses() != null) {
-                mushroomCount = mushroomReferences.mushroomReferenceInfoResponses().size();
-            }
-        } catch (Exception e) {
-            log.warn("관리자 대시보드: 버섯 종류 조회 실패", e);
-        }
-
-        List<MemberSummaryResponse> recentMembers = List.of();
-        long totalMemberCount = 0;
-        try {
-            Pageable pageable = PageRequest.of(0, DASHBOARD_MEMBER_PREVIEW_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
-            ApiResponse<MemberSummaryPageResponse> response = userClient.getMembers("active", pageable);
-            MemberSummaryPageResponse page = response != null ? response.data() : null;
-            if (page != null) {
-                recentMembers = page.content() != null ? page.content() : List.of();
-                totalMemberCount = page.totalElements() != null ? page.totalElements() : 0;
-            }
-        } catch (Exception e) {
-            log.warn("관리자 대시보드: 회원 정보 조회 실패", e);
-        }
-
-        model.addAttribute("pendingInquiries", pendingInquiries);
-        model.addAttribute("pendingInquiryCount", pendingInquiryCount);
-        model.addAttribute("mushroomCount", mushroomCount);
-        model.addAttribute("recentMembers", recentMembers);
-        model.addAttribute("totalMemberCount", totalMemberCount);
-
+        loadPendingInquiries(model);
+        loadMushroomCount(model);
+        loadRecentMembers(model);
         return "admin/index";
     }
 
@@ -138,5 +97,54 @@ public class AdminViewController {
             log.warn("관리자: 버섯 기준 정보 조회 실패", e);
             return new MushroomReferenceInfoListResponse(List.of());
         }
+    }
+
+    private void loadPendingInquiries(Model model) {
+        List<InquirySummaryResponse> pendingInquiries = List.of();
+        long pendingInquiryCount = 0;
+        try {
+            ApiResponse<InquirySummaryPageResponse> response =
+                    inquiryClient.getAllInquiries(InquiryStatus.PENDING, 0, DASHBOARD_INQUIRY_PREVIEW_SIZE);
+            InquirySummaryPageResponse page = response != null ? response.data() : null;
+            if (page != null) {
+                pendingInquiries = page.content() != null ? page.content() : List.of();
+                pendingInquiryCount = page.totalElements() != null ? page.totalElements() : 0;
+            }
+        } catch (Exception e) {
+            log.warn("관리자 대시보드: 미답변 문의 조회 실패", e);
+        }
+        model.addAttribute("pendingInquiries", pendingInquiries);
+        model.addAttribute("pendingInquiryCount", pendingInquiryCount);
+    }
+
+    private void loadMushroomCount(Model model) {
+        int mushroomCount = 0;
+        try {
+            MushroomReferenceInfoListResponse mushroomReferences = sensorClient.getAllMushroomReferences().getBody();
+            if (mushroomReferences != null && mushroomReferences.mushroomReferenceInfoResponses() != null) {
+                mushroomCount = mushroomReferences.mushroomReferenceInfoResponses().size();
+            }
+        } catch (Exception e) {
+            log.warn("관리자 대시보드: 버섯 종류 조회 실패", e);
+        }
+        model.addAttribute("mushroomCount", mushroomCount);
+    }
+
+    private void loadRecentMembers(Model model) {
+        List<MemberSummaryResponse> recentMembers = List.of();
+        long totalMemberCount = 0;
+        try {
+            Pageable pageable = PageRequest.of(0, DASHBOARD_MEMBER_PREVIEW_SIZE, Sort.by(Sort.Direction.DESC, "createdAt"));
+            ApiResponse<MemberSummaryPageResponse> response = userClient.getMembers("active", pageable);
+            MemberSummaryPageResponse page = response != null ? response.data() : null;
+            if (page != null) {
+                recentMembers = page.content() != null ? page.content() : List.of();
+                totalMemberCount = page.totalElements() != null ? page.totalElements() : 0;
+            }
+        } catch (Exception e) {
+            log.warn("관리자 대시보드: 회원 정보 조회 실패", e);
+        }
+        model.addAttribute("recentMembers", recentMembers);
+        model.addAttribute("totalMemberCount", totalMemberCount);
     }
 }
