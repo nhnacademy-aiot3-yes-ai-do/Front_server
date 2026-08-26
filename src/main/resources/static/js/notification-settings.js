@@ -286,6 +286,11 @@ function renderCultivationList() {
     var listEl = document.getElementById('cultivation-toggle-list');
     if (!listEl) return;
 
+    if (fetchErrors.cultivations) {
+        listEl.innerHTML = '<p class="settings-error">재배지 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</p>';
+        return;
+    }
+
     if (!Array.isArray(cultivations) || cultivations.length === 0) {
         listEl.innerHTML = '<p class="settings-empty">참여 중인 재배지가 없어요.</p>';
         return;
