@@ -41,10 +41,12 @@
         <div class="admin-stat-row">
             <div class="admin-stat-card">
                 <span class="admin-stat-icon-wrap"><i data-lucide="users"></i></span>
-                <div>
-                    <!-- TODO: User_server에 관리자용 회원 수/목록 조회 API가 아직 없어서 데모 값 유지 -->
-                    <div class="admin-stat-value">12</div>
-                    <div class="admin-stat-label">전체 회원</div>
+                <div class="admin-stat-card">
+                    <span class="admin-stat-icon-wrap"><i data-lucide="users"></i></span>
+                    <div>
+                        <div class="admin-stat-value" th:text="${totalMemberCount}">12</div>
+                        <div class="admin-stat-label">전체 회원</div>
+                    </div>
                 </div>
             </div>
             <div class="admin-stat-card">
@@ -90,34 +92,15 @@
                     <a href="/admin/members" class="admin-activity-more">전체보기<i data-lucide="chevron-right"></i></a>
                 </div>
                 <div class="admin-activity-list">
-                    <div class="admin-activity-item">
+                    <div class="admin-activity-item" th:each="member : ${recentMembers}">
                         <span class="admin-activity-item-icon"><i data-lucide="circle-user-round"></i></span>
                         <div class="admin-activity-item-body">
-                            <div class="admin-activity-item-title">nickname11</div>
-                            <div class="admin-activity-item-meta">nickname11@gmail.com · 2026.07.03 가입</div>
+                            <div class="admin-activity-item-title" th:text="${member.nickname}">nickname</div>
+                            <div class="admin-activity-item-meta"
+                                 th:text="${member.email} + ' · ' + ${#temporals.format(member.createdAt, 'yyyy.MM.dd')} + ' 가입'">nickname@gmail.com · 2026.07.03 가입</div>
                         </div>
                     </div>
-                    <div class="admin-activity-item">
-                        <span class="admin-activity-item-icon"><i data-lucide="circle-user-round"></i></span>
-                        <div class="admin-activity-item-body">
-                            <div class="admin-activity-item-title">nickname10</div>
-                            <div class="admin-activity-item-meta">nickname10@gmail.com · 2026.07.01 가입</div>
-                        </div>
-                    </div>
-                    <div class="admin-activity-item">
-                        <span class="admin-activity-item-icon"><i data-lucide="circle-user-round"></i></span>
-                        <div class="admin-activity-item-body">
-                            <div class="admin-activity-item-title">nickname8</div>
-                            <div class="admin-activity-item-meta">nickname8@gmail.com · 2026.06.29 가입</div>
-                        </div>
-                    </div>
-                    <div class="admin-activity-item">
-                        <span class="admin-activity-item-icon"><i data-lucide="circle-user-round"></i></span>
-                        <div class="admin-activity-item-body">
-                            <div class="admin-activity-item-title">nickname7</div>
-                            <div class="admin-activity-item-meta">nickname7@gmail.com · 2026.06.27 가입</div>
-                        </div>
-                    </div>
+                    <div class="admin-activity-empty" th:if="${#lists.isEmpty(recentMembers)}">최근 가입한 회원이 없어요.</div>
                 </div>
             </div>
         </div>
