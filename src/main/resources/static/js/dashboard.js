@@ -1206,3 +1206,147 @@ renderPhotoThumbs();
 renderPhotoUploadPreview();
 renderMainPhoto();
 initializeSensorBootstrap();
+
+var DIFFICULTY_LABELS = ['', '매우 쉬움', '쉬움', '보통', '어려움', '매우 어려움'];
+var SPEED_LABELS = ['', '매우 느림', '느림', '보통', '빠름', '매우 빠름'];
+
+function makeBadge(text) {
+    var span = document.createElement('span');
+    span.className = 'mushroom-badge';
+    span.textContent = text;
+    return span;
+}
+
+function renderEnvBlock(title, condition) {
+    var box = document.createElement('div');
+    box.className = 'mushroom-env-box';
+
+    var heading = document.createElement('div');
+    heading.className = 'mushroom-env-heading';
+    heading.textContent = title;
+    box.appendChild(heading);
+
+    var rows = [
+        ['온도', condition ? condition.temperature : null, '℃'],
+        ['습도', condition ? condition.humidity : null, '%'],
+        ['CO2', condition ? condition.co2 : null, 'ppm'],
+        ['조도', condition ? condition.light : null, 'lux']
+    ];
+
+    rows.forEach(function (row) {
+        var label = row[0], range = row[1], unit = row[2];
+        var line = document.createElement('div');
+        line.className = 'mushroom-env-row';
+        var value = (range && range.min != null && range.max != null)
+            ? (range.min + ' ~ ' + range.max + unit)
+            : '정보 없음';
+        line.innerHTML = '<span class="mushroom-env-label">' + label + '</span><span class="mushroom-env-value"></span>';
+        line.querySelector('.mushroom-env-value').textContent = value;
+        box.appendChild(line);
+    });
+
+    return box;
+}
+
+function renderMushroomInfo(guide) {
+    var mushroomName = (guide && guide.mushroomName) ? guide.mushroomName : '버섯';
+    document.getElementById('mushroom-info-name').textContent = mushroomName;
+
+    if (!guide) {
+        document.getElementById('mushroom-badges').innerHTML = '';
+        document.getElementById('mushroom-info-summary').textContent = 'AI 가이드를 불러오지 못했어요. 재배지는 생성 후에도 이용할 수 있어요.';
+        document.getElementById('mushroom-info-caution-wrap').style.display = 'none';
+        document.getElementById('mushroom-info-tip-wrap').style.display = 'none';
+        document.getElementById('mushroom-env-grid').innerHTML = '';
+        document.getElementById('mushroom-recipe-btn').style.display = 'none';
+        return;
+    }
+
+    var badges = document.getElementById('mushroom-badges');
+    badges.innerHTML = '';
+    var evaluation = guide.evaluation;
+    if (evaluation) {
+        badges.appendChild(makeBadge('난이도 ' + (DIFFICULTY_LABELS[evaluation.difficultyLevel] || evaluation.difficultyLevel)));
+        badges.appendChild(makeBadge('성장속도 ' + (SPEED_LABELS[evaluation.growthSpeed] || evaluation.growthSpeed)));
+        if (evaluation.sensitivity) {
+            badges.appendChild(makeBadge(evaluation.sensitivity));
+        }
+    }
+
+    document.getElementById('mushroom-info-summary').textContent = guide.summary || (evaluation ? evaluation.aiStrategy : '') || '';
+
+    var cautionWrap = document.getElementById('mushroom-info-caution-wrap');
+    if (guide.caution) {
+        cautionWrap.style.display = '';
+        document.getElementById('mushroom-info-caution').textContent = guide.caution;
+    } else {
+        cautionWrap.style.display = 'none';
+    }
+
+    var tipWrap = document.getElementById('mushroom-info-tip-wrap');
+    if (guide.tip) {
+        tipWrap.style.display = '';
+        document.getElementById('mushroom-info-tip').textContent = guide.tip;
+    } else {
+        tipWrap.style.display = 'none';
+    }
+
+    var envGrid = document.getElementById('mushroom-env-grid');
+    envGrid.innerHTML = '';
+    if (guide.cultivationCondition || guide.harvestCondition) {
+        envGrid.appendChild(renderEnvBlock('재배 환경 조건', guide.cultivationCondition));
+        envGrid.appendChild(renderEnvBlock('수확 환경 조건', guide.harvestCondition));
+    }
+
+    var recipeBtn = document.getElementById('mushroom-recipe-btn');
+    var recipeList = document.getElementById('mushroom-recipe-list');
+    recipeList.innerHTML = '';
+    if (guide.recipes && guide.recipes.length > 0) {
+        recipeBtn.style.display = '';
+        guide.recipes.forEach(function (recipe) {
+            var card = document.createElement('div');
+            card.className = 'mushroom-recipe-card';
+            var name = document.createElement('div');
+            name.className = 'mushroom-recipe-name';
+            name.textContent = recipe.name;
+            var instructions = document.createElement('div');
+            instructions.className = 'mushroom-recipe-instructions';
+            instructions.textContent = recipe.instructions;
+            card.appendChild(name);
+            card.appendChild(instructions);
+            recipeList.appendChild(card);
+        });
+    } else {
+        recipeBtn.style.display = 'none';
+    }
+
+    lucide.createIcons();
+}
+
+function openRecipeModal() {
+    document.getElementById('recipe-modal-overlay').classList.add('active');
+}
+
+function closeRecipeModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('recipe-modal-overlay').classList.remove('active');
+}
+
+function openMushroomGuideModal() {
+    if (!MUSHROOM_ID) {
+        alert('현재 재배지의 버섯 정보를 불러올 수 없습니다. 페이지를 새로고침 해주세요.');
+        return;
+    }
+
+    openModal('modal-mushroom-guide');
+
+    fetch('/cultivations/mushrooms/' + MUSHROOM_ID + '/guide')
+        .then(function (res) { return res.json(); })
+        .then(function (result) {
+            var guide = (result && result.success) ? result.data : null;
+            renderMushroomInfo(guide);
+        })
+        .catch(function () {
+            renderMushroomInfo(null);
+        });
+}
