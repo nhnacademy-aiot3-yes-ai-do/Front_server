@@ -12,6 +12,7 @@ import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivation
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidationResponse;
 import site.yesaido.frontserver.util.LoginRequired;
@@ -54,6 +55,14 @@ public class SensorController {
         return sensorClient.deleteSensor(cultivationId, sensorId);
     }
 
+
+    @GetMapping(value = "/{cultivation-id}/sensor-values/trend", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<SensorTrendPointListResponse> getSensorTrend(@PathVariable("cultivation-id") Long cultivationId,
+                                                                       @RequestParam("device-eui") String deviceEui,
+                                                                       @RequestParam("sensor-type") String sensorType) {
+        ResponseEntity<SensorTrendPointListResponse> upstream = sensorClient.getSensorTrend(cultivationId, deviceEui, sensorType);
+        return jsonResponse(upstream);
+    }
 
     @PostMapping("/{cultivation-id}/sensor-validation")
     public ResponseEntity<ApiResponse<SensorValidationResponse>> validationSensorThreshold(
