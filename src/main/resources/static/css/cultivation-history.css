@@ -185,7 +185,7 @@ body {
    라벨/값을 세로로 쌓는 카드 형태로 바꿔 여백을 더 잘 채우고 시각적으로 강조되게 함 */
 .env-stat-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0.9rem;
     margin-bottom: 1.4rem;
 }
@@ -377,7 +377,4 @@ body {
     }
 }
 
-@media (max-width: 560px) {
-    .env-stat-grid { grid-template-columns: repeat(2, 1fr); }
-}
 .compare-diff.flat { color: var(--brown-500); }

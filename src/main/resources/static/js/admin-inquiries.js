@@ -1,3 +1,5 @@
+lucide.createIcons();
+
 var INQUIRY_PAGE_SIZE = 8;
 var inquiryState = { page: 0, totalPages: 1 };
 var currentInquiryId = null;

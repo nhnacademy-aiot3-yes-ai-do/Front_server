@@ -110,6 +110,10 @@ body {
 .list-table {
     width: 100%;
     border-collapse: collapse;
+    /* 브라우저 기본(auto) 테이블 레이아웃은 현재 페이지에 렌더링된 값의 길이에 따라
+       컬럼 너비를 매번 다시 계산해서, 페이지를 넘기거나 탭을 오갈 때마다 열 위치가
+       미묘하게 흔들려 보였음 -> colgroup으로 폭을 고정(table-layout: fixed)해서 항상 동일하게 둠 */
+    table-layout: fixed;
 }
 
 .list-table thead th {
@@ -119,6 +123,9 @@ body {
     font-weight: 700;
     text-align: left;
     padding: 0.9rem 1.1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .list-table tbody td {
@@ -126,6 +133,9 @@ body {
     font-size: 0.9rem;
     color: var(--ink);
     border-top: 1px solid rgba(139, 94, 60, 0.14);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .list-table tbody tr {
@@ -144,6 +154,31 @@ body {
 #tab-sensor .list-table tbody tr:hover {
     background: none;
 }
+
+/* "오프라인" 같은 상태 텍스트가 좁은 칸에서 두 줄로 어색하게 잘려 보이던 문제 -> 뱃지로 감싸고 줄바꿈 금지 */
+.sensor-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.sensor-status-badge::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+}
+
+.sensor-status-badge.online { color: var(--sage-600); background: rgba(124, 148, 115, 0.18); }
+.sensor-status-badge.offline { color: var(--brown-500); background: rgba(139, 94, 60, 0.12); }
+.sensor-status-badge.error { color: var(--danger); background: rgba(192, 87, 74, 0.14); }
 
 /* ===== footer ===== */
 /* 버튼은 항상 우측 하단 고정, 페이지네이션은 버튼/내용과 무관하게 footer 정중앙에 절대배치 */
