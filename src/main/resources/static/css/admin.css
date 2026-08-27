@@ -246,7 +246,7 @@ body {
 
 .admin-stat-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 1rem;
     width: 100%;
 }
@@ -268,10 +268,12 @@ body {
     border-color: rgba(139, 94, 60, 0.24);
 }
 
-/* 카드 3개를 색으로 구분해서(세이지/코랄/골드) 한눈에 알아보기 쉽게 함 */
+/* 카드 5개를 색으로 구분해서(세이지/코랄/골드/브라운/틸) 한눈에 알아보기 쉽게 함 */
 .admin-stat-row .admin-stat-card:nth-child(1) .admin-stat-icon-wrap { background: rgba(124, 148, 115, 0.16); color: var(--sage-600); }
 .admin-stat-row .admin-stat-card:nth-child(2) .admin-stat-icon-wrap { background: rgba(192, 87, 74, 0.14); color: var(--danger); }
 .admin-stat-row .admin-stat-card:nth-child(3) .admin-stat-icon-wrap { background: rgba(201, 154, 63, 0.18); color: #a97c1f; }
+.admin-stat-row .admin-stat-card:nth-child(4) .admin-stat-icon-wrap { background: rgba(139, 94, 60, 0.16); color: var(--brown-700); }
+.admin-stat-row .admin-stat-card:nth-child(5) .admin-stat-icon-wrap { background: rgba(58, 141, 145, 0.16); color: #2f7a7e; }
 
 .admin-stat-icon-wrap {
     width: 2.4rem;
@@ -690,6 +692,12 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 
 .member-table td:last-child { text-align: center; }
 
+.ne-desc-cell {
+    max-width: 22rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .member-table tbody tr { background: #fff; transition: background 0.15s ease; }
 .member-table tbody tr:hover { background: var(--cream-200); }
 .member-table tbody tr:last-child td { border-bottom: 0; }
@@ -1036,7 +1044,8 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
     margin-bottom: 6px;
 }
 
-.modal-field input {
+.modal-field input,
+.modal-field textarea {
     width: 100%;
     padding: 11px 13px;
     font-size: 0.95rem;
@@ -1047,7 +1056,13 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
     background: #fff;
 }
 
-.modal-field input:focus { outline: none; border-color: var(--sage-500); }
+.modal-field textarea {
+    resize: vertical;
+    min-height: 4.5rem;
+}
+
+.modal-field input:focus,
+.modal-field textarea:focus { outline: none; border-color: var(--sage-500); }
 
 .modal-field-hint {
     display: block;
@@ -1524,6 +1539,11 @@ body.error-page {
 }
 
 .error-actions .btn { flex: 1; justify-content: center; }
+
+/* 대시보드 통계 카드 5개는 데스크톱보다 살짝 좁아지면 2줄(3+2)로 접히게 함 */
+@media (max-width: 1200px) {
+    .admin-stat-row { grid-template-columns: repeat(3, 1fr); }
+}
 
 /* ===== 반응형: 좁은 화면에서 사이드바 축소 + 카드/테이블 겹침 방지 ===== */
 @media (max-width: 900px) {
