@@ -130,6 +130,15 @@ body {
     margin-bottom: 1rem;
 }
 
+/* 서버 밸리데이션(@Valid) 실패 시 /cultivations/new로 되돌아왔을 때 보여주는 에러 문구 */
+.wizard-form-error {
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--danger);
+    margin: -0.4rem 0 1rem;
+}
+
 .form-field label {
     display: block;
     font-size: 0.8rem;
