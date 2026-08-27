@@ -33,6 +33,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
     private static final Pattern METHOD_KEY_PATTERN = Pattern.compile("\\[(\\w+)#");
+    private static final String ERROR = "error";
 
     private static final Map<String, String> NOT_FOUND_MESSAGES = Map.of(
             "AiClient", "해당 버섯 가이드 정보를 찾을 수 없습니다.",
@@ -70,10 +71,10 @@ public class GlobalExceptionHandler {
     // Spring의 기본 /error 디스패치(→ error.html)까지 가지도 못하고 여기서 JSON으로 가로채져
     // 브라우저엔 알맹이 없는 JSON 텍스트만 보이는 문제가 있었음.
     private ModelAndView errorView(HttpServletRequest request, HttpStatus status, String message) {
-        ModelAndView mav = new ModelAndView("error");
+        ModelAndView mav = new ModelAndView(ERROR);
         mav.setStatus(status);
         mav.addObject("status", status.value());
-        mav.addObject("error", status.getReasonPhrase());
+        mav.addObject(ERROR, status.getReasonPhrase());
         mav.addObject("message", message);
         mav.addObject("path", request.getRequestURI());
         mav.addObject("timestamp", new Date());
@@ -170,7 +171,7 @@ public class GlobalExceptionHandler {
             return errorView(request, HttpStatus.INTERNAL_SERVER_ERROR, message);
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "internal_server_error", "message", message));
+                .body(Map.of(ERROR, "internal_server_error", "message", message));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

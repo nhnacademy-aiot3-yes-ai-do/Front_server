@@ -11,7 +11,7 @@ public record MushroomReferenceThresholdRequest(
         Long id,
         @NotNull Long sensorTypeId,
         @NotBlank @Pattern(regexp = "GROWTH|HARVEST") String thresholdType,
-        @NotNull BigDecimal thresholdMin,
-        @NotNull BigDecimal thresholdMax
+        BigDecimal thresholdMin,
+        BigDecimal thresholdMax
 ) {
 }
