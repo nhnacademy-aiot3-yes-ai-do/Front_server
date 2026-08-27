@@ -524,6 +524,10 @@ function togglePanel(id) {
     document.querySelectorAll('.dropdown-panel').forEach(function (p) {
         p.classList.remove('is-open');
     });
+    // 모달이 열려있는 채로 알림/담당자 패널을 열면 반투명 모달 배경 뒤로 패널이 비쳐 보여서 같이 닫아줌
+    document.querySelectorAll('.modal-overlay.is-open').forEach(function (m) {
+        m.classList.remove('is-open');
+    });
     if (!isOpen) {
         panel.classList.add('is-open');
         if (id === 'notif-panel') {
@@ -970,18 +974,175 @@ function finishCultivation() {
     location.href = '/';
 }
 
+// 사진 카드 아래 날짜 선택기로 고른 날짜 (YYYY-MM-DD). null이면 최신 사진을 보여줌.
+var PHOTO_DATE_FILTER = null;
+
+function photosForDate(dateStr) {
+    return PHOTOS.filter(function (p) {
+        return p.updatedAt && p.updatedAt.slice(0, 10) === dateStr;
+    });
+}
+
+function mdpFormatLabel(dateStr) {
+    var parts = dateStr.split('-');
+    return parts[0] + '. ' + parts[1] + '. ' + parts[2] + '.';
+}
+
+function onPhotoDateChange(value) {
+    PHOTO_DATE_FILTER = value || null;
+    var label = document.getElementById('mdp-trigger-label');
+    if (label) {
+        label.textContent = PHOTO_DATE_FILTER ? mdpFormatLabel(PHOTO_DATE_FILTER) : '최신 사진';
+    }
+    renderMainPhoto();
+}
+
+// ---- 커스텀 달력(mdp) ----
+// 네이티브 <input type="date"> 팝업은 브라우저가 직접 그려서 CSS를 전혀 못 먹여서
+// .msh-select 드롭다운이랑 비슷하게 트리거 버튼 + 패널 구조로 직접 구현함.
+// 재배지 시작일(CULTIVATION_STARTED_AT) 이전 ~ 오늘 이후는 고를 수 없게 막음.
+var MDP_TODAY = new Date();
+var MDP_MAX = MDP_TODAY.getFullYear() + '-' + String(MDP_TODAY.getMonth() + 1).padStart(2, '0') + '-' + String(MDP_TODAY.getDate()).padStart(2, '0');
+var MDP_MIN = (typeof CULTIVATION_STARTED_AT !== 'undefined' && CULTIVATION_STARTED_AT) ? CULTIVATION_STARTED_AT : null;
+var mdpMinYear = MDP_MIN ? Number(MDP_MIN.split('-')[0]) : null;
+var mdpMinMonth = MDP_MIN ? Number(MDP_MIN.split('-')[1]) - 1 : null;
+var mdpMaxYear = MDP_TODAY.getFullYear();
+var mdpMaxMonth = MDP_TODAY.getMonth();
+var mdpViewYear = mdpMaxYear;
+var mdpViewMonth = mdpMaxMonth;
+
+function mdpFormatDate(y, m, d) {
+    return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+}
+
+function toggleMdp() {
+    var wrap = document.getElementById('mdp');
+    if (!wrap) return;
+    if (wrap.classList.contains('open')) {
+        closeMdp();
+        return;
+    }
+    // 선택된 날짜(없으면 오늘)가 있는 달로 캘린더를 열게 함
+    var base = PHOTO_DATE_FILTER || MDP_MAX;
+    var parts = base.split('-');
+    mdpViewYear = Number(parts[0]);
+    mdpViewMonth = Number(parts[1]) - 1;
+    renderMdpDays();
+    wrap.classList.add('open');
+
+    // 사진 카드가 overflow:hidden이라 팝업이 카드 경계에서 잘려버려서, msh-select 드롭다운과
+    // 같은 방식으로 열려있는 동안만 패널을 body로 옮겨서 fixed 포지션으로 그림.
+    // body로 옮기면 ".mdp.open .mdp-panel" 같은 조상 셀렉터는 더 이상 안 먹히니(패널이
+    // .mdp 밖으로 나감) display도 인라인으로 같이 세팅해야 함 — msh-select.js도 같은 이유로 그렇게 함.
+    var trigger = document.getElementById('mdp-trigger');
+    var panel = document.getElementById('mdp-panel');
+    var rect = trigger.getBoundingClientRect();
+    document.body.appendChild(panel);
+    panel.style.display = 'block';
+    panel.style.position = 'fixed';
+    panel.style.top = (rect.bottom + 10) + 'px';
+    panel.style.left = rect.left + 'px';
+    panel.style.zIndex = '200';
+}
+
+function closeMdp() {
+    var wrap = document.getElementById('mdp');
+    if (!wrap) return;
+    wrap.classList.remove('open');
+
+    var panel = document.getElementById('mdp-panel');
+    if (panel && panel.parentElement === document.body) {
+        panel.style.display = '';
+        panel.style.position = '';
+        panel.style.top = '';
+        panel.style.left = '';
+        panel.style.zIndex = '';
+        wrap.appendChild(panel);
+    }
+}
+
+function mdpChangeMonth(delta) {
+    mdpViewMonth += delta;
+    if (mdpViewMonth < 0) {
+        mdpViewMonth = 11;
+        mdpViewYear--;
+    } else if (mdpViewMonth > 11) {
+        mdpViewMonth = 0;
+        mdpViewYear++;
+    }
+    renderMdpDays();
+}
+
+function mdpSelectDay(dateStr) {
+    onPhotoDateChange(dateStr);
+    closeMdp();
+}
+
+function renderMdpDays() {
+    var monthLabel = document.getElementById('mdp-month-label');
+    if (monthLabel) monthLabel.textContent = mdpViewYear + '년 ' + (mdpViewMonth + 1) + '월';
+
+    var firstDayOfWeek = new Date(mdpViewYear, mdpViewMonth, 1).getDay();
+    var daysInMonth = new Date(mdpViewYear, mdpViewMonth + 1, 0).getDate();
+
+    var html = '';
+    for (var i = 0; i < firstDayOfWeek; i++) {
+        html += '<button type="button" class="mdp-day mdp-day--other-month" disabled></button>';
+    }
+    for (var day = 1; day <= daysInMonth; day++) {
+        var dateStr = mdpFormatDate(mdpViewYear, mdpViewMonth, day);
+        var disabled = (MDP_MIN && dateStr < MDP_MIN) || dateStr > MDP_MAX;
+        var selected = PHOTO_DATE_FILTER === dateStr;
+        html += '<button type="button" class="mdp-day' + (selected ? ' mdp-day--selected' : '') + '"' +
+            (disabled ? ' disabled' : ' onclick="mdpSelectDay(\'' + dateStr + '\')"') + '>' + day + '</button>';
+    }
+    var daysEl = document.getElementById('mdp-days');
+    if (daysEl) daysEl.innerHTML = html;
+
+    var prevBtn = document.getElementById('mdp-prev');
+    var nextBtn = document.getElementById('mdp-next');
+    if (prevBtn) {
+        prevBtn.disabled = mdpMinYear != null &&
+            (mdpViewYear < mdpMinYear || (mdpViewYear === mdpMinYear && mdpViewMonth <= mdpMinMonth));
+    }
+    if (nextBtn) {
+        nextBtn.disabled = mdpViewYear > mdpMaxYear || (mdpViewYear === mdpMaxYear && mdpViewMonth >= mdpMaxMonth);
+    }
+}
+
+document.addEventListener('click', function (e) {
+    // 패널이 열려있을 땐 body로 옮겨져서 #mdp 바깥에 있으니 패널 자체도 같이 체크해야
+    // 월 이동 버튼 클릭 시 바로 닫혀버리는 문제가 안 생김
+    if (!e.target.closest('#mdp') && !e.target.closest('#mdp-panel')) {
+        closeMdp();
+    }
+});
+
+document.addEventListener('scroll', function (e) {
+    if (e.target.closest && e.target.closest('#mdp-panel')) return;
+    closeMdp();
+}, true);
+
 function renderMainPhoto() {
     var placeholder = document.getElementById('photo-placeholder');
+    var placeholderText = document.getElementById('photo-placeholder-text');
     var img = document.getElementById('photo-preview-img');
-    if (PHOTOS.length === 0) {
+    var candidates = PHOTO_DATE_FILTER ? photosForDate(PHOTO_DATE_FILTER) : PHOTOS;
+
+    if (candidates.length === 0) {
         placeholder.style.display = 'flex';
         img.style.display = 'none';
         img.src = '';
+        if (placeholderText) {
+            placeholderText.textContent = PHOTO_DATE_FILTER
+                ? '이 날짜엔 등록된 사진이 없어요'
+                : '등록된 사진이 없습니다';
+        }
         return;
     }
     placeholder.style.display = 'none';
     img.style.display = 'block';
-    img.src = PHOTOS[0].uri;
+    img.src = candidates[0].uri;
 }
 
 // 업로드 박스(네모 칸) 자체에 현재 대표 사진(가장 최근 사진)을 미리보기로 보여줌.
@@ -1073,6 +1234,10 @@ if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
 renderPhotoThumbs();
 renderPhotoUploadPreview();
 renderMainPhoto();
+if (document.getElementById('mdp')) {
+    // 기본값은 오늘 날짜로 채워둠
+    onPhotoDateChange(MDP_MAX);
+}
 initializeSensorBootstrap();
 
 var DIFFICULTY_LABELS = ['', '매우 쉬움', '쉬움', '보통', '어려움', '매우 어려움'];

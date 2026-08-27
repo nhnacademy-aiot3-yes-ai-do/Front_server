@@ -1,6 +1,7 @@
 package site.yesaido.frontserver.exception;
 
 import feign.FeignException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,11 +16,13 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -54,6 +57,29 @@ public class GlobalExceptionHandler {
 
     private final AuthCookieProvider authCookieProvider;
 
+    // 브라우저가 페이지를 직접 열 때(주소 입력, 링크 클릭, 폼 제출 등)는 Accept 헤더에 text/html이
+    // 명시적으로 들어감. dashboard.js 등의 fetch() 호출은 Accept를 따로 안 지정해서 기본값(*/*)이라
+    // 이 조건에 안 걸림 — 그래서 이 값으로 "페이지 요청이냐 AJAX 요청이냐"를 구분함.
+    private boolean wantsHtml(HttpServletRequest request) {
+        String accept = request.getHeader("Accept");
+        return accept != null && accept.contains("text/html");
+    }
+
+    // templates/error.html이 기대하는 모델(status, path)을 채워서 커스텀 에러 페이지를 렌더링.
+    // 예전엔 아래 catch-all 핸들러들이 무조건 JSON을 반환해서, 페이지 로딩 중 터진 예외는
+    // Spring의 기본 /error 디스패치(→ error.html)까지 가지도 못하고 여기서 JSON으로 가로채져
+    // 브라우저엔 알맹이 없는 JSON 텍스트만 보이는 문제가 있었음.
+    private ModelAndView errorView(HttpServletRequest request, HttpStatus status, String message) {
+        ModelAndView mav = new ModelAndView("error");
+        mav.setStatus(status);
+        mav.addObject("status", status.value());
+        mav.addObject("error", status.getReasonPhrase());
+        mav.addObject("message", message);
+        mav.addObject("path", request.getRequestURI());
+        mav.addObject("timestamp", new Date());
+        return mav;
+    }
+
     @ExceptionHandler(FeignException.Unauthorized.class)
     public void handleUnauthorized(HttpServletResponse response) {
         try {
@@ -78,16 +104,19 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(FeignException.class)
-    public ErrorResponse handleFeignException(FeignException e) {
+    public Object handleFeignException(FeignException e, HttpServletRequest request) {
         String clientName = extractClientName(e);
         log.error("{} 통신 실패 (Status: {}): {}", clientName, e.status(), e.getMessage());
 
-        if (e.status() == 404) {
-            return ErrorResponse.create(e, HttpStatus.NOT_FOUND,
-                    NOT_FOUND_MESSAGES.getOrDefault(clientName, DEFAULT_NOT_FOUND_MESSAGE));
+        HttpStatus status = e.status() == 404 ? HttpStatus.NOT_FOUND : HttpStatus.SERVICE_UNAVAILABLE;
+        String message = e.status() == 404
+                ? NOT_FOUND_MESSAGES.getOrDefault(clientName, DEFAULT_NOT_FOUND_MESSAGE)
+                : UNAVAILABLE_MESSAGES.getOrDefault(clientName, DEFAULT_UNAVAILABLE_MESSAGE);
+
+        if (wantsHtml(request)) {
+            return errorView(request, status, message);
         }
-        return ErrorResponse.create(e, HttpStatus.SERVICE_UNAVAILABLE,
-                UNAVAILABLE_MESSAGES.getOrDefault(clientName, DEFAULT_UNAVAILABLE_MESSAGE));
+        return ErrorResponse.create(e, status, message);
     }
 
     private String extractClientName(FeignException e) {
@@ -122,18 +151,26 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleUnexpected(Exception exception) {
+    public Object handleUnexpected(Exception exception, HttpServletRequest request) {
         log.error("처리되지 않은 예외 발생: {}", exception.getClass().getName(), exception);
+        String message = "일시적인 오류가 발생했습니다.";
+        if (wantsHtml(request)) {
+            return errorView(request, HttpStatus.INTERNAL_SERVER_ERROR, message);
+        }
         return ResponseEntity.status(500)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("detail", "일시적인 오류가 발생했습니다."));
+                .body(Map.of("detail", message));
     }
 
     @ExceptionHandler(Throwable.class)
-    public ResponseEntity<Object> handleThrowable(Throwable e) {
+    public Object handleThrowable(Throwable e, HttpServletRequest request) {
         log.error("처리되지 않은 Error 발생: {}", e.getClass().getName(), e);
+        String message = "일시적인 서버 오류가 발생했습니다.";
+        if (wantsHtml(request)) {
+            return errorView(request, HttpStatus.INTERNAL_SERVER_ERROR, message);
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "internal_server_error", "message", "일시적인 서버 오류가 발생했습니다."));
+                .body(Map.of("error", "internal_server_error", "message", message));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

@@ -7,6 +7,11 @@ function logout() {
 }
 
 function openModal(id) {
+    // 알림/담당자 관리 같은 드롭다운 패널이 열린 채로 모달을 열면, 모달 배경이 반투명이라
+    // 뒤에 있는 패널이 비쳐 보이는 문제가 있어서 모달 열 때 항상 같이 닫아줌
+    document.querySelectorAll('.dropdown-panel.is-open').forEach(function (p) {
+        p.classList.remove('is-open');
+    });
     document.getElementById(id).classList.add('is-open');
 }
 

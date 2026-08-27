@@ -87,7 +87,7 @@
                 <div class="photo-frame">
                     <div class="photo-placeholder" id="photo-placeholder" th:style="${photos != null and !photos.isEmpty()} ? 'display:none;' : ''">
                         <i data-lucide="image" style="width:48px;height:48px;"></i>
-                        <span>등록된 사진이 없습니다</span>
+                        <span id="photo-placeholder-text">등록된 사진이 없습니다</span>
                     </div>
                     <img id="photo-preview-img"
                          th:src="${cultivation != null and photos != null and !photos.isEmpty()} ? @{'/cultivations/' + ${cultivation.cultivationId} + '/photos/' + ${photos[0].photoId} + '/raw'} : ''"
@@ -99,7 +99,37 @@
                     </button>
                 </div>
 
-                <div class="cultivation-name" th:if="${cultivation != null}" th:text="${cultivation.name}">양송이 1번 재배지</div>
+                <div class="photo-date-picker">
+                    <div class="mdp" id="mdp">
+                        <button type="button" class="mdp-trigger" id="mdp-trigger" onclick="toggleMdp()">
+                            <i data-lucide="calendar-days"></i>
+                            <span id="mdp-trigger-label">날짜 선택</span>
+                        </button>
+                        <div class="mdp-panel" id="mdp-panel">
+                            <div class="mdp-panel-header">
+                                <button type="button" id="mdp-prev" onclick="mdpChangeMonth(-1)">
+                                    <i data-lucide="chevron-left"></i>
+                                </button>
+                                <span id="mdp-month-label">2026년 8월</span>
+                                <button type="button" id="mdp-next" onclick="mdpChangeMonth(1)">
+                                    <i data-lucide="chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="mdp-weekdays">
+                                <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+                            </div>
+                            <div class="mdp-days" id="mdp-days"></div>
+                        </div>
+                    </div>
+                    <button type="button" id="photo-date-clear" title="최신 사진으로" onclick="onPhotoDateChange('')">
+                        <i data-lucide="history"></i>
+                    </button>
+                </div>
+
+                <div class="cultivation-name" th:if="${cultivation != null}">
+                    <span th:text="${cultivation.name}">양송이 1번 재배지</span>
+                    <span class="cultivation-mushroom-badge" th:if="${mushroomNameKo != null}" th:text="${mushroomNameKo}">양송이</span>
+                </div>
 
                 <div class="growth-days-box" th:if="${growthDays != null}">
                     <i data-lucide="calendar"></i>
@@ -175,13 +205,6 @@
                     </div>
                 </div>
 
-                <div class="sensor-upload-card">
-                    <div class="settings-photo-upload" id="photo-upload-preview-main" onclick="document.getElementById('photo-upload-input-main').click()">
-                        <i data-lucide="upload" style="width:28px;height:28px;"></i>
-                    </div>
-                    <input type="file" id="photo-upload-input-main" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
-                    <div class="sensor-upload-label">AI 분석용 사진 등록</div>
-                </div>
             </div>
             <!-- 환경통계 카드 + 그래프 카드 (분리) -->
             <div class="stats-col">
@@ -487,6 +510,8 @@
 <script th:inline="javascript">
     var CULTIVATION_ID = /*[[${cultivation?.cultivationId}]]*/ 0;
     var MUSHROOM_ID = /*[[${cultivation?.mushroomId}]]*/ null;
+    // 사진 날짜 선택기에서 재배지 시작일 이전은 고를 수 없게 막는 기준값
+    var CULTIVATION_STARTED_AT = /*[[${cultivation != null and cultivation.startedAt != null} ? ${#temporals.format(cultivation.startedAt, 'yyyy-MM-dd')} : null]]*/ null;
     var PHOTOS = [(${photosJson})];
     var memberData = [(${membersJson})];
     var MY_ROLE = /*[[${myRole}]]*/ null;
