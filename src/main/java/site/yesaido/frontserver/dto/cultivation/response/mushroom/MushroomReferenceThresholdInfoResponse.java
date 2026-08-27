@@ -6,7 +6,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record MushroomReferenceThresholdInfoResponse(
+        Long id,
         SensorTypeInfoResponse sensorType,
+        String thresholdType,
         BigDecimal thresholdMin,
         BigDecimal thresholdMax,
         LocalDateTime createdAt,

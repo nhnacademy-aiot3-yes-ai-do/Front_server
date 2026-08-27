@@ -19,9 +19,11 @@ function formatDate(iso) {
     return d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + String(d.getDate()).padStart(2, '0');
 }
 
-function thresholdOf(m, type) {
-    var t = (m.thresholdInfoResponses || []).filter(function (x) { return x.sensorType && x.sensorType.type === type; })[0];
-    return t ? { min: t.thresholdMin, max: t.thresholdMax } : null;
+function thresholdOf(m, type, thresholdType) {
+    var t = (m.thresholdInfoResponses || []).filter(function (x) {
+        return x.sensorType && x.sensorType.type === type && x.thresholdType === thresholdType;
+    })[0];
+    return t ? { id: t.id, min: t.thresholdMin, max: t.thresholdMax } : null;
 }
 
 // 서버가 렌더링 시점에 심어준 SENSOR_TYPES_BOOTSTRAP / MUSHROOMS_BOOTSTRAP으로 초기화 (fetch 없음)
@@ -47,8 +49,8 @@ function renderMushrooms() {
     var tbody = document.getElementById('mushroom-tbody');
     tbody.innerHTML = '';
     pageData.forEach(function (m) {
-        var temp = thresholdOf(m, 'TEMPERATURE');
-        var humidity = thresholdOf(m, 'HUMIDITY');
+        var temp = thresholdOf(m, 'TEMPERATURE', 'GROWTH');
+        var humidity = thresholdOf(m, 'HUMIDITY', 'GROWTH');
         var tr = document.createElement('tr');
         tr.innerHTML =
             '<td>' + escapeHtml(m.mushroomNameKo) + '</td>' +
@@ -97,10 +99,14 @@ function openMushroomForm(id) {
     document.getElementById('mushroom-form-error').style.display = 'none';
 
     var m = id ? MUSHROOMS.filter(function (x) { return x.id === id; })[0] : null;
-    var temp = m ? thresholdOf(m, 'TEMPERATURE') : null;
-    var humidity = m ? thresholdOf(m, 'HUMIDITY') : null;
-    var co2 = m ? thresholdOf(m, 'CO2') : null;
-    var light = m ? thresholdOf(m, 'LIGHT') : null;
+    var temp = m ? thresholdOf(m, 'TEMPERATURE', 'GROWTH') : null;
+    var humidity = m ? thresholdOf(m, 'HUMIDITY', 'GROWTH') : null;
+    var co2 = m ? thresholdOf(m, 'CO2', 'GROWTH') : null;
+    var light = m ? thresholdOf(m, 'LIGHT', 'GROWTH') : null;
+    var harvestTemp = m ? thresholdOf(m, 'TEMPERATURE', 'HARVEST') : null;
+    var harvestHumidity = m ? thresholdOf(m, 'HUMIDITY', 'HARVEST') : null;
+    var harvestCo2 = m ? thresholdOf(m, 'CO2', 'HARVEST') : null;
+    var harvestLight = m ? thresholdOf(m, 'LIGHT', 'HARVEST') : null;
 
     document.getElementById('mushroom-form-title').textContent = m ? '버섯 정보 수정' : '새 버섯 등록';
     document.getElementById('mf-name-ko').value = m ? m.mushroomNameKo : '';
@@ -114,16 +120,25 @@ function openMushroomForm(id) {
     document.getElementById('mf-co2-max').value = co2 ? co2.max : '';
     document.getElementById('mf-light-min').value = light ? light.min : '';
     document.getElementById('mf-light-max').value = light ? light.max : '';
+    document.getElementById('mf-harvest-temp-min').value = harvestTemp ? harvestTemp.min : '';
+    document.getElementById('mf-harvest-temp-max').value = harvestTemp ? harvestTemp.max : '';
+    document.getElementById('mf-harvest-humidity-min').value = harvestHumidity ? harvestHumidity.min : '';
+    document.getElementById('mf-harvest-humidity-max').value = harvestHumidity ? harvestHumidity.max : '';
+    document.getElementById('mf-harvest-co2-min').value = harvestCo2 ? harvestCo2.min : '';
+    document.getElementById('mf-harvest-co2-max').value = harvestCo2 ? harvestCo2.max : '';
+    document.getElementById('mf-harvest-light-min').value = harvestLight ? harvestLight.min : '';
+    document.getElementById('mf-harvest-light-max').value = harvestLight ? harvestLight.max : '';
 
     openModal('modal-mushroom-form');
 }
 
-function buildThreshold(typeName, minId, maxId) {
+function buildThreshold(typeName, thresholdType, minId, maxId, mushroom) {
     var st = SENSOR_TYPE_BY_NAME[typeName];
     var minVal = document.getElementById(minId).value;
     var maxVal = document.getElementById(maxId).value;
     if (!st || minVal === '' || maxVal === '') return null;
-    return { id: null, sensorTypeId: st.id, thresholdMin: Number(minVal), thresholdMax: Number(maxVal) };
+    var existing = mushroom ? thresholdOf(mushroom, typeName, thresholdType) : null;
+    return { id: existing ? existing.id : null, sensorTypeId: st.id, thresholdType: thresholdType, thresholdMin: Number(minVal), thresholdMax: Number(maxVal) };
 }
 
 function saveMushroomForm() {
@@ -133,11 +148,29 @@ function saveMushroomForm() {
         return;
     }
 
+    var mushroom = currentMushroomId ? MUSHROOMS.filter(function (x) { return x.id === currentMushroomId; })[0] : null;
+    var thresholdFieldPairs = [
+        ['mf-temp-min', 'mf-temp-max'], ['mf-humidity-min', 'mf-humidity-max'],
+        ['mf-co2-min', 'mf-co2-max'], ['mf-light-min', 'mf-light-max'],
+        ['mf-harvest-temp-min', 'mf-harvest-temp-max'], ['mf-harvest-humidity-min', 'mf-harvest-humidity-max'],
+        ['mf-harvest-co2-min', 'mf-harvest-co2-max'], ['mf-harvest-light-min', 'mf-harvest-light-max']
+    ];
+    if (thresholdFieldPairs.some(function (pair) {
+        return (document.getElementById(pair[0]).value === '') !== (document.getElementById(pair[1]).value === '');
+    })) {
+        document.getElementById('mushroom-form-error').textContent = '각 생육 환경 값은 최소와 최대를 모두 입력하거나 모두 비워 주세요.';
+        document.getElementById('mushroom-form-error').style.display = 'block';
+        return;
+    }
     var thresholds = [
-        buildThreshold('TEMPERATURE', 'mf-temp-min', 'mf-temp-max'),
-        buildThreshold('HUMIDITY', 'mf-humidity-min', 'mf-humidity-max'),
-        buildThreshold('CO2', 'mf-co2-min', 'mf-co2-max'),
-        buildThreshold('LIGHT', 'mf-light-min', 'mf-light-max')
+        buildThreshold('TEMPERATURE', 'GROWTH', 'mf-temp-min', 'mf-temp-max', mushroom),
+        buildThreshold('HUMIDITY', 'GROWTH', 'mf-humidity-min', 'mf-humidity-max', mushroom),
+        buildThreshold('CO2', 'GROWTH', 'mf-co2-min', 'mf-co2-max', mushroom),
+        buildThreshold('LIGHT', 'GROWTH', 'mf-light-min', 'mf-light-max', mushroom),
+        buildThreshold('TEMPERATURE', 'HARVEST', 'mf-harvest-temp-min', 'mf-harvest-temp-max', mushroom),
+        buildThreshold('HUMIDITY', 'HARVEST', 'mf-harvest-humidity-min', 'mf-harvest-humidity-max', mushroom),
+        buildThreshold('CO2', 'HARVEST', 'mf-harvest-co2-min', 'mf-harvest-co2-max', mushroom),
+        buildThreshold('LIGHT', 'HARVEST', 'mf-harvest-light-min', 'mf-harvest-light-max', mushroom)
     ].filter(function (t) { return t !== null; });
 
     if (thresholds.length === 0) {
