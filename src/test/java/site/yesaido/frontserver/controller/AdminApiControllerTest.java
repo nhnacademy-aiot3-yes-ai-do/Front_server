@@ -22,6 +22,7 @@ import site.yesaido.frontserver.controller.admin.AdminInquiryController;
 import site.yesaido.frontserver.controller.admin.AdminMushroomReferenceController;
 import site.yesaido.frontserver.controller.admin.AdminSensorTypeController;
 import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
+import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceThresholdRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorTypeRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
@@ -32,12 +33,14 @@ import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryPageResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import tools.jackson.databind.ObjectMapper;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -161,6 +164,25 @@ class AdminApiControllerTest {
                 .andExpect(status().isCreated());
 
         verify(sensorClient).registerMushroomReference(request);
+    }
+
+    @Test
+    @DisplayName("최소값이 최대값보다 큰 threshold는 Front에서 전달하지 않는다")
+    void createMushroomReferenceRejectsInvalidThresholdRange() throws Exception {
+        MushroomReferenceRequest request = new MushroomReferenceRequest(
+                "양송이", "Button mushroom", "Agaricus bisporus",
+                List.of(new MushroomReferenceThresholdRequest(
+                        null, 1L, "GROWTH", new BigDecimal("30"), new BigDecimal("10")
+                ))
+        );
+
+        mockMvc.perform(post("/admin/mushroom-references")
+                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(sensorClient);
     }
 
     @Test

@@ -31,11 +31,11 @@ public interface SensorClient {
 
     // mushroom reference (관리자)
     @PostMapping("/api/v1/admin/mushroom-references")
-    ResponseEntity<Void> registerMushroomReference(@RequestBody MushroomReferenceRequest request);
+    ResponseEntity<Void> registerMushroomReference(@Valid @RequestBody MushroomReferenceRequest request);
 
     @PutMapping("/api/v1/admin/mushroom-references/{mushroom-reference-id}")
     ResponseEntity<Void> updateMushroomReference(@PathVariable("mushroom-reference-id") Long id,
-                                                 @RequestBody MushroomReferenceRequest request);
+                                                 @Valid @RequestBody MushroomReferenceRequest request);
 
     @DeleteMapping("/api/v1/admin/mushroom-references/{mushroom-reference-id}")
     ResponseEntity<Void> deleteMushroomReference(@PathVariable("mushroom-reference-id") Long id);
