@@ -14,6 +14,7 @@ import site.yesaido.frontserver.dto.notification.response.TelegramLinkSessionRes
 import site.yesaido.frontserver.dto.notification.response.TelegramLinkStatusResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,12 +45,12 @@ public class NotificationEndpointController {
 
     @PostMapping("/telegram-link-sessions")
     public ResponseEntity<TelegramLinkSessionResponse> createTelegramLinkSession() {
-        return notificationClient.createTelegramLinkSession();
+        return rebuildTelegramResponse(notificationClient.createTelegramLinkSession());
     }
 
     @GetMapping("/telegram-link-sessions/{session-id}")
     public ResponseEntity<TelegramLinkStatusResponse> getTelegramLinkSession(@PathVariable("session-id") UUID sessionId) {
-        return notificationClient.getTelegramLinkSession(sessionId);
+        return rebuildTelegramResponse(notificationClient.getTelegramLinkSession(sessionId));
     }
 
     @PatchMapping("/{endpointId}")
@@ -66,5 +67,14 @@ public class NotificationEndpointController {
     public ResponseEntity<Void> deleteEndpoint(@PathVariable Long endpointId) {
         notificationClient.deleteEndpoint(endpointId);
         return ResponseEntity.noContent().build();
+    }
+
+    private static <T> ResponseEntity<T> rebuildTelegramResponse(ResponseEntity<T> upstreamResponse) {
+        ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(upstreamResponse.getStatusCode());
+        URI location = upstreamResponse.getHeaders().getLocation();
+        if (location != null) {
+            responseBuilder.location(location);
+        }
+        return responseBuilder.body(upstreamResponse.getBody());
     }
 }
