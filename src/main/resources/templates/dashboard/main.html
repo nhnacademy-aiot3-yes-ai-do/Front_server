@@ -150,60 +150,9 @@
 
             <!-- 센서 컬럼 -->
             <div class="sensor-col">
-                <div class="sensor-rows">
-                    <div class="card sensor-row" data-sensor-type="TEMPERATURE">
-                        <i data-lucide="thermometer" class="sensor-icon"></i>
-                        <div class="sensor-main">
-                            <div class="msh-select msh-select--sensor" data-value="" data-onchange="updateSensor" data-onchange-arg="TEMPERATURE">
-                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                    <span class="msh-select-value">등록된 센서 없음</span>
-                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                                </button>
-                                <div class="msh-select-menu"></div>
-                            </div>
-                            <div class="sensor-value">-</div>
-                        </div>
-                    </div>
-                    <div class="card sensor-row" data-sensor-type="HUMIDITY">
-                        <i data-lucide="droplet" class="sensor-icon"></i>
-                        <div class="sensor-main">
-                            <div class="msh-select msh-select--sensor" data-value="" data-onchange="updateSensor" data-onchange-arg="HUMIDITY">
-                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                    <span class="msh-select-value">등록된 센서 없음</span>
-                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                                </button>
-                                <div class="msh-select-menu"></div>
-                            </div>
-                            <div class="sensor-value">-</div>
-                        </div>
-                    </div>
-                    <div class="card sensor-row" data-sensor-type="CO2">
-                        <i data-lucide="cloudy" class="sensor-icon"></i>
-                        <div class="sensor-main">
-                            <div class="msh-select msh-select--sensor" data-value="" data-onchange="updateSensor" data-onchange-arg="CO2">
-                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                    <span class="msh-select-value">등록된 센서 없음</span>
-                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                                </button>
-                                <div class="msh-select-menu"></div>
-                            </div>
-                            <div class="sensor-value">-</div>
-                        </div>
-                    </div>
-                    <div class="card sensor-row" data-sensor-type="LIGHT">
-                        <i data-lucide="sun" class="sensor-icon"></i>
-                        <div class="sensor-main">
-                            <div class="msh-select msh-select--sensor" data-value="" data-onchange="updateSensor" data-onchange-arg="LIGHT">
-                                <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                                    <span class="msh-select-value">등록된 센서 없음</span>
-                                    <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                                </button>
-                                <div class="msh-select-menu"></div>
-                            </div>
-                            <div class="sensor-value">-</div>
-                        </div>
-                    </div>
-                </div>
+                <!-- 카드 목록은 하드코딩하지 않고 dashboard.js의 renderSensorPanel()이
+                     이 재배지에 실제 등록된 센서 타입(4개 기본 타입 + 관리자가 추가한 커스텀 타입 전부) 기준으로 채워줌 -->
+                <div class="sensor-rows" id="sensor-rows"></div>
 
                 <button type="button" class="insight-btn" onclick="openModal('modal-insight')">
                     <i data-lucide="sparkles"></i>

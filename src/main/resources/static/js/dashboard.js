@@ -1,8 +1,23 @@
 lucide.createIcons();
 
 var CANONICAL_SENSOR_TYPES = ['TEMPERATURE', 'HUMIDITY', 'CO2', 'LIGHT'];
+// 기본 4종은 전용 아이콘이 있고, 관리자가 나중에 새로 등록한 커스텀 타입(TEST1 등)은
+// 아이콘이 없어서 공통 아이콘(cpu)으로 대체함
+var SENSOR_TYPE_ICONS = { TEMPERATURE: 'thermometer', HUMIDITY: 'droplet', CO2: 'cloudy', LIGHT: 'sun' };
+var SENSOR_TYPE_ICON_FALLBACK = 'cpu';
 var SENSOR_DEVICES_BY_TYPE = {};
 var LATEST_VALUES = {};
+
+// 카드로 보여줄 센서 타입 순서: 기본 4종(등록된 기기가 없어도 항상 표시) + 이 재배지에
+// 실제로 값이 있는 그 외 타입(관리자 페이지에서 새로 만든 커스텀 타입 등, 이름 순 정렬)
+function sensorTypeDisplayOrder() {
+    var extras = Object.keys(SENSOR_DEVICES_BY_TYPE)
+        .filter(function (t) {
+            return CANONICAL_SENSOR_TYPES.indexOf(t) === -1 && SENSOR_DEVICES_BY_TYPE[t].length > 0;
+        })
+        .sort();
+    return CANONICAL_SENSOR_TYPES.concat(extras);
+}
 
 function latestSensorValuesOf(payload) {
     return payload && Array.isArray(payload.latestSensorValueResponses)
@@ -38,8 +53,46 @@ function formatSensorValue(entry) {
     return entry.value + (entry.unit || '');
 }
 
+// 센서 카드 하나(아이콘 + 타입 코드 라벨 + 기기 선택 드롭다운 + 최신값)의 마크업을 만듦.
+// 예전엔 main.html에 4개 타입 카드가 하드코딩돼 있었는데, 관리자 페이지에서 센서 타입을
+// 새로 등록해도 반영이 안 돼서(항상 4개만 뜸) 이렇게 JS에서 타입 목록 기준으로 직접 그리도록 바꿈.
+function sensorRowHtml(type) {
+    var icon = SENSOR_TYPE_ICONS[type] || SENSOR_TYPE_ICON_FALLBACK;
+    // msh-select.js는 페이지 로드 시 딱 한 번만 돌면서 그 시점에 이미 있는 .msh-select에
+    // id를 붙이고 menu에 data-owner를 매칭해줌(closeMshSelect가 이 id로 menu를 다시 찾음).
+    // 이 카드들은 그 이후에 JS로 새로 만들어지는 거라 가만히 두면 id/data-owner가 없어서
+    // 드롭다운을 열 순 있어도 닫을 때 menu를 못 찾아 body에 붙은 채로 안 닫힘 -> 여기서 직접 지정.
+    var selectId = 'msh-select-sensor-' + type;
+    return '<div class="card sensor-row" data-sensor-type="' + type + '">' +
+        '<i data-lucide="' + icon + '" class="sensor-icon"></i>' +
+        '<div class="sensor-main">' +
+        '<div class="sensor-row-type">' + escapeHtml(type) + '</div>' +
+        '<div class="msh-select msh-select--sensor" id="' + selectId + '" data-value="" data-onchange="updateSensor" data-onchange-arg="' + type + '">' +
+        '<button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">' +
+        '<span class="msh-select-value">등록된 센서 없음</span>' +
+        '<i data-lucide="chevron-down" class="msh-select-chevron"></i>' +
+        '</button>' +
+        '<div class="msh-select-menu" data-owner="' + selectId + '"></div>' +
+        '</div>' +
+        '<div class="sensor-value">-</div>' +
+        '</div>' +
+        '</div>';
+}
+
+function escapeHtml(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function renderSensorPanel() {
-    document.querySelectorAll('.sensor-row[data-sensor-type]').forEach(function (row) {
+    var container = document.getElementById('sensor-rows');
+    if (!container) return;
+
+    container.innerHTML = sensorTypeDisplayOrder().map(sensorRowHtml).join('');
+    lucide.createIcons();
+
+    container.querySelectorAll('.sensor-row[data-sensor-type]').forEach(function (row) {
         var type = row.dataset.sensorType;
         var devices = SENSOR_DEVICES_BY_TYPE[type] || [];
         var wrapperEl = row.querySelector('.msh-select--sensor');
@@ -64,6 +117,25 @@ function renderSensorPanel() {
         menu.querySelector('.msh-select-option').classList.add('selected');
         valueEl.textContent = formatSensorValue(LATEST_VALUES[type + '|' + first.deviceEui]);
     });
+
+    capSensorRowsHeight(container);
+}
+
+// rem으로 대충 높이를 잡으면 카드 5번째가 어중간하게 잘려 보여서(스크롤 힌트치곤 애매함),
+// 실제 카드 1개 높이를 재서 "정확히 4장 + 그 사이 간격"만큼만 보이게 자름.
+// 카드가 4장 이하면 스크롤이 필요 없으니 그냥 자연스러운 높이로 둠.
+function capSensorRowsHeight(container) {
+    var rows = container.querySelectorAll('.sensor-row');
+    if (rows.length <= 4) {
+        container.style.maxHeight = '';
+        return;
+    }
+    // gap을 따로 계산해서 더하면(rowGap 계산이 안 먹는 경우 등) 오차가 생겨 4번째 카드가
+    // 어중간하게 잘릴 수 있어서, 대신 "4번째 카드의 실제 아래쪽 끝"까지 거리를 직접 재서 씀 -> 오차 없음.
+    container.style.maxHeight = 'none';
+    var containerTop = container.getBoundingClientRect().top;
+    var fourthRowBottom = rows[3].getBoundingClientRect().bottom;
+    container.style.maxHeight = (fourthRowBottom - containerTop) + 'px';
 }
 
 // 메인 탭 "환경 통계" 카드: 센서 타입별 첫 번째 기기의 최신 측정값을 그대로 보여줌.
@@ -149,7 +221,7 @@ function populateChartSensorSelect() {
 
     var groupsHtml = '';
     var firstOption = null;
-    CANONICAL_SENSOR_TYPES.forEach(function (type) {
+    sensorTypeDisplayOrder().forEach(function (type) {
         var devices = SENSOR_DEVICES_BY_TYPE[type] || [];
         if (devices.length === 0) return;
         groupsHtml += '<div class="msh-select-group-label">' + (SENSOR_TYPE_LABELS[type] || type) + '</div>';
