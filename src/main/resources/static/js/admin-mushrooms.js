@@ -39,6 +39,7 @@ function initializeBootstrap() {
 
 function renderMushrooms() {
     var totalPages = Math.max(1, Math.ceil(MUSHROOMS.length / MUSHROOM_PAGE_SIZE));
+    if (mushroomPage < 1) mushroomPage = 1;
     if (mushroomPage > totalPages) mushroomPage = totalPages;
 
     document.getElementById('mushroom-total-count').textContent = MUSHROOMS.length;
@@ -79,8 +80,8 @@ function renderMushroomPagination(totalPages) {
     var wrap = document.getElementById('mushroom-pagination');
     if (totalPages <= 1) { wrap.innerHTML = ''; return; }
 
-    var prevDisabled = mushroomPage === 1 ? ' disabled' : '';
-    var nextDisabled = mushroomPage === totalPages ? ' disabled' : '';
+    var prevDisabled = mushroomPage === 1;
+    var nextDisabled = mushroomPage === totalPages;
 
     var pageBtns = '';
     for (var p = 1; p <= totalPages; p++) {
@@ -88,9 +89,11 @@ function renderMushroomPagination(totalPages) {
     }
 
     wrap.innerHTML =
-        '<button class="page-arrow' + prevDisabled + '" type="button" onclick="goToMushroomPage(' + (mushroomPage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
+        '<button class="page-arrow' + (prevDisabled ? ' disabled' : '') + '" type="button"' +
+        (prevDisabled ? ' disabled' : '') + ' onclick="goToMushroomPage(' + (mushroomPage - 1) + ')"><i data-lucide="chevron-left"></i></button>' +
         pageBtns +
-        '<button class="page-arrow' + nextDisabled + '" type="button" onclick="goToMushroomPage(' + (mushroomPage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
+        '<button class="page-arrow' + (nextDisabled ? ' disabled' : '') + '" type="button"' +
+        (nextDisabled ? ' disabled' : '') + ' onclick="goToMushroomPage(' + (mushroomPage + 1) + ')"><i data-lucide="chevron-right"></i></button>';
     lucide.createIcons();
 }
 
@@ -144,6 +147,7 @@ function buildThreshold(typeName, thresholdType, minId, maxId, mushroom) {
 function saveMushroomForm() {
     var nameKo = document.getElementById('mf-name-ko').value.trim();
     if (!nameKo) {
+        document.getElementById('mushroom-form-error').textContent = '버섯 국문명을 입력해 주세요.';
         document.getElementById('mushroom-form-error').style.display = 'block';
         return;
     }
@@ -159,6 +163,13 @@ function saveMushroomForm() {
         return (document.getElementById(pair[0]).value === '') !== (document.getElementById(pair[1]).value === '');
     })) {
         document.getElementById('mushroom-form-error').textContent = '각 생육 환경 값은 최소와 최대를 모두 입력하거나 모두 비워 주세요.';
+        document.getElementById('mushroom-form-error').style.display = 'block';
+        return;
+    }
+    if (thresholdFieldPairs.some(function (pair) {
+        return Number(document.getElementById(pair[0]).value) > Number(document.getElementById(pair[1]).value);
+    })) {
+        document.getElementById('mushroom-form-error').textContent = '생육 환경의 최소값은 최대값보다 클 수 없습니다.';
         document.getElementById('mushroom-form-error').style.display = 'block';
         return;
     }
