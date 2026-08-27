@@ -38,11 +38,18 @@ public class AdminViewController {
     private final UserClient userClient;
     private final ViewJsonWriter viewJsonWriter;
 
+    // 알림 이벤트 등록 화면(admin-notification-events.js)이 아직 브라우저 메모리 목업이라
+    // 실제 개수를 서버에서 조회할 방법이 없음. 그 파일의 초기 목업 데이터 개수(3개)와 맞춰둠.
+    // Notification_service에 CRUD API가 생기면 이 상수 대신 실제 조회 결과로 바꾸면 됨.
+    private static final int MOCK_NOTIFICATION_EVENT_COUNT = 3;
+
     @GetMapping("/admin")
     public String admin(Model model) {
         loadPendingInquiries(model);
         loadMushroomCount(model);
+        loadSensorTypeCount(model);
         loadRecentMembers(model);
+        model.addAttribute("notificationEventCount", MOCK_NOTIFICATION_EVENT_COUNT);
         return "admin/index";
     }
 
@@ -77,6 +84,16 @@ public class AdminViewController {
         model.addAttribute("sensorTypesJson", viewJsonWriter.toScriptJson(sensorTypes));
 
         return "admin/sensors";
+    }
+
+    // 알림 이벤트 등록
+    // Notification_service 쪽에 이벤트 타입을 관리하는 API가 아직 없어서 Feign 호출 없이
+    // 화면만 렌더링함. 초기 목업 데이터는 admin-notification-events.js에 직접 들고 있고,
+    // 저장/수정/삭제도 전부 브라우저 메모리에서만 동작함(새로고침하면 초기화).
+    // 나중에 Notification_service에 CRUD API가 생기면 sensors()처럼 Feign 클라이언트로 바꾸면 됨.
+    @GetMapping("/admin/notification-events")
+    public String notificationEvents() {
+        return "admin/notification-events";
     }
 
     private SensorTypeInfoListResponse fetchSensorTypes() {
@@ -128,6 +145,19 @@ public class AdminViewController {
             log.warn("관리자 대시보드: 버섯 종류 조회 실패", e);
         }
         model.addAttribute("mushroomCount", mushroomCount);
+    }
+
+    private void loadSensorTypeCount(Model model) {
+        int sensorTypeCount = 0;
+        try {
+            SensorTypeInfoListResponse sensorTypes = sensorClient.getSensorTypes().getBody();
+            if (sensorTypes != null && sensorTypes.sensorTypeInfoResponses() != null) {
+                sensorTypeCount = sensorTypes.sensorTypeInfoResponses().size();
+            }
+        } catch (Exception e) {
+            log.warn("관리자 대시보드: 센서 타입 조회 실패", e);
+        }
+        model.addAttribute("sensorTypeCount", sensorTypeCount);
     }
 
     private void loadRecentMembers(Model model) {

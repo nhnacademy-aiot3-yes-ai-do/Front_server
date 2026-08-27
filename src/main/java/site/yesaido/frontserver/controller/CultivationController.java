@@ -1,13 +1,17 @@
 package site.yesaido.frontserver.controller;
 
 import feign.FeignException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.SensorClient;
@@ -124,8 +128,16 @@ public class CultivationController {
     }
   
     @PostMapping
-    public String createCultivation(@RequestParam String name, @RequestParam Long mushroomId) {
-        cultivationClient.createCultivation(new CultivationCreateRequest(name, mushroomId));
+    public String createCultivation(@Valid @ModelAttribute CultivationCreateRequest request,
+                                    BindingResult bindingResult,
+                                    RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            FieldError fieldError = bindingResult.getFieldError();
+            String message = fieldError != null ? fieldError.getDefaultMessage() : "입력값을 다시 확인해주세요.";
+            redirectAttributes.addFlashAttribute("cultivationCreateError", message);
+            return "redirect:/cultivations/new";
+        }
+        cultivationClient.createCultivation(request);
         return "redirect:/cultivations";
     }
 
@@ -176,6 +188,17 @@ public class CultivationController {
         model.addAttribute(MUSHROOMS_JSON, viewJsonWriter.toScriptJson(
                 mushroomRefs == null ? List.of() : mushroomRefs.mushroomReferenceInfoResponses()
         ));
+
+        // 사진 카드에 재배지 이름 옆으로 버섯 종류(품종명)도 같이 보여주기 위함
+        String mushroomNameKo = null;
+        if (cultivation != null && cultivation.mushroomId() != null && mushroomRefs != null) {
+            mushroomNameKo = mushroomRefs.mushroomReferenceInfoResponses().stream()
+                    .filter(m -> m.id().equals(cultivation.mushroomId()))
+                    .map(m -> m.mushroomNameKo())
+                    .findFirst()
+                    .orElse(null);
+        }
+        model.addAttribute("mushroomNameKo", mushroomNameKo);
 
         return "dashboard/main";
     }

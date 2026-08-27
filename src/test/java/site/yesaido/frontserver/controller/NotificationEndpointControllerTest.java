@@ -12,6 +12,7 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAu
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -26,6 +27,7 @@ import site.yesaido.frontserver.exception.GlobalExceptionHandler;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.LoginCheckInterceptor;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
@@ -141,13 +143,18 @@ class NotificationEndpointControllerTest {
     @Test
     @DisplayName("Telegram 연동 세션 생성 요청을 알림 서버로 전달")
     void createsTelegramLinkSession() throws Exception {
-        given(notificationClient.createTelegramLinkSession()).willReturn(ResponseEntity.status(201).body(
-                new TelegramLinkSessionResponse(java.util.UUID.fromString("11111111-1111-1111-1111-111111111111"),
-                        "PENDING", "https://t.me/bot?start=opaque", java.time.Instant.parse("2026-08-25T03:00:00Z"))
-        ));
+        given(notificationClient.createTelegramLinkSession()).willReturn(ResponseEntity.status(201)
+                .header(HttpHeaders.TRANSFER_ENCODING, "chunked")
+                .location(URI.create("/api/v1/telegram-link-sessions/11111111-1111-1111-1111-111111111111"))
+                .body(new TelegramLinkSessionResponse(
+                        java.util.UUID.fromString("11111111-1111-1111-1111-111111111111"),
+                        "PENDING", "https://t.me/bot?start=opaque", java.time.Instant.parse("2026-08-25T03:00:00Z"))));
 
         mockMvc.perform(post("/notifications/endpoints/telegram-link-sessions").cookie(LOGGED_IN))
                 .andExpect(status().isCreated())
+                .andExpect(header().doesNotExist(HttpHeaders.TRANSFER_ENCODING))
+                .andExpect(header().string(HttpHeaders.LOCATION,
+                        "/api/v1/telegram-link-sessions/11111111-1111-1111-1111-111111111111"))
                 .andExpect(jsonPath("$.status").value("PENDING"))
                 .andExpect(jsonPath("$.deepLink").value("https://t.me/bot?start=opaque"));
 
@@ -158,12 +165,13 @@ class NotificationEndpointControllerTest {
     @DisplayName("Telegram 연동 세션 상태 조회를 알림 서버로 전달")
     void getsTelegramLinkSession() throws Exception {
         java.util.UUID sessionId = java.util.UUID.fromString("11111111-1111-1111-1111-111111111111");
-        given(notificationClient.getTelegramLinkSession(sessionId)).willReturn(ResponseEntity.ok(
-                new TelegramLinkStatusResponse(sessionId, "LINKED")
-        ));
+        given(notificationClient.getTelegramLinkSession(sessionId)).willReturn(ResponseEntity.ok()
+                .header(HttpHeaders.TRANSFER_ENCODING, "chunked")
+                .body(new TelegramLinkStatusResponse(sessionId, "LINKED")));
 
         mockMvc.perform(get("/notifications/endpoints/telegram-link-sessions/{session-id}", sessionId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
+                .andExpect(header().doesNotExist(HttpHeaders.TRANSFER_ENCODING))
                 .andExpect(jsonPath("$.sessionId").value(sessionId.toString()))
                 .andExpect(jsonPath("$.status").value("LINKED"));
 

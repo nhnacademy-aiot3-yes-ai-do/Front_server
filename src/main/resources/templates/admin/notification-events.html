@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>알림 이벤트 등록 | MushMush</title>
+    <link rel="stylesheet" th:href="@{/css/admin.css}" />
+    <script th:src="@{/js/lucide.js}"></script>
+    <script th:src="@{/js/admin-common.js}"></script>
+</head>
+<body>
+
+<div class="admin-body-row">
+    <aside th:replace="~{fragments/admin-sidebar :: adminSidebar('notification-events')}"></aside>
+
+    <div class="page-container admin-list-page">
+
+        <div class="admin-panel">
+            <section class="admin-page-heading">
+                <span class="admin-page-heading-icon"><i data-lucide="bell"></i></span>
+                <div><h2>알림 이벤트 등록</h2><p>회원들에게 보낼 알림 이벤트의 코드와 이름을 관리해요. (아직 백엔드 연동 전이라 새로고침하면 초기화돼요)</p></div>            </section>
+
+            <section class="member-card">
+                <div class="member-toolbar">
+                    <div class="member-count">전체 이벤트 <strong id="notification-event-total-count">0</strong>개</div>
+                    <div class="toolbar-actions">
+                        <button class="add-button" type="button" onclick="openNotificationEventForm()">
+                            <i data-lucide="plus"></i>새 이벤트 등록
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-wrap">
+                    <table class="member-table">
+                        <thead>
+                        <tr>
+                            <th>이벤트 코드</th>
+                            <th>이름</th>
+                            <th>설명</th>
+                            <th>관리</th>
+                        </tr>
+                        </thead>
+                        <tbody id="notification-event-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div class="pagination" id="notification-event-pagination"></div>
+        </div>
+
+    </div>
+</div>
+
+<!-- 알림 이벤트 등록 / 수정 -->
+<div class="modal-overlay" id="modal-notification-event-form">
+    <form class="modal-box" id="notification-event-form" onsubmit="saveNotificationEvent(event)">
+        <button class="modal-close" type="button" onclick="closeModal('modal-notification-event-form')">
+            <i data-lucide="x"></i>
+        </button>
+        <h3 class="modal-title" id="notification-event-form-title">새 이벤트 등록</h3>
+        <p class="modal-sub">알림을 발송할 때 사용할 이벤트 코드와 표시 이름을 등록해요.</p>
+
+        <div class="modal-field">
+            <label>이벤트 코드</label>
+            <input type="text" id="ne-type" required placeholder="예: HARVEST_COMPLETED" />
+            <span class="modal-field-hint">영문 대문자와 언더바(_)로 입력해주세요.<br />(예: HARVEST_COMPLETED, MEMBER_ADDED, ENVIRONMENT_THRESHOLD_BREACHED)</span>
+        </div>
+
+        <div class="modal-field">
+            <label>이름</label>
+            <input type="text" id="ne-name" required placeholder="예: 수확 완료" />
+        </div>
+
+        <div class="modal-field">
+            <label>설명</label>
+            <textarea id="ne-description" rows="3" placeholder="예: 재배가 종료되고 수확이 완료되면 발송돼요."></textarea>
+        </div>
+
+        <p class="modal-form-error" id="ne-form-error" style="display:none;">이벤트 코드와 이름을 모두 입력해 주세요.</p>
+
+        <div class="modal-actions">
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-notification-event-form')">취소</button>
+            <button class="btn btn-primary" type="submit">저장</button>
+        </div>
+    </form>
+</div>
+
+<!-- 알림 이벤트 삭제 확인 -->
+<div class="modal-overlay" id="modal-notification-event-delete">
+    <div class="modal-box">
+        <h3 class="modal-title">이 알림 이벤트를 삭제하겠습니까?</h3>
+        <p class="modal-sub">삭제하면 목록에서 바로 사라져요. (현재는 브라우저에만 저장되는 화면이에요)</p>
+        <div class="modal-actions">
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-notification-event-delete')">취소</button>
+            <button class="btn btn-danger" type="button" onclick="deleteNotificationEvent()">삭제</button>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/admin-notification-events.js}"></script>
+
+</body>
+</html>
