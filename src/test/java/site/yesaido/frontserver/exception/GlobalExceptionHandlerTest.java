@@ -9,8 +9,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.web.ErrorResponse;
+import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
@@ -66,7 +68,8 @@ class GlobalExceptionHandlerTest {
                 .build();
         FeignException exception = FeignException.errorStatus("AiClient#getMushroomGuide(Long)", response);
 
-        ErrorResponse result = handler.handleFeignException(exception);
+        // Accept 헤더를 안 주면 fetch() 기본값(*/*)과 동일하게 취급되어 JSON(ErrorResponse)으로 응답함
+        ErrorResponse result = (ErrorResponse) handler.handleFeignException(exception, new MockHttpServletRequest());
 
         assertEquals(404, result.getStatusCode().value());
         assertEquals("해당 버섯 가이드 정보를 찾을 수 없습니다.", result.getBody().getDetail());
@@ -86,9 +89,48 @@ class GlobalExceptionHandlerTest {
                 .build();
         FeignException exception = FeignException.errorStatus("NotificationClient#getEndpoints()", response);
 
-        ErrorResponse result = handler.handleFeignException(exception);
+        ErrorResponse result = (ErrorResponse) handler.handleFeignException(exception, new MockHttpServletRequest());
 
         assertEquals(503, result.getStatusCode().value());
         assertEquals("알림 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요.", result.getBody().getDetail());
+    }
+
+    @Test
+    @DisplayName("페이지 요청(Accept: text/html) 중 Feign 오류 발생 시 JSON 대신 error 뷰를 반환")
+    void handleFeignExceptionReturnsErrorViewForHtmlRequest() {
+        Request request = Request.create(
+                Request.HttpMethod.GET, "/api/v1/cultivations/1",
+                Collections.emptyMap(), null, StandardCharsets.UTF_8, null
+        );
+        Response response = Response.builder()
+                .status(503).reason("Service Unavailable").request(request)
+                .headers(Collections.emptyMap())
+                .build();
+        FeignException exception = FeignException.errorStatus("CultivationClient#getCultivation(Long)", response);
+
+        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+        httpRequest.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+        httpRequest.setRequestURI("/cultivations/1");
+
+        ModelAndView result = (ModelAndView) handler.handleFeignException(exception, httpRequest);
+
+        assertEquals("error", result.getViewName());
+        assertEquals(503, result.getStatus().value());
+        assertEquals("/cultivations/1", result.getModel().get("path"));
+    }
+
+    @Test
+    @DisplayName("페이지 요청 중 처리되지 않은 예외 발생 시 JSON 대신 error 뷰를 반환")
+    void handleUnexpectedReturnsErrorViewForHtmlRequest() {
+        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+        httpRequest.addHeader("Accept", "text/html");
+        httpRequest.setRequestURI("/cultivations");
+
+        Object result = handler.handleUnexpected(new RuntimeException("boom"), httpRequest);
+
+        assertTrue(result instanceof ModelAndView);
+        ModelAndView mav = (ModelAndView) result;
+        assertEquals("error", mav.getViewName());
+        assertEquals(500, mav.getStatus().value());
     }
 }

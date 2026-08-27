@@ -177,6 +177,17 @@ public class CultivationController {
                 mushroomRefs == null ? List.of() : mushroomRefs.mushroomReferenceInfoResponses()
         ));
 
+        // 사진 카드에 재배지 이름 옆으로 버섯 종류(품종명)도 같이 보여주기 위함
+        String mushroomNameKo = null;
+        if (cultivation != null && cultivation.mushroomId() != null && mushroomRefs != null) {
+            mushroomNameKo = mushroomRefs.mushroomReferenceInfoResponses().stream()
+                    .filter(m -> m.id().equals(cultivation.mushroomId()))
+                    .map(m -> m.mushroomNameKo())
+                    .findFirst()
+                    .orElse(null);
+        }
+        model.addAttribute("mushroomNameKo", mushroomNameKo);
+
         return "dashboard/main";
     }
 
