@@ -121,7 +121,7 @@
                             <div class="mdp-days" id="mdp-days"></div>
                         </div>
                     </div>
-                    <button type="button" id="photo-date-clear" title="최신 사진으로" onclick="onPhotoDateChange('')">
+                    <button type="button" id="photo-date-clear" title="오늘 날짜로" onclick="onPhotoDateChange(MDP_MAX)">
                         <i data-lucide="history"></i>
                     </button>
                 </div>
@@ -204,6 +204,11 @@
                         </div>
                     </div>
                 </div>
+
+                <button type="button" class="insight-btn" onclick="openModal('modal-insight')">
+                    <i data-lucide="sparkles"></i>
+                    <span>인사이트 보기</span>
+                </button>
 
             </div>
             <!-- 환경통계 카드 + 그래프 카드 (분리) -->
@@ -490,6 +495,41 @@
             <button type="button" class="mushroom-recipe-btn" id="mushroom-recipe-btn" onclick="openRecipeModal()">
                 <i data-lucide="chef-hat"></i>추천 요리법 보기
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- 인사이트 비교 (프레임만 - Ai_server에 아직 조회용 컨트롤러가 없어서 실제 데이터는 연결 안 함) -->
+<div class="modal-overlay" id="modal-insight">
+    <div class="modal-box" style="max-width: 60rem; width: 92vw; max-height: 85vh; overflow-y: auto; padding: 1.8rem 2.2rem;">
+        <button class="modal-close" type="button" onclick="closeModal('modal-insight')">
+            <i data-lucide="x"></i>
+        </button>
+        <h3 class="modal-title">
+            <i data-lucide="sparkles" style="width:18px;height:18px;vertical-align:-3px;margin-right:6px;color:var(--sage-600);"></i>인사이트
+        </h3>
+
+        <div class="insight-section">
+            <div class="insight-my-card" id="insight-my-card">
+                <div class="insight-empty">
+                    <i data-lucide="sparkles"></i>
+                    <span>아직 준비 중인 기능이에요</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="insight-section">
+            <div class="insight-section-title">AI 추천 · 나와 비슷한 재배자 인사이트</div>
+            <div class="insight-similar-list" id="insight-similar-list">
+                <div class="insight-similar-card" th:each="i : ${#numbers.sequence(1, 5)}">
+                    <div class="insight-avatar"><i data-lucide="user"></i></div>
+                    <div class="insight-similar-body">
+                        <div class="insight-skeleton-line insight-skeleton-line--name"></div>
+                        <div class="insight-skeleton-line"></div>
+                        <div class="insight-skeleton-line insight-skeleton-line--short"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
