@@ -993,12 +993,15 @@ function renderMainPhoto() {
 // 업로드 박스(네모 칸) 자체에 현재 대표 사진(가장 최근 사진)을 미리보기로 보여줌.
 // 사진이 없을 때만 업로드 아이콘을 보여주고, 있으면 그 안에 바로 사진이 뜨게 함.
 function renderPhotoUploadPreview() {
-    var box = document.getElementById('photo-upload-preview');
-    if (PHOTOS.length === 0) {
-        box.innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
-    } else {
-        box.innerHTML = '<img src="' + PHOTOS[0].uri + '" alt="재배 사진" />';
-    }
+    ['photo-upload-preview', 'photo-upload-preview-main'].forEach(function (id) {
+        var box = document.getElementById(id);
+        if (!box) return;
+        if (PHOTOS.length === 0) {
+            box.innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
+        } else {
+            box.innerHTML = '<img src="' + PHOTOS[0].uri + '" alt="재배 사진" />';
+        }
+    });
     lucide.createIcons();
 }
 
