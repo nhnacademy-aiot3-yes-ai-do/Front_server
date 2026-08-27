@@ -17,9 +17,63 @@
 <div class="page-container">
 
     <nav class="tabs-nav">
-        <button class="tab-btn active" type="button" onclick="switchTab('main')"><i data-lucide="layout-dashboard"></i>Main</button>
-        <button class="tab-btn" type="button" onclick="switchTab('report')"><i data-lucide="sparkles"></i>AI report</button>
-        <button class="tab-btn" type="button" onclick="switchTab('chatbot')"><i data-lucide="bot"></i>AI Chatbot</button>
+        <div class="tabs-nav-tabs">
+            <button class="tab-btn active" type="button" onclick="switchTab('main')"><i data-lucide="layout-dashboard"></i>Main</button>
+            <button class="tab-btn" type="button" onclick="switchTab('report')"><i data-lucide="sparkles"></i>AI report</button>
+            <button class="tab-btn" type="button" onclick="switchTab('chatbot')"><i data-lucide="bot"></i>AI Chatbot</button>
+        </div>
+
+        <div class="action-bar">
+
+            <div class="dropdown-panel" id="member-panel">
+                <div class="dropdown-panel-title">
+                    담당자 관리
+                    <button type="button" title="추가" th:if="${myRole == 'OWNER'}" onclick="openMemberAddModal()">
+                        <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
+                    </button>
+                </div>
+                <div id="member-list"></div>
+                <div class="panel-pagination" id="member-pagination">
+                    <button type="button" onclick="changeMemberPage(-1)" id="member-prev">
+                        <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
+                    </button>
+                    <span id="member-page-label"></span>
+                    <button type="button" onclick="changeMemberPage(1)" id="member-next">
+                        <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="dropdown-panel" id="notif-panel">
+                <div class="dropdown-panel-title">알림</div>
+                <div id="notif-list"></div>
+                <div class="panel-pagination" id="notif-pagination">
+                    <button type="button" onclick="changeNotifPage(-1)" id="notif-prev">
+                        <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
+                    </button>
+                    <span id="notif-page-label"></span>
+                    <button type="button" onclick="changeNotifPage(1)" id="notif-next">
+                        <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button class="icon-btn" type="button" title="AI 버섯 가이드" onclick="openMushroomGuideModal()">
+                <i data-lucide="sparkles"></i>
+            </button>
+            <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
+                <i data-lucide="users"></i>
+            </button>
+            <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
+                <i data-lucide="bell"></i>
+            </button>
+            <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openEndAmountModal()">
+                <i data-lucide="power"></i>
+            </button>
+            <button class="icon-btn danger" type="button" title="삭제하기" th:if="${myRole == 'OWNER'}" onclick="openModal('modal-delete')">
+                <i data-lucide="trash-2"></i>
+            </button>
+        </div>
     </nav>
 
     <div class="tab-panels">
@@ -121,60 +175,14 @@
                     </div>
                 </div>
 
-                <div class="action-bar">
-
-                    <div class="dropdown-panel" id="member-panel">
-                        <div class="dropdown-panel-title">
-                            담당자 관리
-                            <button type="button" title="추가" th:if="${myRole == 'OWNER'}" onclick="openMemberAddModal()">
-                                <i data-lucide="user-plus" style="width:18px;height:18px;"></i>
-                            </button>
-                        </div>
-                        <div id="member-list"></div>
-                        <div class="panel-pagination" id="member-pagination">
-                            <button type="button" onclick="changeMemberPage(-1)" id="member-prev">
-                                <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
-                            </button>
-                            <span id="member-page-label"></span>
-                            <button type="button" onclick="changeMemberPage(1)" id="member-next">
-                                <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
-                            </button>
-                        </div>
+                <div class="sensor-upload-card">
+                    <div class="settings-photo-upload" id="photo-upload-preview-main" onclick="document.getElementById('photo-upload-input-main').click()">
+                        <i data-lucide="upload" style="width:28px;height:28px;"></i>
                     </div>
-
-                    <div class="dropdown-panel" id="notif-panel">
-                        <div class="dropdown-panel-title">알림</div>
-                        <div id="notif-list"></div>
-                        <div class="panel-pagination" id="notif-pagination">
-                            <button type="button" onclick="changeNotifPage(-1)" id="notif-prev">
-                                <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
-                            </button>
-                            <span id="notif-page-label"></span>
-                            <button type="button" onclick="changeNotifPage(1)" id="notif-next">
-                                <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <button class="icon-btn" type="button" title="AI 버섯 가이드" onclick="openMushroomGuideModal()">
-                        <i data-lucide="sparkles"></i>
-                    </button>
-                    <button class="icon-btn" type="button" title="담당자 관리" onclick="togglePanel('member-panel')">
-                        <i data-lucide="users"></i>
-                    </button>
-                    <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
-                        <i data-lucide="bell"></i>
-                    </button>
-                    <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openEndAmountModal()">
-                        <i data-lucide="power"></i>
-                    </button>
-                    <button class="icon-btn danger" type="button" title="삭제하기" th:if="${myRole == 'OWNER'}" onclick="openModal('modal-delete')">
-                        <i data-lucide="trash-2"></i>
-                    </button>
+                    <input type="file" id="photo-upload-input-main" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
+                    <div class="sensor-upload-label">AI 분석용 사진 등록</div>
                 </div>
-
             </div>
-
             <!-- 환경통계 카드 + 그래프 카드 (분리) -->
             <div class="stats-col">
                 <div class="card env-stats-card env-stats-card--main">

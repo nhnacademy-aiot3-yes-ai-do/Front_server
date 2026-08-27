@@ -34,6 +34,8 @@ body {
    각 탭은 배경 없이 밑줄로만 활성 상태를 표시하는 스타일로 변경 */
 .tabs-nav {
     display: flex;
+    justify-content: space-between;   /* 추가 */
+    align-items: center;              /* 추가 */
     gap: 4px;
     background: rgba(251, 246, 234, 0.7);
     backdrop-filter: blur(6px);
@@ -42,6 +44,12 @@ body {
     border-radius: 16px;
     padding: 0.4rem;
     margin-bottom: 1.1rem;
+}
+
+.tabs-nav-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .tab-btn {
@@ -937,6 +945,20 @@ body {
     margin: 1.5rem 0 0;
 }
 
+.sensor-upload-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 1rem 0;
+}
+
+.sensor-upload-label {
+    font-family: "Gaegu", inherit;
+    font-size: 0.9rem;
+    color: var(--brown-500);
+}
+
 .action-bar {
     display: flex;
     justify-content: flex-end;
@@ -1008,7 +1030,7 @@ body {
 .dropdown-panel {
     display: none;
     position: absolute;
-    bottom: calc(100% + 10px);
+    top: calc(100% + 10px);
     width: 380px;
     max-height: 460px;
     overflow-y: auto;
