@@ -20,6 +20,8 @@ import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.config.WebConfig;
 import site.yesaido.frontserver.dto.notification.request.EndpointCreateRequest;
 import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
+import site.yesaido.frontserver.dto.notification.response.TelegramLinkSessionResponse;
+import site.yesaido.frontserver.dto.notification.response.TelegramLinkStatusResponse;
 import site.yesaido.frontserver.exception.GlobalExceptionHandler;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.LoginCheckInterceptor;
@@ -31,6 +33,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -133,6 +136,82 @@ class NotificationEndpointControllerTest {
                                 {"destination":"https://example.com/api/webhooks/1/token","displayName":"우리 농장 알림"}
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Telegram 연동 세션 생성 요청을 알림 서버로 전달")
+    void createsTelegramLinkSession() throws Exception {
+        given(notificationClient.createTelegramLinkSession()).willReturn(ResponseEntity.status(201).body(
+                new TelegramLinkSessionResponse(java.util.UUID.fromString("11111111-1111-1111-1111-111111111111"),
+                        "PENDING", "https://t.me/bot?start=opaque", java.time.Instant.parse("2026-08-25T03:00:00Z"))
+        ));
+
+        mockMvc.perform(post("/notifications/endpoints/telegram-link-sessions").cookie(LOGGED_IN))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.deepLink").value("https://t.me/bot?start=opaque"));
+
+        verify(notificationClient).createTelegramLinkSession();
+    }
+
+    @Test
+    @DisplayName("Telegram 연동 세션 상태 조회를 알림 서버로 전달")
+    void getsTelegramLinkSession() throws Exception {
+        java.util.UUID sessionId = java.util.UUID.fromString("11111111-1111-1111-1111-111111111111");
+        given(notificationClient.getTelegramLinkSession(sessionId)).willReturn(ResponseEntity.ok(
+                new TelegramLinkStatusResponse(sessionId, "LINKED")
+        ));
+
+        mockMvc.perform(get("/notifications/endpoints/telegram-link-sessions/{session-id}", sessionId).cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionId").value(sessionId.toString()))
+                .andExpect(jsonPath("$.status").value("LINKED"));
+
+        verify(notificationClient).getTelegramLinkSession(sessionId);
+    }
+
+    @Test
+    @DisplayName("로그인 없이 Telegram 연동 세션 상태를 조회하면 로그인으로 이동")
+    void getTelegramLinkSessionWithoutAccessTokenRedirectsToLogin() throws Exception {
+        mockMvc.perform(get("/notifications/endpoints/telegram-link-sessions/{session-id}",
+                        "11111111-1111-1111-1111-111111111111"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+
+        verifyNoInteractions(notificationClient);
+    }
+
+    @Test
+    @DisplayName("없는 Telegram 연동 세션 상태 조회는 알림 정보 없음으로 반환")
+    void getTelegramLinkSessionNotFoundReturnsNotificationNotFound() throws Exception {
+        java.util.UUID sessionId = java.util.UUID.fromString("11111111-1111-1111-1111-111111111111");
+        given(notificationClient.getTelegramLinkSession(sessionId)).willThrow(feignException(404));
+
+        mockMvc.perform(get("/notifications/endpoints/telegram-link-sessions/{session-id}", sessionId).cookie(LOGGED_IN))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("해당 알림 정보를 찾을 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("Telegram 연동 세션 상태 조회 중 인증 오류가 발생하면 로그인으로 이동")
+    void getTelegramLinkSessionUnauthorizedRedirectsToLogin() throws Exception {
+        java.util.UUID sessionId = java.util.UUID.fromString("11111111-1111-1111-1111-111111111111");
+        given(notificationClient.getTelegramLinkSession(sessionId)).willThrow(feignException(401));
+
+        mockMvc.perform(get("/notifications/endpoints/telegram-link-sessions/{session-id}", sessionId).cookie(LOGGED_IN))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    @DisplayName("Telegram 연동 세션 상태 조회 중 알림 서버 오류는 서비스 안내 메시지로 반환")
+    void getTelegramLinkSessionPropagatesNotificationServerError() throws Exception {
+        java.util.UUID sessionId = java.util.UUID.fromString("11111111-1111-1111-1111-111111111111");
+        given(notificationClient.getTelegramLinkSession(sessionId)).willThrow(feignException(503));
+
+        mockMvc.perform(get("/notifications/endpoints/telegram-link-sessions/{session-id}", sessionId).cookie(LOGGED_IN))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.detail").value("알림 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요."));
     }
 
     @Test
