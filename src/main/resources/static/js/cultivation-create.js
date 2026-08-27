@@ -155,6 +155,13 @@ function goToStep(n) {
     }
 
     if (n === 2) {
+        var nameInput = document.getElementById('f-name');
+        if (!nameInput.value.trim()) {
+            alert('재배지 이름을 입력해주세요.');
+            goToStep(1);
+            return;
+        }
+
         var selected = document.getElementById('f-mushroom');
         if (!selected.value) {
             alert('버섯 종류를 확인해주세요.');
