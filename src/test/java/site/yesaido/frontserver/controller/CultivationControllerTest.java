@@ -40,8 +40,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -188,7 +187,7 @@ class CultivationControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/cultivations"));
 
-        verify(cultivationClient).createCultivation(new CultivationCreateRequest("새 재배", 5L));
+        verify(cultivationClient).createCultivation(new CultivationCreateRequest("새 재배", 5L, anyList()));
     }
 
     @Test

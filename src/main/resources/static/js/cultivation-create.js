@@ -1,5 +1,15 @@
 lucide.createIcons();
 
+var environmentSettings = [];
+var manualSettingEnabled = false;
+
+var SENSOR_TYPE_LABELS = {
+    TEMPERATURE: '온도',
+    HUMIDITY: '습도',
+    CO2: 'CO2',
+    LIGHT: '조도'
+};
+
 var MUSHROOMS = [];
 
 var DIFFICULTY_LABELS = ['', '매우 쉬움', '쉬움', '보통', '어려움', '매우 어려움'];
@@ -156,6 +166,7 @@ function goToStep(n) {
 
     if (n === 2) {
         var nameInput = document.getElementById('f-name');
+
         if (!nameInput.value.trim()) {
             alert('재배지 이름을 입력해주세요.');
             goToStep(1);
@@ -168,7 +179,17 @@ function goToStep(n) {
             goToStep(1);
             return;
         }
+
+        // 다른 버섯 선택한 경우 수동 설정 상태 초기화
+        manualSettingEnabled = false;
+        document.getElementById('manual-setting-toggle').checked = false;
         document.getElementById('loading-mushroom').textContent = selected.selectedOptions[0].textContent;
+
+        // 선택된 버섯의 thresholdInfoResponses로 기본 임계값을 만듭니다.
+        initializeEnvironmentSettings();
+
+        document.getElementById('loading-mushroom').textContent =
+            selected.selectedOptions[0].textContent;
 
         fetch('/cultivations/mushrooms/' + selected.value + '/guide')
             .then(function (res) { return res.json(); })
@@ -183,3 +204,176 @@ function goToStep(n) {
             });
     }
 }
+
+function renderEnvironmentSettings() {
+    var container = document.getElementById('environment-settings');
+    container.replaceChildren();
+
+    environmentSettings.forEach(function (setting, index) {
+        var row = document.createElement('div');
+        row.className = 'environment-setting-row';
+
+        var label = document.createElement('span');
+        label.textContent =
+            (SENSOR_TYPE_LABELS[setting.sensorType] || setting.sensorType)
+            + ' (' + setting.unit + ')';
+
+        var minInput = document.createElement('input');
+        minInput.type = 'number';
+        minInput.step = 'any';
+        minInput.value = setting.thresholdMin;
+        minInput.disabled = !manualSettingEnabled;
+
+        var separator = document.createElement('span');
+        separator.textContent = '~';
+
+        var maxInput = document.createElement('input');
+        maxInput.type = 'number';
+        maxInput.step = 'any';
+        maxInput.value = setting.thresholdMax;
+        maxInput.disabled = !manualSettingEnabled;
+
+        minInput.addEventListener('input', function () {
+            var value = minInput.value.trim();
+
+            environmentSettings[index].thresholdMin =
+                value === '' ? NaN : Number(value);
+
+            validateEnvironmentSettings();
+        });
+
+        maxInput.addEventListener('input', function () {
+            var value = maxInput.value.trim();
+
+            environmentSettings[index].thresholdMax =
+                value === '' ? NaN : Number(value);
+
+            validateEnvironmentSettings();
+        });
+
+        row.append(label, minInput, separator, maxInput);
+        container.appendChild(row);
+    });
+
+    validateEnvironmentSettings();
+}
+
+function initializeEnvironmentSettings() {
+    var mushroomId = document.getElementById('f-mushroom').value;
+
+    var mushroom = MUSHROOMS.find(function (item) {
+        return String(item.id) === String(mushroomId);
+    });
+
+    var thresholds = mushroom && Array.isArray(mushroom.thresholdInfoResponses)
+        ? mushroom.thresholdInfoResponses
+        : [];
+
+    environmentSettings = thresholds.map(function (threshold) {
+        return {
+            sensorTypeId: threshold.sensorType.id,
+            sensorType: threshold.sensorType.type,
+            unit: threshold.sensorType.valueUnit,
+            recommendedMin: Number(threshold.thresholdMin),
+            recommendedMax: Number(threshold.thresholdMax),
+            thresholdMin: Number(threshold.thresholdMin),
+            thresholdMax: Number(threshold.thresholdMax)
+        };
+    });
+
+    renderEnvironmentSettings();
+}
+
+function bindEnvironmentSettingEvents() {
+    var toggle = document.getElementById('manual-setting-toggle');
+
+    toggle.addEventListener('change', function (event) {
+        manualSettingEnabled = event.target.checked;
+        renderEnvironmentSettings();
+    });
+}
+
+function validateEnvironmentSettings() {
+    var message = '';
+
+    if (environmentSettings.length === 0) {
+        message = '등록된 재배 환경 기준이 없습니다.';
+    } else {
+        environmentSettings.some(function (setting) {
+            if (!Number.isFinite(setting.thresholdMin)
+                || !Number.isFinite(setting.thresholdMax)) {
+                message = '최소값과 최대값을 모두 입력해주세요.';
+                return true;
+            }
+
+            if (setting.thresholdMin >= setting.thresholdMax) {
+                message = '최소값은 최대값보다 작아야 합니다.';
+                return true;
+            }
+
+            if (setting.thresholdMin < setting.recommendedMin
+                || setting.thresholdMax > setting.recommendedMax) {
+                message = 'AI 추천 범위를 벗어난 값이 있습니다.';
+                return true;
+            }
+
+            return false;
+        });
+    }
+
+    document.getElementById('environment-setting-error').textContent = message;
+    document.getElementById('cultivation-submit').disabled = message !== '';
+
+    return message === '';
+}
+
+function bindCultivationCreateForm() {
+    var form = document.getElementById('cultivation-create-form');
+
+    form.addEventListener('submit', function (event) {
+        // 기존 HTML form 전송을 중단합니다.
+        event.preventDefault();
+
+        if (!validateEnvironmentSettings()) {
+            return;
+        }
+
+        var request = {
+            name: document.getElementById('f-name').value.trim(),
+            mushroomId: Number(
+                document.getElementById('f-mushroom').value
+            ),
+            environmentSettingRequests: environmentSettings.map(
+                function (setting) {
+                    return {
+                        sensorTypeId: setting.sensorTypeId,
+                        thresholdMin: setting.thresholdMin,
+                        thresholdMax: setting.thresholdMax
+                    };
+                }
+            )
+        };
+
+        fetch('/cultivations', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(request)
+        })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('재배지 생성에 실패했습니다.');
+                }
+
+                window.location.href = '/cultivations';
+            })
+            .catch(function (error) {
+                alert(error.message);
+            });
+    });
+}
+
+bindEnvironmentSettingEvents();
+bindCultivationCreateForm();

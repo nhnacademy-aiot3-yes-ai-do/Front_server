@@ -32,7 +32,10 @@
             </div>
         </div>
 
-        <form class="wizard-panels" method="post" th:action="@{/cultivations}">
+        <form id="cultivation-create-form"
+              class="wizard-panels"
+              method="post"
+              th:action="@{/cultivations}">
 
             <!-- STEP 1 : 재배지 정보 입력 -->
             <section class="wizard-panel active" id="step-1">
@@ -70,7 +73,7 @@
                 <h2 class="wizard-title">
                     <span id="result-mushroom">양송이버섯</span> 재배를 시작해볼까요?
                 </h2>
-                <p class="wizard-desc">센서와 환경 임계값은 생성 후 '내 센서'에서 등록할 수 있어요.</p>
+                <p class="wizard-desc">추가 센서는 생성 후 '내 센서'에서 등록할 수 있어요.</p>
 
                 <div class="mushroom-info-card" id="mushroom-info-card">
                     <div class="mushroom-info-title">
@@ -96,6 +99,20 @@
                     <button type="button" class="mushroom-recipe-btn" id="mushroom-recipe-btn" onclick="openRecipeModal()">
                         <i data-lucide="chef-hat"></i>추천 요리법 보기
                     </button>
+                </div>
+
+                <div class="environment-setting-card">
+                    <div class="environment-setting-header">
+                        <h3>적용할 재배 환경 설정</h3>
+
+                        <label>
+                            <input type="checkbox" id="manual-setting-toggle" />
+                            수동 설정
+                        </label>
+                    </div>
+
+                    <div id="environment-settings"></div>
+                    <p id="environment-setting-error"></p>
                 </div>
 
                 <div class="recipe-modal-overlay" id="recipe-modal-overlay" onclick="closeRecipeModal(event)">

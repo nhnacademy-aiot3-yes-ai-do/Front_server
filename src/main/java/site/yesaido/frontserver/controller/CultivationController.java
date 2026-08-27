@@ -1,8 +1,11 @@
 package site.yesaido.frontserver.controller;
 
 import feign.FeignException;
+import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -124,9 +127,11 @@ public class CultivationController {
     }
   
     @PostMapping
-    public String createCultivation(@RequestParam String name, @RequestParam Long mushroomId) {
-        cultivationClient.createCultivation(new CultivationCreateRequest(name, mushroomId));
-        return "redirect:/cultivations";
+    public ResponseEntity<Void> createCultivation(
+            @Valid @RequestBody CultivationCreateRequest request
+    ) {
+        cultivationClient.createCultivation(request);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/{cultivation-id}")
