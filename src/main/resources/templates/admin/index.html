@@ -60,6 +60,20 @@
                     <div class="admin-stat-label">등록된 버섯 종류</div>
                 </div>
             </div>
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon-wrap"><i data-lucide="cpu"></i></span>
+                <div>
+                    <div class="admin-stat-value" th:text="${sensorTypeCount}">4</div>
+                    <div class="admin-stat-label">등록된 센서타입</div>
+                </div>
+            </div>
+            <div class="admin-stat-card">
+                <span class="admin-stat-icon-wrap"><i data-lucide="bell"></i></span>
+                <div>
+                    <div class="admin-stat-value" th:text="${notificationEventCount}">3</div>
+                    <div class="admin-stat-label">등록된 알림 이벤트</div>
+                </div>
+            </div>
         </div>
 
         <div class="admin-activity-row">

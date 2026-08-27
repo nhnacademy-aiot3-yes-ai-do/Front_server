@@ -473,6 +473,11 @@ function renderChartTrend() {
 // 그럴듯한 답변을 무작위로 지어내던 CHATBOT_REPLIES는 없애고 항상 같은 안내 문구만 보냄.
 var CHATBOT_PLACEHOLDER_REPLY = 'AI 챗봇은 아직 준비 중인 기능이에요. 조금만 기다려 주세요 🍄';
 
+// 인사이트: Ai_server에 서비스/DB 로직(InsightService 등)은 이미 있는데 이걸 밖에서 부를 수
+// 있는 컨트롤러(API)가 아직 없어서, 지금은 modal-insight에 "내 인사이트" + "비슷한 재배자 인사이트 5개"
+// 자리(프레임)만 잡아둠. 실제 데이터 없이 골격만 있는 상태라 버튼은 openModal('modal-insight')로 바로 연결.
+// API가 생기면 openModal 앞뒤로 fetch 붙여서 #insight-my-card / #insight-similar-list를 채우면 됨.
+
 function sendChatMessage(event) {
     event.preventDefault();
     var input = document.getElementById('chatbot-input');
