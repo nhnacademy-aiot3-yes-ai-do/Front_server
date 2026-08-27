@@ -100,7 +100,7 @@ var CHART_UNIT = '';            // 현재 선택된 센서의 단위 (°C, %, pp
 var CHART_MAX_POINTS = 3000;    // 버퍼 하나당 안전장치용 개수 상한
 var CHART_RETENTION_MS = 24 * 60 * 60 * 1000; // 버퍼 자체는 최대 24시간치까지 보관 (화면엔 아래 실시간 구간만 표시)
 var CHART_POLL_INTERVAL_MS = 3000; // 3초마다 최신값 폴링
-var CHART_DISPLAY_WINDOW_MS = 15 * 60 * 1000; // 화면엔 항상 최근 15분만 — 24h/15분평균 추이 API 조회 결과와 맞춰봄 (실험용, B안)
+var CHART_DISPLAY_WINDOW_MS = 1 * 60 * 1000; // 화면엔 항상 최근 1분만 — 3초 폴링 간격 대비 창이 짧아야 중간 지점 타임스탬프가 보임
 var chartPollTimer = null;
 
 function chartKey(sensorType, deviceEui) {
@@ -288,7 +288,7 @@ function stopChartPolling() {
 function pollChartValue() {
     if (!CHART_SELECTED) return;
     var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    var gatewayOrigin = isLocal ? 'http://localhost:8080' : 'https://api.yes-nhn.site';
+    var gatewayOrigin = isLocal ? 'http://localhost:8000' : 'https://api.yes-nhn.site';
 
     fetch(gatewayOrigin + '/api/v1/cultivations/' + CULTIVATION_ID + '/sensor-values', {
         credentials: 'include'
@@ -433,27 +433,21 @@ function renderChartTrend() {
             '<text class="chart-axis-label chart-axis-label-y" x="' + (CHART_PLOT_X0 - 5) + '" y="' + (row.y + 3) + '" text-anchor="end">' + formatChartValue(row.value) + '</text>';
     }).join('');
 
-    // ---- X축(시간) 눈금: 값이 2개 이상일 때 처음/마지막 시각만 표시 ----
-    // 예전엔 중간 라벨도 같이 그렸는데, 그래프 폭(300)에 비해 "HH:MM:SS" 라벨 자체가 꽤 넓어서
-    // 세 라벨 중 두 개가 픽셀상 가까워지면(특히 데이터가 최근 시점에 몰려있을 때) 텍스트가 겹쳐 보이는 문제가
-    // 여러 번 재발했음. 라벨 개수를 처음/마지막 두 개로 고정하면 그 겹침 경우의 수 자체가 사라짐.
+    // ---- X축(시간) 눈금: 눕히지 않고 가로로, 폭이 부족하면 중간 점 라벨은 건너뜀 ----
+    // 마지막(최신) 라벨부터 왼쪽으로 훑으면서 라벨 폭(minLabelGap)만큼 떨어진 점에서만 라벨 추가
     var timeLabelsHtml = '';
     if (n >= 2) {
-        var firstX = coords[0].x;
-        var lastX = coords[n - 1].x;
-        // "HH:MM:SS" 라벨 하나가 대략 26~28 유닛 폭을 차지함(5.6px 폰트 기준) —
-        // 처음 라벨은 시작점에서 오른쪽으로, 마지막 라벨은 끝점에서 왼쪽으로 텍스트가 뻗어나가므로
-        // 두 점이 라벨 폭의 2배(약 56)보다 가까우면 겹칠 수 있어 그럴 땐 마지막 라벨 하나만 표시
-        var minLabelGap = 56;
-        var timeRows;
+        var minLabelGap = 30;
+        var timeRows = [];
+        var lastLabelX = null;
 
-        if (lastX - firstX < minLabelGap) {
-            timeRows = [{ x: lastX, t: times[n - 1], anchor: 'end' }];
-        } else {
-            timeRows = [
-                { x: firstX, t: times[0], anchor: 'start' },
-                { x: lastX, t: times[n - 1], anchor: 'end' }
-            ];
+        for (var li = n - 1; li >= 0; li--) {
+            var x = coords[li].x;
+            if (lastLabelX === null || (lastLabelX - x) >= minLabelGap) {
+                var anchor = li === 0 ? 'start' : (li === n - 1 ? 'end' : 'middle');
+                timeRows.unshift({ x: x, t: times[li], anchor: anchor });
+                lastLabelX = x;
+            }
         }
 
         timeLabelsHtml = timeRows.map(function (row) {
