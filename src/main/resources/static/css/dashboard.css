@@ -678,7 +678,19 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.7rem;
+    /* 기본 4종 + 관리자가 새로 등록한 커스텀 센서 타입까지 다 뜨면 카드가 무한정 늘어날 수 있어서
+       스크롤되게 막아둠. max-height는 rem으로 어림잡으면 카드 5번째가 어중간하게 잘려 보여서,
+       dashboard.js(capSensorRowsHeight)가 실제 카드 높이를 재서 "정확히 4장" 높이로 잘라줌. */
+    overflow-y: auto;
+    padding-right: 0.3rem;
+    /* .sensor-col이 flex라서 이게 없으면 부모가 그리드 행 높이에 맞춰 여길 또 짓눌러버려서
+       위 JS가 계산한 "정확히 4장" 높이가 무시되고 다시 어중간하게 잘림 -> shrink 자체를 막음 */
+    flex-shrink: 0;
 }
+
+.sensor-rows::-webkit-scrollbar { width: 6px; }
+.sensor-rows::-webkit-scrollbar-thumb { background: var(--brown-300); border-radius: 8px; }
+.sensor-rows::-webkit-scrollbar-track { background: transparent; }
 
 .sensor-row {
     display: flex;
@@ -707,6 +719,16 @@ body {
 .sensor-row .sensor-main {
     flex: 1;
     min-width: 0;
+}
+
+/* 관리자에서 추가한 커스텀 타입은 전용 아이콘이 없어서(공통 cpu 아이콘) 아이콘만으론 구분이 안 되니
+   타입 코드를 작게 같이 보여줌 */
+.sensor-row-type {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--brown-500);
+    margin-bottom: 0.15rem;
 }
 
 /* ===== 커스텀 드롭다운: 대시보드 전용 변형 (공통 부분은 common.css) ===== */
