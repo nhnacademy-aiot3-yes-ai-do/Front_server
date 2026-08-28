@@ -20,6 +20,7 @@ import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.config.MethodOverrideConfig;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.CultivationCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.request.cultivation.EnvironmentSettingRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddFormRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberAddRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
@@ -41,6 +42,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -178,16 +180,43 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("HTML form 재배 생성 성공 시 목록으로 리다이렉트")
-    void createCultivationRedirectsToListForNativeFormSubmission() throws Exception {
+    @DisplayName("JSON 재배 생성 요청 성공 시 201을 반환하고 재배 서비스에 전달한다")
+    void createCultivationReturnsCreatedForJsonRequest() throws Exception {
+        CultivationCreateRequest request = new CultivationCreateRequest(
+                "새 재배",
+                5L,
+                List.of(new EnvironmentSettingRequest(
+                        1L,
+                        new BigDecimal("18.0"),
+                        new BigDecimal("24.0")
+                ))
+        );
+
         mockMvc.perform(post("/cultivations")
                         .cookie(LOGGED_IN)
-                        .param("name", "새 재배")
-                        .param("mushroomId", "5"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cultivations"));
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
 
-        verify(cultivationClient).createCultivation(new CultivationCreateRequest("새 재배", 5L, anyList()));
+        verify(cultivationClient).createCultivation(request);
+    }
+
+    @Test
+    @DisplayName("환경 설정이 없는 재배 생성 요청은 400을 반환한다")
+    void createCultivationRejectsEmptyEnvironmentSettings() throws Exception {
+        CultivationCreateRequest request = new CultivationCreateRequest(
+                "새 재배",
+                5L,
+                List.of()
+        );
+
+        mockMvc.perform(post("/cultivations")
+                        .cookie(LOGGED_IN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(cultivationClient);
     }
 
     @Test
