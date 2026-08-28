@@ -35,6 +35,15 @@
     </nav>
 
     <div class="admin-sidebar-footer">
+        <!-- 일반 유저 페이지 헤더(fragments/header.html)의 로그인 남은시간 타이머 + 연장 버튼과
+             완전히 동일한 마크업/JS(common.js의 initTopbarSessionTimer/extendLoginSession)를 재사용함.
+             id를 그대로 맞춰야 JS가 찾아서 동작하므로 id는 바꾸지 않음. -->
+        <div class="topbar-session admin-sidebar-session" id="topbar-session">
+            <i data-lucide="calendar-clock"></i>
+            <span class="topbar-session-timer" id="topbar-session-timer">30:00</span>
+            <button type="button" class="topbar-session-extend" id="topbar-session-extend" onclick="extendLoginSession()">로그인 연장하기</button>
+        </div>
+
         <div class="admin-sidebar-profile">
             <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
             <span class="admin-sidebar-profile-name">관리자</span>
