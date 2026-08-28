@@ -1,5 +1,5 @@
 function handleLogout() {
-    fetch('/logout', { method: 'POST' }).finally(function () {
+    fetch('/users/token/logout', { method: 'POST' }).finally(function () {
         location.href = '/login';
     });
 }

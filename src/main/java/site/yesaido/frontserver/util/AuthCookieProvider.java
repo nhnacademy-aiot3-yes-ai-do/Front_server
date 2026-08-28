@@ -75,6 +75,6 @@ public class AuthCookieProvider {
     }
 
     private void addRefreshTokenCookie(HttpServletResponse response, String value, int maxAgeSeconds){
-        addCookie(response, REFRESH_TOKEN, value, maxAgeSeconds, true, "/users/reissue");
+        addCookie(response, REFRESH_TOKEN, value, maxAgeSeconds, true, "/users/token");
     }
 }

@@ -30,6 +30,15 @@ spring:
               - profile
   lifecycle:
     timeout-per-shutdown-phase: 20s
+  session:
+    store-type: redis
+    timeout: 10m
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      database: ${REDIS_DATABASE}
 
 auth:
   cookie:

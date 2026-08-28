@@ -21,6 +21,7 @@
                    href="/find-password?type=dormant"
                    style="color: #d9534f; font-weight: bold; text-decoration: underline; margin-left: 6px;">[이메일 인증하기]</a>
             </p>
+            <p class="help-text ok" th:if="${loginMessage}" th:text="${loginMessage}"></p>
 
             <form id="login-form" action="/login" method="post">
                 <div class="field">

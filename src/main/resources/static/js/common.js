@@ -1,7 +1,7 @@
 function logout() {
     var form = document.createElement('form');
     form.method = 'POST';
-    form.action = '/logout';
+    form.action = '/users/token/logout';
     document.body.appendChild(form);
     form.submit();
 }
@@ -125,7 +125,7 @@ function extendLoginSession() {
         btn.textContent = '연장 중...';
     }
 
-    fetch('/users/reissue', {
+    fetch('/users/token/reissue', {
         method: 'POST',
         credentials: 'same-origin'
     })

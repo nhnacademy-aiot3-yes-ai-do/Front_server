@@ -42,7 +42,7 @@ public interface UserClient {
 
     // 6. 로그아웃
     @PostMapping("/api/v1/auth/logout")
-    void logout();
+    void logout(@RequestBody LogoutRequest request);
 
     // 7. Token 재발급
     @PostMapping("/api/v1/auth/reissue")
@@ -79,4 +79,10 @@ public interface UserClient {
     @GetMapping("/api/v1/admin/members")
     ApiResponse<MemberSummaryPageResponse> getMembers(@RequestParam("status") String status,
                                                       @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable);
+    // 16. 회원 탈퇴
+    @PostMapping("/api/v1/users/withdraw")
+    ApiResponse<Void> withdraw(@RequestBody WithdrawRequest request);
+
+    @PostMapping("/api/v1/auth/password/reset")
+    ApiResponse<Void> resetPassword(@RequestBody PasswordResetRequest resetRequest);
 }

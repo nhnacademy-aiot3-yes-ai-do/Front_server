@@ -28,7 +28,7 @@ class AuthCookieProviderTest {
                 && c.contains("Path=/")
                 && c.contains("Max-Age=0")));
         assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=refreshVal")
-                && c.contains("Path=/users/reissue")));
+                && c.contains("Path=/users/token")));
         assertTrue(cookies.stream().anyMatch(c -> c.contains("role=USER")));
         assertTrue(cookies.stream().anyMatch(c -> c.contains("accessTokenExpiresAt=1755671400000")
                 && !c.contains("HttpOnly")));
@@ -55,7 +55,7 @@ class AuthCookieProviderTest {
         assertEquals(5, cookies.size());
         assertTrue(cookies.stream().allMatch(c -> c.contains("Max-Age=0")));
         assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=") && c.contains("Path=/")));
-        assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=") && c.contains("Path=/users/reissue")));
+        assertTrue(cookies.stream().anyMatch(c -> c.contains("refreshToken=") && c.contains("Path=/users/token")));
     }
 
     @Test

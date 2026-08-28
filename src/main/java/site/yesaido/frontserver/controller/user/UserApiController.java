@@ -1,6 +1,7 @@
 package site.yesaido.frontserver.controller.user;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.UserClient;
@@ -16,6 +17,7 @@ import site.yesaido.frontserver.util.AuthCookieProvider;
 @RequiredArgsConstructor
 public class UserApiController {
     private static final String REFRESH_TOKEN = "refreshToken";
+    private static final String PASSWORD_RESET_VERIFIED_EMAIL = "passwordResetVerifiedEmail";
 
     private final UserClient userClient;
     private final AuthCookieProvider authCookieProvider;
@@ -38,6 +40,24 @@ public class UserApiController {
         return userClient.sendEmail(new EmailSendResponse(email));
     }
 
+    @PostMapping("/users/password-reset/verify-email")
+    public Boolean verifyEmail(@RequestBody PasswordResetEmailVerifyRequest request,
+                               HttpSession session){
+        ApiResponse<Boolean> response = userClient.verifyEmail(
+                new EmailVerifyRequest(
+                        request.email().trim(),
+                        request.code().trim()
+                )
+        );
+
+        boolean verified = response != null && Boolean.TRUE.equals(response.data());
+
+        if(verified){
+            session.setAttribute(PASSWORD_RESET_VERIFIED_EMAIL, request.email().trim());
+        }
+        return verified;
+    }
+
     // 이메일 인증번호 확인
     @PostMapping("/users/email/verify")
     public Boolean verifyEmail(@RequestParam String email, @RequestParam String code) {
@@ -46,7 +66,7 @@ public class UserApiController {
     }
 
     // 토큰 시간 연장
-    @PostMapping("/users/reissue")
+    @PostMapping("/users/token/reissue")
     public ApiResponse<TokenResponse> reissue(@CookieValue(name = REFRESH_TOKEN, required = false) String refreshToken,
                                               HttpServletResponse response) {
         if (refreshToken == null || refreshToken.isBlank()) {
@@ -96,6 +116,16 @@ public class UserApiController {
             authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
         }
 
+        return apiResponse;
+    }
+
+    // 회원 탈퇴
+    @PostMapping("/users/withdraw")
+    public ApiResponse<Void> withdraw(@RequestBody WithdrawRequest request, HttpServletResponse response){
+        ApiResponse<Void> apiResponse = userClient.withdraw(request);
+        if(apiResponse != null && apiResponse.success()){
+            authCookieProvider.clearAuthCookies(response);
+        }
         return apiResponse;
     }
 }

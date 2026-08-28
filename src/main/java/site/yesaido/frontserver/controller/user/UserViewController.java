@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttribute;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
@@ -27,6 +28,8 @@ import java.util.function.Supplier;
 @Controller
 @RequiredArgsConstructor
 public class UserViewController {
+    private static final String PASSWORD_RESET_VERIFIED_EMAIL = "passwordResetVerifiedEmail";
+
     private final NotificationClient notificationClient;
     private final MeterRegistry meterRegistry;
     private final CultivationClient cultivationClient;
@@ -71,7 +74,10 @@ public class UserViewController {
     }
 
     @GetMapping("/reset-password")
-    public String resetPasswordPage() {
+    public String resetPasswordPage(@SessionAttribute(name = PASSWORD_RESET_VERIFIED_EMAIL, required = false) String verifiedEmail) {
+        if(verifiedEmail == null || verifiedEmail.isBlank()){
+            return "redirect:/find-password";
+        }
         return "auth/reset-password";
     }
 

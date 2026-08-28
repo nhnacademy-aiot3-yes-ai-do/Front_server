@@ -84,9 +84,18 @@ class UserViewControllerTest {
     }
 
     @Test
-    @DisplayName("비밀번호 재설정 페이지 요청 시 auth/reset-password 뷰 반환")
-    void resetPasswordPageReturnsView() throws Exception {
+    @DisplayName("이메일 인증 세션 없이 비밀번호 재설정 페이지에 접근하면 비밀번호 찾기로 이동")
+    void resetPasswordPageRedirectsToFindPasswordWithoutVerifiedSession() throws Exception {
         mockMvc.perform(get("/reset-password"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/find-password"));
+    }
+
+    @Test
+    @DisplayName("이메일 인증 세션이 있으면 비밀번호 재설정 페이지를 반환")
+    void resetPasswordPageReturnsViewWithVerifiedSession() throws Exception {
+        mockMvc.perform(get("/reset-password")
+                        .sessionAttr("passwordResetVerifiedEmail", "test@naver.com"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/reset-password"));
     }

@@ -1,6 +1,8 @@
 spring:
   application:
     name: front_server
+  session:
+    store-type: none
   security:
     oauth2:
       client:
