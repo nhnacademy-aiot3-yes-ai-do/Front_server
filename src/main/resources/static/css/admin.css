@@ -64,6 +64,21 @@ body {
     gap: 0.6rem;
 }
 
+/* common.css의 .topbar-session은 원래 가로로 넓은 상단바용이라, 좁은 사이드바 폭 안에서
+   연장 버튼("로그인 연장하기")까지 뜨면 넘칠 수 있어서 필요하면 다음 줄로 감싸지게 함 */
+.admin-sidebar-session {
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 6px;
+}
+
+.admin-sidebar-session .topbar-session-extend {
+    flex: 1 0 100%;
+    text-align: center;
+}
+
 .admin-sidebar-profile {
     display: flex;
     align-items: center;
@@ -1560,6 +1575,10 @@ body.error-page {
     .admin-sidebar-link-label,
     .admin-sidebar-profile-name,
     .admin-sidebar-logout-label { display: none; }
+
+    /* 아이콘만 남는 폭(4.6rem)엔 카운트다운+연장 버튼 텍스트가 들어갈 자리가 없어서 숨김.
+       세션 자체는 여전히 유효하고 만료 임박 시 alert/로그아웃 로직은 그대로 동작함. */
+    .admin-sidebar-session { display: none !important; }
 
     .admin-sidebar-profile { justify-content: center; }
     .admin-sidebar-logout { justify-content: center; }
