@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>회원문의 | MushMush</title>
     <link rel="stylesheet" th:href="@{/css/support.css}" />
-    <script th:src="@{/js/lucide.js}"></script>
-    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/common/lucide.js}"></script>
+    <script th:src="@{/js/common/common.js}"></script>
 </head>
 <body>
 
@@ -15,7 +15,6 @@
 <div class="page-container">
     <div class="support-panels">
 
-        <!-- 목록 -->
         <section id="support-panel-list" class="support-panel active">
             <div class="support-list-card">
 
@@ -41,7 +40,6 @@
             </div>
         </section>
 
-        <!-- 작성 -->
         <section id="support-panel-new" class="support-panel">
             <div class="support-form-card">
                 <div class="support-form-icon">
@@ -81,7 +79,6 @@
             </div>
         </section>
 
-        <!-- 상세 -->
         <section id="support-panel-detail" class="support-panel">
             <button class="support-back-link" type="button" onclick="showPanel('list')">
                 <i data-lucide="chevron-left"></i>목록으로

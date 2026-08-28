@@ -1099,7 +1099,6 @@ function toggleMdp() {
         closeMdp();
         return;
     }
-    // 선택된 날짜(없으면 오늘)가 있는 달로 캘린더를 열게 함
     var base = PHOTO_DATE_FILTER || MDP_MAX;
     var parts = base.split('-');
     mdpViewYear = Number(parts[0]);
@@ -1312,7 +1311,6 @@ renderPhotoThumbs();
 renderPhotoUploadPreview();
 renderMainPhoto();
 if (document.getElementById('mdp')) {
-    // 기본값은 오늘 날짜로 채워둠
     onPhotoDateChange(MDP_MAX);
 }
 initializeSensorBootstrap();

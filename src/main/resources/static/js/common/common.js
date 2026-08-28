@@ -39,7 +39,6 @@ document.addEventListener('click', function (e) {
     }
 });
 
-// ===== 로그인 세션 남은시간 타이머 + 연장하기 =====
 // accessTokenExpiresAt 쿠키(httpOnly 아님, 로그인 시 서버가 심어둠)를 읽어서
 // 남은 시간을 매초 갱신함. 로그인 안 한 상태(쿠키 없음)면 그냥 숨겨둠.
 function getCookieValue(name) {
@@ -58,8 +57,6 @@ function getAccessTokenExpiresAt() {
 
     return expiresAt;
 }
-
-// ===== 실제 Access Token 만료 시각 기반 세션 타이머 =====
 
 var sessionTimerInterval = null;
 

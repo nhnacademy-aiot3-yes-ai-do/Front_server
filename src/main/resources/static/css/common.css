@@ -171,7 +171,6 @@
     height: 65%;
 }
 
-/* ===== 헤더 닉네임 드롭다운 (내 정보 보기 / 로그아웃) ===== */
 .topbar-profile {
     position: relative;
 }
@@ -327,7 +326,6 @@
     color: #fff;
 }
 
-/* ===== 헤더 반응형 (창/화면이 좁아질 때 로고·버튼·간격을 줄여서 겹침/잘림 방지) ===== */
 @media (max-width: 900px) {
     .topbar { height: 68px; }
     .topbar-logo { height: 58px; }
@@ -346,7 +344,6 @@
     .avatar-circle { width: 38px; height: 38px; }
 }
 
-/* ===== 토글 스위치 (알림 설정 등 on/off 항목에서 공용으로 씀) ===== */
 .toggle-switch {
     position: relative;
     display: inline-flex;
@@ -407,7 +404,6 @@
     cursor: default;
 }
 
-/* ===== MushMush 커스텀 커서 ===== */
 body {
     cursor: auto;
 }
@@ -673,7 +669,6 @@ textarea,
     background: rgba(139, 94, 60, 0.08);
 }
 
-/* ===== 팝업 공용 컴포넌트 (휴면 계정 안내, 메신저 연동 등에서 재사용) ===== */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -783,7 +778,6 @@ textarea,
     height: 28px;
 }
 
-/* ===== 텔레그램/디스코드 연동 카드 (알림 설정 페이지) ===== */
 .integration-icon.telegram { background: rgba(43, 130, 210, 0.15); color: #2b82d2; }
 .integration-icon.discord { background: rgba(88, 101, 242, 0.15); color: #5865f2; }
 
@@ -803,7 +797,6 @@ textarea,
     font-size: 0.82rem;
 }
 
-/* --- 연동 팝업 안 내용 --- */
 .integration-modal-icon {
     width: 3.4rem;
     height: 3.4rem;

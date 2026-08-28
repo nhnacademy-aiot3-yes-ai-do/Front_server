@@ -39,7 +39,6 @@ async function fetchJson(url, options) {
     return body.data;
 }
 
-// ===== 초기 데이터 로드 =====
 async function loadCategories() {
     var categories = (await fetchJson('/support/inquiries/categories')) || [];
     var select = document.getElementById('new-category');
@@ -53,7 +52,6 @@ async function loadMyCultivations() {
     MY_CULTIVATIONS = (response && response.cultivationSummaryResponses) || [];
 }
 
-// ===== 목록 =====
 async function loadList(page) {
     var grid = document.getElementById('support-grid');
     var emptyEl = document.getElementById('support-empty');
@@ -119,7 +117,6 @@ function buildPageBtn(icon, enabled, targetPage) {
     return el;
 }
 
-// ===== 작성 =====
 function openNewForm() {
     document.getElementById('new-inquiry-form').reset();
 
@@ -174,7 +171,6 @@ async function submitNewInquiry(event) {
     }
 }
 
-// ===== 상세 =====
 async function openDetail(id) {
     currentDetailId = id;
     try {
@@ -246,7 +242,6 @@ async function submitFollowUp(event) {
     }
 }
 
-// ===== 초기 진입 =====
 (async function init() {
     await Promise.all([loadCategories(), loadMyCultivations()]);
     await loadList(0);

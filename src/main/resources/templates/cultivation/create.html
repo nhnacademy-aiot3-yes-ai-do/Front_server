@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배지 생성 | MushMush</title>
     <link rel="stylesheet" th:href="@{/css/cultivation-create.css}" />
-    <script th:src="@{/js/lucide.js}"></script>
-    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/common/lucide.js}"></script>
+    <script th:src="@{/js/common/common.js}"></script>
 </head>
 <body>
 
@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <form class="wizard-panels" method="post" th:action="@{/cultivations}">
+        <form id="cultivation-create-form" class="wizard-panels">
 
             <!-- STEP 1 : 재배지 정보 입력 -->
             <section class="wizard-panel active" id="step-1">
@@ -72,7 +72,7 @@
                 <h2 class="wizard-title">
                     <span id="result-mushroom">양송이버섯</span> 재배를 시작해볼까요?
                 </h2>
-                <p class="wizard-desc">센서와 환경 임계값은 생성 후 '내 센서'에서 등록할 수 있어요.</p>
+                <p class="wizard-desc">추가된 센서는 경작지 생성 후 '내 센서'에서 확인할 수 있어요.</p>
 
                 <div class="mushroom-info-card" id="mushroom-info-card">
                     <div class="mushroom-info-title">
@@ -98,6 +98,26 @@
                     <button type="button" class="mushroom-recipe-btn" id="mushroom-recipe-btn" onclick="openRecipeModal()">
                         <i data-lucide="chef-hat"></i>추천 요리법 보기
                     </button>
+                </div>
+
+                <div class="environment-setting-card">
+                    <div class="environment-setting-header">
+                        <div>
+                            <h3>적용할 재배 환경 설정</h3>
+                            <p>AI 추천값을 적용하며, 수동 설정을 켜면 범위를 조정할 수 있습니다.</p>
+                        </div>
+
+                        <div class="environment-setting-toggle-wrap">
+                            <span>수동 설정</span>
+                            <label class="toggle-switch environment-setting-toggle">
+                                <input type="checkbox" id="manual-setting-toggle" aria-label="수동 설정" />
+                                <span class="toggle-track"><span class="toggle-thumb"></span></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="environment-settings"></div>
+                    <p id="environment-setting-error" aria-live="polite"></p>
                 </div>
 
                 <div class="recipe-modal-overlay" id="recipe-modal-overlay" role="button" tabindex="0"
@@ -132,7 +152,7 @@
     var mushroomsData = [(${mushroomsJson})];
 </script>
 <!-- SSR bootstrap 계약이 바뀐 JS를 이전 브라우저 캐시와 섞지 않습니다. -->
-<script th:src="@{/js/cultivation-create.js(v=${'ssr-create-v2'})}"></script>
+<script th:src="@{/js/cultivation/cultivation-create.js(v=${'ssr-create-v2'})}"></script>
 
 </body>
 </html>
