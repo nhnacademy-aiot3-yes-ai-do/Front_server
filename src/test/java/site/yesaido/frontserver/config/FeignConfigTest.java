@@ -41,6 +41,18 @@ class FeignConfigTest {
     }
 
     @Test
+    @DisplayName("logout 요청 URL이면 Cookie 헤더를 전달하지 않는다")
+    void authInterceptorSkipsLogoutUrl() {
+        RequestTemplate template = mock(RequestTemplate.class);
+        given(template.url()).willReturn("/api/v1/auth/logout");
+
+        feignConfig.authInterceptor().apply(template);
+
+        verify(template, never()).removeHeader(HttpHeaders.COOKIE);
+        verify(template, never()).header(eq(HttpHeaders.COOKIE), any(String[].class));
+    }
+
+    @Test
     @DisplayName("RequestContextHolder에 요청 정보가 없으면 아무 것도 하지 않는다")
     void authInterceptorNoRequestContext() {
         RequestContextHolder.resetRequestAttributes();

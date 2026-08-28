@@ -99,7 +99,7 @@ async function saveProfileEdit() {
 
     try {
         const res = await fetch('/users/mypage', {
-            method: 'POST',
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nickname, currentPassword, newPassword })
         });
@@ -140,20 +140,22 @@ async function confirmProfileDelete() {
         return;
     }
     try {
-        const res = await fetch('/users/verify-password', {
-            method: 'POST',
+        const res = await fetch('/users/withdraw', {
+            method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: input })
         });
         const result = await res.json();
 
-        if (!res.ok || !result.success || result.data !== true) {
-            showError(errorEl, result.message || '비밀번호가 일치하지 않습니다.');
+        if (!res.ok || !result.success) {
+            showError(
+                errorEl,
+                result.message || result.detail || '회원 탈퇴에 실패했습니다.'
+            );
             return;
         }
 
-        await fetch('/logout', {method: 'POST'});
-        alert('회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.')
+        alert('회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.');
         location.href = '/login';
 
     } catch {
