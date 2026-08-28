@@ -73,4 +73,8 @@ public interface CultivationClient {
     @DeleteMapping("/api/v1/cultivations/{cultivation-id}/photos/{photo-id}")
     ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                      @PathVariable("photo-id") Long photoId);
+
+    // 모드 변경
+    @PutMapping("/api/v1/cultivations/{cultivation-id}/harvest-mode")
+    ResponseEntity<CultivationModeChangeResponse> switchToHarvestMode(@PathVariable("cultivation-id") Long cultivationId);
 }
