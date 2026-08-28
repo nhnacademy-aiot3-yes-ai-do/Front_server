@@ -66,6 +66,11 @@
             <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
                 <i data-lucide="bell"></i>
             </button>
+            <button class="icon-btn" type="button" title="수확 모드로 전환"
+                    th:if="${(myRole == 'OWNER' or myRole == 'MANAGER') and cultivation != null and cultivation.mode == 'GROWTH'}"
+                    onclick="openModal('modal-harvest-mode')">
+                <i data-lucide="package"></i>
+            </button>
             <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openEndAmountModal()">
                 <i data-lucide="power"></i>
             </button>
@@ -127,6 +132,7 @@
                 <div class="cultivation-name" th:if="${cultivation != null}">
                     <span th:text="${cultivation.name}">양송이 1번 재배지</span>
                     <span class="cultivation-mushroom-badge" th:if="${mushroomNameKo != null}" th:text="${mushroomNameKo}">양송이</span>
+                    <span class="cultivation-mode-badge cultivation-mode-badge--harvest" th:if="${cultivation.mode == 'HARVEST'}">수확 모드</span>
                 </div>
 
                 <div class="growth-days-box" th:if="${growthDays != null}">
@@ -304,6 +310,20 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-harvest-mode">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeModal('modal-harvest-mode')">
+            <i data-lucide="x"></i>
+        </button>
+        <h3 class="modal-title">수확 모드로 전환</h3>
+        <p class="modal-desc">수확 모드로 전환하면 이 버섯의 수확기 환경 기준값이 자동으로 적용돼요. 전환 후에는 재배 모드로 되돌릴 수 없어요. 계속하시겠어요?</p>
+        <div class="modal-actions">
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-harvest-mode')">Cancel</button>
+            <button class="btn btn-primary" type="button" onclick="submitSwitchToHarvestMode()">전환</button>
         </div>
     </div>
 </div>
@@ -491,6 +511,7 @@
     var PHOTOS = [(${photosJson})];
     var memberData = [(${membersJson})];
     var MY_ROLE = /*[[${myRole}]]*/ null;
+    var CULTIVATION_MODE = /*[[${cultivation?.mode}]]*/ null;
     var SENSORS_BOOTSTRAP = [(${sensorsJson})];
     var SENSOR_VALUES_BOOTSTRAP = [(${sensorValuesJson})];
     var GROWTH_DAYS = /*[[${growthDays}]]*/ 0;

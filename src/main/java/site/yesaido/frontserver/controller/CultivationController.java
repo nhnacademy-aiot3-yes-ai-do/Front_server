@@ -198,6 +198,11 @@ public class CultivationController {
         return "dashboard/main";
     }
 
+    @PutMapping("/{cultivation-id}/harvest-mode")
+    public ResponseEntity<CultivationModeChangeResponse> switchToHarvestMode(@PathVariable("cultivation-id") Long cultivationId) {
+        return cultivationClient.switchToHarvestMode(cultivationId);
+    }
+
     @PostMapping("/{cultivation-id}/finish")
     public String finish(@PathVariable("cultivation-id") Long cultivationId) {
         cultivationClient.finishCultivation(cultivationId);
