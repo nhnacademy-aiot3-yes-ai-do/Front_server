@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>로그인 | MushMush</title>
     <link rel="stylesheet" th:href="@{/css/style.css}" />
-    <script th:src="@{/js/lucide.js}"></script>
-    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/common/lucide.js}"></script>
+    <script th:src="@{/js/common/common.js}"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -111,7 +111,7 @@
     </div>
 </div>
 
-<script th:src="@{/js/auth-login.js}"></script>
+<script th:src="@{/js/auth/auth-login.js}"></script>
 <script th:inline="javascript">
     // 로그인 실패 시 서버의 isDormant 깃발로 즉시 휴면 모달 팝업 띄우기
     document.addEventListener('DOMContentLoaded', function () {
