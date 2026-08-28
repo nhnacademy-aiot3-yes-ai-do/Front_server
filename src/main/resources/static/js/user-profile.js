@@ -99,7 +99,7 @@ async function saveProfileEdit() {
 
     try {
         const res = await fetch('/users/mypage', {
-            method: 'POST',
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nickname, currentPassword, newPassword })
         });
@@ -141,7 +141,7 @@ async function confirmProfileDelete() {
     }
     try {
         const res = await fetch('/users/withdraw', {
-            method: 'POST',
+            method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: input })
         });

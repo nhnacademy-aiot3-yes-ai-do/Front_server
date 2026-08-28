@@ -28,7 +28,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(
@@ -209,7 +211,7 @@ class UserApiControllerTest {
         ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임", "oldPass", "newPass");
         given(userClient.updateMyPage(any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
 
-        mockMvc.perform(post("/users/mypage")
+        mockMvc.perform(put("/users/mypage")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -262,7 +264,7 @@ class UserApiControllerTest {
         WithdrawRequest request = new WithdrawRequest("password123!");
         given(userClient.withdraw(any())).willReturn(new ApiResponse<>(true, "회원 탈퇴가 완료되었습니다.", null));
 
-        mockMvc.perform(post("/users/withdraw")
+        mockMvc.perform(delete("/users/withdraw")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -279,7 +281,7 @@ class UserApiControllerTest {
         WithdrawRequest request = new WithdrawRequest("password123!");
         given(userClient.withdraw(any())).willReturn(new ApiResponse<>(false, "비밀번호가 일치하지 않습니다.", null));
 
-        mockMvc.perform(post("/users/withdraw")
+        mockMvc.perform(delete("/users/withdraw")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

@@ -4,10 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.user.request.*;
@@ -61,7 +58,7 @@ public interface UserClient {
     ApiResponse<UserProfileResponse> getMyPage();
 
     // 11. 프로필 수정
-    @PostMapping("/api/v1/users/mypage")
+    @PutMapping("/api/v1/users/mypage")
     ApiResponse<UserProfileResponse> updateMyPage(@RequestBody ProfileUpdateRequest request);
 
     // 12. 비밀번호 확인
@@ -80,7 +77,7 @@ public interface UserClient {
     ApiResponse<MemberSummaryPageResponse> getMembers(@RequestParam("status") String status,
                                                       @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable);
     // 16. 회원 탈퇴
-    @PostMapping("/api/v1/users/withdraw")
+    @DeleteMapping("/api/v1/users/withdraw")
     ApiResponse<Void> withdraw(@RequestBody WithdrawRequest request);
 
     @PostMapping("/api/v1/auth/password/reset")

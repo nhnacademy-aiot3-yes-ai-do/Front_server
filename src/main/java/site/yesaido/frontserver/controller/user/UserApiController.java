@@ -89,7 +89,7 @@ public class UserApiController {
         return userClient.getMyPage();
     }
 
-    @PostMapping("/users/mypage")
+    @PutMapping("/users/mypage")
     public ApiResponse<UserProfileResponse> updateMyPage(@RequestBody ProfileUpdateRequest request) {
         return userClient.updateMyPage(request);
     }
@@ -120,7 +120,7 @@ public class UserApiController {
     }
 
     // 회원 탈퇴
-    @PostMapping("/users/withdraw")
+    @DeleteMapping("/users/withdraw")
     public ApiResponse<Void> withdraw(@RequestBody WithdrawRequest request, HttpServletResponse response){
         ApiResponse<Void> apiResponse = userClient.withdraw(request);
         if(apiResponse != null && apiResponse.success()){
