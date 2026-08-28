@@ -185,9 +185,6 @@ function goToStep(n) {
         document.getElementById('manual-setting-toggle').checked = false;
         document.getElementById('loading-mushroom').textContent = selected.selectedOptions[0].textContent;
 
-        // 선택된 버섯의 thresholdInfoResponses로 기본 임계값을 만듭니다.
-        initializeEnvironmentSettings();
-
         document.getElementById('loading-mushroom').textContent =
             selected.selectedOptions[0].textContent;
 
@@ -195,11 +192,20 @@ function goToStep(n) {
             .then(function (res) { return res.json(); })
             .then(function (result) {
                 var guide = (result && result.success) ? result.data : null;
+
+                // AI 가이드 설명, 배지, 재배/수확 조건, 요리법 렌더링
                 renderMushroomInfo(guide);
+
+                // 재배 조건 4개를 생성 요청용 환경 설정으로 변환
+                initializeEnvironmentSettings(
+                    guide ? guide.cultivationCondition : null
+                );
                 goToStep(3);
             })
             .catch(function () {
                 renderMushroomInfo(null);
+                environmentSettings = [];
+                renderEnvironmentSettings();
                 goToStep(3);
             });
     }
@@ -258,7 +264,7 @@ function renderEnvironmentSettings() {
     validateEnvironmentSettings();
 }
 
-function initializeEnvironmentSettings() {
+function initializeEnvironmentSettings(cultivationCondition) {
     var mushroomId = document.getElementById('f-mushroom').value;
 
     var mushroom = MUSHROOMS.find(function (item) {
@@ -269,16 +275,39 @@ function initializeEnvironmentSettings() {
         ? mushroom.thresholdInfoResponses
         : [];
 
-    environmentSettings = thresholds.map(function (threshold) {
+    var definitions = [
+        { key: 'temperature', type: 'TEMPERATURE' },
+        { key: 'humidity', type: 'HUMIDITY' },
+        { key: 'co2', type: 'CO2' },
+        { key: 'light', type: 'LIGHT' }
+    ];
+
+    environmentSettings = definitions.map(function (definition) {
+        var reference = thresholds.find(function (threshold) {
+            return threshold.sensorType
+                && threshold.sensorType.type === definition.type;
+        });
+
+        var range = cultivationCondition
+            ? cultivationCondition[definition.key]
+            : null;
+
+        if (!reference || !range
+            || range.min == null || range.max == null) {
+            return null;
+        }
+
         return {
-            sensorTypeId: threshold.sensorType.id,
-            sensorType: threshold.sensorType.type,
-            unit: threshold.sensorType.valueUnit,
-            recommendedMin: Number(threshold.thresholdMin),
-            recommendedMax: Number(threshold.thresholdMax),
-            thresholdMin: Number(threshold.thresholdMin),
-            thresholdMax: Number(threshold.thresholdMax)
+            sensorTypeId: reference.sensorType.id,
+            sensorType: reference.sensorType.type,
+            unit: reference.sensorType.valueUnit,
+            recommendedMin: Number(range.min),
+            recommendedMax: Number(range.max),
+            thresholdMin: Number(range.min),
+            thresholdMax: Number(range.max)
         };
+    }).filter(function (setting) {
+        return setting !== null;
     });
 
     renderEnvironmentSettings();
@@ -363,10 +392,24 @@ function bindCultivationCreateForm() {
             body: JSON.stringify(request)
         })
             .then(function (response) {
-                if (!response.ok) {
-                    throw new Error('재배지 생성에 실패했습니다.');
+                if (response.ok) {
+                    return;
                 }
 
+                return response.text().then(function (text) {
+                    var message = '재배지 생성에 실패했습니다.';
+
+                    try {
+                        var body = JSON.parse(text);
+                        message = body.detail || body.message || message;
+                    } catch (ignored) {
+                        // JSON이 아니면 기본 메시지를 사용합니다.
+                    }
+
+                    throw new Error(message);
+                });
+            })
+            .then(function () {
                 window.location.href = '/cultivations';
             })
             .catch(function (error) {
