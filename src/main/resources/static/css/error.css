@@ -21,3 +21,73 @@ body::before {
     background: rgba(251, 246, 234, 0.15);
     z-index: 0;
 }
+
+.error-wrap,
+.error-card {
+    position: relative;
+    z-index: 1;
+}
+
+.error-character {
+    position: relative;
+    width: min(100%, 220px);
+    height: 220px;
+    margin: -18px auto 8px;
+}
+
+.error-character-image {
+    position: relative;
+    z-index: 2;
+    display: block;
+    width: 170px;
+    height: 212px;
+    margin: 0 auto;
+    object-fit: cover;
+    object-position: center top;
+    border: 5px solid var(--cream-100);
+    border-radius: 48% 48% 22% 22%;
+    box-shadow: 0 8px 18px rgba(63, 42, 29, 0.18);
+    animation: errorCharacterArrive 0.55s ease-out both;
+}
+
+.spore-field {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.spore {
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    width: var(--spore-size, 8px);
+    height: var(--spore-size, 8px);
+    border-radius: 50%;
+    background: var(--spore-color, #d4a84f);
+    opacity: 0;
+    box-shadow: 0 0 0 2px rgba(251, 246, 234, 0.4);
+    animation: sporeBurst 1.25s cubic-bezier(.2, .7, .3, 1) var(--spore-delay, 0s) both;
+}
+
+@keyframes sporeBurst {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(.2); }
+    12% { opacity: .95; }
+    100% { opacity: 0; transform: translate(var(--spore-x), var(--spore-y)) scale(.75); }
+}
+
+@keyframes errorCharacterArrive {
+    from { opacity: 0; transform: translateY(12px) rotate(-2deg); }
+    to { opacity: 1; transform: translateY(0) rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .error-character-image { animation: none; }
+    .spore { animation: none; opacity: .55; transform: translate(var(--spore-x), var(--spore-y)); }
+}
+
+@media (max-width: 520px) {
+    .error-character { height: 190px; }
+    .error-character-image { width: 145px; height: 180px; }
+}
