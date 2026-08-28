@@ -1,31 +1,45 @@
 package site.yesaido.frontserver.controller.user;
 
+import feign.FeignException;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
+import site.yesaido.frontserver.dto.user.request.LogoutRequest;
+import site.yesaido.frontserver.dto.user.request.PasswordResetRequest;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.exception.DormantUserException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+
+
+
 
 @Slf4j
 @Controller
 @RequiredArgsConstructor
 public class UserController {
+
+    private static final String PASSWORD_RESET_VERIFIED_EMAIL = "passwordResetVerifiedEmail";
     private static final String LOGIN_URL = "/login";
     private static final String REDIRECT_PREFIX = "redirect:";
+    private static final String PASSWORD_RESET_FAILURE_MESSAGE = "비밀번호 변경에 실패했습니다. 다시 시도해 주세요.";
 
     private final UserClient userClient;
     private final AuthCookieProvider authCookieProvider;
+    private final ObjectMapper objectMapper;
 
     @PostMapping("/signup")
     public String signup(@RequestParam String email,
@@ -60,6 +74,78 @@ public class UserController {
         }
     }
 
+    @PostMapping("/reset-password")
+    public String resetPassword(
+            @RequestParam String newPassword,
+            @RequestParam String confirmPassword,
+            HttpSession session,
+            HttpServletResponse response,
+            RedirectAttributes redirectAttributes
+    ) {
+        String email = getVerifiedEmail(session);
+
+        if (email == null) {
+            return REDIRECT_PREFIX + "/find-password";
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            return redirectToResetPage(
+                    redirectAttributes,
+                    "비밀번호가 일치하지 않습니다."
+            );
+        }
+
+        try {
+            userClient.resetPassword(new PasswordResetRequest(email, newPassword));
+
+            session.removeAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
+            authCookieProvider.clearAuthCookies(response);
+
+            redirectAttributes.addFlashAttribute(
+                    "loginMessage",
+                    "비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요."
+            );
+            return REDIRECT_PREFIX + LOGIN_URL;
+        } catch (FeignException.BadRequest e) {
+            log.warn("비밀번호 재설정 요청 거부: {}", e.getMessage());
+            return redirectToResetPage(redirectAttributes, extractErrorMessage(e));
+        } catch (Exception e) {
+            log.warn("비밀번호 재설정 실패: {}", e.getMessage());
+            return redirectToResetPage(
+                    redirectAttributes,
+                    PASSWORD_RESET_FAILURE_MESSAGE
+            );
+        }
+    }
+
+    private String getVerifiedEmail(HttpSession session) {
+        Object email = session.getAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
+
+        if (email instanceof String verifiedEmail && !verifiedEmail.isBlank()) {
+            return verifiedEmail;
+        }
+
+        return null;
+    }
+
+    private String redirectToResetPage(
+            RedirectAttributes redirectAttributes,
+            String errorMessage
+    ) {
+        redirectAttributes.addFlashAttribute("resetPasswordError", errorMessage);
+        return REDIRECT_PREFIX + "/reset-password";
+    }
+
+    private String extractErrorMessage(FeignException e) {
+        try {
+            JsonNode response = objectMapper.readTree(e.contentUTF8());
+            String message = response.path("message").asText();
+            return message.isBlank() ? PASSWORD_RESET_FAILURE_MESSAGE : message;
+        } catch (Exception ignored) {
+            return PASSWORD_RESET_FAILURE_MESSAGE;
+        }
+    }
+
     // 관리자 전용 로그인: 일반 로그인과 같은 인증을 쓰되, 응답의 role이 ADMIN이 아니면
     // 로그인 자체를 실패 처리함 (일반 회원 계정으로는 이 창을 통해 로그인할 수 없음)
     @PostMapping("/admin/login")
@@ -85,10 +171,12 @@ public class UserController {
         }
     }
 
-    @PostMapping("/logout")
-    public String logout(HttpServletResponse response) {
+    @PostMapping("/users/token/logout")
+    public String logout(@CookieValue(name = "refreshToken", required = false)String refreshToken, @CookieValue(name = "accessToken", required = false) String accessToken, HttpServletResponse response) {
         try {
-            userClient.logout();
+            if(refreshToken != null && !refreshToken.isBlank()){
+                userClient.logout(new LogoutRequest(refreshToken, accessToken));
+            }
         } catch (Exception e) {
             log.warn("백엔드 레디스 토큰 삭제 중 예외 발생 : {}", e.getMessage());
         }

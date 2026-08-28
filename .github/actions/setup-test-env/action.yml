@@ -19,3 +19,8 @@ runs:
 
         # Front tests mock upstream calls; disable any accidental external dependency.
         echo "GATEWAY_URL=http://localhost:8080" >> "$GITHUB_ENV"
+        
+        echo "REDIS_HOST=localhost" >> "$GITHUB_ENV"
+        echo "REDIS_PORT=6379" >> "$GITHUB_ENV"
+        echo "REDIS_PASSWORD=" >> "$GITHUB_ENV"
+        echo "REDIS_DATABASE=314" >> "$GITHUB_ENV"

@@ -1,8 +1,6 @@
 package site.yesaido.frontserver;
 
 import com.sun.net.httpserver.HttpServer;
-import java.net.InetSocketAddress;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,6 +11,9 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionEnabledRequest;
+
+import java.net.InetSocketAddress;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

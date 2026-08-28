@@ -7,12 +7,7 @@ import site.yesaido.frontserver.dto.notification.request.EndpointCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.EndpointUpdateRequest;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionEnabledRequest;
-import site.yesaido.frontserver.dto.notification.response.DeliveryPageResponse;
-import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
-import site.yesaido.frontserver.dto.notification.response.SubscriptionResponse;
-import site.yesaido.frontserver.dto.notification.response.SubscriptionTypeResponse;
-import site.yesaido.frontserver.dto.notification.response.TelegramLinkSessionResponse;
-import site.yesaido.frontserver.dto.notification.response.TelegramLinkStatusResponse;
+import site.yesaido.frontserver.dto.notification.response.*;
 
 import java.util.List;
 

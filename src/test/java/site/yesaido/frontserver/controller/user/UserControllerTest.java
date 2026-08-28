@@ -1,6 +1,10 @@
 package site.yesaido.frontserver.controller.user;
 
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import io.micrometer.core.instrument.MeterRegistry;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +20,16 @@ import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
+import site.yesaido.frontserver.dto.user.request.LogoutRequest;
+import site.yesaido.frontserver.dto.user.request.PasswordResetRequest;
 import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.exception.DormantUserException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.ViewJsonWriter;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
@@ -137,12 +146,104 @@ class UserControllerTest {
     @Test
     @DisplayName("로그아웃 요청 - 성공 분기")
     void logoutSuccess() throws Exception {
-        mockMvc.perform(post("/logout"))
+        mockMvc.perform(post("/users/token/logout")
+                        .cookie(
+                                new Cookie("refreshToken", "valid-refresh-token"),
+                                new Cookie("accessToken", "valid-access-token")
+                        ))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
 
-        verify(userClient).logout();
+        verify(userClient).logout(new LogoutRequest("valid-refresh-token", "valid-access-token"));
         verify(authCookieProvider).clearAuthCookies(any());
+    }
+
+    @Test
+    @DisplayName("Refresh Token 쿠키가 없어도 브라우저 쿠키를 지우고 로그인 화면으로 이동한다")
+    void logoutWithoutRefreshTokenStillClearsCookies() throws Exception {
+        mockMvc.perform(post("/users/token/logout"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+
+        verify(userClient, never()).logout(any());
+        verify(authCookieProvider).clearAuthCookies(any());
+    }
+
+    @Test
+    @DisplayName("인증 세션 없이 비밀번호 재설정을 요청하면 비밀번호 찾기 화면으로 이동")
+    void resetPasswordWithoutVerifiedSessionRedirectsToFindPassword() throws Exception {
+        mockMvc.perform(post("/reset-password")
+                        .param("newPassword", "newPassword123!")
+                        .param("confirmPassword", "newPassword123!"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/find-password"));
+
+        verify(userClient, never()).resetPassword(any());
+    }
+
+    @Test
+    @DisplayName("새 비밀번호가 일치하지 않으면 재설정 화면으로 이동하고 오류를 표시")
+    void resetPasswordWithMismatchRedirectsToResetPage() throws Exception {
+        mockMvc.perform(post("/reset-password")
+                        .sessionAttr("passwordResetVerifiedEmail", "test@naver.com")
+                        .param("newPassword", "newPassword123!")
+                        .param("confirmPassword", "differentPassword123!"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/reset-password"))
+                .andExpect(flash().attribute("resetPasswordError", "비밀번호가 일치하지 않습니다."));
+
+        verify(userClient, never()).resetPassword(any());
+    }
+
+    @Test
+    @DisplayName("인증 세션과 일치하는 새 비밀번호가 있으면 재설정 후 로그인으로 이동")
+    void resetPasswordSuccess() throws Exception {
+        String email = "test@naver.com";
+        given(userClient.resetPassword(any())).willReturn(new ApiResponse<>(true, "비밀번호가 변경되었습니다.", null));
+
+        mockMvc.perform(post("/reset-password")
+                        .sessionAttr("passwordResetVerifiedEmail", email)
+                        .param("newPassword", "newPassword123!")
+                        .param("confirmPassword", "newPassword123!"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"))
+                .andExpect(flash().attributeExists("loginMessage"));
+
+        verify(userClient).resetPassword(new PasswordResetRequest(email, "newPassword123!"));
+        verify(authCookieProvider).clearAuthCookies(any());
+    }
+
+    @Test
+    @DisplayName("Auth 비밀번호 재설정 호출이 실패하면 재설정 화면으로 이동하고 오류를 표시")
+    void resetPasswordFailureRedirectsToResetPage() throws Exception {
+        given(userClient.resetPassword(any())).willThrow(new RuntimeException("Auth server error"));
+
+        mockMvc.perform(post("/reset-password")
+                        .sessionAttr("passwordResetVerifiedEmail", "test@naver.com")
+                        .param("newPassword", "newPassword123!")
+                        .param("confirmPassword", "newPassword123!"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/reset-password"))
+                .andExpect(flash().attribute("resetPasswordError", "비밀번호 변경에 실패했습니다. 다시 시도해 주세요."));
+    }
+
+    @Test
+    @DisplayName("기존 비밀번호와 같은 비밀번호로 재설정하면 Auth의 오류 메시지를 표시")
+    void resetPasswordWithSamePasswordShowsAuthErrorMessage() throws Exception {
+        given(userClient.resetPassword(any())).willThrow(badRequestException(
+                "새 비밀번호는 기존 비밀번호와 달라야 합니다."
+        ));
+
+        mockMvc.perform(post("/reset-password")
+                        .sessionAttr("passwordResetVerifiedEmail", "test@naver.com")
+                        .param("newPassword", "samePassword123!")
+                        .param("confirmPassword", "samePassword123!"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/reset-password"))
+                .andExpect(flash().attribute(
+                        "resetPasswordError",
+                        "새 비밀번호는 기존 비밀번호와 달라야 합니다."
+                ));
     }
 
     @Test
@@ -192,5 +293,24 @@ class UserControllerTest {
                         .param("password", "wrongpass"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/login"));
+    }
+
+    private FeignException badRequestException(String message) {
+        Request request = Request.create(
+                Request.HttpMethod.POST,
+                "/api/v1/auth/password/reset",
+                Collections.emptyMap(),
+                null,
+                StandardCharsets.UTF_8,
+                null
+        );
+        Response response = Response.builder()
+                .status(400)
+                .reason("Bad Request")
+                .request(request)
+                .headers(Collections.emptyMap())
+                .body("{\"message\":\"" + message + "\"}", StandardCharsets.UTF_8)
+                .build();
+        return FeignException.errorStatus("UserClient#resetPassword(PasswordResetRequest)", response);
     }
 }

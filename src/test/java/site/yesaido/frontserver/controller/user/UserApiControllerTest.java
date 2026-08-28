@@ -14,9 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
-import site.yesaido.frontserver.dto.user.request.GoogleLoginRequest;
-import site.yesaido.frontserver.dto.user.request.PasswordVerifyRequest;
-import site.yesaido.frontserver.dto.user.request.ProfileUpdateRequest;
+import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
@@ -27,9 +25,12 @@ import java.time.LocalDateTime;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(
@@ -141,6 +142,35 @@ class UserApiControllerTest {
     }
 
     @Test
+    @DisplayName("비밀번호 재설정용 이메일 인증 성공 시 인증 이메일을 세션에 저장한다")
+    void verifyPasswordResetEmailStoresVerifiedEmailInSession() throws Exception {
+        String email = "test@naver.com";
+        PasswordResetEmailVerifyRequest requestBody = new PasswordResetEmailVerifyRequest(email, "123456");
+        given(userClient.verifyEmail(any())).willReturn(new ApiResponse<>(true, "검증 성공", true));
+
+        mockMvc.perform(post("/users/password-reset/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"))
+                .andExpect(request().sessionAttribute("passwordResetVerifiedEmail", email));
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정용 이메일 인증 실패 시 인증 이메일을 세션에 저장하지 않는다")
+    void verifyPasswordResetEmailDoesNotStoreEmailWhenVerificationFails() throws Exception {
+        PasswordResetEmailVerifyRequest requestBody = new PasswordResetEmailVerifyRequest("test@naver.com", "000000");
+        given(userClient.verifyEmail(any())).willReturn(new ApiResponse<>(true, "검증 실패", false));
+
+        mockMvc.perform(post("/users/password-reset/verify-email")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestBody)))
+                .andExpect(status().isOk())
+                .andExpect(content().string("false"))
+                .andExpect(request().sessionAttributeDoesNotExist("passwordResetVerifiedEmail"));
+    }
+
+    @Test
     @DisplayName("토큰 시간 연장 (reissue) - 정상 쿠키 분기")
     void reissueSuccess() throws Exception {
         TokenResponse tokenResponse = TokenResponse.builder()
@@ -151,7 +181,7 @@ class UserApiControllerTest {
                 .build();
         given(userClient.reissue(any())).willReturn(new ApiResponse<>(true, "재발급 성공", tokenResponse));
 
-        mockMvc.perform(post("/users/reissue").cookie(new Cookie("refreshToken", "validRefresh")))
+        mockMvc.perform(post("/users/token/reissue").cookie(new Cookie("refreshToken", "validRefresh")))
                 .andExpect(status().isOk());
 
         verify(authCookieProvider).setAuthCookies(any(), eq("newAccess"), eq("newRefresh"), eq("USER"), eq(1_755_671_400_000L));
@@ -160,7 +190,7 @@ class UserApiControllerTest {
     @Test
     @DisplayName("토큰 시간 연장 (reissue) - refreshToken 없을 때 401 반환")
     void reissueWithoutTokenReturns401() throws Exception {
-        mockMvc.perform(post("/users/reissue"))
+        mockMvc.perform(post("/users/token/reissue"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.detail").value("로그인이 필요합니다."));
     }
@@ -181,7 +211,7 @@ class UserApiControllerTest {
         ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임", "oldPass", "newPass");
         given(userClient.updateMyPage(any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
 
-        mockMvc.perform(post("/users/mypage")
+        mockMvc.perform(put("/users/mypage")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
@@ -226,5 +256,37 @@ class UserApiControllerTest {
                 .andExpect(status().isOk());
 
         verify(authCookieProvider).setAuthCookies(any(), eq("access"), eq("refresh"), eq("USER"), eq(1_755_671_400_000L));
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 성공 시 Auth에 요청을 전달하고 인증 쿠키를 삭제한다")
+    void withdrawSuccessClearsAuthCookies() throws Exception {
+        WithdrawRequest request = new WithdrawRequest("password123!");
+        given(userClient.withdraw(any())).willReturn(new ApiResponse<>(true, "회원 탈퇴가 완료되었습니다.", null));
+
+        mockMvc.perform(delete("/users/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("회원 탈퇴가 완료되었습니다."));
+
+        verify(userClient).withdraw(request);
+        verify(authCookieProvider).clearAuthCookies(any());
+    }
+
+    @Test
+    @DisplayName("회원 탈퇴 응답이 실패면 인증 쿠키를 삭제하지 않는다")
+    void withdrawFailureDoesNotClearAuthCookies() throws Exception {
+        WithdrawRequest request = new WithdrawRequest("password123!");
+        given(userClient.withdraw(any())).willReturn(new ApiResponse<>(false, "비밀번호가 일치하지 않습니다.", null));
+
+        mockMvc.perform(delete("/users/withdraw")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(false));
+
+        verify(authCookieProvider, never()).clearAuthCookies(any());
     }
 }
