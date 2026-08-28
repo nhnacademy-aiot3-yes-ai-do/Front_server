@@ -216,18 +216,31 @@ function renderEnvironmentSettings() {
         var row = document.createElement('div');
         row.className = 'environment-setting-row';
 
-        var label = document.createElement('span');
-        label.textContent =
-            (SENSOR_TYPE_LABELS[setting.sensorType] || setting.sensorType)
-            + ' (' + setting.unit + ')';
+        var displayName = SENSOR_TYPE_LABELS[setting.sensorType] || setting.sensorType;
+
+        var label = document.createElement('div');
+        label.className = 'environment-setting-label';
+
+        var labelName = document.createElement('span');
+        labelName.className = 'environment-setting-name';
+        labelName.textContent = displayName;
+
+        var unit = document.createElement('span');
+        unit.className = 'environment-setting-unit';
+        unit.textContent = setting.unit;
+
+        label.append(labelName, unit);
 
         var minInput = document.createElement('input');
         minInput.type = 'number';
         minInput.step = 'any';
         minInput.value = setting.thresholdMin;
         minInput.disabled = !manualSettingEnabled;
+        minInput.className = 'environment-setting-input';
+        minInput.setAttribute('aria-label', displayName + ' 최소값');
 
         var separator = document.createElement('span');
+        separator.className = 'environment-setting-separator';
         separator.textContent = '~';
 
         var maxInput = document.createElement('input');
@@ -235,6 +248,8 @@ function renderEnvironmentSettings() {
         maxInput.step = 'any';
         maxInput.value = setting.thresholdMax;
         maxInput.disabled = !manualSettingEnabled;
+        maxInput.className = 'environment-setting-input';
+        maxInput.setAttribute('aria-label', displayName + ' 최대값');
 
         minInput.addEventListener('input', function () {
             var value = minInput.value.trim();
@@ -254,7 +269,11 @@ function renderEnvironmentSettings() {
             validateEnvironmentSettings();
         });
 
-        row.append(label, minInput, separator, maxInput);
+        var range = document.createElement('div');
+        range.className = 'environment-setting-range';
+        range.append(minInput, separator, maxInput);
+
+        row.append(label, range);
         container.appendChild(row);
     });
 
@@ -332,8 +351,8 @@ function validateEnvironmentSettings() {
                 return true;
             }
 
-            if (setting.thresholdMin >= setting.thresholdMax) {
-                message = '최소값은 최대값보다 작아야 합니다.';
+            if (setting.thresholdMin > setting.thresholdMax) {
+                message = '최소값은 최대값보다 클 수 없습니다.';
                 return true;
             }
 
