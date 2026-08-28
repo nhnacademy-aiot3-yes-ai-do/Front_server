@@ -25,7 +25,6 @@
 
     <div class="list-panels">
 
-        <!-- 내 재배지 목록 -->
         <section id="tab-cultivation" class="list-panel active">
             <div class="list-table-wrap">
                 <table class="list-table">
@@ -65,7 +64,6 @@
             </div>
         </section>
 
-        <!-- 내 센서 목록 -->
         <section id="tab-sensor" class="list-panel">
             <div class="list-table-wrap">
                 <table class="list-table">
@@ -114,7 +112,6 @@
     </div>
 </div>
 
-<!-- 센서 등록 다이얼로그 -->
 <div class="modal-overlay" id="modal-sensor">
     <div class="modal-box modal-box-wide">
         <button class="modal-close" type="button" onclick="closeModal('modal-sensor')">
@@ -183,7 +180,7 @@
     var mushroomRefsData = /*[(${mushroomsJson})]*/ [];
 </script>
 <!-- SSR bootstrap 계약이 바뀐 JS를 이전 브라우저 캐시와 섞지 않습니다. -->
-<script th:src="@{/js/cultivation-list.js(v=${'ssr-list-v2'})}"></script>
+<script th:src="@{/js/cultivation/cultivation-list.js(v=${'ssr-list-v2'})}"></script>
 <script th:src="@{/js/msh-select.js}"></script>
 
 </body>

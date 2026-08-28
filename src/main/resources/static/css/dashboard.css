@@ -1,4 +1,3 @@
-/* static/css/dashboard.css */
 @import url("common.css");
 
 /* 화면 크기에 따라 딱 하나의 비율(rem 기준값)만 바뀌고,
@@ -18,7 +17,6 @@ body {
     flex-direction: column;
 }
 
-/* ===== page container: tabs + box share this width ===== */
 .page-container {
     position: relative;
     flex: 1;
@@ -29,13 +27,12 @@ body {
     margin: 1.6rem auto;
 }
 
-/* ===== Tabs ===== */
 /* 탭바를 콘텐츠 박스에 붙은 알약 모양이 아니라, 독립된 둥근 바 하나로 바꾸고
    각 탭은 배경 없이 밑줄로만 활성 상태를 표시하는 스타일로 변경 */
 .tabs-nav {
     display: flex;
-    justify-content: space-between;   /* 추가 */
-    align-items: center;              /* 추가 */
+    justify-content: space-between;
+    align-items: center;
     gap: 4px;
     background: rgba(251, 246, 234, 0.7);
     backdrop-filter: blur(6px);
@@ -97,7 +94,6 @@ body {
     color: var(--sage-600);
 }
 
-/* ===== translucent content box ===== */
 /* 세 탭의 내용을 같은 그리드 칸에 겹쳐서, 어느 탭이든 상자 크기가
    항상 가장 큰 탭 기준으로 고정되도록 함 (display:none 대신 visibility로 전환) */
 .tab-panels {
@@ -136,7 +132,6 @@ body {
     font-size: 16px;
 }
 
-/* ===== AI Chatbot ===== */
 .chatbot-wrap {
     position: absolute;
     inset: 1.8rem;
@@ -303,7 +298,6 @@ body {
     border-color: var(--sage-500);
 }
 
-/* ===== Main row: photo / sensors / stats ===== */
 .main-row {
     display: grid;
     grid-template-columns: 1fr 0.7fr 1.6fr;
@@ -343,7 +337,6 @@ body {
     margin-left: 0.6rem;
 }
 
-/* ---- photo card ---- */
 .photo-card {
     position: relative;
     min-height: 34rem;
@@ -620,7 +613,6 @@ body {
     color: var(--brown-500);
 }
 
-/* ---- bottom row: action bar (오른쪽 정렬) ---- */
 .bottom-row {
     display: flex;
     align-items: center;
@@ -666,7 +658,6 @@ body {
     color: var(--sage-600);
 }
 
-/* ---- sensor column ---- */
 .sensor-col {
     display: flex;
     flex-direction: column;
@@ -732,7 +723,6 @@ body {
 }
 
 /* ===== 커스텀 드롭다운: 대시보드 전용 변형 (공통 부분은 common.css) ===== */
-/* 센서 카드 안의 작은 borderless 드롭다운 */
 .msh-select--sensor .msh-select-trigger {
     padding: 0;
     font-size: 0.8rem;
@@ -740,7 +730,6 @@ body {
     margin-bottom: 2px;
 }
 
-/* 그래프 카드 헤더의 테두리 있는 드롭다운 */
 .msh-select--chart .msh-select-trigger {
     padding: 6px 10px;
     border: 2px solid var(--brown-300);
@@ -769,7 +758,6 @@ body {
     text-overflow: ellipsis;
 }
 
-/* 환경설정 모달의 flex 안 borderless 드롭다운 */
 .msh-select--settings {
     flex: 1;
 }
@@ -780,7 +768,6 @@ body {
     color: var(--ink);
 }
 
-/* 모달 안 일반 입력창처럼 보이는 드롭다운 (재배 이력 비교 등) */
 .msh-select--modal-field {
     display: block;
     width: 100%;
@@ -822,7 +809,6 @@ body {
     line-height: 1.6;
 }
 
-/* ---- 환경통계 카드 + 그래프 카드 (분리) ---- */
 .stats-col {
     display: flex;
     flex-direction: column;
@@ -1021,7 +1007,6 @@ body {
     font-size: 5.6px;
 }
 
-/* ===== AI report tab ===== */
 #tab-report {
     display: flex;
     flex-direction: column;
@@ -1146,8 +1131,6 @@ body {
     flex: none;
 }
 
-/* ===== bottom action bar ===== */
-/* ---- bottom row: action bar, 오른쪽 정렬 ---- */
 .bottom-row {
     display: flex;
     align-items: center;
@@ -1368,7 +1351,6 @@ body {
     box-shadow: none;
 }
 
-/* dropdown panel (담당자 관리 / 알림) */
 .dropdown-panel {
     display: none;
     position: absolute;
@@ -1533,7 +1515,6 @@ body {
     color: var(--brown-500);
 }
 
-/* ===== 담당자 추가 모달 (검색 결과) ===== */
 .member-search-results {
     margin-top: 16px;
     max-height: 260px;
@@ -1599,7 +1580,6 @@ body {
     cursor: default;
 }
 
-/* ===== Modal ===== */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -1883,7 +1863,6 @@ body {
     box-shadow: none;
 }
 
-/* ===== 재배 종료 흐름: 재배 이력 비교 ===== */
 .compare-rows {
     display: flex;
     flex-direction: column;

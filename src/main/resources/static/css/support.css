@@ -12,7 +12,6 @@ body {
     flex-direction: column;
 }
 
-/* ===== page container ===== */
 .page-container {
     flex: 1;
     display: flex;
@@ -23,7 +22,6 @@ body {
     margin: 1.2rem auto;
 }
 
-/* ===== 버튼 ===== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -44,7 +42,6 @@ body {
 
 .btn.btn-outline { box-shadow: none; }
 
-/* ===== 공통 헤딩 ===== */
 /* 목록/작성/상세를 한 페이지 안에서 패널 전환으로 보여주는 스택 컨테이너 */
 .support-panels {
     display: grid;
@@ -161,7 +158,6 @@ body {
     background: rgba(124, 148, 115, 0.18);
 }
 
-/* ===== 문의 목록: 카드 그리드 ===== */
 .support-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
@@ -301,7 +297,6 @@ body {
 
 .support-card-foot svg { width: 0.85rem; height: 0.85rem; }
 
-/* ===== 문의 작성 ===== */
 .support-form-card {
     background: rgba(251, 246, 234, 0.72);
     backdrop-filter: blur(10px);
@@ -495,7 +490,6 @@ body {
 
 .support-full-btn { width: 100%; justify-content: center; }
 
-/* ===== 문의 상세 (지식인 스타일 스레드) ===== */
 .support-back-link {
     display: inline-flex;
     align-items: center;
@@ -556,7 +550,6 @@ body {
     color: var(--brown-500);
 }
 
-/* ---- 채팅 스레드 ---- */
 .support-chat {
     display: flex;
     flex-direction: column;
@@ -649,7 +642,6 @@ body {
     color: var(--brown-500);
 }
 
-/* ---- 추가 질문 입력창 ---- */
 .support-composer {
     display: flex;
     align-items: flex-end;

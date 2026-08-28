@@ -13,7 +13,6 @@
 <div class="error-wrap">
     <div class="error-card">
 
-        <!-- 404: 페이지 없음 -->
         <th:block th:if="${kind == 'notfound'}">
             <div class="error-icon-wrap neutral"><i data-lucide="search"></i></div>
             <div class="error-code" th:text="'ERROR ' + ${status}">ERROR 404</div>
@@ -29,7 +28,6 @@
             </p>
         </th:block>
 
-        <!-- 403: 접근 권한 없음 -->
         <th:block th:if="${kind == 'forbidden'}">
             <div class="error-icon-wrap"><i data-lucide="shield-alert"></i></div>
             <div class="error-code" th:text="'ERROR ' + ${status}">ERROR 403</div>
@@ -45,7 +43,6 @@
             </p>
         </th:block>
 
-        <!-- 그 외 (500 등 서버 오류) -->
         <th:block th:if="${kind == 'server'}">
             <div class="error-icon-wrap"><i data-lucide="triangle-alert"></i></div>
             <div class="error-code" th:text="'ERROR ' + ${status}">ERROR 500</div>
