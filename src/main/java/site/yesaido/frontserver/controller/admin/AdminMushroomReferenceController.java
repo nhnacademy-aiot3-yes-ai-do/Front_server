@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.admin;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -22,13 +23,13 @@ public class AdminMushroomReferenceController {
     }
 
     @PostMapping
-    public ResponseEntity<Void> createMushroomReference(@RequestBody MushroomReferenceRequest request) {
+    public ResponseEntity<Void> createMushroomReference(@Valid @RequestBody MushroomReferenceRequest request) {
         return sensorClient.registerMushroomReference(request);
     }
 
     @PutMapping("{mushroom-reference-id}")
     public ResponseEntity<Void> updateMushroomReference(@PathVariable("mushroom-reference-id") Long id,
-                                                        @RequestBody MushroomReferenceRequest request) {
+                                                        @Valid @RequestBody MushroomReferenceRequest request) {
         return sensorClient.updateMushroomReference(id, request);
     }
 

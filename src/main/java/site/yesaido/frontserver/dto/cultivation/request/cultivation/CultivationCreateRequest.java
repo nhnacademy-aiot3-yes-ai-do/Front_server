@@ -9,14 +9,14 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 public record CultivationCreateRequest(
-    @NotBlank
-    @Size(max = 100)
-    String name,
+        @NotBlank
+        @Size(max = 100)
+        String name,
 
-    @NotNull
-    Long mushroomId,
+        @NotNull
+        Long mushroomId,
 
-    @NotEmpty
-    List<@NotNull @Valid EnvironmentSettingRequest> environmentSettingRequests
+        @NotEmpty
+        List<@NotNull @Valid EnvironmentSettingRequest> environmentSettingRequests
 ) {
 }

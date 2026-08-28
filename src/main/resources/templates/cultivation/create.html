@@ -32,23 +32,22 @@
             </div>
         </div>
 
-        <form id="cultivation-create-form"
-              class="wizard-panels"
-              method="post"
-              th:action="@{/cultivations}">
+        <form class="wizard-panels" method="post" th:action="@{/cultivations}">
 
             <!-- STEP 1 : 재배지 정보 입력 -->
             <section class="wizard-panel active" id="step-1">
                 <h2 class="wizard-title">재배지 정보를 입력해주세요</h2>
                 <p class="wizard-desc">새로 시작할 재배지의 기본 정보를 알려주세요. 센서는 생성 후 '내 센서'에서 등록할 수 있어요.</p>
 
+                <p class="wizard-form-error" th:if="${cultivationCreateError}" th:text="${cultivationCreateError}"></p>
+
                 <div class="form-grid">
                     <div class="form-field">
-                        <label>재배지 이름</label>
+                        <label for="f-name">재배지 이름</label>
                         <input type="text" id="f-name" name="name" required placeholder="예: 양송이 1번 재배지" />
                     </div>
                     <div class="form-field">
-                        <label>버섯 종류</label>
+                        <label for="f-mushroom">버섯 종류</label>
                         <select id="f-mushroom" name="mushroomId" required></select>
                     </div>
                 </div>
@@ -73,7 +72,7 @@
                 <h2 class="wizard-title">
                     <span id="result-mushroom">양송이버섯</span> 재배를 시작해볼까요?
                 </h2>
-                <p class="wizard-desc">추가 센서는 생성 후 '내 센서'에서 등록할 수 있어요.</p>
+                <p class="wizard-desc">추가된 센서는 경작지 생성 후 '내 센서'에서 확인할 수 있어요.</p>
 
                 <div class="mushroom-info-card" id="mushroom-info-card">
                     <div class="mushroom-info-title">
@@ -115,7 +114,9 @@
                     <p id="environment-setting-error"></p>
                 </div>
 
-                <div class="recipe-modal-overlay" id="recipe-modal-overlay" onclick="closeRecipeModal(event)">
+                <div class="recipe-modal-overlay" id="recipe-modal-overlay" role="button" tabindex="0"
+                     onclick="closeRecipeModal(event)"
+                     onkeydown="if (event.key === 'Enter' || event.key === ' ' || event.key === 'Escape') { closeRecipeModal(event); }">
                     <div class="recipe-modal">
                         <div class="recipe-modal-header">
                             <div class="mushroom-info-subtitle"><i data-lucide="chef-hat"></i>추천 요리법</div>

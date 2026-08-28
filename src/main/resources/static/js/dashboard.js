@@ -1,8 +1,23 @@
 lucide.createIcons();
 
 var CANONICAL_SENSOR_TYPES = ['TEMPERATURE', 'HUMIDITY', 'CO2', 'LIGHT'];
+// 기본 4종은 전용 아이콘이 있고, 관리자가 나중에 새로 등록한 커스텀 타입(TEST1 등)은
+// 아이콘이 없어서 공통 아이콘(cpu)으로 대체함
+var SENSOR_TYPE_ICONS = { TEMPERATURE: 'thermometer', HUMIDITY: 'droplet', CO2: 'cloudy', LIGHT: 'sun' };
+var SENSOR_TYPE_ICON_FALLBACK = 'cpu';
 var SENSOR_DEVICES_BY_TYPE = {};
 var LATEST_VALUES = {};
+
+// 카드로 보여줄 센서 타입 순서: 기본 4종(등록된 기기가 없어도 항상 표시) + 이 재배지에
+// 실제로 값이 있는 그 외 타입(관리자 페이지에서 새로 만든 커스텀 타입 등, 이름 순 정렬)
+function sensorTypeDisplayOrder() {
+    var extras = Object.keys(SENSOR_DEVICES_BY_TYPE)
+        .filter(function (t) {
+            return CANONICAL_SENSOR_TYPES.indexOf(t) === -1 && SENSOR_DEVICES_BY_TYPE[t].length > 0;
+        })
+        .sort();
+    return CANONICAL_SENSOR_TYPES.concat(extras);
+}
 
 function latestSensorValuesOf(payload) {
     return payload && Array.isArray(payload.latestSensorValueResponses)
@@ -38,8 +53,46 @@ function formatSensorValue(entry) {
     return entry.value + (entry.unit || '');
 }
 
+// 센서 카드 하나(아이콘 + 타입 코드 라벨 + 기기 선택 드롭다운 + 최신값)의 마크업을 만듦.
+// 예전엔 main.html에 4개 타입 카드가 하드코딩돼 있었는데, 관리자 페이지에서 센서 타입을
+// 새로 등록해도 반영이 안 돼서(항상 4개만 뜸) 이렇게 JS에서 타입 목록 기준으로 직접 그리도록 바꿈.
+function sensorRowHtml(type) {
+    var icon = SENSOR_TYPE_ICONS[type] || SENSOR_TYPE_ICON_FALLBACK;
+    // msh-select.js는 페이지 로드 시 딱 한 번만 돌면서 그 시점에 이미 있는 .msh-select에
+    // id를 붙이고 menu에 data-owner를 매칭해줌(closeMshSelect가 이 id로 menu를 다시 찾음).
+    // 이 카드들은 그 이후에 JS로 새로 만들어지는 거라 가만히 두면 id/data-owner가 없어서
+    // 드롭다운을 열 순 있어도 닫을 때 menu를 못 찾아 body에 붙은 채로 안 닫힘 -> 여기서 직접 지정.
+    var selectId = 'msh-select-sensor-' + type;
+    return '<div class="card sensor-row" data-sensor-type="' + type + '">' +
+        '<i data-lucide="' + icon + '" class="sensor-icon"></i>' +
+        '<div class="sensor-main">' +
+        '<div class="sensor-row-type">' + escapeHtml(type) + '</div>' +
+        '<div class="msh-select msh-select--sensor" id="' + selectId + '" data-value="" data-onchange="updateSensor" data-onchange-arg="' + type + '">' +
+        '<button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">' +
+        '<span class="msh-select-value">등록된 센서 없음</span>' +
+        '<i data-lucide="chevron-down" class="msh-select-chevron"></i>' +
+        '</button>' +
+        '<div class="msh-select-menu" data-owner="' + selectId + '"></div>' +
+        '</div>' +
+        '<div class="sensor-value">-</div>' +
+        '</div>' +
+        '</div>';
+}
+
+function escapeHtml(value) {
+    return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function renderSensorPanel() {
-    document.querySelectorAll('.sensor-row[data-sensor-type]').forEach(function (row) {
+    var container = document.getElementById('sensor-rows');
+    if (!container) return;
+
+    container.innerHTML = sensorTypeDisplayOrder().map(sensorRowHtml).join('');
+    lucide.createIcons();
+
+    container.querySelectorAll('.sensor-row[data-sensor-type]').forEach(function (row) {
         var type = row.dataset.sensorType;
         var devices = SENSOR_DEVICES_BY_TYPE[type] || [];
         var wrapperEl = row.querySelector('.msh-select--sensor');
@@ -64,6 +117,25 @@ function renderSensorPanel() {
         menu.querySelector('.msh-select-option').classList.add('selected');
         valueEl.textContent = formatSensorValue(LATEST_VALUES[type + '|' + first.deviceEui]);
     });
+
+    capSensorRowsHeight(container);
+}
+
+// rem으로 대충 높이를 잡으면 카드 5번째가 어중간하게 잘려 보여서(스크롤 힌트치곤 애매함),
+// 실제 카드 1개 높이를 재서 "정확히 4장 + 그 사이 간격"만큼만 보이게 자름.
+// 카드가 4장 이하면 스크롤이 필요 없으니 그냥 자연스러운 높이로 둠.
+function capSensorRowsHeight(container) {
+    var rows = container.querySelectorAll('.sensor-row');
+    if (rows.length <= 4) {
+        container.style.maxHeight = '';
+        return;
+    }
+    // gap을 따로 계산해서 더하면(rowGap 계산이 안 먹는 경우 등) 오차가 생겨 4번째 카드가
+    // 어중간하게 잘릴 수 있어서, 대신 "4번째 카드의 실제 아래쪽 끝"까지 거리를 직접 재서 씀 -> 오차 없음.
+    container.style.maxHeight = 'none';
+    var containerTop = container.getBoundingClientRect().top;
+    var fourthRowBottom = rows[3].getBoundingClientRect().bottom;
+    container.style.maxHeight = (fourthRowBottom - containerTop) + 'px';
 }
 
 // 메인 탭 "환경 통계" 카드: 센서 타입별 첫 번째 기기의 최신 측정값을 그대로 보여줌.
@@ -100,7 +172,7 @@ var CHART_UNIT = '';            // 현재 선택된 센서의 단위 (°C, %, pp
 var CHART_MAX_POINTS = 3000;    // 버퍼 하나당 안전장치용 개수 상한
 var CHART_RETENTION_MS = 24 * 60 * 60 * 1000; // 버퍼 자체는 최대 24시간치까지 보관 (화면엔 아래 실시간 구간만 표시)
 var CHART_POLL_INTERVAL_MS = 3000; // 3초마다 최신값 폴링
-var CHART_DISPLAY_WINDOW_MS = 15 * 60 * 1000; // 화면엔 항상 최근 15분만 — 24h/15분평균 추이 API 조회 결과와 맞춰봄 (실험용, B안)
+var CHART_DISPLAY_WINDOW_MS = 1 * 60 * 1000; // 화면엔 항상 최근 1분만 — 3초 폴링 간격 대비 창이 짧아야 중간 지점 타임스탬프가 보임
 var chartPollTimer = null;
 
 function chartKey(sensorType, deviceEui) {
@@ -149,7 +221,7 @@ function populateChartSensorSelect() {
 
     var groupsHtml = '';
     var firstOption = null;
-    CANONICAL_SENSOR_TYPES.forEach(function (type) {
+    sensorTypeDisplayOrder().forEach(function (type) {
         var devices = SENSOR_DEVICES_BY_TYPE[type] || [];
         if (devices.length === 0) return;
         groupsHtml += '<div class="msh-select-group-label">' + (SENSOR_TYPE_LABELS[type] || type) + '</div>';
@@ -288,7 +360,7 @@ function stopChartPolling() {
 function pollChartValue() {
     if (!CHART_SELECTED) return;
     var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    var gatewayOrigin = isLocal ? 'http://localhost:8080' : 'https://api.yes-nhn.site';
+    var gatewayOrigin = isLocal ? 'http://localhost:8000' : 'https://api.yes-nhn.site';
 
     fetch(gatewayOrigin + '/api/v1/cultivations/' + CULTIVATION_ID + '/sensor-values', {
         credentials: 'include'
@@ -433,27 +505,21 @@ function renderChartTrend() {
             '<text class="chart-axis-label chart-axis-label-y" x="' + (CHART_PLOT_X0 - 5) + '" y="' + (row.y + 3) + '" text-anchor="end">' + formatChartValue(row.value) + '</text>';
     }).join('');
 
-    // ---- X축(시간) 눈금: 값이 2개 이상일 때 처음/마지막 시각만 표시 ----
-    // 예전엔 중간 라벨도 같이 그렸는데, 그래프 폭(300)에 비해 "HH:MM:SS" 라벨 자체가 꽤 넓어서
-    // 세 라벨 중 두 개가 픽셀상 가까워지면(특히 데이터가 최근 시점에 몰려있을 때) 텍스트가 겹쳐 보이는 문제가
-    // 여러 번 재발했음. 라벨 개수를 처음/마지막 두 개로 고정하면 그 겹침 경우의 수 자체가 사라짐.
+    // ---- X축(시간) 눈금: 눕히지 않고 가로로, 폭이 부족하면 중간 점 라벨은 건너뜀 ----
+    // 마지막(최신) 라벨부터 왼쪽으로 훑으면서 라벨 폭(minLabelGap)만큼 떨어진 점에서만 라벨 추가
     var timeLabelsHtml = '';
     if (n >= 2) {
-        var firstX = coords[0].x;
-        var lastX = coords[n - 1].x;
-        // "HH:MM:SS" 라벨 하나가 대략 26~28 유닛 폭을 차지함(5.6px 폰트 기준) —
-        // 처음 라벨은 시작점에서 오른쪽으로, 마지막 라벨은 끝점에서 왼쪽으로 텍스트가 뻗어나가므로
-        // 두 점이 라벨 폭의 2배(약 56)보다 가까우면 겹칠 수 있어 그럴 땐 마지막 라벨 하나만 표시
-        var minLabelGap = 56;
-        var timeRows;
+        var minLabelGap = 30;
+        var timeRows = [];
+        var lastLabelX = null;
 
-        if (lastX - firstX < minLabelGap) {
-            timeRows = [{ x: lastX, t: times[n - 1], anchor: 'end' }];
-        } else {
-            timeRows = [
-                { x: firstX, t: times[0], anchor: 'start' },
-                { x: lastX, t: times[n - 1], anchor: 'end' }
-            ];
+        for (var li = n - 1; li >= 0; li--) {
+            var x = coords[li].x;
+            if (lastLabelX === null || (lastLabelX - x) >= minLabelGap) {
+                var anchor = li === 0 ? 'start' : (li === n - 1 ? 'end' : 'middle');
+                timeRows.unshift({ x: x, t: times[li], anchor: anchor });
+                lastLabelX = x;
+            }
         }
 
         timeLabelsHtml = timeRows.map(function (row) {
@@ -478,6 +544,11 @@ function renderChartTrend() {
 // AI 챗봇 답변을 생성해줄 백엔드가 아직 없어서(Ai_server에 대화형 엔드포인트 없음),
 // 그럴듯한 답변을 무작위로 지어내던 CHATBOT_REPLIES는 없애고 항상 같은 안내 문구만 보냄.
 var CHATBOT_PLACEHOLDER_REPLY = 'AI 챗봇은 아직 준비 중인 기능이에요. 조금만 기다려 주세요 🍄';
+
+// 인사이트: Ai_server에 서비스/DB 로직(InsightService 등)은 이미 있는데 이걸 밖에서 부를 수
+// 있는 컨트롤러(API)가 아직 없어서, 지금은 modal-insight에 "내 인사이트" + "비슷한 재배자 인사이트 5개"
+// 자리(프레임)만 잡아둠. 실제 데이터 없이 골격만 있는 상태라 버튼은 openModal('modal-insight')로 바로 연결.
+// API가 생기면 openModal 앞뒤로 fetch 붙여서 #insight-my-card / #insight-similar-list를 채우면 됨.
 
 function sendChatMessage(event) {
     event.preventDefault();
@@ -529,6 +600,10 @@ function togglePanel(id) {
     var isOpen = panel.classList.contains('is-open');
     document.querySelectorAll('.dropdown-panel').forEach(function (p) {
         p.classList.remove('is-open');
+    });
+    // 모달이 열려있는 채로 알림/담당자 패널을 열면 반투명 모달 배경 뒤로 패널이 비쳐 보여서 같이 닫아줌
+    document.querySelectorAll('.modal-overlay.is-open').forEach(function (m) {
+        m.classList.remove('is-open');
     });
     if (!isOpen) {
         panel.classList.add('is-open');
@@ -976,29 +1051,189 @@ function finishCultivation() {
     location.href = '/';
 }
 
+// 사진 카드 아래 날짜 선택기로 고른 날짜 (YYYY-MM-DD). null이면 최신 사진을 보여줌.
+var PHOTO_DATE_FILTER = null;
+
+function photosForDate(dateStr) {
+    return PHOTOS.filter(function (p) {
+        return p.updatedAt && p.updatedAt.slice(0, 10) === dateStr;
+    });
+}
+
+function mdpFormatLabel(dateStr) {
+    var parts = dateStr.split('-');
+    return parts[0] + '. ' + parts[1] + '. ' + parts[2] + '.';
+}
+
+function onPhotoDateChange(value) {
+    PHOTO_DATE_FILTER = value || null;
+    var label = document.getElementById('mdp-trigger-label');
+    if (label) {
+        label.textContent = PHOTO_DATE_FILTER ? mdpFormatLabel(PHOTO_DATE_FILTER) : '최신 사진';
+    }
+    renderMainPhoto();
+}
+
+// ---- 커스텀 달력(mdp) ----
+// 네이티브 <input type="date"> 팝업은 브라우저가 직접 그려서 CSS를 전혀 못 먹여서
+// .msh-select 드롭다운이랑 비슷하게 트리거 버튼 + 패널 구조로 직접 구현함.
+// 재배지 시작일(CULTIVATION_STARTED_AT) 이전 ~ 오늘 이후는 고를 수 없게 막음.
+var MDP_TODAY = new Date();
+var MDP_MAX = MDP_TODAY.getFullYear() + '-' + String(MDP_TODAY.getMonth() + 1).padStart(2, '0') + '-' + String(MDP_TODAY.getDate()).padStart(2, '0');
+var MDP_MIN = (typeof CULTIVATION_STARTED_AT !== 'undefined' && CULTIVATION_STARTED_AT) ? CULTIVATION_STARTED_AT : null;
+var mdpMinYear = MDP_MIN ? Number(MDP_MIN.split('-')[0]) : null;
+var mdpMinMonth = MDP_MIN ? Number(MDP_MIN.split('-')[1]) - 1 : null;
+var mdpMaxYear = MDP_TODAY.getFullYear();
+var mdpMaxMonth = MDP_TODAY.getMonth();
+var mdpViewYear = mdpMaxYear;
+var mdpViewMonth = mdpMaxMonth;
+
+function mdpFormatDate(y, m, d) {
+    return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+}
+
+function toggleMdp() {
+    var wrap = document.getElementById('mdp');
+    if (!wrap) return;
+    if (wrap.classList.contains('open')) {
+        closeMdp();
+        return;
+    }
+    // 선택된 날짜(없으면 오늘)가 있는 달로 캘린더를 열게 함
+    var base = PHOTO_DATE_FILTER || MDP_MAX;
+    var parts = base.split('-');
+    mdpViewYear = Number(parts[0]);
+    mdpViewMonth = Number(parts[1]) - 1;
+    renderMdpDays();
+    wrap.classList.add('open');
+
+    // 사진 카드가 overflow:hidden이라 팝업이 카드 경계에서 잘려버려서, msh-select 드롭다운과
+    // 같은 방식으로 열려있는 동안만 패널을 body로 옮겨서 fixed 포지션으로 그림.
+    // body로 옮기면 ".mdp.open .mdp-panel" 같은 조상 셀렉터는 더 이상 안 먹히니(패널이
+    // .mdp 밖으로 나감) display도 인라인으로 같이 세팅해야 함 — msh-select.js도 같은 이유로 그렇게 함.
+    var trigger = document.getElementById('mdp-trigger');
+    var panel = document.getElementById('mdp-panel');
+    var rect = trigger.getBoundingClientRect();
+    document.body.appendChild(panel);
+    panel.style.display = 'block';
+    panel.style.position = 'fixed';
+    panel.style.top = (rect.bottom + 10) + 'px';
+    panel.style.left = rect.left + 'px';
+    panel.style.zIndex = '200';
+}
+
+function closeMdp() {
+    var wrap = document.getElementById('mdp');
+    if (!wrap) return;
+    wrap.classList.remove('open');
+
+    var panel = document.getElementById('mdp-panel');
+    if (panel && panel.parentElement === document.body) {
+        panel.style.display = '';
+        panel.style.position = '';
+        panel.style.top = '';
+        panel.style.left = '';
+        panel.style.zIndex = '';
+        wrap.appendChild(panel);
+    }
+}
+
+function mdpChangeMonth(delta) {
+    mdpViewMonth += delta;
+    if (mdpViewMonth < 0) {
+        mdpViewMonth = 11;
+        mdpViewYear--;
+    } else if (mdpViewMonth > 11) {
+        mdpViewMonth = 0;
+        mdpViewYear++;
+    }
+    renderMdpDays();
+}
+
+function mdpSelectDay(dateStr) {
+    onPhotoDateChange(dateStr);
+    closeMdp();
+}
+
+function renderMdpDays() {
+    var monthLabel = document.getElementById('mdp-month-label');
+    if (monthLabel) monthLabel.textContent = mdpViewYear + '년 ' + (mdpViewMonth + 1) + '월';
+
+    var firstDayOfWeek = new Date(mdpViewYear, mdpViewMonth, 1).getDay();
+    var daysInMonth = new Date(mdpViewYear, mdpViewMonth + 1, 0).getDate();
+
+    var html = '';
+    for (var i = 0; i < firstDayOfWeek; i++) {
+        html += '<button type="button" class="mdp-day mdp-day--other-month" disabled></button>';
+    }
+    for (var day = 1; day <= daysInMonth; day++) {
+        var dateStr = mdpFormatDate(mdpViewYear, mdpViewMonth, day);
+        var disabled = (MDP_MIN && dateStr < MDP_MIN) || dateStr > MDP_MAX;
+        var selected = PHOTO_DATE_FILTER === dateStr;
+        html += '<button type="button" class="mdp-day' + (selected ? ' mdp-day--selected' : '') + '"' +
+            (disabled ? ' disabled' : ' onclick="mdpSelectDay(\'' + dateStr + '\')"') + '>' + day + '</button>';
+    }
+    var daysEl = document.getElementById('mdp-days');
+    if (daysEl) daysEl.innerHTML = html;
+
+    var prevBtn = document.getElementById('mdp-prev');
+    var nextBtn = document.getElementById('mdp-next');
+    if (prevBtn) {
+        prevBtn.disabled = mdpMinYear != null &&
+            (mdpViewYear < mdpMinYear || (mdpViewYear === mdpMinYear && mdpViewMonth <= mdpMinMonth));
+    }
+    if (nextBtn) {
+        nextBtn.disabled = mdpViewYear > mdpMaxYear || (mdpViewYear === mdpMaxYear && mdpViewMonth >= mdpMaxMonth);
+    }
+}
+
+document.addEventListener('click', function (e) {
+    // 패널이 열려있을 땐 body로 옮겨져서 #mdp 바깥에 있으니 패널 자체도 같이 체크해야
+    // 월 이동 버튼 클릭 시 바로 닫혀버리는 문제가 안 생김
+    if (!e.target.closest('#mdp') && !e.target.closest('#mdp-panel')) {
+        closeMdp();
+    }
+});
+
+document.addEventListener('scroll', function (e) {
+    if (e.target.closest && e.target.closest('#mdp-panel')) return;
+    closeMdp();
+}, true);
+
 function renderMainPhoto() {
     var placeholder = document.getElementById('photo-placeholder');
+    var placeholderText = document.getElementById('photo-placeholder-text');
     var img = document.getElementById('photo-preview-img');
-    if (PHOTOS.length === 0) {
+    var candidates = PHOTO_DATE_FILTER ? photosForDate(PHOTO_DATE_FILTER) : PHOTOS;
+
+    if (candidates.length === 0) {
         placeholder.style.display = 'flex';
         img.style.display = 'none';
         img.src = '';
+        if (placeholderText) {
+            placeholderText.textContent = PHOTO_DATE_FILTER
+                ? '이 날짜엔 등록된 사진이 없어요'
+                : '등록된 사진이 없습니다';
+        }
         return;
     }
     placeholder.style.display = 'none';
     img.style.display = 'block';
-    img.src = PHOTOS[0].uri;
+    img.src = candidates[0].uri;
 }
 
 // 업로드 박스(네모 칸) 자체에 현재 대표 사진(가장 최근 사진)을 미리보기로 보여줌.
 // 사진이 없을 때만 업로드 아이콘을 보여주고, 있으면 그 안에 바로 사진이 뜨게 함.
 function renderPhotoUploadPreview() {
-    var box = document.getElementById('photo-upload-preview');
-    if (PHOTOS.length === 0) {
-        box.innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
-    } else {
-        box.innerHTML = '<img src="' + PHOTOS[0].uri + '" alt="재배 사진" />';
-    }
+    ['photo-upload-preview', 'photo-upload-preview-main'].forEach(function (id) {
+        var box = document.getElementById(id);
+        if (!box) return;
+        if (PHOTOS.length === 0) {
+            box.innerHTML = '<i data-lucide="upload" style="width:28px;height:28px;"></i>';
+        } else {
+            box.innerHTML = '<img src="' + PHOTOS[0].uri + '" alt="재배 사진" />';
+        }
+    });
     lucide.createIcons();
 }
 
@@ -1076,6 +1311,10 @@ if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
 renderPhotoThumbs();
 renderPhotoUploadPreview();
 renderMainPhoto();
+if (document.getElementById('mdp')) {
+    // 기본값은 오늘 날짜로 채워둠
+    onPhotoDateChange(MDP_MAX);
+}
 initializeSensorBootstrap();
 
 var DIFFICULTY_LABELS = ['', '매우 쉬움', '쉬움', '보통', '어려움', '매우 어려움'];
