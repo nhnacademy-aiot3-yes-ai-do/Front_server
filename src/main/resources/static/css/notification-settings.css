@@ -195,7 +195,6 @@ body {
     padding: 1.2rem 0;
 }
 
-/* ===== 버튼 (연동 카드, 연동 모달에서 씀) ===== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -217,7 +216,6 @@ body {
 
 .btn.btn-outline { box-shadow: none; }
 
-/* ===== 텔레그램/디스코드 연동 카드 ===== */
 .integration-list .settings-row + .settings-row {
     margin-top: 0.7rem;
 }

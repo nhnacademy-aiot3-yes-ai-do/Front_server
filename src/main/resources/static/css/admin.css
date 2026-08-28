@@ -1,4 +1,3 @@
-/* static/css/admin.css */
 /* 관리자 페이지 전용 테마: 배경 사진 없이 은은한 크림색 배경 + 왼쪽 사이드바를 쓰되
    로고(MushMush - 크림/우드브라운/세이지그린, 둥근 손글씨 로고)와 톤을 맞춘 배색. */
 @import url("common.css");
@@ -15,7 +14,6 @@ body {
     flex-direction: column;
 }
 
-/* ===== 사이드바 레이아웃 (헤더 없이 사이드바가 화면 전체 높이를 차지) ===== */
 .admin-body-row {
     flex: 1;
     display: flex;
@@ -159,7 +157,6 @@ body {
 .admin-sidebar-link.is-active { background: var(--sage-500); color: #fff; }
 .admin-sidebar-link.is-active svg { color: #fff; }
 
-/* ===== page container ===== */
 .page-container {
     flex: 1;
     display: flex;
@@ -313,7 +310,6 @@ body {
 
 .admin-stat-label { font-size: 0.78rem; color: var(--brown-500); margin-top: 0.15rem; }
 
-/* ===== 대시보드: 오늘 요약 히어로 패널 ===== */
 .admin-hero-panel {
     position: relative;
     width: 100%;
@@ -344,7 +340,6 @@ body {
 
 .admin-hero-actions { display: flex; gap: 0.7rem; margin-top: 0.3rem; flex-wrap: wrap; }
 
-/* ===== 대시보드: 최근 미답변 문의 / 최근 가입 회원 ===== */
 .admin-activity-row {
     display: flex;
     align-items: stretch;
@@ -447,7 +442,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
     color: var(--brown-500);
 }
 
-/* ===== 하위 페이지 공통: 상단 타이틀 + 뒤로가기 + 필터 ===== */
 /* 예전엔 카드 상자(테두리+그림자)로 감쌌지만, 리스트 페이지는 그냥 페이지 배경 위에
    바로 놓는 걸로 바꿈 — 레이아웃(폭/비율/flex)만 유지하고 상자 껍데기는 벗김 */
 .admin-panel {
@@ -462,71 +456,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
    아직 쓰고 있어서 그대로 남겨둠 — 여기서 지우지 말 것)
 ========================================================= */
 
-/* ----- 상단 인사말 바 (사이드바 옆, 페이지 콘텐츠 맨 위) ----- */
-/* 부모(.page-container.admin-list-page)가 align-items:center라서 폭을 안 주면
-   콘텐츠 크기만큼 줄어들어 justify-content:space-between이 무력화됨 -> .admin-panel과
-   같은 폭으로 명시해서 양쪽 끝(제목/액션)이 실제로 좌우로 벌어지게 함 */
-.admin-topbar {
-    width: min(90%, 100rem);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1.4rem 0;
-    border-bottom: 1px solid rgba(112, 87, 60, 0.1);
-    margin-bottom: 1.4rem;
-}
-
-.admin-topbar-title {
-    margin: 0;
-    font-family: "Gaegu", inherit;
-    font-weight: 700;
-    font-size: 1.5rem;
-    color: var(--brown-900);
-}
-
-.admin-topbar-desc {
-    margin: 0.4rem 0 0;
-    font-size: 0.82rem;
-    color: var(--brown-500);
-}
-
-.admin-topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    flex-shrink: 0;
-}
-
-.admin-topbar-bell {
-    width: 2.4rem;
-    height: 2.4rem;
-    border-radius: 50%;
-    border: none;
-    background: var(--cream-200);
-    color: var(--brown-700);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.admin-topbar-bell:hover { background: rgba(124, 148, 115, 0.18); color: var(--sage-600); }
-.admin-topbar-bell svg { width: 1.15rem; height: 1.15rem; }
-
-.admin-topbar-profile {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--brown-900);
-}
-
-.admin-topbar-profile .avatar-circle { width: 2.2rem; height: 2.2rem; box-shadow: none; }
-.admin-topbar-profile svg:last-child { width: 1rem; height: 1rem; color: var(--brown-500); }
-
-/* ----- 페이지 제목 영역: 아이콘 배지 + 제목/설명 + 우하단 버섯 장식 ----- */
 .admin-page-heading {
     position: relative;
     display: flex;
@@ -564,7 +493,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
     color: var(--brown-500);
 }
 
-/* ----- 회원 카드: 툴바 + 테이블 ----- */
 .member-card {
     background: rgba(255, 253, 248, 0.92);
     border: 1px solid rgba(139, 94, 60, 0.16);
@@ -861,7 +789,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 
 .msh-select--admin-filter .msh-select-menu { min-width: 100%; }
 
-/* ===== table ===== */
 .list-table-wrap {
     background: #fff;
     border: 1px solid rgba(139, 94, 60, 0.14);
@@ -925,7 +852,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 .row-action-btn:hover { background: var(--cream-200); color: var(--brown-900); }
 .row-action-btn svg { width: 1.05rem; height: 1.05rem; }
 
-/* ===== pagination ===== */
 .admin-pagination {
     display: flex;
     align-items: center;
@@ -990,7 +916,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 .status-badge.pending { color: var(--brown-500); background: rgba(139, 94, 60, 0.12); }
 .status-badge.answered { color: var(--sage-600); background: rgba(124, 148, 115, 0.18); }
 
-/* ===== buttons ===== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -1013,7 +938,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 .btn-sm { padding: 0.45rem 0.9rem; font-size: 0.82rem; border-radius: 10px; box-shadow: 2px 2px 0 rgba(63, 42, 29, 0.12); }
 .btn-sm:active { box-shadow: 1px 1px 0 rgba(63, 42, 29, 0.12); }
 
-/* ===== modal ===== */
 .modal-overlay {
     display: none;
     position: fixed;
@@ -1050,7 +974,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
     margin-top: 18px;
 }
 
-/* ===== 버섯 등록/수정 폼 ===== */
 .modal-field label {
     display: block;
     font-size: 0.85rem;
@@ -1108,7 +1031,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
     margin: -6px 0 12px;
 }
 
-/* ===== 회원 문의 상세 팝업 (문의 내용 + 답변 작성) ===== */
 .iq-detail-head {
     display: flex;
     align-items: flex-start;
@@ -1147,7 +1069,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 .iq-cultivation-tag svg { width: 0.85rem; height: 0.85rem; }
 .iq-cultivation-tag:hover { background: rgba(124, 148, 115, 0.28); }
 
-/* ===== 문의 상세 안에서 여는 재배지 상세 미니 팝업 (예전 재배지 관리 상세팝업과 동일한 스타일) ===== */
 .cd-main-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1214,7 +1135,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 
 .cd-chart-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.9rem; }
 
-/* 일간 추이 그래프 헤더의 알약 모양 드롭다운 */
 .msh-select--cd-chart .msh-select-trigger {
     background: var(--cream-200);
     border: 1px solid var(--brown-300);
@@ -1307,7 +1227,6 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 .cd-member-chip-avatar svg { width: 1rem; height: 1rem; }
 .cd-member-chip-role { font-size: 0.72rem; color: var(--brown-500); }
 
-/* 모달 안 탭 전환 (메인 / AI 리포트) */
 .cd-modal-tabs {
     display: flex;
     gap: 4px;
@@ -1555,12 +1474,10 @@ body.error-page {
 
 .error-actions .btn { flex: 1; justify-content: center; }
 
-/* 대시보드 통계 카드 5개는 데스크톱보다 살짝 좁아지면 2줄(3+2)로 접히게 함 */
 @media (max-width: 1200px) {
     .admin-stat-row { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* ===== 반응형: 좁은 화면에서 사이드바 축소 + 카드/테이블 겹침 방지 ===== */
 @media (max-width: 900px) {
     .admin-sidebar {
         width: 4.6rem;

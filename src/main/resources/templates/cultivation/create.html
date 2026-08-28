@@ -34,12 +34,9 @@
 
         <form id="cultivation-create-form" class="wizard-panels">
 
-            <!-- STEP 1 : 재배지 정보 입력 -->
             <section class="wizard-panel active" id="step-1">
                 <h2 class="wizard-title">재배지 정보를 입력해주세요</h2>
                 <p class="wizard-desc">새로 시작할 재배지의 기본 정보를 알려주세요. 센서는 생성 후 '내 센서'에서 등록할 수 있어요.</p>
-
-                <p class="wizard-form-error" th:if="${cultivationCreateError}" th:text="${cultivationCreateError}"></p>
 
                 <div class="form-grid">
                     <div class="form-field">
@@ -59,7 +56,6 @@
                 </div>
             </section>
 
-            <!-- STEP 2 : 로딩 (AI 분석) -->
             <section class="wizard-panel" id="step-2">
                 <div class="loading-wrap">
                     <div class="loading-spinner"></div>
@@ -67,7 +63,6 @@
                 </div>
             </section>
 
-            <!-- STEP 3 : 버섯 효능 확인 -->
             <section class="wizard-panel" id="step-3">
                 <h2 class="wizard-title">
                     <span id="result-mushroom">양송이버섯</span> 재배를 시작해볼까요?
@@ -146,7 +141,7 @@
     var mushroomsData = [(${mushroomsJson})];
 </script>
 <!-- SSR bootstrap 계약이 바뀐 JS를 이전 브라우저 캐시와 섞지 않습니다. -->
-<script th:src="@{/js/cultivation-create.js(v=${'ssr-create-v2'})}"></script>
+<script th:src="@{/js/cultivation/cultivation-create.js(v=${'ssr-create-v2'})}"></script>
 
 </body>
 </html>

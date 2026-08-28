@@ -180,7 +180,6 @@ function goToStep(n) {
             return;
         }
 
-        // 다른 버섯 선택한 경우 수동 설정 상태 초기화
         manualSettingEnabled = false;
         document.getElementById('manual-setting-toggle').checked = false;
         document.getElementById('loading-mushroom').textContent = selected.selectedOptions[0].textContent;
@@ -193,10 +192,8 @@ function goToStep(n) {
             .then(function (result) {
                 var guide = (result && result.success) ? result.data : null;
 
-                // AI 가이드 설명, 배지, 재배/수확 조건, 요리법 렌더링
                 renderMushroomInfo(guide);
 
-                // 재배 조건 4개를 생성 요청용 환경 설정으로 변환
                 initializeEnvironmentSettings(
                     guide ? guide.cultivationCondition : null
                 );
@@ -360,7 +357,6 @@ function bindCultivationCreateForm() {
     var form = document.getElementById('cultivation-create-form');
 
     form.addEventListener('submit', function (event) {
-        // 기존 HTML form 전송을 중단합니다.
         event.preventDefault();
 
         if (!validateEnvironmentSettings()) {

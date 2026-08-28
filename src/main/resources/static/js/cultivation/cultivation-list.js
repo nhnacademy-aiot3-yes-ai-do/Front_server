@@ -191,7 +191,6 @@ function populateCultivationSelect() {
     wrapperEl.querySelector('.msh-select-value').textContent = '재배지를 선택하세요';
 }
 
-// 모달 열 때 드롭다운에 측정 타입 옵션 채우기
 function populateSensorTypeSelect() {
     var select = document.getElementById('ms-type-select');
     select.innerHTML = '<option value="">추가할 측정 타입을 선택하세요</option>' +
@@ -201,7 +200,6 @@ function populateSensorTypeSelect() {
         }).join('');
 }
 
-// [+ 추가] 버튼 클릭 시 측정 타입 행 동적 생성
 function addSensorTypeRow() {
     var select = document.getElementById('ms-type-select');
     var selectedOption = select.options[select.selectedIndex];
@@ -212,7 +210,6 @@ function addSensorTypeRow() {
         return;
     }
 
-    // 중복 추가 방지 검사
     var alreadyExists = document.querySelector('#ms-type-list .sensor-type-check-row[data-sensor-type-id="' + sensorTypeId + '"]');
     if (alreadyExists) {
         alert('이미 추가된 측정 타입입니다.');
@@ -237,10 +234,9 @@ function addSensorTypeRow() {
         '<span class="st-validate-msg"></span>';
 
     wrap.appendChild(row);
-    select.value = ''; // 선택 초기화
+    select.value = '';
 }
 
-// ✕ 버튼 클릭 시 행 삭제
 function removeSensorTypeRow(button) {
     var row = button.closest('.sensor-type-check-row');
     if (row) row.remove();
@@ -305,7 +301,6 @@ function validateThreshold(button) {
     })
         .then(function (res) { return res.json(); })
         .then(function (result) {
-            // AI가 돌려준 진짜 isValid(true/false)와 피드백 문구 출력!
             if (result.data) {
                 showResult(result.data.isValid, result.data.message);
             } else {
@@ -319,8 +314,8 @@ function validateThreshold(button) {
 
 function openSensorModal() {
     populateCultivationSelect();
-    populateSensorTypeSelect(); // 드롭다운 채우기 호출
-    document.getElementById('ms-type-list').innerHTML = ''; // 이전 추가 목록 비우기
+    populateSensorTypeSelect();
+    document.getElementById('ms-type-list').innerHTML = '';
     ['ms-name', 'ms-model', 'ms-location', 'ms-location-detail', 'ms-serial'].forEach(function (id) {
         document.getElementById(id).value = '';
     });
@@ -345,7 +340,6 @@ function registerSensor() {
     var invalidRange = false;
     var unvalidated = false;
 
-    // 추가되어 있는 행들만 순회
     document.querySelectorAll('#ms-type-list .sensor-type-check-row').forEach(function (row) {
         if (row.dataset.validated !== 'true') {
             unvalidated = true;
