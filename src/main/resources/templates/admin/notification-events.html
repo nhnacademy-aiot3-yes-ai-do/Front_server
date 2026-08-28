@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>알림 이벤트 등록 | MushMush</title>
     <link rel="stylesheet" th:href="@{/css/admin.css}" />
-    <script th:src="@{/js/lucide.js}"></script>
-    <script th:src="@{/js/admin-common.js}"></script>
+    <script th:src="@{/js/common/lucide.js}"></script>
+    <script th:src="@{/js/common/common.js}"></script>
+    <script th:src="@{/js/admin/admin-common.js}"></script>
 </head>
 <body>
 
@@ -51,7 +52,6 @@
     </div>
 </div>
 
-<!-- 알림 이벤트 등록 / 수정 -->
 <div class="modal-overlay" id="modal-notification-event-form">
     <form class="modal-box" id="notification-event-form" onsubmit="saveNotificationEvent(event)">
         <button class="modal-close" type="button" onclick="closeModal('modal-notification-event-form')">
@@ -85,7 +85,6 @@
     </form>
 </div>
 
-<!-- 알림 이벤트 삭제 확인 -->
 <div class="modal-overlay" id="modal-notification-event-delete">
     <div class="modal-box">
         <h3 class="modal-title">이 알림 이벤트를 삭제하겠습니까?</h3>
@@ -97,7 +96,7 @@
     </div>
 </div>
 
-<script th:src="@{/js/admin-notification-events.js}"></script>
+<script th:src="@{/js/admin/admin-notification-events.js}"></script>
 
 </body>
 </html>

@@ -58,7 +58,6 @@ function startDormantTimer(durationSeconds) {
     }, 1000);
 }
 
-// 1. 실제 이메일 인증번호 발송 요청
 function handleDormantSendCode() {
     var btn = document.getElementById('dormant-send-btn');
     btn.disabled = true;
@@ -79,7 +78,6 @@ function handleDormantSendCode() {
         });
 }
 
-// 2. 이메일 인증번호 재발송 요청
 function handleDormantResend() {
     document.getElementById('dormant-code').value = '';
     var statusText = document.getElementById('dormant-status-text');
@@ -97,7 +95,6 @@ function handleDormantResend() {
         });
 }
 
-// 3. 인증번호 확인 및 백엔드 휴면 해제 API 호출
 function handleDormantVerifyCode() {
     var code = document.getElementById('dormant-code').value.trim();
     var statusText = document.getElementById('dormant-status-text');
@@ -114,7 +111,6 @@ function handleDormantVerifyCode() {
         return;
     }
 
-    // A. 이메일 인증번호 검증
     fetch('/users/email/verify?email=' + encodeURIComponent(dormantCurrentEmail) + '&code=' + encodeURIComponent(code), { method: 'POST' })
         .then(function (res) {
             if (!res.ok) throw new Error('인증번호 불일치');
@@ -126,7 +122,6 @@ function handleDormantVerifyCode() {
             statusText.classList.remove('error');
             statusText.textContent = '인증되었습니다. 계정을 복구하는 중이에요...';
 
-            // B. 백엔드 휴면 해제 API 호출
             return fetch('/users/dormant/release?email=' + encodeURIComponent(dormantCurrentEmail), { method: 'POST' });
         })
         .then(function (res) {
@@ -140,7 +135,6 @@ function handleDormantVerifyCode() {
             showDormantStep('success');
             lucide.createIcons();
 
-            // C. 해제 성공 후 로그인 페이지로 자동 이동하여 유저가 바로 로그인할 수 있게 안내
             setTimeout(function () {
                 alert('휴면 계정이 성공적으로 해제되었습니다! 다시 로그인해 주세요.');
                 window.location.href = '/login';

@@ -1,4 +1,3 @@
-<!-- templates/cultivation/history.html -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>재배 이력 | MushMush</title>
     <link rel="stylesheet" th:href="@{/css/cultivation-history.css}" />
-    <script th:src="@{/js/lucide.js}"></script>
-    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/common/lucide.js}"></script>
+    <script th:src="@{/js/common/common.js}"></script>
 </head>
 <body>
 
@@ -21,15 +20,12 @@
             <div class="history-name-list" id="history-name-list"></div>
         </aside>
 
-        <div class="history-detail" id="history-detail">
-            <!-- JS로 채워짐 -->
-        </div>
+        <div class="history-detail" id="history-detail"></div>
 
     </div>
 
 </div>
 
-<!-- 재배 이력 비교 다이얼로그 -->
 <div class="modal-overlay" id="modal-compare">
     <div class="modal-box modal-box-wide">
         <button class="modal-close" type="button" onclick="closeModal('modal-compare')">
@@ -67,7 +63,7 @@
         };
     });
 </script>
-<script th:src="@{/js/cultivation-history.js}"></script>
+<script th:src="@{/js/cultivation/cultivation-history.js}"></script>
 
 </body>
 </html>

@@ -91,7 +91,6 @@ function renderInquiryPagination() {
     lucide.createIcons();
 }
 
-// ===== 문의 상세 + 답변 작성 =====
 async function openInquiryDetail(id) {
     currentInquiryId = id;
     try {

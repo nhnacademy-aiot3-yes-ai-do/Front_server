@@ -9,6 +9,7 @@
     <link rel="stylesheet" th:href="${isAdmin} ? @{/css/admin.css} : @{/css/error.css}" />
     <script th:src="@{/js/lucide.js}"></script>
     <script th:if="${!isAdmin}" th:src="@{/js/error.js}" defer></script>
+    <script th:src="@{/js/common/lucide.js}"></script>
 </head>
 <body th:classappend="${isAdmin} ? 'error-page' : ''">
 <div class="error-wrap">

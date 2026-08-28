@@ -1,4 +1,3 @@
-<!-- templates/user/profile.html -->
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>내 정보 | MushMush</title>
     <link rel="stylesheet" th:href="@{/css/user-profile.css}" />
-    <script th:src="@{/js/lucide.js}"></script>
-    <script th:src="@{/js/common.js}"></script>
+    <script th:src="@{/js/common/lucide.js}"></script>
+    <script th:src="@{/js/common/common.js}"></script>
 </head>
 <body>
 
@@ -16,7 +15,6 @@
 <div class="page-container">
     <div class="profile-panels">
 
-        <!-- 내 정보 보기 -->
         <section id="profile-view" class="profile-panel active">
             <div class="profile-card">
                 <div class="profile-avatar"><i data-lucide="circle-user-round" style="width:40px;height:40px;"></i></div>
@@ -50,7 +48,6 @@
             </div>
         </section>
 
-        <!-- 비밀번호 확인 -->
         <section id="profile-verify" class="profile-panel">
             <div class="profile-card">
                 <h3 class="modal-title">비밀번호 확인</h3>
@@ -67,7 +64,6 @@
             </div>
         </section>
 
-        <!-- 회원정보 수정 -->
         <section id="profile-edit" class="profile-panel">
             <div class="profile-card">
                 <h3 class="modal-title">회원정보 수정</h3>
@@ -91,7 +87,6 @@
             </div>
         </section>
 
-        <!-- 회원 탈퇴 -->
         <section id="profile-delete-confirm" class="profile-panel">
             <div class="profile-card">
                 <div class="delete-warning-icon">

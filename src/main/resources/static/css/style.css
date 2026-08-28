@@ -366,7 +366,6 @@ body.admin-login-body .auth-links {
 
 /* 팝업(모달) 공용 스타일은 common.css 참고 (.modal-overlay/.modal-box/.modal-title 등) */
 
-/* ===== 반응형: 좁은 화면에서 카드 좌우 여백 축소 ===== */
 @media (max-width: 480px) {
     .auth-card { padding: 32px 22px; }
 }

@@ -1,7 +1,7 @@
-let emailChecked = false;   // 중복확인 통과 여부
-let emailVerified = false;  // 인증번호 확인 통과 여부
-let isTimerExpired = false; // 타이머 만료 여부
-let timerInterval = null; // 타이머 객체 변수
+let emailChecked = false;
+let emailVerified = false;
+let isTimerExpired = false;
+let timerInterval = null;
 
 function startTimer(durationSeconds){
     if(timerInterval){
