@@ -952,9 +952,28 @@ function handleCompareSelectChange() {
 }
 
 function openEndAmountModal() {
+    if (CULTIVATION_MODE !== 'HARVEST') {
+        alert('먼저 "수확 모드로 전환" 버튼으로 전환한 뒤에 수확을 기록할 수 있어요.');
+        return;
+    }
     document.getElementById('end-amount-input').value = '0';
     document.getElementById('end-memo-input').value = '';
     openModal('modal-end-amount');
+}
+
+function submitSwitchToHarvestMode() {
+    fetch('/cultivations/' + CULTIVATION_ID + '/harvest-mode', { method: 'PUT' })
+        .then(function (res) {
+            if (!res.ok) throw new Error(res.status === 409 ? '이미 수확 모드로 전환된 재배지예요.' : '수확 모드 전환에 실패했습니다.');
+            return res.json();
+        })
+        .then(function () {
+            closeModal('modal-harvest-mode');
+            location.reload();
+        })
+        .catch(function (err) {
+            alert(err.message);
+        });
 }
 
 function submitEndAmount() {
