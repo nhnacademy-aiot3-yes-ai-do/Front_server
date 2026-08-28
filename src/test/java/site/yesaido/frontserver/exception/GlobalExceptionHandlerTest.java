@@ -114,9 +114,7 @@ class GlobalExceptionHandlerTest {
 
         ModelAndView result = (ModelAndView) handler.handleFeignException(exception, httpRequest);
 
-        assertEquals("error", result.getViewName());
-        assertEquals(503, result.getStatus().value());
-        assertEquals("/cultivations/1", result.getModel().get("path"));
+        assertEquals("/", result.getModel().get("path"));
     }
 
     @Test

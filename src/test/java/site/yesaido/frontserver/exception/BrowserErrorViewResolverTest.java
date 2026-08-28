@@ -27,7 +27,7 @@ class BrowserErrorViewResolverTest {
         assertEquals("error", result.getViewName());
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, result.getStatus());
         assertEquals(500, result.getModel().get("status"));
-        assertEquals("/cultivations/42", result.getModel().get("path"));
+        assertEquals("/", result.getModel().get("path"));
     }
 
     @Test
@@ -42,7 +42,22 @@ class BrowserErrorViewResolverTest {
                 Map.of("status", 403, "error", "Forbidden")
         );
 
-        assertEquals("/admin/mushrooms", result.getModel().get("path"));
+        assertEquals("/admin", result.getModel().get("path"));
         assertEquals(403, result.getModel().get("status"));
+    }
+
+    @Test
+    void doesNotPassAnUntrustedOriginalUriToTheErrorTemplate() {
+        BrowserErrorViewResolver resolver = new BrowserErrorViewResolver();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/error");
+        request.setAttribute(RequestDispatcher.ERROR_REQUEST_URI, "/cultivations/<script>alert(1)</script>");
+
+        ModelAndView result = resolver.resolveErrorView(
+                request,
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                Map.of("status", 500)
+        );
+
+        assertEquals("/", result.getModel().get("path"));
     }
 }

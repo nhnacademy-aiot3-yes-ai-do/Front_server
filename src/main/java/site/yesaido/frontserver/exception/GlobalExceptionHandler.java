@@ -76,9 +76,14 @@ public class GlobalExceptionHandler {
         mav.addObject("status", status.value());
         mav.addObject(ERROR, status.getReasonPhrase());
         mav.addObject("message", message);
-        mav.addObject("path", request.getRequestURI());
+        mav.addObject("path", errorPagePath(request));
         mav.addObject("timestamp", new Date());
         return mav;
+    }
+
+    private String errorPagePath(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return "/admin".equals(path) || path.startsWith("/admin/") ? "/admin" : "/";
     }
 
     @ExceptionHandler(FeignException.Unauthorized.class)
