@@ -961,21 +961,6 @@ function openEndAmountModal() {
     openModal('modal-end-amount');
 }
 
-function submitSwitchToHarvestMode() {
-    fetch('/cultivations/' + CULTIVATION_ID + '/harvest-mode', { method: 'PUT' })
-        .then(function (res) {
-            if (!res.ok) throw new Error(res.status === 409 ? '이미 수확 모드로 전환된 재배지예요.' : '수확 모드 전환에 실패했습니다.');
-            return res.json();
-        })
-        .then(function () {
-            closeModal('modal-harvest-mode');
-            location.reload();
-        })
-        .catch(function (err) {
-            alert(err.message);
-        });
-}
-
 function submitEndAmount() {
     var amountInput = document.getElementById('end-amount-input');
     var memoInput = document.getElementById('end-memo-input');
@@ -987,29 +972,57 @@ function submitEndAmount() {
     }
 
     var memo = memoInput.value;
+    var body = JSON.stringify({ harvestWeight: amount, memo: memo });
 
-    fetch('/cultivations/' + CULTIVATION_ID + '/harvest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ harvestWeight: amount, memo: memo })
-    })
+    function postHarvest() {
+        return fetch('/cultivations/' + CULTIVATION_ID + '/harvest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        });
+    }
+
+    function proceed() {
+        harvestState.totalAmount = amount;
+        endReportStats = computeEndReportStats();
+        renderEndReport(endReportStats);
+        amountInput.value = '';
+        memoInput.value = '';
+        closeModal('modal-end-amount');
+        openModal('modal-end-report');
+    }
+
+    function retry() {
+        return postHarvest()
+            .then(function (res) {
+                // 재시도에서 409(이미 수확 기록 존재)가 뜨면 직전 요청이 실제로는 성공했다는 뜻이므로 정상 처리한다.
+                if (res.ok || res.status === 409) {
+                    proceed();
+                    return;
+                }
+                alert('수확 기록에 실패했습니다.');
+            })
+            .catch(function () {
+                alert('수확 기록에 실패했습니다.');
+            });
+    }
+
+    // 500번대 응답이나 네트워크 단절은 "서버엔 실제로 반영됐는데 응답만 못 받은" 경우일 수 있어 한 번만 조용히
+    // 재시도한다. 400/403/404 같은 명확한 클라이언트 에러는 재시도 없이 그대로 신뢰해서 보여준다.
+    postHarvest()
         .then(function (res) {
-            if (!res.ok) throw new Error('harvest failed');
-            return res.json();
+            if (res.ok) {
+                proceed();
+                return;
+            }
+            if (res.status >= 500) {
+                return retry();
+            }
+            alert('수확 기록에 실패했습니다.');
         })
-        .then(function () {
-            harvestState.totalAmount = amount;
-
-            endReportStats = computeEndReportStats();
-            renderEndReport(endReportStats);
-
-            amountInput.value = '';
-            memoInput.value = '';
-
-            closeModal('modal-end-amount');
-            openModal('modal-end-report');
-        })
-        .catch(function () { alert('수확 기록에 실패했습니다.'); });
+        .catch(function () {
+            retry();
+        });
 }
 
 function computeEndReportStats() {
@@ -1303,6 +1316,11 @@ function deletePhoto(photoId) {
 var cultivationDeleteForm = document.getElementById('cultivation-delete-form');
 if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
     cultivationDeleteForm.action = '/cultivations/' + CULTIVATION_ID;
+}
+
+var harvestModeForm = document.getElementById('harvest-mode-form');
+if (harvestModeForm && typeof CULTIVATION_ID !== 'undefined') {
+    harvestModeForm.action = '/cultivations/' + CULTIVATION_ID + '/harvest-mode';
 }
 
 var photoUploadForm = document.getElementById('photo-upload-form');
