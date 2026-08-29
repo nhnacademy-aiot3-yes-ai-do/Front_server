@@ -961,21 +961,6 @@ function openEndAmountModal() {
     openModal('modal-end-amount');
 }
 
-function submitSwitchToHarvestMode() {
-    fetch('/cultivations/' + CULTIVATION_ID + '/harvest-mode', { method: 'PUT' })
-        .then(function (res) {
-            if (!res.ok) throw new Error(res.status === 409 ? '이미 수확 모드로 전환된 재배지예요.' : '수확 모드 전환에 실패했습니다.');
-            return res.json();
-        })
-        .then(function () {
-            closeModal('modal-harvest-mode');
-            location.reload();
-        })
-        .catch(function (err) {
-            alert(err.message);
-        });
-}
-
 function submitEndAmount() {
     var amountInput = document.getElementById('end-amount-input');
     var memoInput = document.getElementById('end-memo-input');
@@ -1303,6 +1288,11 @@ function deletePhoto(photoId) {
 var cultivationDeleteForm = document.getElementById('cultivation-delete-form');
 if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
     cultivationDeleteForm.action = '/cultivations/' + CULTIVATION_ID;
+}
+
+var harvestModeForm = document.getElementById('harvest-mode-form');
+if (harvestModeForm && typeof CULTIVATION_ID !== 'undefined') {
+    harvestModeForm.action = '/cultivations/' + CULTIVATION_ID + '/harvest-mode';
 }
 
 var photoUploadForm = document.getElementById('photo-upload-form');
