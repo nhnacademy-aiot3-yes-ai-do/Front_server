@@ -277,9 +277,10 @@ public class CultivationController {
 
     // 사진
     @PostMapping("/{cultivation-id}/photos")
-    public ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
+    public String uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
                                                      @RequestParam("file") MultipartFile file) {
-        return cultivationClient.uploadPhoto(cultivationId, file);
+        cultivationClient.uploadPhoto(cultivationId, file);
+        return "redirect:/cultivations/" + cultivationId;
     }
 
     @GetMapping("{cultivation-id}/photos")

@@ -1274,7 +1274,7 @@ function renderPhotoThumbs() {
     lucide.createIcons();
 }
 
-function handlePhotoSelect(input) {
+function submitPhotoUpload(input) {
     if (!input.files || !input.files[0]) return;
     var file = input.files[0];
 
@@ -1284,28 +1284,7 @@ function handlePhotoSelect(input) {
         return;
     }
 
-    var formData = new FormData();
-    formData.append('file', file);
-
-    fetch('/cultivations/' + CULTIVATION_ID + '/photos', {
-        method: 'POST',
-        body: formData
-    })
-        .then(function (res) {
-            if (!res.ok) throw new Error('upload failed');
-            return res.json();
-        })
-        .then(function (uploaded) {
-            PHOTOS.unshift(uploaded);
-            renderMainPhoto();
-            renderPhotoThumbs();
-            renderPhotoUploadPreview();
-            input.value = '';
-        })
-        .catch(function () {
-            alert('사진 업로드에 실패했습니다.');
-            input.value = '';
-        });
+    input.form.submit();
 }
 
 function deletePhoto(photoId) {
@@ -1324,6 +1303,11 @@ function deletePhoto(photoId) {
 var cultivationDeleteForm = document.getElementById('cultivation-delete-form');
 if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
     cultivationDeleteForm.action = '/cultivations/' + CULTIVATION_ID;
+}
+
+var photoUploadForm = document.getElementById('photo-upload-form');
+if (photoUploadForm && typeof CULTIVATION_ID !== 'undefined') {
+    photoUploadForm.action = '/cultivations/' + CULTIVATION_ID + '/photos';
 }
 
 renderPhotoThumbs();
