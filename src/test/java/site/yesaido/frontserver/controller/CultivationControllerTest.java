@@ -347,26 +347,37 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("사진 업로드 및 조회/삭제 테스트 분기")
-    void photoOperationsTest() throws Exception {
+    @DisplayName("HTML form 사진 업로드 성공 시 상세 페이지로 리다이렉트")
+    void uploadPhotoRedirectsToDetail() throws Exception {
         Long cultivationId = 1L;
         MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test data".getBytes());
         PhotoResponse photo = new PhotoResponse(100L, "key", "uri", "S3", LocalDateTime.now());
 
         when(cultivationClient.uploadPhoto(eq(cultivationId), any())).thenReturn(ResponseEntity.ok(photo));
-        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(new PhotoListResponse(List.of(photo))));
-        when(cultivationClient.deletePhoto(cultivationId, 100L)).thenReturn(ResponseEntity.ok().build());
 
         mockMvc.perform(multipart("/cultivations/{cultivation-id}/photos", cultivationId)
                         .file(file)
                         .cookie(LOGGED_IN))
-                .andExpect(status().isOk());
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cultivations/" + cultivationId));
+
+        verify(cultivationClient).uploadPhoto(eq(cultivationId), any());
+    }
+
+    @Test
+    @DisplayName("사진 조회/삭제 테스트")
+    void photoOperationsTest() throws Exception {
+        Long cultivationId = 1L;
+        PhotoResponse photo = new PhotoResponse(100L, "key", "uri", "S3", LocalDateTime.now());
+
+        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(new PhotoListResponse(List.of(photo))));
+        when(cultivationClient.deletePhoto(cultivationId, 100L)).thenReturn(ResponseEntity.noContent().build());
 
         mockMvc.perform(get("/cultivations/{cultivation-id}/photos", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk());
 
         mockMvc.perform(delete("/cultivations/{cultivation-id}/photos/100", cultivationId).cookie(LOGGED_IN))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test
