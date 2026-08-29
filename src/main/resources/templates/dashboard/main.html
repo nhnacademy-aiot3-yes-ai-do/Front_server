@@ -321,10 +321,11 @@
         </button>
         <h3 class="modal-title">수확 모드로 전환</h3>
         <p class="modal-desc">수확 모드로 전환하면 이 버섯의 수확기 환경 기준값이 자동으로 적용돼요. 전환 후에는 재배 모드로 되돌릴 수 없어요. 계속하시겠어요?</p>
-        <div class="modal-actions">
+        <form class="modal-actions" id="harvest-mode-form" method="post">
+            <input name="_method" type="hidden" value="PUT" />
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-harvest-mode')">Cancel</button>
-            <button class="btn btn-primary" type="button" onclick="submitSwitchToHarvestMode()">전환</button>
-        </div>
+            <button class="btn btn-primary" type="submit">전환</button>
+        </form>
     </div>
 </div>
 
