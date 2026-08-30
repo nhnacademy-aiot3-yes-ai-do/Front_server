@@ -17,6 +17,7 @@ import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
+import site.yesaido.frontserver.dto.user.response.SignupEmailVerificationResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import tools.jackson.databind.ObjectMapper;
 
@@ -53,26 +54,6 @@ class UserApiControllerTest {
 
     @MockitoBean
     private AuthCookieProvider authCookieProvider;
-
-    @Test
-    @DisplayName("이메일 중복 확인 - 성공 (true)")
-    void checkEmailSuccess() throws Exception {
-        given(userClient.checkEmail("test@naver.com")).willReturn(new ApiResponse<>(true, "조회 성공", true));
-
-        mockMvc.perform(get("/users/check-email").param("email", "test@naver.com"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("true"));
-    }
-
-    @Test
-    @DisplayName("이메일 중복 확인 - null 또는 false 분기")
-    void checkEmailFailedOrNull() throws Exception {
-        given(userClient.checkEmail("fail@naver.com")).willReturn(null);
-
-        mockMvc.perform(get("/users/check-email").param("email", "fail@naver.com"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("false"));
-    }
 
     @Test
     @DisplayName("닉네임 중복 확인 - 성공 (true)")
@@ -113,6 +94,21 @@ class UserApiControllerTest {
                         .param("code", "123456"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
+    }
+
+    @Test
+    @DisplayName("회원가입 이메일 인증 결과를 그대로 반환한다")
+    void verifySignupEmailSuccess() throws Exception {
+        SignupEmailVerificationResponse result = new SignupEmailVerificationResponse(true, "AVAILABLE", null);
+        given(userClient.verifySignupEmail("test@naver.com", "123456"))
+                .willReturn(new ApiResponse<>(true, "회원가입 이메일 인증 결과입니다.", result));
+
+        mockMvc.perform(post("/users/signup/verify-email")
+                        .param("email", "test@naver.com")
+                        .param("code", "123456"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.verified").value(true))
+                .andExpect(jsonPath("$.data.eligibility").value("AVAILABLE"));
     }
 
     @Test

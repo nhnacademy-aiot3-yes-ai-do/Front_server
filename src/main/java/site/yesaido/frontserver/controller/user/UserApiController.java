@@ -8,6 +8,7 @@ import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
+import site.yesaido.frontserver.dto.user.response.SignupEmailVerificationResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
 import site.yesaido.frontserver.exception.MissingRefreshTokenException;
@@ -21,12 +22,6 @@ public class UserApiController {
 
     private final UserClient userClient;
     private final AuthCookieProvider authCookieProvider;
-
-    @GetMapping("/users/check-email")
-    public Boolean checkEmail(@RequestParam String email) {
-        ApiResponse<Boolean> response = userClient.checkEmail(email);
-        return response != null && Boolean.TRUE.equals(response.data());
-    }
 
     @GetMapping("/users/check-nickname")
     public Boolean checkNickname(@RequestParam String nickname) {
@@ -63,6 +58,11 @@ public class UserApiController {
     public Boolean verifyEmail(@RequestParam String email, @RequestParam String code) {
         ApiResponse<Boolean> response = userClient.verifyEmail(new EmailVerifyRequest(email.trim(), code.trim()));
         return response != null && Boolean.TRUE.equals(response.data());
+    }
+
+    @PostMapping("/users/signup/verify-email")
+    public ApiResponse<SignupEmailVerificationResponse> verifySignupEmail(@RequestParam String email, @RequestParam String code) {
+        return userClient.verifySignupEmail(email.trim(), code.trim());
     }
 
     // 토큰 시간 연장
