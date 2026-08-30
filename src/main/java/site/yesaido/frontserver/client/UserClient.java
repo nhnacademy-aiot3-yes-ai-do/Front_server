@@ -57,10 +57,12 @@ public interface UserClient {
     @GetMapping("/api/v1/users/mypage")
     ApiResponse<UserProfileResponse> getMyPage();
 
+    @PutMapping("/api/v1/users/mypage/password")
+    ApiResponse<Void> changePassword(@RequestBody PasswordChangeRequest request);
+
     // 11. 프로필 수정
     @PutMapping("/api/v1/users/mypage")
     ApiResponse<UserProfileResponse> updateMyPage(@RequestBody ProfileUpdateRequest request);
-
     // 12. 비밀번호 확인
     @PostMapping("/api/v1/users/verify-password")
     ApiResponse<Boolean> verifyPassword(@RequestBody PasswordVerifyRequest request);

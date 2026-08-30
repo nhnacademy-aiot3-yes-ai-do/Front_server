@@ -196,7 +196,7 @@ class UserApiControllerTest {
     @Test
     @DisplayName("프로필 마이페이지 조회")
     void getMyPageSuccess() throws Exception {
-        UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "이름", "닉네임", "USER", LocalDateTime.now(), LocalDateTime.now());
+        UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "닉네임", "USER", "ACTIVE", LocalDateTime.now(), LocalDateTime.now(), true);
         given(userClient.getMyPage()).willReturn(new ApiResponse<>(true, "조회 성공", profileResponse));
 
         mockMvc.perform(get("/users/mypage"))
@@ -206,13 +206,28 @@ class UserApiControllerTest {
     @Test
     @DisplayName("프로필 수정")
     void updateMyPageSuccess() throws Exception {
-        ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임", "oldPass", "newPass");
+        ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임");
         given(userClient.updateMyPage(any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
 
         mockMvc.perform(put("/users/mypage")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 성공 시 User 서버에 요청을 전달하고 인증 쿠키를 삭제한다")
+    void changePasswordSuccess() throws Exception {
+        PasswordChangeRequest request = new PasswordChangeRequest("currentPass1!", "newPass1!");
+        given(userClient.changePassword(any())).willReturn(new ApiResponse<>(true, "비밀번호가 변경되었습니다.", null));
+
+        mockMvc.perform(put("/users/mypage/password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(userClient).changePassword(request);
+        verify(authCookieProvider).clearAuthCookies(any());
     }
 
     @Test
