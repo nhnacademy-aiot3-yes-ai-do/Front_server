@@ -89,7 +89,12 @@
 
         <div class="iq-chat" id="iq-chat"></div>
 
+        <div class="iq-attach-chip-list" id="iq-reply-chips"></div>
         <form class="iq-composer" onsubmit="submitAdminReply(event)">
+            <label class="iq-attach-icon-btn" title="사진 첨부 (최대 5장)">
+                <i data-lucide="paperclip"></i>
+                <input type="file" id="iq-reply-photos" accept="image/*" multiple hidden />
+            </label>
             <textarea id="iq-reply-input" rows="1" placeholder="답변을 입력하세요" required></textarea>
             <button class="iq-composer-send" type="submit" title="답변 보내기">
                 <i data-lucide="send"></i>

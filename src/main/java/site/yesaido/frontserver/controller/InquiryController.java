@@ -13,6 +13,7 @@ import site.yesaido.frontserver.dto.inquiry.request.InquiryMessageRequest;
 import site.yesaido.frontserver.dto.inquiry.response.InquiryCategoryResponse;
 import site.yesaido.frontserver.dto.inquiry.response.InquiryDetailResponse;
 import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryPageResponse;
+import site.yesaido.frontserver.util.FileUploadValidator;
 import site.yesaido.frontserver.util.LoginRequired;
 import tools.jackson.databind.ObjectMapper;
 
@@ -35,6 +36,7 @@ public class InquiryController {
     @PostMapping
     public ApiResponse<InquiryDetailResponse> createInquiry(@RequestPart("request") InquiryCreateRequest request,
                                                             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        FileUploadValidator.validateInquiryPhotoCount(files);
         FormData requestPart = new FormData("application/json", "request.json", objectMapper.writeValueAsBytes(request));
         return inquiryClient.createInquiry(requestPart, files);
     }
@@ -53,8 +55,11 @@ public class InquiryController {
 
     @PostMapping("/{inquiry-id}/messages")
     public ApiResponse<InquiryDetailResponse> addFollowUp(@PathVariable("inquiry-id") Long inquiryId,
-                                                          @RequestBody InquiryMessageRequest request) {
-        return inquiryClient.addFollowUp(inquiryId, request);
+                                                          @RequestPart("request") InquiryMessageRequest request,
+                                                          @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        FileUploadValidator.validateInquiryPhotoCount(files);
+        FormData requestPart = new FormData("application/json", "request.json", objectMapper.writeValueAsBytes(request));
+        return inquiryClient.addFollowUp(inquiryId, requestPart, files);
     }
 
     @GetMapping("/my-cultivations")

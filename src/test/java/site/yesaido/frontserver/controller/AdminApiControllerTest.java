@@ -1,16 +1,20 @@
 package site.yesaido.frontserver.controller;
 
+import feign.form.FormData;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientAutoConfiguration;
 import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAuth2ClientWebSecurityAutoConfiguration;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.CultivationClient;
@@ -37,6 +41,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -126,16 +131,44 @@ class AdminApiControllerTest {
         InquiryMessageRequest request = new InquiryMessageRequest("답변 내용");
         InquiryDetailResponse detail = new InquiryDetailResponse(
                 1L, 10L, "닉네임", 2L, "카테고리", "제목", null, LocalDateTime.now(), null, null, List.of());
-        when(inquiryClient.answerMessage(eq(1L), any(InquiryMessageRequest.class)))
+        when(inquiryClient.answerMessage(eq(1L), any(FormData.class), any()))
                 .thenReturn(new ApiResponse<>(true, "답변 등록 성공", detail));
 
-        mockMvc.perform(put("/admin/inquiries/messages/{answer-id}", 1L)
-                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        MockMultipartFile requestPart = new MockMultipartFile(
+                "request", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/admin/inquiries/messages/{answer-id}", 1L)
+                        .file(requestPart)
+                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE))
                 .andExpect(status().isOk());
 
-        verify(inquiryClient).answerMessage(1L, request);
+        ArgumentCaptor<FormData> captor = ArgumentCaptor.forClass(FormData.class);
+        verify(inquiryClient).answerMessage(eq(1L), captor.capture(), isNull());
+
+        FormData sent = captor.getValue();
+        assertThat(sent.getContentType()).isEqualTo("application/json");
+        assertThat(objectMapper.readValue(sent.getData(), InquiryMessageRequest.class)).isEqualTo(request);
+    }
+
+    @Test
+    @DisplayName("문의 답변 등록 - 사진이 5장 초과면 400을 반환한다")
+    void answerMessage_tooManyFiles_returnsBadRequest() throws Exception {
+        InquiryMessageRequest request = new InquiryMessageRequest("답변 내용");
+        MockMultipartFile requestPart = new MockMultipartFile(
+                "request", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/admin/inquiries/messages/{answer-id}", 1L)
+                        .file(requestPart)
+                        .file(new MockMultipartFile("files", "1.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "2.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "3.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "4.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "5.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "6.jpg", "image/jpeg", "a".getBytes()))
+                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(inquiryClient);
     }
 
     @Test
