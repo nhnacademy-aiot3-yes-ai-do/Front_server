@@ -13,8 +13,8 @@ import site.yesaido.frontserver.dto.notification.response.EndpointResponse;
 import site.yesaido.frontserver.dto.notification.response.TelegramLinkSessionResponse;
 import site.yesaido.frontserver.dto.notification.response.TelegramLinkStatusResponse;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,7 +31,7 @@ public class NotificationEndpointController {
 
     @GetMapping
     public ResponseEntity<List<EndpointResponse>> listEndpoints() {
-        return notificationClient.getEndpoints();
+        return UpstreamResponseUtils.isolate(notificationClient.getEndpoints());
     }
 
     @PostMapping
@@ -40,17 +40,17 @@ public class NotificationEndpointController {
     ) {
         EndpointCreateRequest request = new EndpointCreateRequest(
                 discordChannelTypeId, form.destination(), form.displayName());
-        return notificationClient.createEndpoint(request);
+        return UpstreamResponseUtils.isolate(notificationClient.createEndpoint(request));
     }
 
     @PostMapping("/telegram-link-sessions")
     public ResponseEntity<TelegramLinkSessionResponse> createTelegramLinkSession() {
-        return rebuildTelegramResponse(notificationClient.createTelegramLinkSession());
+        return UpstreamResponseUtils.isolateWithLocation(notificationClient.createTelegramLinkSession());
     }
 
     @GetMapping("/telegram-link-sessions/{session-id}")
     public ResponseEntity<TelegramLinkStatusResponse> getTelegramLinkSession(@PathVariable("session-id") UUID sessionId) {
-        return rebuildTelegramResponse(notificationClient.getTelegramLinkSession(sessionId));
+        return UpstreamResponseUtils.isolateWithLocation(notificationClient.getTelegramLinkSession(sessionId));
     }
 
     @PatchMapping("/{endpointId}")
@@ -60,21 +60,12 @@ public class NotificationEndpointController {
     ) {
         EndpointUpdateRequest request = new EndpointUpdateRequest(
                 form.destination(), form.displayName());
-        return notificationClient.updateEndpoint(endpointId, request);
+        return UpstreamResponseUtils.isolate(notificationClient.updateEndpoint(endpointId, request));
     }
 
     @DeleteMapping("/{endpointId}")
     public ResponseEntity<Void> deleteEndpoint(@PathVariable Long endpointId) {
         notificationClient.deleteEndpoint(endpointId);
         return ResponseEntity.noContent().build();
-    }
-
-    private static <T> ResponseEntity<T> rebuildTelegramResponse(ResponseEntity<T> upstreamResponse) {
-        ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.status(upstreamResponse.getStatusCode());
-        URI location = upstreamResponse.getHeaders().getLocation();
-        if (location != null) {
-            responseBuilder.location(location);
-        }
-        return responseBuilder.body(upstreamResponse.getBody());
     }
 }
