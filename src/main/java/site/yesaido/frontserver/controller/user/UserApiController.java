@@ -94,6 +94,15 @@ public class UserApiController {
         return userClient.updateMyPage(request);
     }
 
+    @PutMapping("/users/mypage/password")
+    public ApiResponse<Void> changePassword(@RequestBody PasswordChangeRequest request, HttpServletResponse response){
+        ApiResponse<Void> apiResponse = userClient.changePassword(request);
+        if(apiResponse != null && apiResponse.success()){
+            authCookieProvider.clearAuthCookies(response);
+        }
+        return apiResponse;
+    }
+
     // 프로필 수정 전 비밀번호 검증
     @PostMapping("/users/verify-password")
     public ApiResponse<Boolean> verifyPassword(@RequestBody PasswordVerifyRequest request) {
