@@ -219,4 +219,9 @@ public class GlobalExceptionHandler {
     public ErrorResponse handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, "사진 파일 크기는 8MB를 초과할 수 없습니다.");
     }
+
+    @ExceptionHandler(TooManyFilesException.class)
+    public ErrorResponse handleTooManyFilesException(TooManyFilesException e) {
+        return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, e.getMessage());
+    }
 }

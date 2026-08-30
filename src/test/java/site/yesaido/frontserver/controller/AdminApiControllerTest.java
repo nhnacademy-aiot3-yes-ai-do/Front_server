@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.client.SensorClient;
@@ -148,6 +149,27 @@ class AdminApiControllerTest {
         FormData sent = captor.getValue();
         assertThat(sent.getContentType()).isEqualTo("application/json");
         assertThat(objectMapper.readValue(sent.getData(), InquiryMessageRequest.class)).isEqualTo(request);
+    }
+
+    @Test
+    @DisplayName("문의 답변 등록 - 사진이 5장 초과면 400을 반환한다")
+    void answerMessage_tooManyFiles_returnsBadRequest() throws Exception {
+        InquiryMessageRequest request = new InquiryMessageRequest("답변 내용");
+        MockMultipartFile requestPart = new MockMultipartFile(
+                "request", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/admin/inquiries/messages/{answer-id}", 1L)
+                        .file(requestPart)
+                        .file(new MockMultipartFile("files", "1.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "2.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "3.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "4.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "5.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "6.jpg", "image/jpeg", "a".getBytes()))
+                        .cookie(ACCESS_COOKIE, ADMIN_COOKIE))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(inquiryClient);
     }
 
     @Test

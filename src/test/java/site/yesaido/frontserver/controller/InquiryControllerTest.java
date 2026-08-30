@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.common.ApiResponse;
@@ -34,8 +35,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -187,5 +187,26 @@ class InquiryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.cultivationSummaryResponses").isArray())
                 .andExpect(jsonPath("$.data.cultivationSummaryResponses").isEmpty());
+    }
+
+    @Test
+    @DisplayName("문의 등록 - 사진이 5장 초과면 400을 반환한다")
+    void createInquiry_tooManyFiles_returnsBadRequest() throws Exception {
+        InquiryCreateRequest request = new InquiryCreateRequest(1L, "제목", "내용", null);
+        MockMultipartFile requestPart = new MockMultipartFile(
+                "request", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+
+        mockMvc.perform(multipart("/support/inquiries")
+                        .file(requestPart)
+                        .file(new MockMultipartFile("files", "1.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "2.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "3.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "4.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "5.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "6.jpg", "image/jpeg", "a".getBytes()))
+                        .cookie(LOGGED_IN))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(inquiryClient);
     }
 }

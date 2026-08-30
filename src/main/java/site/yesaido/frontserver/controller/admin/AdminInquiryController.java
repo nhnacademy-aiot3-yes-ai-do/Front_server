@@ -11,6 +11,7 @@ import site.yesaido.frontserver.dto.inquiry.InquiryStatus;
 import site.yesaido.frontserver.dto.inquiry.request.InquiryMessageRequest;
 import site.yesaido.frontserver.dto.inquiry.response.InquiryDetailResponse;
 import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryPageResponse;
+import site.yesaido.frontserver.util.FileUploadValidator;
 import site.yesaido.frontserver.util.LoginRequired;
 import tools.jackson.databind.ObjectMapper;
 
@@ -41,6 +42,7 @@ public class AdminInquiryController {
     public ApiResponse<InquiryDetailResponse> answerMessage(@PathVariable("answer-id") Long answerId,
                                                             @RequestPart("request") InquiryMessageRequest request,
                                                             @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        FileUploadValidator.validateInquiryPhotoCount(files);
         FormData requestPart = new FormData("application/json", "request.json", objectMapper.writeValueAsBytes(request));
         return inquiryClient.answerMessage(answerId, requestPart, files);
     }
