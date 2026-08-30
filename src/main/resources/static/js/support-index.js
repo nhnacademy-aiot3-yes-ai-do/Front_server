@@ -9,6 +9,9 @@ var MY_CULTIVATIONS = [];
 var PAGE_SIZE = 6;
 var listState = { page: 0, totalPages: 1 };
 var currentDetailId = null;
+var MAX_PHOTOS = 5;
+var newInquiryFiles = [];
+var followUpFiles = [];
 
 function statusLabel(status) {
     return status === 'RESOLVED' ? '답변완료' : '답변대기';
@@ -37,6 +40,93 @@ async function fetchJson(url, options) {
         throw new Error((body && body.message) || '요청 처리 중 오류가 발생했어요.');
     }
     return body.data;
+}
+
+async function fetchJsonMultipart(url, formData) {
+    var response = await fetch(url, { method: 'POST', body: formData });
+    var body = await response.json().catch(function () { return null; });
+    if (!response.ok || !body || body.success === false) {
+        throw new Error((body && body.message) || '요청 처리 중 오류가 발생했어요.');
+    }
+    return body.data;
+}
+
+// ===== 사진 첨부 공통 로직 =====
+
+function addFilesToState(files, incoming) {
+    var accepted = files.slice();
+    var rejectedByCount = false;
+    for (var i = 0; i < incoming.length; i++) {
+        var file = incoming[i];
+        if (!file.type || file.type.indexOf('image/') !== 0) continue;
+        if (accepted.length >= MAX_PHOTOS) { rejectedByCount = true; break; }
+        accepted.push(file);
+    }
+    if (rejectedByCount) {
+        alert('사진은 최대 ' + MAX_PHOTOS + '장까지 첨부할 수 있어요.');
+    }
+    return accepted;
+}
+
+function renderAttachChips(containerId, files, onRemove) {
+    var container = document.getElementById(containerId);
+    container.innerHTML = '';
+    files.forEach(function (file, index) {
+        var chip = document.createElement('div');
+        chip.className = 'support-attach-chip';
+        var url = URL.createObjectURL(file);
+        chip.innerHTML =
+            '<img src="' + url + '" alt="" />' +
+            '<span class="support-attach-filename"></span>' +
+            '<button type="button" class="support-attach-remove" title="첨부 취소">' +
+            '<i data-lucide="x"></i></button>';
+        chip.querySelector('.support-attach-filename').textContent = file.name;
+        chip.querySelector('img').onload = function () { URL.revokeObjectURL(url); };
+        chip.querySelector('.support-attach-remove').onclick = function () { onRemove(index); };
+        container.appendChild(chip);
+    });
+    lucide.createIcons();
+}
+
+function setupAttachInput(inputId, composerId, getFiles, setFiles, renderFn) {
+    var input = document.getElementById(inputId);
+    var composer = document.getElementById(composerId);
+
+    input.addEventListener('change', function () {
+        setFiles(addFilesToState(getFiles(), input.files));
+        input.value = '';
+        renderFn();
+    });
+
+    composer.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        composer.classList.add('drag-over');
+    });
+    composer.addEventListener('dragleave', function () {
+        composer.classList.remove('drag-over');
+    });
+    composer.addEventListener('drop', function (e) {
+        e.preventDefault();
+        composer.classList.remove('drag-over');
+        if (e.dataTransfer && e.dataTransfer.files) {
+            setFiles(addFilesToState(getFiles(), e.dataTransfer.files));
+            renderFn();
+        }
+    });
+}
+
+function renderNewInquiryChips() {
+    renderAttachChips('new-content-chips', newInquiryFiles, function (index) {
+        newInquiryFiles.splice(index, 1);
+        renderNewInquiryChips();
+    });
+}
+
+function renderFollowUpChips() {
+    renderAttachChips('followup-chips', followUpFiles, function (index) {
+        followUpFiles.splice(index, 1);
+        renderFollowUpChips();
+    });
 }
 
 async function loadCategories() {
@@ -119,6 +209,8 @@ function buildPageBtn(icon, enabled, targetPage) {
 
 function openNewForm() {
     document.getElementById('new-inquiry-form').reset();
+    newInquiryFiles = [];
+    renderNewInquiryChips();
 
     var cultivationSelect = document.getElementById('new-cultivation');
     cultivationSelect.innerHTML = MY_CULTIVATIONS.map(function (c) {
@@ -157,13 +249,10 @@ async function submitNewInquiry(event) {
     try {
         var formData = new FormData();
         formData.append('request', new Blob([JSON.stringify({ categoryId: categoryId, title: title, content: content, cultivationId: cultivationId })], { type: 'application/json' }));
+        newInquiryFiles.forEach(function (file) { formData.append('files', file); });
 
-        var detail = await fetch('/support/inquiries', { method: 'POST', body: formData })
-            .then(function (res) { return res.json(); })
-            .then(function (body) {
-                if (!body || body.success === false) throw new Error((body && body.message) || '요청 처리 중 오류가 발생했어요.');
-                return body.data;
-            });
+        var detail = await fetchJsonMultipart('/support/inquiries', formData);
+        newInquiryFiles = [];
         await loadList(0);
         openDetail(detail.id);
     } catch (e) {
@@ -173,6 +262,8 @@ async function submitNewInquiry(event) {
 
 async function openDetail(id) {
     currentDetailId = id;
+    followUpFiles = [];
+    renderFollowUpChips();
     try {
         var detail = await fetchJson('/support/inquiries/' + id);
         renderDetail(detail);
@@ -201,14 +292,17 @@ function renderDetail(inquiry) {
     var chat = document.getElementById('support-chat');
     chat.innerHTML = '';
     (inquiry.messages || []).forEach(function (m) {
-        appendChatBubble(chat, '나', m.content, formatDateTime(m.createdAt), false);
+        var photoUrls = m.photoUrls || [];
+        // 사진은 같은 InquiryAnswer 행에 붙기 때문에, 답변이 달린 메시지는 답변 쪽에,
+        // 아직 답변이 없는 메시지는 질문 쪽에 붙여서 보여줍니다.
+        appendChatBubble(chat, '나', m.content, formatDateTime(m.createdAt), false, m.answerContent ? [] : photoUrls);
         if (m.answerContent) {
-            appendChatBubble(chat, '관리자', m.answerContent, formatDateTime(m.createdAt), true);
+            appendChatBubble(chat, '관리자', m.answerContent, formatDateTime(m.createdAt), true, photoUrls);
         }
     });
 }
 
-function appendChatBubble(chat, name, content, time, fromAdmin) {
+function appendChatBubble(chat, name, content, time, fromAdmin, photoUrls) {
     var row = document.createElement('div');
     row.className = 'support-chat-msg ' + (fromAdmin ? 'from-admin' : 'from-user');
     row.innerHTML =
@@ -219,7 +313,16 @@ function appendChatBubble(chat, name, content, time, fromAdmin) {
         '<div class="support-chat-time"></div>' +
         '</div>';
     row.querySelector('.support-chat-name').textContent = name;
-    row.querySelector('.support-chat-bubble span').textContent = content;
+    var bubble = row.querySelector('.support-chat-bubble');
+    (photoUrls || []).forEach(function (url) {
+        var img = document.createElement('img');
+        img.className = 'support-chat-photo';
+        img.src = url;
+        img.alt = '첨부 사진';
+        img.onclick = function () { window.open(url, '_blank'); };
+        bubble.insertBefore(img, bubble.firstChild);
+    });
+    bubble.querySelector('span').textContent = content;
     row.querySelector('.support-chat-time').textContent = time;
     chat.appendChild(row);
 }
@@ -231,16 +334,29 @@ async function submitFollowUp(event) {
     if (!text || currentDetailId == null) return;
 
     try {
-        var detail = await fetchJson('/support/inquiries/' + currentDetailId + '/messages', {
-            method: 'POST',
-            body: JSON.stringify({ content: text })
-        });
+        var formData = new FormData();
+        formData.append('request', new Blob([JSON.stringify({ content: text })], { type: 'application/json' }));
+        followUpFiles.forEach(function (file) { formData.append('files', file); });
+
+        var detail = await fetchJsonMultipart('/support/inquiries/' + currentDetailId + '/messages', formData);
         input.value = '';
+        followUpFiles = [];
+        renderFollowUpChips();
         renderDetail(detail);
     } catch (e) {
         alert(e.message);
     }
 }
+
+setupAttachInput('new-photos', 'new-content-composer',
+    function () { return newInquiryFiles; },
+    function (files) { newInquiryFiles = files; },
+    renderNewInquiryChips);
+
+setupAttachInput('followup-photos', 'followup-composer',
+    function () { return followUpFiles; },
+    function (files) { followUpFiles = files; },
+    renderFollowUpChips);
 
 (async function init() {
     await Promise.all([loadCategories(), loadMyCultivations()]);
