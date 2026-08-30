@@ -10,6 +10,7 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserS
 import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
 import site.yesaido.frontserver.dto.user.response.MemberSummaryPageResponse;
+import site.yesaido.frontserver.dto.user.response.SignupEmailVerificationResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
 
@@ -17,11 +18,7 @@ import java.util.List;
 
 @FeignClient(name = "userClient", url = "${feign.client.gateway.url}")
 public interface UserClient {
-    // 1. 이메일 중복 확인
-    @GetMapping("/api/v1/users/check-email")
-    ApiResponse<Boolean> checkEmail(@RequestParam("email") String email);
-
-    // 2. 닉네임 중복 확인
+    // 1. 닉네임 중복 확인
     @GetMapping("/api/v1/users/check-nickname")
     ApiResponse<Boolean> checkNickname(@RequestParam("nickname") String nickname);
 
@@ -52,6 +49,9 @@ public interface UserClient {
     // 9. 이메일 인증 코드 검증 요청
     @PostMapping("/api/v1/auth/email/verify")
     ApiResponse<Boolean> verifyEmail(@RequestBody EmailVerifyRequest request);
+
+    @PostMapping("/api/v1/users/signup/verify-email")
+    ApiResponse<SignupEmailVerificationResponse> verifySignupEmail(@RequestParam("email") String email, @RequestParam("code") String code);
 
     // 10. 프로필 조회
     @GetMapping("/api/v1/users/mypage")
