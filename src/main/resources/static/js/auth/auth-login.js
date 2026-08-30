@@ -69,7 +69,7 @@ function handleDormantSendCode() {
             showDormantStep('code');
             document.getElementById('dormant-status-text').textContent = '';
             document.getElementById('dormant-status-text').classList.remove('error');
-            startDormantTimer(300);
+            startDormantTimer(30);
         })
         .catch(function (err) {
             alert('인증번호 발송 실패: ' + err.message);
@@ -87,7 +87,7 @@ function handleDormantResend() {
     fetch('/users/email/send?email=' + encodeURIComponent(dormantCurrentEmail), { method: 'POST' })
         .then(function (res) {
             if (!res.ok) throw new Error('재발송 실패');
-            startDormantTimer(300);
+            startDormantTimer(30);
         })
         .catch(function (err) {
             statusText.textContent = '인증번호 재발송 실패: ' + err.message;
