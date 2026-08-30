@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.InquiryClient;
 import site.yesaido.frontserver.client.SensorClient;
