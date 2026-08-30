@@ -36,7 +36,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -134,16 +135,23 @@ class InquiryControllerTest {
         InquiryMessageRequest request = new InquiryMessageRequest("추가 문의 내용");
         InquiryDetailResponse detail = new InquiryDetailResponse(
                 1L, 10L, "닉네임", 1L, "재배 관련", "제목", null, LocalDateTime.now(), null, null, List.of());
-        when(inquiryClient.addFollowUp(eq(1L), any(InquiryMessageRequest.class)))
+        when(inquiryClient.addFollowUp(eq(1L), any(FormData.class), any()))
                 .thenReturn(new ApiResponse<>(true, "등록 성공", detail));
 
-        mockMvc.perform(post("/support/inquiries/{inquiry-id}/messages", 1L)
-                        .cookie(LOGGED_IN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        MockMultipartFile requestPart = new MockMultipartFile(
+                "request", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+
+        mockMvc.perform(multipart("/support/inquiries/{inquiry-id}/messages", 1L)
+                        .file(requestPart)
+                        .cookie(LOGGED_IN))
                 .andExpect(status().isOk());
 
-        verify(inquiryClient).addFollowUp(1L, request);
+        ArgumentCaptor<FormData> captor = ArgumentCaptor.forClass(FormData.class);
+        verify(inquiryClient).addFollowUp(eq(1L), captor.capture(), isNull());
+
+        FormData sent = captor.getValue();
+        assertThat(sent.getContentType()).isEqualTo("application/json");
+        assertThat(objectMapper.readValue(sent.getData(), InquiryMessageRequest.class)).isEqualTo(request);
     }
 
     @Test

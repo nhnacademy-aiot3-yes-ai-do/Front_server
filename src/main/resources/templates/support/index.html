@@ -66,7 +66,14 @@
 
                     <div class="support-field">
                         <label>문의 내용</label>
-                        <textarea id="new-content" rows="3" placeholder="문의하실 내용을 자세히 적어주세요" required></textarea>
+                        <div class="support-attach-chip-list" id="new-content-chips"></div>
+                        <div class="support-content-composer" id="new-content-composer">
+                            <textarea id="new-content" rows="3" placeholder="문의하실 내용을 자세히 적어주세요" required></textarea>
+                            <label class="support-attach-icon-btn" title="사진 첨부 (최대 5장)">
+                                <i data-lucide="paperclip"></i>
+                                <input type="file" id="new-photos" accept="image/*" multiple hidden />
+                            </label>
+                        </div>
                     </div>
 
                     <div class="support-actions">
@@ -98,7 +105,12 @@
 
                 <div class="support-chat" id="support-chat"></div>
 
+                <div class="support-attach-chip-list" id="followup-chips"></div>
                 <form class="support-composer" id="followup-composer" onsubmit="submitFollowUp(event)">
+                    <label class="support-attach-icon-btn" title="사진 첨부 (최대 5장)">
+                        <i data-lucide="paperclip"></i>
+                        <input type="file" id="followup-photos" accept="image/*" multiple hidden />
+                    </label>
                     <textarea id="followup-input" rows="1" placeholder="답변으로 해결이 안 됐다면, 이어서 질문해보세요" required></textarea>
                     <button class="support-composer-send" type="submit" title="질문 추가하기">
                         <i data-lucide="send"></i>

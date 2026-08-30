@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.inquiry.InquiryStatus;
-import site.yesaido.frontserver.dto.inquiry.request.InquiryMessageRequest;
 import site.yesaido.frontserver.dto.inquiry.response.InquiryCategoryResponse;
 import site.yesaido.frontserver.dto.inquiry.response.InquiryDetailResponse;
 import site.yesaido.frontserver.dto.inquiry.response.InquirySummaryPageResponse;
@@ -32,9 +31,10 @@ public interface InquiryClient {
     @GetMapping("/api/v1/inquiries/{inquiry-id}")
     ApiResponse<InquiryDetailResponse> getMyInquiryDetail(@PathVariable("inquiry-id") Long inquiryId);
 
-    @PostMapping("/api/v1/inquiries/{inquiry-id}/messages")
+    @PostMapping(value = "/api/v1/inquiries/{inquiry-id}/messages", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ApiResponse<InquiryDetailResponse> addFollowUp(@PathVariable("inquiry-id") Long inquiryId,
-                                                   @RequestBody InquiryMessageRequest request);
+                                                   @RequestPart("request") FormData request,
+                                                   @RequestPart(value = "files", required = false) List<MultipartFile> files);
 
     // 관리자용
     @GetMapping("/api/v1/admin/inquiries")
@@ -45,8 +45,8 @@ public interface InquiryClient {
     @GetMapping("/api/v1/admin/inquiries/{inquiry-id}")
     ApiResponse<InquiryDetailResponse> getInquiryDetailForAdmin(@PathVariable("inquiry-id") Long inquiryId);
 
-    @PutMapping("/api/v1/admin/inquiries/messages/{answer-id}")
+    @PutMapping(value = "/api/v1/admin/inquiries/messages/{answer-id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ApiResponse<InquiryDetailResponse> answerMessage(@PathVariable("answer-id") Long answerId,
-                                                     @RequestBody InquiryMessageRequest request);
-
+                                                     @RequestPart("request") FormData request,
+                                                     @RequestPart(value = "files", required = false) List<MultipartFile> files);
 }

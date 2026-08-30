@@ -53,8 +53,10 @@ public class InquiryController {
 
     @PostMapping("/{inquiry-id}/messages")
     public ApiResponse<InquiryDetailResponse> addFollowUp(@PathVariable("inquiry-id") Long inquiryId,
-                                                          @RequestBody InquiryMessageRequest request) {
-        return inquiryClient.addFollowUp(inquiryId, request);
+                                                          @RequestPart("request") InquiryMessageRequest request,
+                                                          @RequestPart(value = "files", required = false) List<MultipartFile> files) {
+        FormData requestPart = new FormData("application/json", "request.json", objectMapper.writeValueAsBytes(request));
+        return inquiryClient.addFollowUp(inquiryId, requestPart, files);
     }
 
     @GetMapping("/my-cultivations")
