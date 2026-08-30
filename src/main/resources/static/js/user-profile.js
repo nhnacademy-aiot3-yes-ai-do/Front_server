@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('profile-view-email').textContent = user.email || '';
         document.getElementById('profile-view-joined-at').textContent = user.createdAt ? user.createdAt.substring(0, 10) : '';
         document.getElementById('profile-view-updated-at').textContent = user.updatedAt ? user.updatedAt.substring(0, 10) : '';
+
+        if (user.hasPassword === false) {
+            document.getElementById('change-password-button').style.display = 'none';
+        }
     } catch {
         location.href = '/login';
     }
@@ -37,42 +41,59 @@ function showProfilePanel(id) {
 }
 
 function startProfileEdit() {
-    document.getElementById('profile-verify-password').value = '';
-    hideError(document.getElementById('profile-verify-error'));
-    showProfilePanel('profile-verify');
+    document.getElementById('profile-edit-nickname').value =
+        document.getElementById('profile-view-nickname').textContent;
+
+    hideError(document.getElementById('profile-edit-error'));
+    showProfilePanel('profile-edit');
 }
 
-async function confirmProfilePassword() {
-    const input = document.getElementById('profile-verify-password').value;
-    const errorEl = document.getElementById('profile-verify-error');
+function startPasswordChange() {
+    document.getElementById('password-change-current').value = '';
+    document.getElementById('password-change-new').value = '';
+    document.getElementById('password-change-confirm').value = '';
 
-    if (!input) {
-        showError(errorEl, '비밀번호를 입력해주세요.');
+    hideError(document.getElementById('password-change-error'));
+    showProfilePanel('password-change');
+}
+
+async function savePasswordChange() {
+    const currentPassword = document.getElementById('password-change-current').value;
+    const newPassword = document.getElementById('password-change-new').value;
+    const confirmPassword = document.getElementById('password-change-confirm').value;
+    const errorEl = document.getElementById('password-change-error');
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showError(errorEl, '모든 항목을 입력해주세요.');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showError(errorEl, '새 비밀번호가 일치하지 않습니다.');
         return;
     }
 
     try {
-        const res = await fetch('/users/verify-password', {
-            method: 'POST',
+        const res = await fetch('/users/mypage/password', {
+            method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: input })
+            body: JSON.stringify({ currentPassword, newPassword })
         });
+
         const result = await res.json();
 
-        if (!res.ok || !result.success || result.data !== true) {
-            showError(errorEl, result.message || '비밀번호가 일치하지 않습니다.');
+        if (!res.ok || !result.success) {
+            showError(errorEl, result.message || '비밀번호 변경에 실패했습니다.');
             return;
         }
 
-        document.getElementById('profile-edit-nickname').value = document.getElementById('profile-view-nickname').textContent;
-        document.getElementById('profile-edit-password').value = '';
-        document.getElementById('profile-edit-password-confirm').value = '';
-        hideError(document.getElementById('profile-edit-error'));
-        showProfilePanel('profile-edit');
+        alert('비밀번호가 변경되었습니다. 다시 로그인해주세요.');
+        location.href = '/login';
     } catch {
-        showError(errorEl, '비밀번호 확인 중 오류가 발생했습니다.');
+        showError(errorEl, '서버 통신 중 오류가 발생했습니다.');
     }
 }
+
 
 function cancelProfileEdit() {
     showProfilePanel('profile-view');
@@ -80,9 +101,6 @@ function cancelProfileEdit() {
 
 async function saveProfileEdit() {
     const nickname = document.getElementById('profile-edit-nickname').value.trim();
-    const currentPassword = document.getElementById('profile-verify-password').value;
-    const newPassword = document.getElementById('profile-edit-password').value;
-    const passwordConfirm = document.getElementById('profile-edit-password-confirm').value;
     const errorEl = document.getElementById('profile-edit-error');
 
     if (!nickname) {
@@ -90,39 +108,25 @@ async function saveProfileEdit() {
         return;
     }
 
-    if (newPassword || passwordConfirm) {
-        if (newPassword !== passwordConfirm) {
-            showError(errorEl, '새 비밀번호가 일치하지 않습니다.');
-            return;
-        }
-    }
-
     try {
         const res = await fetch('/users/mypage', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nickname, currentPassword, newPassword })
+            body: JSON.stringify({ nickname })
         });
+
         const result = await res.json();
+
         if (!res.ok || !result.success) {
-            if (res.status === 401 || result.message?.includes('로그인')) {
-                alert('세션이 만료되었습니다. 다시 로그인해 주세요.');
-                location.href = '/login';
-                return;
-            }
             showError(errorEl, result.message || '수정에 실패했습니다.');
             return;
         }
-        sessionStorage.setItem('mm_user_nickname', nickname);
-        const nicknameLabel = document.getElementById('topbar-nickname-label');
-        if (nicknameLabel) nicknameLabel.textContent = nickname;
 
-        alert('프로필이 성공적으로 수정되었습니다!');
+        alert('회원정보가 수정되었습니다.');
         location.reload();
     } catch {
         showError(errorEl, '서버 통신 중 오류가 발생했습니다.');
     }
-
 }
 
 function startProfileDelete() {
