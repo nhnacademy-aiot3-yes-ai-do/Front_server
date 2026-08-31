@@ -550,6 +550,8 @@ var CHATBOT_PLACEHOLDER_REPLY = 'AI 챗봇은 아직 준비 중인 기능이에�
 // 자리(프레임)만 잡아둠. 실제 데이터 없이 골격만 있는 상태라 버튼은 openModal('modal-insight')로 바로 연결.
 // API가 생기면 openModal 앞뒤로 fetch 붙여서 #insight-my-card / #insight-similar-list를 채우면 됨.
 
+var CURRENT_CONVERSATION_ID = null;
+
 function sendChatMessage(event) {
     event.preventDefault();
     var input = document.getElementById('chatbot-input');
@@ -567,14 +569,48 @@ function sendChatMessage(event) {
     input.value = '';
     list.scrollTop = list.scrollHeight;
 
-    window.setTimeout(function () {
-        var botMsg = document.createElement('div');
-        botMsg.className = 'chat-message bot';
-        botMsg.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble"></div>';
-        botMsg.querySelector('.chat-bubble').textContent = CHATBOT_PLACEHOLDER_REPLY;
-        list.appendChild(botMsg);
-        list.scrollTop = list.scrollHeight;
-    }, 500);
+    var loadingMsg = document.createElement('div');
+    loadingMsg.className = 'chat-message bot';
+    loadingMsg.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble">답변을 생각하고 있어요...</div>';
+    list.appendChild(loadingMsg);
+    list.scrollTop = list.scrollHeight;
+
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            conversationId: CURRENT_CONVERSATION_ID,
+            cultivationId: (typeof CULTIVATION_ID !== 'undefined' && CULTIVATION_ID > 0) ? CULTIVATION_ID : null,
+            message: text,
+            channelId: 1
+        })
+    })
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (loadingMsg.parentNode) {
+                list.removeChild(loadingMsg);
+            }
+            if (res && res.success && res.data) {
+                CURRENT_CONVERSATION_ID = res.data.conversationId;
+                var botMsg = document.createElement('div');
+                botMsg.className = 'chat-message bot';
+                botMsg.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble" style="white-space: pre-wrap;"></div>';
+                botMsg.querySelector('.chat-bubble').textContent = res.data.reply;
+                list.appendChild(botMsg);
+            } else {
+                var errBubble = document.createElement('div');
+                errBubble.className = 'chat-message bot';
+                errBubble.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble">일시적으로 답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.</div>';
+                list.appendChild(errBubble);
+            }
+            list.scrollTop = list.scrollHeight;
+        })
+        .catch(function(err) {
+            if (loadingMsg.parentNode) {
+                list.removeChild(loadingMsg);
+            }
+            console.error('챗봇 통신 실패:', err);
+        });
 }
 
 function updateSettingsSensorIcon(wrapperEl, optionEl) {
