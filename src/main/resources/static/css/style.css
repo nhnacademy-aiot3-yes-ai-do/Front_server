@@ -346,6 +346,12 @@ body.admin-login-body .auth-links {
     display: none;
 }
 
+#avatar-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .step-indicator {
     display: flex;
     justify-content: center;
