@@ -35,8 +35,8 @@ function requestJson(url, options) {
 
 function loadNotificationEvents() {
     requestJson(EVENT_API, { headers: {} })
-        .then(function (events) {
-            NOTIFICATION_EVENTS = Array.isArray(events) ? events : [];
+        .then(function (payload) {
+            NOTIFICATION_EVENTS = payload && Array.isArray(payload.notificationEventTypeResponses) ? payload.notificationEventTypeResponses : [];
             renderNotificationEvents();
         })
         .catch(function (error) {
@@ -141,8 +141,8 @@ function deleteNotificationEvent() {
         .catch(function (error) { alert(error.message); });
 }
 function loadNotificationTemplates() {
-    requestJson('/admin/notification-events/api/templates').then(function (items) {
-        items = Array.isArray(items) ? items : [];
+    requestJson('/admin/notification-events/api/templates').then(function (payload) {
+        var items = payload && Array.isArray(payload.notificationTemplateResponses) ? payload.notificationTemplateResponses : [];
         document.getElementById('notification-template-total-count').textContent = items.length;
         document.getElementById('notification-template-tbody').innerHTML = items.map(function (item) { return '<tr><td>' + escapeHtml(item.eventTypeCode) + '</td><td>' + escapeHtml(item.channelCode) + '</td><td>' + item.version + '</td><td class="ne-desc-cell">' + escapeHtml(item.bodyTemplate) + '</td><td><button type="button" onclick="editNotificationTemplate(' + item.id + ',' + item.eventTypeId + ',' + item.channelTypeId + ',' + item.version + ')">수정</button> <button type="button" onclick="deleteNotificationTemplate(' + item.id + ')">삭제</button></td></tr>'; }).join('');
     }).catch(function (e) { alert(e.message); });
@@ -150,7 +150,7 @@ function loadNotificationTemplates() {
 function createNotificationTemplate(){var e=prompt('이벤트 ID');var c=prompt('채널 ID');var v=prompt('버전','1');var b=prompt('Template 본문');if(!e||!c||!b)return;requestJson('/admin/notification-events/api/templates',{method:'POST',body:JSON.stringify({eventTypeId:Number(e),channelTypeId:Number(c),version:Number(v||1),bodyTemplate:b.trim()})}).then(loadNotificationTemplates).catch(function(x){alert(x.message);});}
 function editNotificationTemplate(id,e,c,v){var body=prompt('Template 본문을 입력하세요.');if(!body||!body.trim())return;requestJson('/admin/notification-events/api/templates/'+id,{method:'PUT',body:JSON.stringify({eventTypeId:e,channelTypeId:c,bodyTemplate:body.trim(),version:v})}).then(loadNotificationTemplates).catch(function(x){alert(x.message);});}
 function deleteNotificationTemplate(id){if(!confirm('사용 중인 Template은 삭제할 수 없습니다. 삭제하시겠습니까?'))return;requestJson('/admin/notification-events/api/templates/'+id,{method:'DELETE'}).then(loadNotificationTemplates).catch(function(e){alert(e.message);});}
-function loadNotificationChannels(){requestJson('/admin/notification-events/api/channels').then(function(items){items=Array.isArray(items)?items:[];document.getElementById('channel-type-total-count').textContent=items.length;document.getElementById('channel-type-tbody').innerHTML=items.map(function(i){return '<tr><td>'+escapeHtml(i.code)+'</td><td>'+escapeHtml(i.displayName)+'</td><td>'+(i.deleted?'비활성':'활성')+'</td><td><button type="button" onclick="editNotificationChannel('+i.id+',\''+i.code+'\',\''+i.displayName+'\')">수정</button> <button type="button" onclick="toggleNotificationChannel('+i.id+','+i.deleted+')">'+(i.deleted?'복구':'삭제')+'</button></td></tr>';}).join('');}).catch(function(e){alert(e.message);});}
+function loadNotificationChannels(){requestJson('/admin/notification-events/api/channels').then(function(payload){var items=payload&&Array.isArray(payload.channelTypeResponses)?payload.channelTypeResponses:[];document.getElementById('channel-type-total-count').textContent=items.length;document.getElementById('channel-type-tbody').innerHTML=items.map(function(i){return '<tr><td>'+escapeHtml(i.code)+'</td><td>'+escapeHtml(i.displayName)+'</td><td>'+(i.deleted?'비활성':'활성')+'</td><td><button type="button" onclick="editNotificationChannel('+i.id+',\''+i.code+'\',\''+i.displayName+'\')">수정</button> <button type="button" onclick="toggleNotificationChannel('+i.id+','+i.deleted+')">'+(i.deleted?'복구':'삭제')+'</button></td></tr>';}).join('');}).catch(function(e){alert(e.message);});}
 function createNotificationChannel(){var code=prompt('채널 코드');var name=prompt('채널 이름');if(!code||!name)return;requestJson('/admin/notification-events/api/channels',{method:'POST',body:JSON.stringify({code:code.trim().toUpperCase(),displayName:name.trim()})}).then(loadNotificationChannels).catch(function(e){alert(e.message);});}
 function editNotificationChannel(id,code,name){var next=prompt('채널 이름',name);if(!next)return;requestJson('/admin/notification-events/api/channels/'+id,{method:'PUT',body:JSON.stringify({code:code,displayName:next.trim()})}).then(loadNotificationChannels).catch(function(e){alert(e.message);});}
 function toggleNotificationChannel(id,deleted){var url='/admin/notification-events/api/channels/'+id+(deleted?'/restore':'');requestJson(url,{method:deleted?'POST':'DELETE'}).then(loadNotificationChannels).catch(function(e){alert(e.message);});}

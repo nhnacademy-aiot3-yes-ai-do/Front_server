@@ -63,7 +63,7 @@ public interface NotificationClient {
     ResponseEntity<Void> deleteSubscription(@PathVariable("subscriptionId") Long subscriptionId);
 
     @GetMapping("/api/v1/admin/notification-event-types")
-    ResponseEntity<List<NotificationEventTypeResponse>> getAdminNotificationEventTypes();
+    ResponseEntity<NotificationEventTypeListResponse> getAdminNotificationEventTypes();
 
     @PostMapping("/api/v1/admin/notification-event-types")
     ResponseEntity<NotificationEventTypeResponse> createAdminNotificationEventType(
@@ -78,7 +78,7 @@ public interface NotificationClient {
     ResponseEntity<Void> deleteAdminNotificationEventType(@PathVariable("id") Long id);
 
     @GetMapping("/api/v1/admin/notification-templates")
-    ResponseEntity<List<NotificationTemplateResponse>> getAdminNotificationTemplates();
+    ResponseEntity<NotificationTemplateListResponse> getAdminNotificationTemplates();
 
     @PostMapping("/api/v1/admin/notification-templates")
     ResponseEntity<NotificationTemplateResponse> createAdminNotificationTemplate(@RequestBody NotificationTemplateRequest request);
@@ -90,7 +90,7 @@ public interface NotificationClient {
     ResponseEntity<Void> deleteAdminNotificationTemplate(@PathVariable("id") Long id);
 
     @GetMapping("/api/v1/admin/channel-types")
-    ResponseEntity<List<ChannelTypeResponse>> getAdminChannelTypes();
+    ResponseEntity<ChannelTypeListResponse> getAdminChannelTypes();
 
     @PostMapping("/api/v1/admin/channel-types")
     ResponseEntity<ChannelTypeResponse> createAdminChannelType(@RequestBody ChannelTypeRequest request);

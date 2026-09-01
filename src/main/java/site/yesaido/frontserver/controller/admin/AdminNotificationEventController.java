@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.dto.notification.request.NotificationEventTypeRequest;
+import site.yesaido.frontserver.dto.notification.response.NotificationEventTypeListResponse;
 import site.yesaido.frontserver.dto.notification.response.NotificationEventTypeResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.UpstreamResponseUtils;
@@ -28,7 +29,7 @@ public class AdminNotificationEventController {
     private final NotificationClient notificationClient;
 
     @GetMapping
-    public ResponseEntity<List<NotificationEventTypeResponse>> findAll() {
+    public ResponseEntity<NotificationEventTypeListResponse> findAll() {
         return UpstreamResponseUtils.isolate(notificationClient.getAdminNotificationEventTypes());
     }
 

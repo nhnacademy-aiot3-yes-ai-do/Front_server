@@ -20,7 +20,7 @@ public class AdminNotificationTemplateChannelController {
     private final NotificationClient client;
 
     @GetMapping("/templates")
-    public ResponseEntity<List<NotificationTemplateResponse>> templates() {
+    public ResponseEntity<NotificationTemplateListResponse> templates() {
         return UpstreamResponseUtils.isolate(client.getAdminNotificationTemplates());
     }
 
@@ -41,7 +41,7 @@ public class AdminNotificationTemplateChannelController {
     }
 
     @GetMapping("/channels")
-    public ResponseEntity<List<ChannelTypeResponse>> channels() {
+    public ResponseEntity<ChannelTypeListResponse> channels() {
         return UpstreamResponseUtils.isolate(client.getAdminChannelTypes());
     }
 
