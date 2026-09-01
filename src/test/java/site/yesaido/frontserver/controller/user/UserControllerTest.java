@@ -33,6 +33,7 @@ import site.yesaido.frontserver.util.ViewJsonWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -105,8 +106,8 @@ class UserControllerTest {
 
         FormData requestPart = requestCaptor.getValue();
         String requestJson = new String(requestPart.getData(), StandardCharsets.UTF_8);
-        assertTrue("application/json".equals(requestPart.getContentType()));
-        assertTrue("request.json".equals(requestPart.getFileName()));
+        assertEquals("application/json", requestPart.getContentType());
+        assertEquals("request.json", requestPart.getFileName());
         assertTrue(requestJson.contains("\"email\":\"test@naver.com\""));
         assertTrue(requestJson.contains("\"password\":\"nhn123!\""));
         assertTrue(requestJson.contains("\"nickName\":\"nickTest\""));
