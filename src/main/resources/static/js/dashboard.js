@@ -1396,6 +1396,25 @@ if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
 var harvestModeForm = document.getElementById('harvest-mode-form');
 if (harvestModeForm && typeof CULTIVATION_ID !== 'undefined') {
     harvestModeForm.action = '/cultivations/' + CULTIVATION_ID + '/harvest-mode';
+    harvestModeForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var submitBtn = harvestModeForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        fetch(harvestModeForm.action, { method: 'PUT' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('harvest mode switch failed');
+                return res.json();
+            })
+            .then(function () {
+                closeModal('modal-harvest-mode');
+                location.reload();
+            })
+            .catch(function () {
+                alert('수확 모드 전환에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                if (submitBtn) submitBtn.disabled = false;
+            });
+    });
 }
 
 var photoUploadForm = document.getElementById('photo-upload-form');
