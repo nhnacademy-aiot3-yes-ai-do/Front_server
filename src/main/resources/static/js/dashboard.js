@@ -1391,6 +1391,22 @@ function deletePhoto(photoId) {
 var cultivationDeleteForm = document.getElementById('cultivation-delete-form');
 if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
     cultivationDeleteForm.action = '/cultivations/' + CULTIVATION_ID;
+    cultivationDeleteForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        var submitBtn = cultivationDeleteForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        fetch(cultivationDeleteForm.action, { method: 'DELETE' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('cultivation delete failed');
+                window.location.href = '/cultivations';
+            })
+            .catch(function () {
+                alert('재배지 삭제에 실패했습니다. 다시 시도해 주세요.');
+                if (submitBtn) submitBtn.disabled = false;
+            });
+    });
 }
 
 var harvestModeForm = document.getElementById('harvest-mode-form');
