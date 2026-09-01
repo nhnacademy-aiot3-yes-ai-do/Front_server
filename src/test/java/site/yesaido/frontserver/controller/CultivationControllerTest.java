@@ -110,8 +110,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivationListPageJson", expectedJson));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -123,8 +122,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivationListPageJson", "{\"cultivations\":[],\"sensorTypes\":[]}"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -137,8 +135,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations/new").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/create"))
-                .andExpect(model().attribute("mushroomsJson", objectMapper.writeValueAsString(List.of(mushroom))));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -151,7 +148,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations/history").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/history"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -162,7 +159,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations/history").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/history"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -236,12 +233,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations/{cultivation-id}", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("dashboard/main"))
-                .andExpect(model().attribute("cultivation", detail))
-                .andExpect(model().attribute("membersJson", "[]"))
-                .andExpect(model().attribute("photosJson", "[]"))
-                .andExpect(model().attribute("sensorsJson", "{\"sensors\":[],\"environmentSettings\":[]}"))
-                .andExpect(model().attribute("sensorValuesJson", "{\"latestSensorValueResponses\":[]}"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test

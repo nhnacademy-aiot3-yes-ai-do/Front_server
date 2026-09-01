@@ -11,9 +11,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.web.ErrorResponse;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
+import site.yesaido.frontserver.controller.AuthResultController;
+import site.yesaido.frontserver.dto.react.AuthResultResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.nio.charset.StandardCharsets;
@@ -47,12 +50,18 @@ class GlobalExceptionHandlerTest {
     void handleDormantUserExceptionTest() {
         DormantUserException ex = new DormantUserException("dormant@naver.com", "휴면 계정입니다.");
         RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        MockHttpSession session = new MockHttpSession();
 
-        String view = handler.handleDormantUserException(ex, redirectAttributes);
+        String view = handler.handleDormantUserException(ex, redirectAttributes, session);
 
         assertEquals("redirect:/login", view);
         assertTrue((Boolean) redirectAttributes.getFlashAttributes().get("isDormant"));
         assertEquals("dormant@naver.com", redirectAttributes.getFlashAttributes().get("dormantEmail"));
+        AuthResultResponse result = (AuthResultResponse) session.getAttribute(
+                AuthResultController.AUTH_RESULT_SESSION_KEY
+        );
+        assertEquals("dormant", result.type());
+        assertEquals("dormant@naver.com", result.email());
     }
 
     @Test
