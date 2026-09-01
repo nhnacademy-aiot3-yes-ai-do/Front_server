@@ -7,19 +7,11 @@ body {
     min-height: 100vh;
     font-family: "Gowun Dodum", "Malgun Gothic", sans-serif;
     color: var(--ink);
-    background: var(--cream-200) url("../images/mainback.jpg") center center / cover no-repeat fixed;
+    background: var(--cream-200);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 40px 16px;
-}
-
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: rgba(251, 246, 234, 0.15);
-    z-index: 0;
 }
 
 .error-wrap,
@@ -42,12 +34,48 @@ body::before {
     width: 170px;
     height: 212px;
     margin: 0 auto;
-    object-fit: cover;
+    object-fit: contain;
     object-position: center top;
-    border: 5px solid var(--cream-100);
-    border-radius: 48% 48% 22% 22%;
-    box-shadow: 0 8px 18px rgba(63, 42, 29, 0.18);
     animation: errorCharacterArrive 0.55s ease-out both;
+}
+
+/* 캐릭터 안경 반짝이(눈) 위치 기준 좌표 - PNG 픽셀 좌표를 컨테이너(.error-character) 기준
+   %로 환산한 값. 이미지가 바뀌면 이 값도 다시 맞춰야 함 */
+.eye-laser {
+    position: absolute;
+    width: 90px;
+    height: 0;
+    transform-origin: left center;
+    pointer-events: none;
+    z-index: 4;
+    /* 회전각은 error.js가 마우스 위치를 보고 매 프레임 transform으로 직접 지정함 */
+    transform: rotate(90deg);
+    transition: transform 0.08s linear;
+}
+
+.eye-laser-left {
+    left: 46.4%;
+    top: 26.5%;
+}
+
+.eye-laser-right {
+    left: 57.8%;
+    top: 25%;
+}
+
+.eye-laser-beam {
+    display: block;
+    height: 5px;
+    width: 100%;
+    margin-top: -2.5px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(255, 209, 0, 0.95), rgba(255, 209, 0, 0));
+    box-shadow: 0 0 10px 3px rgba(255, 209, 0, 0.7);
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .eye-laser { transition: none; }
 }
 
 .spore-field {
