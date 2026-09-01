@@ -14,7 +14,7 @@ class ErrorPageAssetTest {
 
     private static final Path ERROR_TEMPLATE = Path.of("src/main/resources/templates/error.html");
     private static final Path ERROR_SCRIPT = Path.of("src/main/resources/static/js/error.js");
-    private static final Path ERROR_IMAGE = Path.of("src/main/resources/static/images/error-person.jpeg");
+    private static final Path ERROR_IMAGE = Path.of("src/main/resources/static/images/errorperson.png");
 
     @Test
     void characterAndSporeAssetsAreLimitedToNonAdminErrorPages() throws IOException {
@@ -23,7 +23,7 @@ class ErrorPageAssetTest {
         assertTrue(template.contains("<script th:if=\"${!isAdmin}\" th:src=\"@{/js/error.js}\" defer></script>"));
         assertTrue(template.contains("<div class=\"error-character\" th:if=\"${!isAdmin}\">") ,
                 "The character must not be rendered on admin error pages");
-        assertTrue(template.contains("th:src=\"@{/images/error-person.jpeg}\""));
+        assertTrue(template.contains("th:src=\"@{/images/errorperson.png}\""));
     }
 
     @Test
