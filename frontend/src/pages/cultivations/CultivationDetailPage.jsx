@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Bot,
@@ -6,7 +6,6 @@ import {
   Cpu,
   LayoutDashboard,
   MoreHorizontal,
-  Settings,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -234,11 +233,139 @@ function MushroomGuide({ guide, error, onRetry }) {
   );
 }
 
+const sensorChartColors = ["#708d66", "#b77e3e", "#688da8", "#9a6f8e", "#7f7569"];
+
+function getSensorState(option) {
+  const value = Number(option.latest?.value);
+  const warning =
+    Number.isFinite(value) &&
+    ((option.setting?.thresholdMin != null && value < Number(option.setting.thresholdMin)) ||
+      (option.setting?.thresholdMax != null && value > Number(option.setting.thresholdMax)));
+
+  if (option.latest?.value == null) return { label: "수집 중", tone: "waiting" };
+  if (warning) return { label: "범위 이탈", tone: "warning" };
+  return { label: "안정", tone: "stable" };
+}
+
+function LiveSensorCard({ color, option, trendQuery }) {
+  const state = getSensorState(option);
+  const unit = option.latest?.unit || option.sensorType.valueUnit;
+  const chartPoints = normalizeList(trendQuery.data?.responses).map((point) => ({
+    measuredAt: formatDateTime(point.measuredAt),
+    value: point.value,
+  }));
+
+  return (
+    <article className={`live-sensor-card live-sensor-card--${state.tone}`}>
+      <header>
+        <div className="live-sensor-card__title">
+          <i aria-hidden="true" style={{ backgroundColor: color }} />
+          <span>
+            <strong>{formatSensorType(option.sensorType.type)}</strong>
+            <small>{option.sensor.deviceName}</small>
+          </span>
+        </div>
+        <span className={`sensor-live-state sensor-live-state--${state.tone}`}>{state.label}</span>
+      </header>
+
+      <div className="live-sensor-card__reading">
+        <strong>{option.latest?.value ?? "-"}</strong>
+        <span>{unit}</span>
+        <small>최근 24시간 · 15분 평균</small>
+      </div>
+
+      <div className="live-sensor-chart" aria-label={`${option.sensor.deviceName} 센서 추이`}>
+        {trendQuery.isLoading ? (
+          <p className="pending-widget">센서 추이를 불러오는 중</p>
+        ) : trendQuery.isError ? (
+          <div className="pending-widget">
+            센서 추이를 불러오지 못했습니다.
+            <button className="text-button" type="button" onClick={() => trendQuery.refetch()}>
+              다시 시도
+            </button>
+          </div>
+        ) : chartPoints.length > 1 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartPoints} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
+              <CartesianGrid stroke="rgba(117,91,65,.12)" vertical={false} />
+              <XAxis dataKey="measuredAt" minTickGap={34} tick={{ fontSize: 10 }} />
+              <YAxis width={42} tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Line
+                dataKey="value"
+                dot={false}
+                isAnimationActive={false}
+                stroke={color}
+                strokeWidth={2.5}
+                type="monotone"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="pending-widget">센서 추이 데이터 준비 중</p>
+        )}
+      </div>
+
+      <dl className="live-sensor-card__meta">
+        <div>
+          <dt>모델</dt>
+          <dd>{option.sensor.deviceModel || "-"}</dd>
+        </div>
+        <div>
+          <dt>연결 상태</dt>
+          <dd>{option.sensor.sensorStatus || "-"}</dd>
+        </div>
+        <div>
+          <dt>위치</dt>
+          <dd>{option.sensor.locationDetail || option.sensor.location || "-"}</dd>
+        </div>
+      </dl>
+    </article>
+  );
+}
+
+function RealTimeSensorPanel({ latestQuery, sensorOptions, trendQueries }) {
+  return (
+    <section className="panel-card realtime-sensor-panel">
+      <header className="section-heading">
+        <div>
+          <h2>실시간 센서 정보</h2>
+          <p>등록된 모든 센서의 현재값과 추이를 한 번에 확인합니다.</p>
+        </div>
+        <span>{latestQuery.isFetching ? "최신값 확인 중" : "3초마다 최신값 갱신"}</span>
+      </header>
+
+      {latestQuery.isError && (
+        <div className="sensor-refresh-notice">
+          <span>최신 센서값을 가져오지 못해 마지막으로 확인된 값을 표시합니다.</span>
+          <button className="text-button" type="button" onClick={() => latestQuery.refetch()}>
+            다시 시도
+          </button>
+        </div>
+      )}
+
+      {sensorOptions.length > 0 ? (
+        <div className="realtime-sensor-grid">
+          {sensorOptions.map((option, index) => (
+            <LiveSensorCard
+              color={sensorChartColors[index % sensorChartColors.length]}
+              key={option.key}
+              option={option}
+              trendQuery={trendQueries[index]}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="pending-widget">등록된 센서가 없습니다.</p>
+      )}
+    </section>
+  );
+}
+
 export default function CultivationDetailPage() {
   const { cultivationId } = useParams();
   const id = Number(cultivationId);
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [selectedKey, setSelectedKey] = useState("");
   const [modal, setModal] = useState(null);
 
   const detailQuery = useQuery({
@@ -260,14 +387,15 @@ export default function CultivationDetailPage() {
       data?.latestSensorValues?.latestSensorValueResponses,
   );
   const sensorOptions = useMemo(() => buildSensorOptions(data, latestValues), [data, latestValues]);
-  const selected = sensorOptions.find((option) => option.key === selectedKey) || sensorOptions[0];
-  const trendQuery = useQuery({
-    queryKey: selected
-      ? cultivationKeys.trend(id, selected.sensor.deviceEui, selected.sensorType.type)
-      : ["cultivations", "trend", id, "none"],
-    queryFn: () => getSensorTrend(id, selected.sensor.deviceEui, selected.sensorType.type),
-    enabled: Boolean(selected) && activeTab === "dashboard",
-    staleTime: 30_000,
+  const trendQueries = useQueries({
+    queries: sensorOptions.map((option) => ({
+      queryKey: cultivationKeys.trend(id, option.sensor.deviceEui, option.sensorType.type),
+      queryFn: () => getSensorTrend(id, option.sensor.deviceEui, option.sensorType.type),
+      enabled: activeTab === "dashboard",
+      staleTime: 30_000,
+      refetchInterval: 30_000,
+      retry: 1,
+    })),
   });
   const guideQuery = useQuery({
     queryKey: ["mushroom-guide", data?.cultivation?.mushroomId],
@@ -295,11 +423,6 @@ export default function CultivationDetailPage() {
   const mushroomName = normalizeList(data.mushrooms).find(
     (mushroom) => mushroom.id === cultivation.mushroomId,
   )?.mushroomNameKo;
-  const chartPoints = normalizeList(trendQuery.data?.responses).map((point) => ({
-    measuredAt: formatDateTime(point.measuredAt),
-    value: point.value,
-  }));
-
   return (
     <main className="detail-page">
       <nav className="detail-toolbar" aria-label="재배 상세 메뉴">
@@ -367,103 +490,11 @@ export default function CultivationDetailPage() {
               <CompliancePanel compliance={data.dailyCompliance} />
             </section>
 
-            <header className="section-heading">
-              <div>
-                <h2>현재 재배 환경</h2>
-                <p>이 재배지에 등록된 센서 측정 항목만 표시합니다.</p>
-              </div>
-              <span>3초마다 최신값 갱신</span>
-            </header>
-            <section className="detail-sensor-grid">
-              {sensorOptions.map((option) => {
-                const value = Number(option.latest?.value);
-                const warning =
-                  Number.isFinite(value) &&
-                  ((option.setting?.thresholdMin != null &&
-                    value < Number(option.setting.thresholdMin)) ||
-                    (option.setting?.thresholdMax != null &&
-                      value > Number(option.setting.thresholdMax)));
-                return (
-                  <button
-                    className={`detail-sensor-card ${selected?.key === option.key ? "selected" : ""}`}
-                    key={option.key}
-                    type="button"
-                    onClick={() => setSelectedKey(option.key)}
-                  >
-                    <span>
-                      {formatSensorType(option.sensorType.type)}
-                      <small className={warning ? "warning" : ""}>
-                        {option.latest?.value == null ? "수집 중" : warning ? "범위 이탈" : "안정"}
-                      </small>
-                    </span>
-                    <strong>
-                      {option.latest?.value ?? "-"}
-                      <small>{option.latest?.unit || option.sensorType.valueUnit}</small>
-                    </strong>
-                    <span>{option.sensor.deviceName}</span>
-                  </button>
-                );
-              })}
-              {sensorOptions.length === 0 && (
-                <p className="pending-widget">등록된 센서가 없습니다.</p>
-              )}
-            </section>
-
-            {selected && (
-              <section className="trend-layout">
-                <article className="panel-card trend-panel">
-                  <header className="panel-card__heading">
-                    <div>
-                      <h2>{formatSensorType(selected.sensorType.type)} 센서 추이</h2>
-                      <p>{selected.sensor.deviceName} · 최근 24시간 15분 평균</p>
-                    </div>
-                    <strong>
-                      {selected.latest?.value ?? "-"}{" "}
-                      {selected.latest?.unit || selected.sensorType.valueUnit}
-                    </strong>
-                  </header>
-                  <div className="detail-chart">
-                    {chartPoints.length > 1 ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartPoints}>
-                          <CartesianGrid stroke="rgba(117,91,65,.12)" vertical={false} />
-                          <XAxis dataKey="measuredAt" minTickGap={32} tick={{ fontSize: 11 }} />
-                          <YAxis width={44} tick={{ fontSize: 11 }} />
-                          <Tooltip />
-                          <Line
-                            dataKey="value"
-                            dot={false}
-                            isAnimationActive={false}
-                            stroke="#708d66"
-                            strokeWidth={2.5}
-                            type="monotone"
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <p className="pending-widget">센서 추이 데이터 준비 중</p>
-                    )}
-                  </div>
-                </article>
-                <aside className="panel-card device-panel">
-                  <header className="panel-card__heading">
-                    <h2>선택 센서 정보</h2>
-                    <Settings aria-hidden="true" />
-                  </header>
-                  <dl>
-                    <dt>센서명</dt>
-                    <dd>{selected.sensor.deviceName}</dd>
-                    <dt>모델</dt>
-                    <dd>{selected.sensor.deviceModel || "-"}</dd>
-                    <dt>연결 상태</dt>
-                    <dd>{selected.sensor.sensorStatus || "-"}</dd>
-                    <dt>위치</dt>
-                    <dd>{selected.sensor.locationDetail || selected.sensor.location || "-"}</dd>
-                  </dl>
-                  <div className="pending-widget">최근 알림 기록 · 데이터 준비 중</div>
-                </aside>
-              </section>
-            )}
+            <RealTimeSensorPanel
+              latestQuery={latestQuery}
+              sensorOptions={sensorOptions}
+              trendQueries={trendQueries}
+            />
 
             <header className="section-heading">
               <div>
