@@ -27,7 +27,10 @@ public class ChatApiController {
     }
 
     @GetMapping("/history")
-    public ApiResponse<List<ChatMessageDto>> getHistory(@RequestParam("conversationId") Long conversationId) {
-        return aiClient.getChatHistory(conversationId);
+    public ApiResponse<List<ChatMessageDto>> getHistory(
+            @RequestParam(value = "conversationId", required = false) Long conversationId,
+            @RequestParam(value = "cultivationId", required = false) Long cultivationId
+    ) {
+        return aiClient.getChatHistory(conversationId, cultivationId);
     }
 }

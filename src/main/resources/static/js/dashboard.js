@@ -360,7 +360,7 @@ function stopChartPolling() {
 function pollChartValue() {
     if (!CHART_SELECTED) return;
     var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    var gatewayOrigin = isLocal ? 'http://localhost:8000' : 'https://api.yes-nhn.site';
+    var gatewayOrigin = isLocal ? 'http://localhost:8080' : 'https://api.yes-nhn.site';
 
     fetch(gatewayOrigin + '/api/v1/cultivations/' + CULTIVATION_ID + '/sensor-values', {
         credentials: 'include'
@@ -382,14 +382,18 @@ function pollChartValue() {
             var now = Date.now();
             latestSensorValuesOf(payload).forEach(function (v) {
                 var key = chartKey(v.sensorType, v.deviceEui);
-                LATEST_VALUES[key] = { value: v.value, unit: v.unit };
                 if (v.value == null) return;
 
                 var bucket = getChartBucket(key);
-                bucket.history.push(v.value);
-                bucket.times.push(now);
-                bucket.unit = v.unit || bucket.unit;
-                trimChartBucket(bucket);
+                if (!bucket.unit) {
+                    bucket.unit = v.unit;
+                }
+                if (v.unit === bucket.unit) {
+                    LATEST_VALUES[key] = { value: v.value, unit: v.unit };
+                    bucket.history.push(v.value);
+                    bucket.times.push(now);
+                    trimChartBucket(bucket);
+                }
             });
             updateVisibleSensorValues();
 
@@ -417,6 +421,7 @@ function updateVisibleSensorValues() {
         if (!deviceEui) return;
         valueEl.textContent = formatSensorValue(LATEST_VALUES[type + '|' + deviceEui]);
     });
+    renderMainEnvStats();
 }
 
 function renderChartEmpty(message) {
@@ -552,6 +557,35 @@ var CHATBOT_PLACEHOLDER_REPLY = 'AI 챗봇은 아직 준비 중인 기능이에�
 
 var CURRENT_CONVERSATION_ID = null;
 
+function loadChatHistory() {
+    if (typeof CULTIVATION_ID === 'undefined' || !CULTIVATION_ID) return;
+
+    fetch('/api/chat/history?cultivationId=' + CULTIVATION_ID)
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+                var list = document.getElementById('chatbot-messages');
+                list.innerHTML = '<div class="chat-message bot"><img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble">안녕하세요! 재배와 관련된 질문을 편하게 남겨주세요.</div></div>';
+
+                res.data.forEach(function(msg) {
+                    var msgEl = document.createElement('div');
+                    msgEl.className = msg.role === 'USER' ? 'chat-message user' : 'chat-message bot';
+                    if (msg.role === 'USER') {
+                        msgEl.innerHTML = '<div class="chat-bubble"></div>';
+                    } else {
+                        msgEl.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble" style="white-space: pre-wrap;"></div>';
+                    }
+                    msgEl.querySelector('.chat-bubble').textContent = msg.content;
+                    list.appendChild(msgEl);
+                });
+                list.scrollTop = list.scrollHeight;
+            }
+        })
+        .catch(function(err) {
+            console.error('대화 내역 불러오기 실패:', err);
+        });
+}
+
 function sendChatMessage(event) {
     event.preventDefault();
     var input = document.getElementById('chatbot-input');
@@ -629,6 +663,11 @@ function switchTab(name) {
     });
     event.currentTarget.classList.add('active');
     document.getElementById('tab-' + name).classList.add('active');
+
+    // 챗봇 탭 클릭 시 이전 대화 내역 불러오기
+    if (name === 'chatbot') {
+        loadChatHistory();
+    }
 }
 
 function togglePanel(id) {

@@ -28,5 +28,8 @@ public interface AiClient {
     ApiResponse<ChatMessageResponse> chat(@RequestBody ChatMessageRequest request);
 
     @GetMapping("/api/v1/ai/chat/history")
-    ApiResponse<List<ChatMessageDto>> getChatHistory(@RequestParam("conversationId") Long conversationId);
+    ApiResponse<List<ChatMessageDto>> getChatHistory(
+            @RequestParam(value = "conversationId", required = false) Long conversationId,
+            @RequestParam(value = "cultivationId", required = false) Long cultivationId
+    );
 }
