@@ -42,12 +42,13 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Run tests
-        run: ./mvnw -B clean test
+      - uses: ./.github/actions/setup-test-env
 
-      - name: Check JaCoCo coverage
+      - uses: ./.github/actions/check-frontend
+
+      - name: Test and JaCoCo coverage check
         id: coverage
-        run: ./mvnw -B -DskipTests verify
+        run: ./mvnw -B clean verify
 
       - name: Run SonarQube Quality Gate
         id: sonar
