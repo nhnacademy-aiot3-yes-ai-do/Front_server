@@ -28,7 +28,15 @@
 
             <div class="topbar-profile" id="topbar-profile">
                 <button class="topbar-profile-trigger" type="button" onclick="toggleTopbarProfile()">
-                    <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+                    <div class="avatar-circle">
+                        <img id="topbar-profile-image"
+                             class="topbar-profile-image"
+                             src=""
+                             alt="프로필 사진"
+                             hidden />
+                        <i id="topbar-default-icon"
+                           data-lucide="circle-user-round"></i>
+                    </div>
                     <span class="topbar-nickname" id="topbar-nickname-label"></span>
                     <i data-lucide="chevron-down" class="topbar-profile-chevron"></i>
                 </button>

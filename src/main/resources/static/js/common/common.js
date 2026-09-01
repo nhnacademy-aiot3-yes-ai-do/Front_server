@@ -165,10 +165,31 @@ function loadHeaderNickname() {
                 nicknameLabel.textContent = nickname;
                 sessionStorage.setItem('mm_user_nickname', nickname);
             }
+            renderHeaderProfileImage(result.data.photoUrl);
         })
         .catch(function (err) {
             console.warn('헤더 닉네임 로드 실패:', err);
         });
+}
+
+function renderHeaderProfileImage(photoUrl) {
+    var imageElement = document.getElementById('topbar-profile-image');
+    var defaultIcon = document.getElementById('topbar-default-icon');
+
+    if (!imageElement || !defaultIcon) {
+        return;
+    }
+
+    if (photoUrl) {
+        imageElement.src = photoUrl;
+        imageElement.hidden = false;
+        defaultIcon.hidden = true;
+        return;
+    }
+
+    imageElement.removeAttribute('src');
+    imageElement.hidden = true;
+    defaultIcon.hidden = false;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
