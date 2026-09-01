@@ -104,10 +104,6 @@ class CultivationControllerTest {
         when(sensorClient.getSensors(1L)).thenReturn(ResponseEntity.ok(sensors));
         when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
-        String expectedJson = objectMapper.writeValueAsString(new CultivationListPageView(
-                List.of(new CultivationListItemView(summary, sensors)), List.of(sensorType)
-        ));
-
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
                 .andExpect(view().name("forward:/react/index.html"));
