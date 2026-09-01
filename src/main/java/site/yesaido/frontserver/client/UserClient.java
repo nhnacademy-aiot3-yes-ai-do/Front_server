@@ -86,4 +86,10 @@ public interface UserClient {
 
     @PutMapping(value = "/api/v1/users/mypage/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ApiResponse<String> uploadProfileImage(@RequestPart("file")MultipartFile file);
+
+    @PutMapping("/api/v1/admin/members/{memberId}/dormant-release")
+    ApiResponse<Void> releaseDormantMember(@PathVariable("memberId") Long memberId);
+
+    @DeleteMapping("/api/v1/admin/members/{memberId}")
+    ApiResponse<Void> forceWithdraw(@PathVariable("memberId") Long memberId);
 }
