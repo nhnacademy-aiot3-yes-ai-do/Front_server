@@ -3,13 +3,7 @@ package site.yesaido.frontserver.client;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import site.yesaido.frontserver.dto.notification.request.ChannelTypeRequest;
-import site.yesaido.frontserver.dto.notification.request.EndpointCreateRequest;
-import site.yesaido.frontserver.dto.notification.request.EndpointUpdateRequest;
-import site.yesaido.frontserver.dto.notification.request.NotificationEventTypeRequest;
-import site.yesaido.frontserver.dto.notification.request.NotificationTemplateRequest;
-import site.yesaido.frontserver.dto.notification.request.SubscriptionCreateRequest;
-import site.yesaido.frontserver.dto.notification.request.SubscriptionEnabledRequest;
+import site.yesaido.frontserver.dto.notification.request.*;
 import site.yesaido.frontserver.dto.notification.response.*;
 
 import java.util.List;
