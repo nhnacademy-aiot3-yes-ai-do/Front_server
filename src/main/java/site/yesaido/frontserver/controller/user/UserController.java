@@ -34,7 +34,7 @@ public class UserController {
     private static final String LOGIN_URL = "/login";
     private static final String REDIRECT_PREFIX = "redirect:";
     private static final String AUTH_ERROR = "error";
-    private static final String PASSWORD_RESET_FAILURE_MESSAGE = "비밀번호 변경에 실패했습니다. 다시 시도해 주세요.";
+    private static final String RESET_FAILURE_MESSAGE = "비밀번호 변경에 실패했습니다. 다시 시도해 주세요.";
 
 
     private final UserClient userClient;
@@ -125,10 +125,10 @@ public class UserController {
             return redirectToResetPage(redirectAttributes, errorMessage);
         } catch (Exception e) {
             log.warn("비밀번호 재설정 실패: {}", e.getMessage());
-            setAuthResult(session, AUTH_ERROR, PASSWORD_RESET_FAILURE_MESSAGE);
+            setAuthResult(session, AUTH_ERROR, RESET_FAILURE_MESSAGE);
             return redirectToResetPage(
                     redirectAttributes,
-                    PASSWORD_RESET_FAILURE_MESSAGE
+                    RESET_FAILURE_MESSAGE
             );
         }
     }
@@ -162,7 +162,7 @@ public class UserController {
         try {
             JsonNode response = objectMapper.readTree(e.contentUTF8());
             String message = response.path("message").asString();
-            return message.isBlank() ? PASSWORD_RESET_FAILURE_MESSAGE : message;
+            return message.isBlank() ? RESET_FAILURE_MESSAGE : message;
         } catch (Exception ignored) {
             return "비밀번호 변경에 실패했습니다.";
         }
