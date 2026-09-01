@@ -713,6 +713,43 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 
 .row-actions button:hover { background: var(--sage-500); border-color: var(--sage-500); color: #fff; }
 
+.row-actions .dormant-release-button {
+    width: auto;
+    min-width: 5.2rem;
+    padding: 0 0.75rem;
+    background: var(--sage-500);
+    border-color: var(--sage-500);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.row-actions .dormant-release-button:hover {
+    background: var(--sage-600);
+    border-color: var(--sage-600);
+}
+
+.row-actions .force-withdraw-button {
+    width: auto;
+    min-width: 5.2rem;
+    padding: 0 0.75rem;
+    background: #fff;
+    border-color: #c2410c;
+    color: #c2410c;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.row-actions .force-withdraw-button:hover {
+    background: #c2410c;
+    border-color: #c2410c;
+    color: #fff;
+}
+
+.row-action-empty {
+    color: var(--brown-400);
+}
+
 /* ----- 페이지네이션 (회원 관리 전용, 숫자 버튼형) ----- */
 .pagination {
     margin-top: 1.4rem;

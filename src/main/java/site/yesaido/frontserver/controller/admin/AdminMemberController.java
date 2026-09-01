@@ -4,10 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.response.MemberSummaryPageResponse;
@@ -25,5 +22,15 @@ public class AdminMemberController {
             @RequestParam(defaultValue = "active") String status,
             @PageableDefault(size = 8, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return userClient.getMembers(status, pageable);
+    }
+
+    @PutMapping("/{memberId}/dormant-release")
+    public ApiResponse<Void> releaseDormantMember(@PathVariable Long memberId){
+        return userClient.releaseDormantMember(memberId);
+    }
+
+    @DeleteMapping("/{memberId}")
+    public ApiResponse<Void> forceWithdraw(@PathVariable Long memberId) {
+        return userClient.forceWithdraw(memberId);
     }
 }
