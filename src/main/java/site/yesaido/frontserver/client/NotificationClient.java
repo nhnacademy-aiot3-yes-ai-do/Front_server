@@ -3,8 +3,11 @@ package site.yesaido.frontserver.client;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import site.yesaido.frontserver.dto.notification.request.ChannelTypeRequest;
 import site.yesaido.frontserver.dto.notification.request.EndpointCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.EndpointUpdateRequest;
+import site.yesaido.frontserver.dto.notification.request.NotificationEventTypeRequest;
+import site.yesaido.frontserver.dto.notification.request.NotificationTemplateRequest;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionCreateRequest;
 import site.yesaido.frontserver.dto.notification.request.SubscriptionEnabledRequest;
 import site.yesaido.frontserver.dto.notification.response.*;
@@ -58,4 +61,46 @@ public interface NotificationClient {
 
     @DeleteMapping("/api/v1/notification-subscriptions/{subscriptionId}")
     ResponseEntity<Void> deleteSubscription(@PathVariable("subscriptionId") Long subscriptionId);
+
+    @GetMapping("/api/v1/admin/notification-event-types")
+    ResponseEntity<List<NotificationEventTypeResponse>> getAdminNotificationEventTypes();
+
+    @PostMapping("/api/v1/admin/notification-event-types")
+    ResponseEntity<NotificationEventTypeResponse> createAdminNotificationEventType(
+            @RequestBody NotificationEventTypeRequest request);
+
+    @PutMapping("/api/v1/admin/notification-event-types/{id}")
+    ResponseEntity<NotificationEventTypeResponse> updateAdminNotificationEventType(
+            @PathVariable("id") Long id,
+            @RequestBody NotificationEventTypeRequest request);
+
+    @DeleteMapping("/api/v1/admin/notification-event-types/{id}")
+    ResponseEntity<Void> deleteAdminNotificationEventType(@PathVariable("id") Long id);
+
+    @GetMapping("/api/v1/admin/notification-templates")
+    ResponseEntity<List<NotificationTemplateResponse>> getAdminNotificationTemplates();
+
+    @PostMapping("/api/v1/admin/notification-templates")
+    ResponseEntity<NotificationTemplateResponse> createAdminNotificationTemplate(@RequestBody NotificationTemplateRequest request);
+
+    @PutMapping("/api/v1/admin/notification-templates/{id}")
+    ResponseEntity<NotificationTemplateResponse> updateAdminNotificationTemplate(@PathVariable("id") Long id, @RequestBody NotificationTemplateRequest request);
+
+    @DeleteMapping("/api/v1/admin/notification-templates/{id}")
+    ResponseEntity<Void> deleteAdminNotificationTemplate(@PathVariable("id") Long id);
+
+    @GetMapping("/api/v1/admin/channel-types")
+    ResponseEntity<List<ChannelTypeResponse>> getAdminChannelTypes();
+
+    @PostMapping("/api/v1/admin/channel-types")
+    ResponseEntity<ChannelTypeResponse> createAdminChannelType(@RequestBody ChannelTypeRequest request);
+
+    @PutMapping("/api/v1/admin/channel-types/{id}")
+    ResponseEntity<ChannelTypeResponse> updateAdminChannelType(@PathVariable("id") Long id, @RequestBody ChannelTypeRequest request);
+
+    @DeleteMapping("/api/v1/admin/channel-types/{id}")
+    ResponseEntity<Void> deleteAdminChannelType(@PathVariable("id") Long id);
+
+    @PostMapping("/api/v1/admin/channel-types/{id}/restore")
+    ResponseEntity<Void> restoreAdminChannelType(@PathVariable("id") Long id);
 }
