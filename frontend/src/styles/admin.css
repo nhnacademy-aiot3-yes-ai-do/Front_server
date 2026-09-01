@@ -667,6 +667,11 @@
   color: var(--brown-500);
 }
 
+.admin-status--dormant {
+  background: #eee6f7;
+  color: #6f4b8b;
+}
+
 .admin-status--pending {
   background: var(--gold-200);
   color: #8a622f;
@@ -694,6 +699,34 @@
 
 .admin-row-actions svg {
   width: 15px;
+}
+
+.admin-member-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--brown-400);
+}
+
+.admin-member-actions button {
+  min-height: 32px;
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-member-release-button {
+  border: 1px solid var(--sage-700);
+  color: var(--sage-700);
+}
+
+.admin-member-withdraw-button,
+.admin-cultivation-delete-button {
+  border: 1px solid var(--danger);
+  color: var(--danger);
 }
 
 .admin-table-state {
@@ -980,6 +1013,63 @@
   border-radius: 11px;
   padding: 11px;
   resize: vertical;
+}
+
+.admin-cultivation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-cultivation-delete-button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  padding: 6px 10px;
+  background: white;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-cultivation-delete-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.admin-inline-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid rgba(192, 57, 43, 0.28);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(192, 57, 43, 0.05);
+}
+
+.admin-inline-confirm > div {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-inline-confirm > div:first-child {
+  flex-direction: column;
+}
+
+.admin-inline-confirm span {
+  color: var(--brown-500);
+  font-size: 12px;
+}
+
+.admin-inline-confirm .admin-primary-button,
+.admin-inline-confirm .admin-secondary-button,
+.admin-inline-confirm .admin-danger-button {
+  min-height: 36px;
+  padding: 7px 12px;
 }
 
 .admin-reply-actions {

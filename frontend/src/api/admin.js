@@ -46,6 +46,14 @@ export function getAdminMembers({ status = "active", page = 0, size = 8 } = {}) 
   return adminRequest(`/admin/members/list?${params}`).then(unwrapApiResponse);
 }
 
+export function releaseDormantAdminMember(memberId) {
+  return adminRequest(`/admin/members/${memberId}/dormant-release`, { method: "PUT" });
+}
+
+export function forceWithdrawAdminMember(memberId) {
+  return adminRequest(`/admin/members/${memberId}`, { method: "DELETE" });
+}
+
 export function getAdminInquiries({ status, page = 0, size = 8 } = {}) {
   const params = new URLSearchParams({ page, size });
   if (status) params.set("status", status);
@@ -64,6 +72,10 @@ export function answerAdminInquiry(answerId, content, files) {
     method: "PUT",
     body,
   }).then(unwrapApiResponse);
+}
+
+export function deleteAdminInquiryCultivation(cultivationId) {
+  return adminRequest(`/cultivations/${cultivationId}`, { method: "DELETE" });
 }
 
 export function getAdminSensorTypes() {

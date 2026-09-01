@@ -1,8 +1,13 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, MessageSquareReply, Paperclip, X } from "lucide-react";
+import { ImagePlus, MessageSquareReply, Paperclip, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { answerAdminInquiry, getAdminInquiries, getAdminInquiry } from "../../api/admin";
+import {
+  answerAdminInquiry,
+  deleteAdminInquiryCultivation,
+  getAdminInquiries,
+  getAdminInquiry,
+} from "../../api/admin";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
@@ -73,9 +78,11 @@ function InquiryConversation({ inquiry }) {
 }
 
 function InquiryDetailModal({ inquiryId, onClose, onAnswered }) {
+  const queryClient = useQueryClient();
   const [content, setContent] = useState("");
   const [files, setFiles] = useState([]);
   const [notice, setNotice] = useState(null);
+  const [confirmCultivationDelete, setConfirmCultivationDelete] = useState(false);
   const detailQuery = useQuery({
     queryKey: ["admin", "inquiry", inquiryId],
     queryFn: () => getAdminInquiry(inquiryId),
@@ -83,10 +90,24 @@ function InquiryDetailModal({ inquiryId, onClose, onAnswered }) {
   const answerMutation = useMutation({
     mutationFn: ({ answerId }) => answerAdminInquiry(answerId, content.trim(), files),
     onSuccess: (detail) => {
-      detailQuery.setData(detail);
+      queryClient.setQueryData(["admin", "inquiry", inquiryId], detail);
       setContent("");
       setFiles([]);
       setNotice({ type: "success", message: "답변을 등록했습니다." });
+      onAnswered();
+    },
+    onError: (error) => setNotice({ type: "error", message: error.message }),
+  });
+  const cultivationDeleteMutation = useMutation({
+    mutationFn: (cultivationId) => deleteAdminInquiryCultivation(cultivationId),
+    onSuccess: () => {
+      queryClient.setQueryData(["admin", "inquiry", inquiryId], (current) => ({
+        ...current,
+        cultivationId: null,
+        cultivationName: null,
+      }));
+      setConfirmCultivationDelete(false);
+      setNotice({ type: "success", message: "문의에 연결된 재배지를 삭제했습니다." });
       onAnswered();
     },
     onError: (error) => setNotice({ type: "error", message: error.message }),
@@ -136,14 +157,49 @@ function InquiryDetailModal({ inquiryId, onClose, onAnswered }) {
             </span>
           </header>
           {inquiry.cultivationId && (
-            <a
-              className="admin-cultivation-link"
-              href={`/cultivations/${inquiry.cultivationId}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              재배지: {inquiry.cultivationName || `#${inquiry.cultivationId}`}
-            </a>
+            <div className="admin-cultivation-actions">
+              <a
+                className="admin-cultivation-link"
+                href={`/cultivations/${inquiry.cultivationId}`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                재배지: {inquiry.cultivationName || `#${inquiry.cultivationId}`}
+              </a>
+              <button
+                className="admin-cultivation-delete-button"
+                type="button"
+                onClick={() => setConfirmCultivationDelete(true)}
+              >
+                <Trash2 aria-hidden="true" /> 재배지 삭제
+              </button>
+            </div>
+          )}
+          {confirmCultivationDelete && inquiry.cultivationId && (
+            <div className="admin-inline-confirm" role="alert">
+              <div>
+                <strong>연결된 재배지를 삭제하시겠습니까?</strong>
+                <span>삭제한 재배지 정보는 되돌릴 수 없습니다.</span>
+              </div>
+              <div>
+                <button
+                  className="admin-secondary-button"
+                  type="button"
+                  disabled={cultivationDeleteMutation.isPending}
+                  onClick={() => setConfirmCultivationDelete(false)}
+                >
+                  취소
+                </button>
+                <button
+                  className="admin-danger-button"
+                  type="button"
+                  disabled={cultivationDeleteMutation.isPending}
+                  onClick={() => cultivationDeleteMutation.mutate(inquiry.cultivationId)}
+                >
+                  {cultivationDeleteMutation.isPending ? "삭제 중…" : "삭제"}
+                </button>
+              </div>
+            </div>
           )}
           <InquiryConversation inquiry={inquiry} />
           <Notice notice={notice} onDismiss={() => setNotice(null)} />
