@@ -65,11 +65,11 @@ public class ReactCultivationPageDataController {
     @GetMapping("/{cultivation-id}/preview")
     public CultivationPreviewData preview(@PathVariable("cultivation-id") Long cultivationId) {
         CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
-        PhotoListResponse photoResponse = isolated(
+        List<PhotoResponse> photos = safePhotos(isolated(
                 "preview photos",
                 () -> cultivationClient.getPhoto(cultivationId).getBody(),
                 new PhotoListResponse(List.of())
-        );
+        ));
         CultivationSensorListResponse sensors = isolated(
                 "preview sensors",
                 () -> sensorClient.getSensors(cultivationId).getBody(),
@@ -81,10 +81,10 @@ public class ReactCultivationPageDataController {
                 new LatestSensorValueListResponse(List.of())
         );
 
-        PhotoResponse newestPhoto = photoResponse.photoUploadResponses().stream()
+        PhotoResponse newestPhoto = photos.stream()
                 .filter(photo -> photo.updatedAt() != null)
                 .max(Comparator.comparing(PhotoResponse::updatedAt))
-                .orElseGet(() -> photoResponse.photoUploadResponses().stream().findFirst().orElse(null));
+                .orElseGet(() -> photos.stream().findFirst().orElse(null));
 
         return new CultivationPreviewData(
                 cultivation,
@@ -99,11 +99,11 @@ public class ReactCultivationPageDataController {
     public CultivationDetailPageData detailPageData(@PathVariable("cultivation-id") Long cultivationId) {
         CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
         MemberListResponse memberResponse = cultivationClient.getMembers(cultivationId).getBody();
-        PhotoListResponse photoResponse = isolated(
+        List<PhotoResponse> photos = safePhotos(isolated(
                 "detail photos",
                 () -> cultivationClient.getPhoto(cultivationId).getBody(),
                 new PhotoListResponse(List.of())
-        );
+        ));
         CultivationSensorListResponse sensors = isolated(
                 "detail sensors",
                 () -> sensorClient.getSensors(cultivationId).getBody(),
@@ -129,7 +129,7 @@ public class ReactCultivationPageDataController {
                 cultivation,
                 growthDays(cultivation),
                 safeMembers(memberResponse),
-                photoResponse.photoUploadResponses(),
+                photos,
                 sensors,
                 latestValues,
                 pastCultivations(cultivationId),
@@ -172,6 +172,11 @@ public class ReactCultivationPageDataController {
                 : response.mushroomReferenceInfoResponses();
     }
 
+    private List<PhotoResponse> safePhotos(PhotoListResponse response) {
+        return response == null || response.photoUploadResponses() == null
+                ? List.of()
+                : response.photoUploadResponses();
+    }
     private Long growthDays(CultivationDetailResponse cultivation) {
         if (cultivation == null || cultivation.startedAt() == null) {
             return null;

@@ -33,6 +33,7 @@ public class UserController {
     private static final String PASSWORD_RESET_VERIFIED_EMAIL = "passwordResetVerifiedEmail";
     private static final String LOGIN_URL = "/login";
     private static final String REDIRECT_PREFIX = "redirect:";
+    private static final String AUTH_ERROR = "error";
 
 
     private final UserClient userClient;
@@ -51,7 +52,7 @@ public class UserController {
             return REDIRECT_PREFIX + LOGIN_URL;
         } catch (Exception exception) {
             log.warn("회원가입 실패: {}", exception.getMessage());
-            setAuthResult(session, "error", "회원가입을 완료하지 못했습니다. 입력 내용을 확인해 주세요.");
+            setAuthResult(session, AUTH_ERROR, "회원가입을 완료하지 못했습니다. 입력 내용을 확인해 주세요.");
             return REDIRECT_PREFIX + "/signup";
         }
     }
@@ -76,7 +77,7 @@ public class UserController {
         } catch (Exception e) {
             log.warn("로그인 실패: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("loginError", "아이디 또는 비밀번호가 일치하지 않습니다.");
-            setAuthResult(session, "error", "아이디 또는 비밀번호가 일치하지 않습니다.");
+            setAuthResult(session, AUTH_ERROR, "아이디 또는 비밀번호가 일치하지 않습니다.");
 
             return REDIRECT_PREFIX + LOGIN_URL;
         }
@@ -97,7 +98,7 @@ public class UserController {
         }
 
         if (!newPassword.equals(confirmPassword)) {
-            setAuthResult(session, "error", "비밀번호가 일치하지 않습니다.");
+            setAuthResult(session, AUTH_ERROR, "비밀번호가 일치하지 않습니다.");
             return redirectToResetPage(
                     redirectAttributes,
                     "비밀번호가 일치하지 않습니다."
@@ -119,11 +120,11 @@ public class UserController {
         } catch (FeignException.BadRequest e) {
             log.warn("비밀번호 재설정 요청 거부: {}", e.getMessage());
             String errorMessage = extractErrorMessage(e);
-            setAuthResult(session, "error", errorMessage);
+            setAuthResult(session, AUTH_ERROR, errorMessage);
             return redirectToResetPage(redirectAttributes, errorMessage);
         } catch (Exception e) {
             log.warn("비밀번호 재설정 실패: {}", e.getMessage());
-            setAuthResult(session, "error", "비밀번호 변경에 실패했습니다. 다시 시도해 주세요.");
+            setAuthResult(session, AUTH_ERROR, "비밀번호 변경에 실패했습니다. 다시 시도해 주세요.");
             return redirectToResetPage(
                     redirectAttributes,
                     "비밀번호 변경에 실패했습니다. 다시 시도해 주세요."
@@ -186,7 +187,7 @@ public class UserController {
             response.sendRedirect("/admin");
         } catch (Exception e) {
             log.warn("관리자 로그인 실패: {}", e.getMessage());
-            setAuthResult(session, "error", "관리자 계정 정보가 일치하지 않습니다.");
+            setAuthResult(session, AUTH_ERROR, "관리자 계정 정보가 일치하지 않습니다.");
             response.sendRedirect("/admin/login");
         }
     }
