@@ -84,6 +84,18 @@ class NotificationSubscriptionControllerTest {
     }
 
     @Test
+    @DisplayName("구독 목록 조회 시 upstream 헤더를 브라우저 응답으로 전달하지 않음")
+    void listSubscriptionsDoesNotRelayUpstreamHeaders() throws Exception {
+        given(notificationClient.getSubscriptions()).willReturn(ResponseEntity.ok()
+                .header("X-Upstream-Only", "must-not-reach-browser")
+                .body(List.of()));
+
+        mockMvc.perform(get("/notifications/subscriptions").cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("X-Upstream-Only"));
+    }
+
+    @Test
     @DisplayName("구독 종류 목록 조회")
     void listTypes() throws Exception {
         given(notificationClient.getSubscriptionTypes()).willReturn(ResponseEntity.ok(List.of(
@@ -129,6 +141,24 @@ class NotificationSubscriptionControllerTest {
                         .content("{\"enabled\":false}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.enabled").value(false));
+    }
+
+    @Test
+    @DisplayName("구독 토글 변경 시 upstream 헤더를 브라우저 응답으로 전달하지 않음")
+    void changeEnabledDoesNotRelayUpstreamHeaders() throws Exception {
+        given(notificationClient.changeSubscriptionEnabled(20L, new SubscriptionEnabledRequest(false)))
+                .willReturn(ResponseEntity.ok()
+                        .header("X-Upstream-Only", "must-not-reach-browser")
+                        .body(new SubscriptionResponse(
+                                20L, 1L, "환경 이상 알림", "ENVIRONMENT_THRESHOLD_BREACHED",
+                                "CULTIVATION", 101L, 10L, "DISCORD", false, null, null)));
+
+        mockMvc.perform(patch("/notifications/subscriptions/20/enabled")
+                        .cookie(LOGGED_IN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"enabled\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(header().doesNotExist("X-Upstream-Only"));
     }
 
     @Test

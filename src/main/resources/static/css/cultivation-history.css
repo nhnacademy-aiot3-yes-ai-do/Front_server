@@ -22,18 +22,21 @@ body {
 }
 
 .history-box {
-    display: grid;
-    grid-template-columns: 14rem 1fr;
+    /* 예전엔 grid + 고정 height였음: grid의 "auto" 트랙 높이가 내부 flex:1 자식의
+       intrinsic 크기를 기대만큼 작게 안 잡아주는 문제가 있어서, 컨텐츠 양과 무관하게
+       박스를 늘 꽉 찬 고정 높이로 만들어 우회했었음. 대신 flexbox로 바꾸면
+       height:auto + max-height + min-height:0 조합이 예측대로 동작해서(내용이 적으면
+       박스가 줄어들고, 많아지면 max-height까지 늘어난 뒤 각 컬럼 안에서만 스크롤됨),
+       고정 높이 없이도 원하는 동작을 얻을 수 있음 */
+    display: flex;
+    align-items: stretch;
     gap: 1.3rem;
-    /* min/max-height만으로는 grid의 "auto" 트랙 높이가 내부 콘텐츠(특히 flex:1인
-       .history-name-list)의 계산 방식에 따라 여전히 크게 잡히는 문제가 있었음(브라우저의
-       grid auto-track 계산이 flex-grow 자식의 intrinsic 크기를 기대만큼 작게 안 잡음).
-       그래서 아예 height를 명시적으로 고정해 컨텐츠 양과 무관하게 박스 크기가 일정하게 만들고,
-       그 안에서 목록/상세 각각 자기 영역만 스크롤되게 함 */
-    height: clamp(420px, 68vh, 760px);
+    height: auto;
+    max-height: clamp(420px, 68vh, 760px);
 }
 
 .history-sidebar {
+    flex: 0 0 14rem;
     background: rgba(251, 246, 234, 0.6);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -43,8 +46,8 @@ body {
     padding: 1.3rem 1rem;
     display: flex;
     flex-direction: column;
-    /* 그리드 아이템은 기본적으로 자기 콘텐츠 크기보다 작게 못 줄어들어서(min-height:auto),
-       .history-box에 max-height를 걸어도 목록이 길면 이 박스가 그만큼 계속 커져버림.
+    /* flex 아이템은 기본적으로 자기 콘텐츠 크기보다 작게 못 줄어들어서(min-height:auto),
+       부모가 max-height로 눌러도 목록이 길면 이 박스가 그만큼 계속 커져버림.
        0으로 풀어줘야 안쪽 .history-name-list가 실제로 스크롤 영역을 갖게 됨 */
     min-height: 0;
 }
@@ -80,6 +83,8 @@ body {
 
 .history-detail {
     position: relative;
+    flex: 1;
+    min-width: 0;
     background: rgba(251, 246, 234, 0.6);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -87,9 +92,10 @@ body {
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 8px 24px rgba(63, 42, 29, 0.15);
     border-radius: 20px;
     padding: 1.8rem;
-    /* 비교하기 버튼을 항상 우측 하단에 고정으로 붙여두기 때문에, 스크롤되는 본문 내용이
-       버튼 밑으로 가려지지 않도록 아래쪽 여백을 넉넉히 확보함 */
-    padding-bottom: 4.4rem;
+    /* 비교하기 버튼을 항상 우측 하단에 고정으로 붙여두기 때문에, 박스가 콘텐츠 크기에 맞춰
+       줄어들 때도 버튼과 본문(특히 마지막 요약 박스)이 겹치지 않도록 아래쪽 여백을 버튼
+       높이보다 확실히 크게 확보함 */
+    padding-bottom: 5.6rem;
     min-height: 0;
     overflow-y: auto;
     /* 상세 내용이 짧으면 위쪽에 몰려있어 휑해 보이는 문제가 있었음. flex column +
@@ -358,11 +364,12 @@ body {
     .page-container { width: min(96vw, 2800px); margin: 1.2rem auto; }
 
     .history-box {
-        grid-template-columns: 1fr;
-        height: auto;
+        flex-direction: column;
+        max-height: none;
     }
 
     .history-sidebar {
+        flex-basis: auto;
         max-height: 12rem;
     }
 

@@ -19,9 +19,16 @@
         <div class="admin-panel">
             <section class="admin-page-heading">
                 <span class="admin-page-heading-icon"><i data-lucide="bell"></i></span>
-                <div><h2>알림 이벤트 등록</h2><p>회원들에게 보낼 알림 이벤트의 코드와 이름을 관리해요. (아직 백엔드 연동 전이라 새로고침하면 초기화돼요)</p></div>            </section>
+                <div><h2>알림 관리</h2><p>이벤트, 채널별 Template과 채널 종류를 관리해요.</p></div>
+            </section>
 
-            <section class="member-card">
+            <nav class="notification-admin-tabs" role="tablist">
+                <button class="notification-admin-tab active" type="button" data-notification-tab="events">이벤트 관리</button>
+                <button class="notification-admin-tab" type="button" data-notification-tab="templates">템플릿 관리</button>
+                <button class="notification-admin-tab" type="button" data-notification-tab="channels">채널 관리</button>
+            </nav>
+
+            <section class="member-card notification-tab-panel" data-notification-panel="events">
                 <div class="member-toolbar">
                     <div class="member-count">전체 이벤트 <strong id="notification-event-total-count">0</strong>개</div>
                     <div class="toolbar-actions">
@@ -37,6 +44,7 @@
                         <tr>
                             <th>이벤트 코드</th>
                             <th>이름</th>
+                            <th>대상 타입</th>
                             <th>설명</th>
                             <th>관리</th>
                         </tr>
@@ -44,6 +52,16 @@
                         <tbody id="notification-event-tbody"></tbody>
                     </table>
                 </div>
+            </section>
+
+            <section class="member-card notification-tab-panel" data-notification-panel="templates" hidden>
+                <div class="member-toolbar"><div class="member-count">전체 템플릿 <strong id="notification-template-total-count">0</strong>개</div><div class="toolbar-actions"><button class="add-button" type="button" onclick="createNotificationTemplate()"><i data-lucide="plus"></i>새 템플릿 등록</button></div></div>
+                <div class="table-wrap"><table class="member-table"><thead><tr><th>이벤트</th><th>채널</th><th>버전</th><th>본문</th><th>관리</th></tr></thead><tbody id="notification-template-tbody"></tbody></table></div>
+            </section>
+
+            <section class="member-card notification-tab-panel" data-notification-panel="channels" hidden>
+                <div class="member-toolbar"><div class="member-count">전체 채널 <strong id="channel-type-total-count">0</strong>개</div><div class="toolbar-actions"><button class="add-button" type="button" onclick="createNotificationChannel()"><i data-lucide="plus"></i>새 채널 등록</button></div></div>
+                <div class="table-wrap"><table class="member-table"><thead><tr><th>코드</th><th>이름</th><th>상태</th><th>관리</th></tr></thead><tbody id="channel-type-tbody"></tbody></table></div>
             </section>
 
             <div class="pagination" id="notification-event-pagination"></div>
@@ -76,7 +94,16 @@
             <textarea id="ne-description" rows="3" placeholder="예: 재배가 종료되고 수확이 완료되면 발송돼요."></textarea>
         </div>
 
-        <p class="modal-form-error" id="ne-form-error" style="display:none;">이벤트 코드와 이름을 모두 입력해 주세요.</p>
+        <div class="modal-field">
+            <label>대상 타입</label>
+            <select id="ne-target-type" required>
+                <option value="USER">사용자</option>
+                <option value="CULTIVATION">재배</option>
+                <option value="INQUIRY">문의</option>
+            </select>
+        </div>
+
+        <p class="modal-form-error" id="ne-form-error" style="display:none;">이벤트 코드, 이름, 대상 타입을 입력해 주세요.</p>
 
         <div class="modal-actions">
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-notification-event-form')">취소</button>
@@ -88,7 +115,7 @@
 <div class="modal-overlay" id="modal-notification-event-delete">
     <div class="modal-box">
         <h3 class="modal-title">이 알림 이벤트를 삭제하겠습니까?</h3>
-        <p class="modal-sub">삭제하면 목록에서 바로 사라져요. (현재는 브라우저에만 저장되는 화면이에요)</p>
+        <p class="modal-sub">삭제하면 목록에서 바로 사라져요. 사용 중인 이벤트는 삭제할 수 없어요.</p>
         <div class="modal-actions">
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-notification-event-delete')">취소</button>
             <button class="btn btn-danger" type="button" onclick="deleteNotificationEvent()">삭제</button>

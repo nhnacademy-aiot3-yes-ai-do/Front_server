@@ -13,6 +13,7 @@ import site.yesaido.frontserver.dto.notification.response.CultivationOptionRespo
 import site.yesaido.frontserver.dto.notification.response.SubscriptionResponse;
 import site.yesaido.frontserver.dto.notification.response.SubscriptionTypeResponse;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
 import java.util.List;
 
@@ -27,19 +28,19 @@ public class NotificationSubscriptionController {
 
     @GetMapping("/subscription-types")
     public ResponseEntity<List<SubscriptionTypeResponse>> listTypes() {
-        return notificationClient.getSubscriptionTypes();
+        return UpstreamResponseUtils.isolate(notificationClient.getSubscriptionTypes());
     }
 
     @GetMapping("/subscriptions")
     public ResponseEntity<List<SubscriptionResponse>> listSubscriptions() {
-        return notificationClient.getSubscriptions();
+        return UpstreamResponseUtils.isolate(notificationClient.getSubscriptions());
     }
 
     @PostMapping("/subscriptions")
     public ResponseEntity<SubscriptionResponse> createSubscription(
             @Valid @RequestBody SubscriptionCreateRequest request
     ) {
-        return notificationClient.createSubscription(request);
+        return UpstreamResponseUtils.isolate(notificationClient.createSubscription(request));
     }
 
     @PatchMapping("/subscriptions/{subscriptionId}/enabled")
@@ -47,7 +48,7 @@ public class NotificationSubscriptionController {
             @PathVariable Long subscriptionId,
             @Valid @RequestBody SubscriptionEnabledRequest request
     ) {
-        return notificationClient.changeSubscriptionEnabled(subscriptionId, request);
+        return UpstreamResponseUtils.isolate(notificationClient.changeSubscriptionEnabled(subscriptionId, request));
     }
 
     @DeleteMapping("/subscriptions/{subscriptionId}")
