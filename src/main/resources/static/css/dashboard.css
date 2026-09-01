@@ -1781,12 +1781,22 @@ body {
     padding-top: 0.3rem;
 }
 
+.settings-form-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.settings-form-content[hidden],
+.settings-actions .btn[hidden] {
+    display: none !important;
+}
+
 .settings-sensor-row {
     display: flex;
     align-items: center;
     gap: 0.6rem;
     width: 100%;
-    max-width: 13rem;
     border: 2px solid var(--brown-300);
     border-radius: 10px;
     padding: 0.6rem 0.8rem;
@@ -1799,9 +1809,55 @@ body {
     flex-shrink: 0;
 }
 
-.settings-threshold-row {
+.settings-sensor-select-group {
     display: flex;
-    align-items: flex-end;
+    flex-direction: column;
+    gap: 0.2rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.settings-sensor-select-group label {
+    font-size: 0.72rem;
+    color: var(--brown-500);
+}
+
+.settings-sensor-select-group select {
+    width: 100%;
+    border: 0;
+    color: var(--brown-900);
+    background: transparent;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    outline: none;
+}
+
+.settings-sensor-select-group select:disabled {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+.settings-recommendation {
+    min-height: 2.7rem;
+    margin: 0;
+    padding: 0.7rem 0.8rem;
+    border-radius: 10px;
+    background: rgba(124, 148, 115, 0.1);
+    color: var(--sage-700);
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
+.settings-recommendation.is-loading,
+.settings-recommendation.is-unavailable {
+    color: var(--brown-500);
+    background: rgba(139, 94, 60, 0.08);
+}
+
+.settings-threshold-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.8rem;
 }
 
@@ -1820,22 +1876,96 @@ body {
 
 .settings-threshold-field input {
     width: 100%;
-    padding: 0.5rem 0.6rem;
+    padding: 0.6rem 2.5rem 0.6rem 0.7rem;
     border: 2px solid var(--brown-300);
     border-radius: 10px;
     font-family: inherit;
+    background: #fff;
+    color: var(--brown-900);
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-.settings-confirm {
-    flex-shrink: 0;
-    height: 2.35rem;
-    display: inline-flex;
+.settings-threshold-field input:disabled {
+    background: rgba(139, 94, 60, 0.08);
+    color: var(--brown-600);
+    cursor: not-allowed;
+}
+
+.settings-config-col.is-editing .settings-threshold-field input:not(:disabled) {
+    border-color: var(--sage-500);
+    box-shadow: 0 0 0 3px rgba(124, 148, 115, 0.12);
+}
+
+.settings-config-col.has-warning .settings-threshold-field input {
+    border-color: #d7a73b;
+    background: #fffaf0;
+}
+
+.settings-input-with-unit {
+    position: relative;
+}
+
+.settings-input-with-unit span {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--brown-500);
+    font-size: 0.78rem;
+    pointer-events: none;
+}
+
+.settings-warning,
+.settings-error {
+    display: none;
+    margin: 0;
+    padding: 0.7rem 0.8rem;
+    border-radius: 10px;
+    font-size: 0.76rem;
+    line-height: 1.55;
+}
+
+.settings-warning.is-visible {
+    display: block;
+    color: #805b09;
+    background: #fff3cd;
+    border: 1px solid #e3bd60;
+}
+
+.settings-error.is-visible {
+    display: block;
+    color: #9e3f34;
+    background: rgba(192, 87, 74, 0.1);
+    border: 1px solid rgba(192, 87, 74, 0.35);
+}
+
+.settings-actions {
+    display: flex;
     align-items: center;
-    justify-content: center;
-    background: none;
-    border: none;
-    color: var(--sage-600);
-    cursor: pointer;
+    justify-content: flex-end;
+    gap: 0.55rem;
+}
+
+.settings-actions .btn {
+    min-width: 4.8rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.8rem;
+    box-shadow: none;
+}
+
+.settings-actions .btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.settings-empty-state {
+    width: 100%;
+    padding: 1.5rem 1rem;
+    border: 2px dashed var(--brown-300);
+    border-radius: 12px;
+    color: var(--brown-500);
+    text-align: center;
+    font-size: 0.82rem;
 }
 
 .modal-field label {
@@ -1950,4 +2080,8 @@ body {
     .tab-btn { padding: 0.55rem 1rem 0.5rem; font-size: 0.95rem; }
     .tab-panel { padding: 1rem; }
     .env-stats-card--main .env-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .settings-modal-grid { flex-direction: column; }
+    .settings-photo-col { width: 100%; align-items: center; }
+    .settings-config-col { width: 100%; }
+    .settings-threshold-row { grid-template-columns: 1fr; }
 }

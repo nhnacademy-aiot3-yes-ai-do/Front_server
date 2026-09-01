@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.common.ApiResponse;
+import site.yesaido.frontserver.dto.cultivation.request.cultivation.EnvironmentSettingRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
@@ -55,6 +57,13 @@ public class SensorController {
         return sensorClient.deleteSensor(cultivationId, sensorId);
     }
 
+    @PutMapping("/{cultivation-id}/environment-settings")
+    public ResponseEntity<Void> updateEnvironmentSetting(
+            @PathVariable("cultivation-id") Long cultivationId,
+            @Valid @RequestBody EnvironmentSettingRequest request
+    ) {
+        return sensorClient.updateEnvironmentSetting(cultivationId, request);
+    }
 
     @GetMapping(value = "/{cultivation-id}/sensor-values/trend", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SensorTrendPointListResponse> getSensorTrend(@PathVariable("cultivation-id") Long cultivationId,

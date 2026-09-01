@@ -92,7 +92,7 @@
                          th:style="${photos != null and !photos.isEmpty()} ? 'display:block;' : 'display:none;'"
                          alt="재배 사진" />
 
-                    <button class="photo-settings-btn" type="button" onclick="openModal('modal-settings')">
+                    <button class="photo-settings-btn" type="button" onclick="openEnvironmentSettingsModal()">
                         <i data-lucide="settings" style="width:20px;height:20px;"></i>
                     </button>
                 </div>
@@ -264,44 +264,47 @@
                 <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
             </div>
 
-            <div class="settings-config-col">
+            <div class="settings-config-col" id="settings-config-col">
+                <div class="settings-empty-state" id="settings-empty" hidden>
+                    현재 경작지에 설정 가능한 센서가 없습니다.
+                </div>
+
+                <div class="settings-form-content" id="settings-form-content">
                 <div class="settings-sensor-row">
                     <span id="settings-sensor-icon-wrap"><i data-lucide="thermometer" style="width:20px;height:20px;"></i></span>
-                    <div class="msh-select msh-select--settings" data-value="온도센서3" data-onchange="updateSettingsSensorIcon">
-                        <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
-                            <span class="msh-select-value">온도센서3</span>
-                            <i data-lucide="chevron-down" class="msh-select-chevron"></i>
-                        </button>
-                        <div class="msh-select-menu">
-                            <div class="msh-select-group-label">온도</div>
-                            <div class="msh-select-option" data-icon="thermometer" onclick="selectMshOption(this)">온도센서1</div>
-                            <div class="msh-select-option" data-icon="thermometer" onclick="selectMshOption(this)">온도센서2</div>
-                            <div class="msh-select-option selected" data-icon="thermometer" onclick="selectMshOption(this)">온도센서3</div>
-                            <div class="msh-select-group-label">습도</div>
-                            <div class="msh-select-option" data-icon="droplet" onclick="selectMshOption(this)">습도센서1</div>
-                            <div class="msh-select-option" data-icon="droplet" onclick="selectMshOption(this)">습도센서2</div>
-                            <div class="msh-select-group-label">CO2</div>
-                            <div class="msh-select-option" data-icon="cloudy" onclick="selectMshOption(this)">CO2센서1</div>
-                            <div class="msh-select-option" data-icon="cloudy" onclick="selectMshOption(this)">CO2센서2</div>
-                            <div class="msh-select-group-label">조도</div>
-                            <div class="msh-select-option" data-icon="sun" onclick="selectMshOption(this)">조도센서1</div>
-                            <div class="msh-select-option" data-icon="sun" onclick="selectMshOption(this)">조도센서2</div>
+                    <div class="settings-sensor-select-group">
+                        <label for="settings-sensor-select">센서 종류</label>
+                        <select id="settings-sensor-select" onchange="handleEnvironmentSensorChange()"></select>
+                    </div>
+                </div>
+
+                <p class="settings-recommendation" id="settings-recommendation" aria-live="polite"></p>
+
+                <div class="settings-threshold-row">
+                    <div class="settings-threshold-field">
+                        <label for="settings-threshold-min">최저값</label>
+                        <div class="settings-input-with-unit">
+                            <input id="settings-threshold-min" type="number" step="any" disabled oninput="handleEnvironmentThresholdInput()" />
+                            <span id="settings-threshold-min-unit"></span>
+                        </div>
+                    </div>
+                    <div class="settings-threshold-field">
+                        <label for="settings-threshold-max">최고값</label>
+                        <div class="settings-input-with-unit">
+                            <input id="settings-threshold-max" type="number" step="any" disabled oninput="handleEnvironmentThresholdInput()" />
+                            <span id="settings-threshold-max-unit"></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="settings-threshold-row">
-                    <div class="settings-threshold-field">
-                        <label>최고값</label>
-                        <input type="number" value="365" />
-                    </div>
-                    <div class="settings-threshold-field">
-                        <label>최저값</label>
-                        <input type="number" value="365" />
-                    </div>
-                    <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
-                        <i data-lucide="circle-check"></i>
-                    </button>
+                <p class="settings-warning" id="settings-warning" role="alert"></p>
+                <p class="settings-error" id="settings-error" role="alert"></p>
+
+                <div class="settings-actions">
+                    <button class="btn btn-outline" id="settings-edit-btn" type="button" onclick="startEnvironmentSettingEdit()">수정</button>
+                    <button class="btn btn-outline" id="settings-cancel-btn" type="button" onclick="cancelEnvironmentSettingEdit()" hidden>취소</button>
+                    <button class="btn btn-primary" id="settings-save-btn" type="button" onclick="saveEnvironmentSetting()" hidden>저장</button>
+                </div>
                 </div>
             </div>
         </div>
@@ -491,6 +494,7 @@
     var PHOTOS = [(${photosJson})];
     var memberData = [(${membersJson})];
     var MY_ROLE = /*[[${myRole}]]*/ null;
+    var MUSHROOM_NAME = /*[[${mushroomNameKo}]]*/ null;
     var SENSORS_BOOTSTRAP = [(${sensorsJson})];
     var SENSOR_VALUES_BOOTSTRAP = [(${sensorValuesJson})];
     var GROWTH_DAYS = /*[[${growthDays}]]*/ 0;
