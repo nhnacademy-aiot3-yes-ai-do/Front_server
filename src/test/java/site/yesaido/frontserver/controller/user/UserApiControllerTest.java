@@ -9,8 +9,10 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAu
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
@@ -192,7 +194,7 @@ class UserApiControllerTest {
     @Test
     @DisplayName("프로필 마이페이지 조회")
     void getMyPageSuccess() throws Exception {
-        UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "닉네임", "USER", "ACTIVE", LocalDateTime.now(), LocalDateTime.now(), true);
+        UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "닉네임", "USER", "ACTIVE", LocalDateTime.now(), LocalDateTime.now(), null, true);
         given(userClient.getMyPage()).willReturn(new ApiResponse<>(true, "조회 성공", profileResponse));
 
         mockMvc.perform(get("/users/mypage"))
@@ -209,6 +211,27 @@ class UserApiControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("프로필 사진 업로드 요청을 User 서버에 multipart 형식으로 전달한다")
+    void uploadProfileImageSuccess() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "profile.png",
+                MediaType.IMAGE_PNG_VALUE,
+                "image-content".getBytes()
+        );
+        given(userClient.uploadProfileImage(any()))
+                .willReturn(new ApiResponse<>(true, "프로필 이미지 업로드 성공", "profiles/1/image.png"));
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/users/mypage/profile-image")
+                        .file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").value("profiles/1/image.png"));
+
+        verify(userClient).uploadProfileImage(any());
     }
 
     @Test

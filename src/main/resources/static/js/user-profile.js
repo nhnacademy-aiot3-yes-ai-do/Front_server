@@ -11,6 +11,22 @@ const hideError = (el) => {
     el.style.display = 'none';
 };
 
+function renderProfileImage(photoUrl) {
+    const imageElement = document.getElementById('profile-image');
+    const defaultIcon = document.getElementById('profile-default-icon');
+
+    if (photoUrl) {
+        imageElement.src = photoUrl;
+        imageElement.hidden = false;
+        defaultIcon.hidden = true;
+        return;
+    }
+
+    imageElement.removeAttribute('src');
+    imageElement.hidden = true;
+    defaultIcon.hidden = false;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const res = await fetch('/users/mypage');
@@ -21,6 +37,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         const user = result.data;
+        renderProfileImage(user.photoUrl);
+
         document.getElementById('profile-view-nickname').textContent = user.nickname || '';
         document.getElementById('profile-view-nickname-row').textContent = user.nickname || '';
         document.getElementById('profile-view-email').textContent = user.email || '';
@@ -165,5 +183,51 @@ async function confirmProfileDelete() {
     } catch {
         showError(errorEl, '비밀번호 확인 중 오류가 발생했습니다.');
     }
+}
 
+async function uploadProfileImage(event) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+        return;
+    }
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+        alert('JPG, PNG, WEBP 이미지 파일만 업로드할 수 있습니다.');
+        event.target.value = '';
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/users/mypage/profile-image', {
+            method: 'PUT',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+            alert(result.message || '프로필 사진 업로드에 실패했습니다.');
+            return;
+        }
+
+        const profileResponse = await fetch('/users/mypage');
+        const profileResult = await profileResponse.json();
+
+        if (!profileResponse.ok || !profileResult.success) {
+            alert('사진은 업로드됐지만 화면 갱신에 실패했습니다. 새로고침해주세요.');
+            return;
+        }
+
+        renderProfileImage(profileResult.data.photoUrl);
+        renderHeaderProfileImage(profileResult.data.photoUrl);
+        alert('프로필 사진이 변경되었습니다.');
+    } catch {
+        alert('서버 통신 중 오류가 발생했습니다.');
+    } finally {
+        event.target.value = '';
+    }
 }

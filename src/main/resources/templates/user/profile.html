@@ -17,7 +17,30 @@
 
         <section id="profile-view" class="profile-panel active">
             <div class="profile-card">
-                <div class="profile-avatar"><i data-lucide="circle-user-round" style="width:40px;height:40px;"></i></div>
+                <div class="profile-image-section">
+                    <div class="profile-avatar">
+                        <img id="profile-image"
+                             class="profile-image"
+                             src=""
+                             alt="프로필 사진"
+                             hidden />
+
+                        <i id="profile-default-icon"
+                           data-lucide="circle-user-round"
+                           style="width:40px;height:40px;"></i>
+                    </div>
+
+                    <label for="profile-image-input" class="profile-image-upload-button">
+                        <i data-lucide="camera"></i>
+                        사진 변경
+                    </label>
+
+                    <input id="profile-image-input"
+                           type="file"
+                           accept="image/jpeg,image/png,image/webp"
+                           hidden
+                           onchange="uploadProfileImage(event)" />
+                </div>
                 <h2 class="profile-name" id="profile-view-nickname">오인택</h2>
 
                 <div class="info-rows">

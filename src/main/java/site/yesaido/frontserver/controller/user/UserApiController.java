@@ -3,7 +3,9 @@ package site.yesaido.frontserver.controller.user;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.*;
@@ -136,5 +138,10 @@ public class UserApiController {
             authCookieProvider.clearAuthCookies(response);
         }
         return apiResponse;
+    }
+
+    @PutMapping(value = "/users/mypage/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<String> uploadProfileImage(@RequestPart("file")MultipartFile file){
+        return userClient.uploadProfileImage(file);
     }
 }

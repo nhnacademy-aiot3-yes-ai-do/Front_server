@@ -1,21 +1,19 @@
 package site.yesaido.frontserver.controller.user;
 
 import feign.FeignException;
+import feign.form.FormData;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
-import site.yesaido.frontserver.dto.user.request.LoginRequest;
-import site.yesaido.frontserver.dto.user.request.LogoutRequest;
-import site.yesaido.frontserver.dto.user.request.PasswordResetRequest;
-import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
+import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.exception.DormantUserException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
@@ -40,11 +38,11 @@ public class UserController {
     private final ObjectMapper objectMapper;
 
     @PostMapping("/signup")
-    public String signup(@RequestParam String email,
-                         @RequestParam String password,
-                         @RequestParam String nickname) {
-        UserSignUpRequest request = new UserSignUpRequest(email, password, nickname, "USER");
-        userClient.signUp(request);
+    public String signup(@ModelAttribute SignupFormRequest form,
+                         @RequestPart(value = "profileImage", required = false)MultipartFile profileImage) {
+        UserSignUpRequest request = new UserSignUpRequest(form.email(), form.password(), form.nickname(), "USER");
+        FormData requestPart = new FormData(MediaType.APPLICATION_JSON_VALUE, "request.json", objectMapper.writeValueAsBytes(request));
+        userClient.signUp(requestPart, profileImage);
         return REDIRECT_PREFIX + LOGIN_URL;
     }
 

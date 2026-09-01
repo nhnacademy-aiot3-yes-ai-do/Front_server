@@ -12,15 +12,22 @@
         <img src="/images/logo1.png" alt="MushMush 로고" class="auth-logo" />
 
         <div class="auth-body">
-            <form action="/signup" method="post">
+            <form action="/signup" method="post" enctype="multipart/form-data">
+
                 <input type="hidden" name="email" th:value="${email}" />
                 <input type="hidden" name="password" th:value="${password}" />
 
                 <div class="profile-row">
                     <div class="avatar-upload">
                         <label for="avatar">
-                            <span>+</span>
-                            <input type="file" id="avatar" name="avatar" accept="image/*" />
+                            <span id="avatar-placeholder">+</span>
+                            <img id="avatar-preview" alt="선택한 프로필 사진 미리보기" hidden />
+                            <input
+                                    type="file"
+                                    id="avatar"
+                                    name="profileImage"
+                                    accept="image/jpeg,image/png,image/webp"
+                            />
                         </label>
                     </div>
 

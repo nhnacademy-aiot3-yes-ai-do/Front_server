@@ -1,10 +1,13 @@
 package site.yesaido.frontserver.client;
 
+import feign.form.FormData;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.user.request.*;
@@ -23,8 +26,8 @@ public interface UserClient {
     ApiResponse<Boolean> checkNickname(@RequestParam("nickname") String nickname);
 
     // 3. 회원가입
-    @PostMapping("/api/v1/users/signup")
-    ApiResponse<Object> signUp(@RequestBody UserSignUpRequest requestDto);
+    @PostMapping(value = "/api/v1/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ApiResponse<Object> signUp(@RequestPart("request") FormData request, @RequestPart(value = "profileImage", required = false) MultipartFile profileImage);
 
     // 4. 로그인
     @PostMapping("/api/v1/auth/login")
@@ -84,4 +87,7 @@ public interface UserClient {
 
     @PostMapping("/api/v1/auth/password/reset")
     ApiResponse<Void> resetPassword(@RequestBody PasswordResetRequest resetRequest);
+
+    @PutMapping(value = "/api/v1/users/mypage/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ApiResponse<String> uploadProfileImage(@RequestPart("file")MultipartFile file);
 }

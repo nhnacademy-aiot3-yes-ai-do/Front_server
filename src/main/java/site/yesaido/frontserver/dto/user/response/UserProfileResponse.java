@@ -11,6 +11,7 @@ public record UserProfileResponse (
         String status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
+        String photoUrl,
         boolean hasPassword
 ){
 }
