@@ -33,7 +33,7 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
 
         String accessToken = cookieValue(request, "accessToken");
         if (!StringUtils.hasText(accessToken)) {
-            response.sendRedirect("/login");
+            response.sendRedirect(loginRequired.adminOnly() ? "/admin/login" : "/login");
             return false;
         }
 

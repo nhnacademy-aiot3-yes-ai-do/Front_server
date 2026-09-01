@@ -172,7 +172,7 @@ public class UserController {
     public void adminLogin(@RequestParam String email,
                            @RequestParam String password,
                            HttpServletResponse response,
-                           RedirectAttributes redirectAttributes) throws IOException {
+                           HttpSession session) throws IOException {
         try {
             ApiResponse<TokenResponse> apiResponse = userClient.login(new LoginRequest(email, password));
             TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
@@ -186,7 +186,7 @@ public class UserController {
             response.sendRedirect("/admin");
         } catch (Exception e) {
             log.warn("관리자 로그인 실패: {}", e.getMessage());
-            redirectAttributes.addFlashAttribute("loginError", "관리자 계정 정보가 일치하지 않습니다.");
+            setAuthResult(session, "error", "관리자 계정 정보가 일치하지 않습니다.");
             response.sendRedirect("/admin/login");
         }
     }

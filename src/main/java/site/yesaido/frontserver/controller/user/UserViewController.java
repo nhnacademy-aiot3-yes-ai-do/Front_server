@@ -19,7 +19,7 @@ public class UserViewController {
 
     @GetMapping("/admin/login")
     public String adminLoginPage() {
-        return "auth/admin-login";
+        return REACT_APP;
     }
 
     @GetMapping("/signup")

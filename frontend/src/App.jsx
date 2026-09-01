@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 const AppLayout = lazy(() => import("./layouts/AppLayout"));
+const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
 const AuthLayout = lazy(() => import("./pages/auth/AuthLayout"));
 const FindPasswordPage = lazy(() => import("./pages/auth/FindPasswordPage"));
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"));
@@ -14,6 +15,13 @@ const CultivationListPage = lazy(() => import("./pages/cultivations/CultivationL
 const NotificationSettingsPage = lazy(() => import("./pages/profile/NotificationSettingsPage"));
 const ProfilePage = lazy(() => import("./pages/profile/ProfilePage"));
 const SupportPage = lazy(() => import("./pages/support/SupportPage"));
+const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+const AdminInquiriesPage = lazy(() => import("./pages/admin/AdminInquiriesPage"));
+const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
+const AdminMembersPage = lazy(() => import("./pages/admin/AdminMembersPage"));
+const AdminMushroomsPage = lazy(() => import("./pages/admin/AdminMushroomsPage"));
+const AdminNotificationsPage = lazy(() => import("./pages/admin/AdminNotificationsPage"));
+const AdminSensorsPage = lazy(() => import("./pages/admin/AdminSensorsPage"));
 
 export default function App() {
   return (
@@ -21,12 +29,22 @@ export default function App() {
       <Routes>
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/signup/nickname" element={<Navigate to="/signup" replace />} />
           <Route path="/signup-nickname" element={<Navigate to="/signup" replace />} />
           <Route path="/find-password" element={<FindPasswordPage />} />
           <Route path="/verify-code" element={<FindPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+        </Route>
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminDashboardPage />} />
+          <Route path="members" element={<AdminMembersPage />} />
+          <Route path="inquiries" element={<AdminInquiriesPage />} />
+          <Route path="mushrooms" element={<AdminMushroomsPage />} />
+          <Route path="sensors" element={<AdminSensorsPage />} />
+          <Route path="notification-events" element={<AdminNotificationsPage />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
         <Route element={<AppLayout />}>
           <Route path="/cultivations" element={<CultivationListPage />} />
