@@ -14,7 +14,6 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivation.Cultivation
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
