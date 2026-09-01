@@ -12,6 +12,7 @@ import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivation
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidationResponse;
@@ -55,7 +56,6 @@ public class SensorController {
         return sensorClient.deleteSensor(cultivationId, sensorId);
     }
 
-
     @GetMapping(value = "/{cultivation-id}/sensor-values/trend", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<SensorTrendPointListResponse> getSensorTrend(@PathVariable("cultivation-id") Long cultivationId,
                                                                        @RequestParam("device-eui") String deviceEui,
@@ -64,11 +64,18 @@ public class SensorController {
         return jsonResponse(upstream);
     }
 
+    @GetMapping(value = "/{cultivation-id}/sensor-values", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<LatestSensorValueListResponse> getLatestSensorValues(
+            @PathVariable("cultivation-id") Long cultivationId
+    ) {
+        return jsonResponse(sensorClient.getLatestSensorValues(cultivationId));
+    }
+
     @PostMapping("/{cultivation-id}/sensor-validation")
     public ResponseEntity<ApiResponse<SensorValidationResponse>> validationSensorThreshold(
             @PathVariable("cultivation-id") Long cultivationId,
-            @RequestBody SensorValidationRequest request){
-        return ResponseEntity.ok(aiClient.validationSensorThreshold(cultivationId ,request));
+            @RequestBody SensorValidationRequest request) {
+        return ResponseEntity.ok(aiClient.validationSensorThreshold(cultivationId, request));
     }
 
     /**

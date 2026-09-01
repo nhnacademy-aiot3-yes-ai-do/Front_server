@@ -22,5 +22,7 @@ jobs:
 
       - uses: ./.github/actions/setup-test-env
 
+      - uses: ./.github/actions/check-frontend
+
       - name: Test and JaCoCo coverage check
         run: ./mvnw -B clean verify

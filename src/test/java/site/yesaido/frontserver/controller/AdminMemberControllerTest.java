@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -118,7 +119,7 @@ class AdminMemberControllerTest {
         when(userClient.forceWithdraw(1L))
                 .thenReturn(new ApiResponse<>(true, "회원을 강제 탈퇴했습니다.", null));
 
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/admin/members/1")
+        mockMvc.perform(delete("/admin/members/1")
                         .cookie(ACCESS_TOKEN, ADMIN_ROLE))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
