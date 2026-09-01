@@ -6,6 +6,8 @@ server:
         http-only: ${COOKIE_HTTP_ONLY:true}
         secure: ${COOKIE_SECURE:true}
   shutdown: graceful
+  tomcat:
+    keep-alive-timeout: 100000
 
 spring:
   config:
