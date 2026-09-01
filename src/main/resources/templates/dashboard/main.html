@@ -324,7 +324,7 @@
         <form class="modal-actions" id="harvest-mode-form" method="post">
             <input name="_method" type="hidden" value="PUT" />
             <button class="btn btn-outline" type="button" onclick="closeModal('modal-harvest-mode')">Cancel</button>
-            <button class="btn btn-primary" type="submit">전환</button>
+            <button class="btn btn-primary" type="submit" onclick="this.disabled=true; this.closest('form').submit();">전환</button>
         </form>
     </div>
 </div>
