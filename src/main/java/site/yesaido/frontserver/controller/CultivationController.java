@@ -200,7 +200,8 @@ public class CultivationController {
 
     @PutMapping("/{cultivation-id}/harvest-mode")
     public ResponseEntity<CultivationModeChangeResponse> switchToHarvestMode(@PathVariable("cultivation-id") Long cultivationId) {
-        return cultivationClient.switchToHarvestMode(cultivationId);
+        ResponseEntity<CultivationModeChangeResponse> response = cultivationClient.switchToHarvestMode(cultivationId);
+        return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
     }
 
     @PostMapping("/{cultivation-id}/finish")
