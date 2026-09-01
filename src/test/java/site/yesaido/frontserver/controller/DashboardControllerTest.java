@@ -32,7 +32,7 @@ class DashboardControllerTest {
     void dashboardPageReturnsMainView() throws Exception {
         mockMvc.perform(get("/dashboard").cookie(new Cookie("accessToken", "demo-access-token")))
                 .andExpect(status().isOk())
-                .andExpect(view().name("dashboard/main"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test

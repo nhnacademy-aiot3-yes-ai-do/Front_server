@@ -3,6 +3,7 @@ package site.yesaido.frontserver.exception;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import site.yesaido.frontserver.controller.AuthResultController;
+import site.yesaido.frontserver.dto.react.AuthResultResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.io.IOException;
@@ -150,9 +153,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DormantUserException.class)
-    public String handleDormantUserException(DormantUserException e, RedirectAttributes redirectAttributes) {
+    public String handleDormantUserException(
+            DormantUserException e,
+            RedirectAttributes redirectAttributes,
+            HttpSession session
+    ) {
         redirectAttributes.addFlashAttribute("isDormant", true);
         redirectAttributes.addFlashAttribute("dormantEmail", e.getEmail());
+        session.setAttribute(
+                AuthResultController.AUTH_RESULT_SESSION_KEY,
+                new AuthResultResponse("dormant", e.getMessage(), e.getEmail())
+        );
         return "redirect:/login";
     }
 

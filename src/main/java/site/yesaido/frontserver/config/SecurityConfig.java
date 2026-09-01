@@ -42,7 +42,7 @@ public class SecurityConfig {
                     .httpBasic(AbstractHttpConfigurer::disable)
                     .logout(AbstractHttpConfigurer::disable)
                     .authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()
+                            .requestMatchers("/css/**", "/js/**", "/images/**", "/react/**", "/favicon.ico").permitAll()
                             .anyRequest().permitAll()
                     )
                     .oauth2Login(oauth2 -> oauth2

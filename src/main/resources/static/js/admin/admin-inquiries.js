@@ -183,6 +183,44 @@ async function openInquiryDetail(id) {
     }
 }
 
+function deleteCultivationFromInquiry() {
+    if (!currentInquiryDetail || !currentInquiryDetail.cultivationId) {
+        alert('삭제할 경작지 정보가 없습니다.');
+        return;
+    }
+
+    openDeleteConfirm();
+}
+
+function openDeleteConfirm() {
+    openModal('modal-delete-confirm');
+}
+
+async function confirmDeleteCultivation() {
+    if (!currentInquiryDetail || !currentInquiryDetail.cultivationId) {
+        alert('삭제할 경작지 정보가 없습니다.');
+        closeModal('modal-delete-confirm');
+        return;
+    }
+
+    try {
+        var response = await fetch('/cultivations/' + currentInquiryDetail.cultivationId, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error('cultivation delete failed');
+        }
+
+        closeModal('modal-delete-confirm');
+        closeModal('modal-cultivation-mini');
+        closeModal('modal-inquiry-detail');
+        alert('경작지를 삭제했습니다.');
+        loadInquiries(inquiryState.page);
+    } catch (e) {
+        alert('경작지 삭제에 실패했습니다. 다시 시도해 주세요.');
+    }
+}
+
 function renderInquiryDetail(inquiry) {
     document.getElementById('iq-category').textContent = inquiry.categoryName;
 

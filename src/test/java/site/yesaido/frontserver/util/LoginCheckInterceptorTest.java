@@ -78,6 +78,21 @@ class LoginCheckInterceptorTest {
     }
 
     @Test
+    @DisplayName("관리자 화면에 accessToken 쿠키 없이 접근하면 /admin/login으로 리다이렉트")
+    void noAccessTokenRedirectsToAdminLoginForAdminOnly() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        TestUserClass target = new TestUserClass();
+        Method method = TestUserClass.class.getMethod("adminOnlyMethod");
+        HandlerMethod handlerMethod = new HandlerMethod(target, method);
+
+        boolean result = interceptor.preHandle(request, response, handlerMethod);
+
+        assertFalse(result);
+        assertEquals("/admin/login", response.getRedirectedUrl());
+    }
+
+    @Test
     @DisplayName("adminOnly 요구 시 ROLE 쿠키가 ADMIN이 아니면 / 리다이렉트 및 false 반환")
     void adminOnlyFailsForUserRole() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();

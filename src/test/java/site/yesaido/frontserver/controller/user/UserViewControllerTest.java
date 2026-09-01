@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller.user;
 
+import jakarta.servlet.http.Cookie;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc(addFilters = false)
 @Import({AuthCookieProvider.class, ViewJsonWriter.class})
 class UserViewControllerTest {
+    private static final Cookie LOGGED_IN = new Cookie("accessToken", "demo-access-token");
 
     @Autowired
     private MockMvc mockMvc;
@@ -54,9 +56,9 @@ class UserViewControllerTest {
     @Test
     @DisplayName("마이페이지 요청 시 user/profile 뷰 반환")
     void myPageRequestReturnsProfileView() throws Exception {
-        mockMvc.perform(get("/mypage"))
+        mockMvc.perform(get("/mypage").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("user/profile"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -64,7 +66,7 @@ class UserViewControllerTest {
     void signupPageReturnsSignupView() throws Exception {
         mockMvc.perform(get("/signup"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("auth/signup"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -72,7 +74,7 @@ class UserViewControllerTest {
     void loginPageReturnsLoginView() throws Exception {
         mockMvc.perform(get("/login"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("auth/login"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -80,7 +82,7 @@ class UserViewControllerTest {
     void findPasswordPageReturnsView() throws Exception {
         mockMvc.perform(get("/find-password"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("auth/find-password"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -97,7 +99,7 @@ class UserViewControllerTest {
         mockMvc.perform(get("/reset-password")
                         .sessionAttr("passwordResetVerifiedEmail", "test@naver.com"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("auth/reset-password"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -108,10 +110,9 @@ class UserViewControllerTest {
         when(notificationClient.getSubscriptions()).thenReturn(ResponseEntity.ok(List.of()));
         when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(new CultivationSummaryListResponse(List.of())));
 
-        mockMvc.perform(get("/mypage/notifications"))
+        mockMvc.perform(get("/mypage/notifications").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("user/notification-settings"))
-                .andExpect(model().attributeExists("endpointsJson", "subscriptionTypesJson", "subscriptionsJson", "cultivationOptionsJson"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -121,9 +122,8 @@ class UserViewControllerTest {
                         .param("email", "test@naver.com")
                         .param("password", "nhn123!"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("auth/signup-nickname"))
-                .andExpect(model().attribute("email", "test@naver.com"))
-                .andExpect(model().attribute("password", "nhn123!"));
+                .andExpect(view().name("forward:/react/index.html"))
+                .andExpect(model().attributeDoesNotExist("email", "password"));
     }
 
     @Test
@@ -131,7 +131,7 @@ class UserViewControllerTest {
     void signupNicknamePageReturnsViewWithoutModel() throws Exception {
         mockMvc.perform(get("/signup/nickname"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("auth/signup-nickname"))
+                .andExpect(view().name("forward:/react/index.html"))
                 .andExpect(model().attributeDoesNotExist("email"))
                 .andExpect(model().attributeDoesNotExist("password"));
     }
@@ -142,8 +142,8 @@ class UserViewControllerTest {
         mockMvc.perform(get("/verify-code")
                         .param("email", "test@naver.com"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("auth/verify-code"))
-                .andExpect(model().attribute("email", "test@naver.com"));
+                .andExpect(view().name("forward:/react/index.html"))
+                .andExpect(model().attributeDoesNotExist("email"));
     }
 
     @Test
@@ -151,7 +151,7 @@ class UserViewControllerTest {
     void verifyCodePageReturnsViewWithoutModel() throws Exception {
         mockMvc.perform(get("/verify-code"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("auth/verify-code"))
+                .andExpect(view().name("forward:/react/index.html"))
                 .andExpect(model().attributeDoesNotExist("email"));
     }
 }

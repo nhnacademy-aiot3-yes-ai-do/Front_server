@@ -26,7 +26,7 @@ function switchMemberSub(wrapperEl) {
     var searchInput = document.getElementById('member-search-input');
     if (searchInput) searchInput.value = '';
     document.getElementById('member-last-col').textContent =
-        memberState.sub === 'active' ? '최근 로그인' : '탈퇴 일자';
+        memberState.sub === 'withdrawn' ? '탈퇴 일자' : '최근 로그인';
     loadMembers(0);
 }
 
@@ -77,7 +77,13 @@ function renderMemberRows() {
     }
 
     rows.forEach(function (m, idx) {
-        var lastValue = memberState.sub === 'active' ? m.lastLoginAt : m.deletedAt;
+        var lastValue = memberState.sub === 'withdrawn' ? m.deletedAt : m.lastLoginAt;
+        var actionContent = memberState.sub === 'dormant'
+            ? '<button type="button" class="dormant-release-button" onclick="releaseDormantMember(' + m.userId + ')">휴면 해제</button>' +
+              '<button type="button" class="force-withdraw-button" onclick="forceWithdrawMember(' + m.userId + ')">강제 탈퇴</button>'
+            : memberState.sub === 'active'
+                ? '<button type="button" class="force-withdraw-button" onclick="forceWithdrawMember(' + m.userId + ')">강제 탈퇴</button>'
+                : '<span class="row-action-empty">-</span>';
         var tr = document.createElement('tr');
         tr.innerHTML =
             '<td><div class="user-cell"><span class="user-avatar avatar-tone-' + (idx % 8) + '"><i data-lucide="circle-user-round"></i></span><strong>' + m.nickname + '</strong></div></td>' +
@@ -85,13 +91,46 @@ function renderMemberRows() {
             '<td>' + formatDate(m.createdAt) + '</td>' +
             '<td>' + formatDate(lastValue) + '</td>' +
             '<td><div class="row-actions">' +
-                '<button type="button" title="수정" onclick="adminComingSoon()"><i data-lucide="pencil"></i></button>' +
-                '<button type="button" title="삭제" onclick="adminComingSoon()"><i data-lucide="trash-2"></i></button>' +
+                actionContent +
             '</div></td>';
         tbody.appendChild(tr);
     });
 
     lucide.createIcons();
+}
+
+async function releaseDormantMember(memberId) {
+    if (!confirm('이 회원의 휴면 상태를 해제할까요?')) {
+        return;
+    }
+
+    try {
+        await fetchJson('/admin/members/' + memberId + '/dormant-release', {
+            method: 'PUT'
+        });
+
+        alert('휴면 계정을 해제했습니다.');
+        loadMembers(memberState.page);
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+async function forceWithdrawMember(memberId) {
+    if (!confirm('이 회원을 강제 탈퇴 처리할까요?\n이 작업은 되돌릴 수 없습니다.')) {
+        return;
+    }
+
+    try {
+        await fetchJson('/admin/members/' + memberId, {
+            method: 'DELETE'
+        });
+
+        alert('회원을 강제 탈퇴 처리했습니다.');
+        loadMembers(memberState.page);
+    } catch (e) {
+        alert(e.message);
+    }
 }
 
 function renderMemberPagination() {

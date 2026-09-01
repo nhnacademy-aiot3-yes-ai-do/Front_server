@@ -10,6 +10,8 @@ import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorTypeRequest
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.*;
 
+import java.time.LocalDate;
+
 @FeignClient(name = "sensor-client", url = "${feign.client.gateway.url}")
 public interface SensorClient {
     // sensor type
@@ -67,4 +69,10 @@ public interface SensorClient {
     ResponseEntity<SensorTrendPointListResponse> getSensorTrend(@PathVariable("cultivation-id") Long cultivationId,
                                                                 @RequestParam("device-eui") String deviceEui,
                                                                 @RequestParam("sensor-type") String sensorType);
+
+    @GetMapping("/api/v1/cultivations/{cultivation-id}/environment-compliance/daily")
+    ResponseEntity<EnvironmentComplianceResponse> getDailyEnvironmentCompliance(
+            @PathVariable("cultivation-id") Long cultivationId,
+            @RequestParam(value = "date", required = false) LocalDate date
+    );
 }

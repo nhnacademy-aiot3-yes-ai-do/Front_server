@@ -44,5 +44,9 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/fonts/**")
                 .addResourceLocations("classpath:/static/fonts/")
                 .setCacheControl(CacheControl.maxAge(7, TimeUnit.DAYS).cachePublic());
+
+        registry.addResourceHandler("/react/**")
+                .addResourceLocations("classpath:/static/react/")
+                .setCacheControl(CacheControl.noCache().cachePublic());
     }
 }
