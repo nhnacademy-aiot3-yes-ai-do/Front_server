@@ -142,27 +142,35 @@ export default function SignupPage() {
               {verified && <p className="help-text ok">이메일 인증이 완료되었습니다.</p>}
             </div>
           )}
-          <div className="field">
-            <input
-              name="password"
-              type="password"
-              placeholder="비밀번호"
-              autoComplete="new-password"
-              minLength="8"
-              required
-            />
-            <p className="help-text">※ 비밀번호는 영문, 숫자, 특수문자(@$!%*#?&.) 포함 8자 이상</p>
-          </div>
-          <div className="field">
-            <input
-              name="confirmPassword"
-              type="password"
-              placeholder="비밀번호 확인"
-              autoComplete="new-password"
-              minLength="8"
-              required
-            />
-          </div>
+            <div className="field">
+                <label className="sr-only" htmlFor="signup-password">
+                    비밀번호
+                </label>
+                <input
+                    id="signup-password"
+                    name="password"
+                    type="password"
+                    placeholder="비밀번호"
+                    autoComplete="new-password"
+                    minLength="8"
+                    required
+                />
+                <p className="help-text">※ 비밀번호는 영문, 숫자, 특수문자(@$!%*#?&.) 포함 8자 이상</p>
+            </div>
+            <div className="field">
+                <label className="sr-only" htmlFor="signup-confirm-password">
+                    비밀번호 확인
+                </label>
+                <input
+                    id="signup-confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="비밀번호 확인"
+                    autoComplete="new-password"
+                    minLength="8"
+                    required
+                />
+            </div>
           <button
             className="button button--primary button--wide"
             type="button"
