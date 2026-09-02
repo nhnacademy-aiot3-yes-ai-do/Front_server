@@ -61,16 +61,6 @@ async function handleCheckEmail() {
     }
 
     try {
-        const response = await fetch(`/users/check-email?email=${encodeURIComponent(email)}`);
-        const isDuplicated = await response.json();
-        if (isDuplicated) {
-            alert("이미 사용 중인 이메일입니다!");
-            emailChecked = false;
-            return;
-        }
-
-        emailChecked = true;
-
         const sendResponse = await fetch(`/users/email/send?email=${encodeURIComponent(email)}`, { method: "POST" });
         if (!sendResponse.ok) {
             const errData = await sendResponse.json();
@@ -79,9 +69,10 @@ async function handleCheckEmail() {
         }
 
         emailVerified = false;
+        emailChecked = false;
         document.getElementById("verify-code-field").style.display = "block";
-        alert("사용 가능한 이메일입니다! 인증번호를 발송했어요.");
-        startTimer(300);
+        alert("인증번호를 발송했어요.");
+        startTimer(30);
 
     } catch (error) {
         console.error(error);
@@ -113,7 +104,7 @@ async function handleVerifyCode() {
 
     try {
         const response = await fetch(
-            `/users/email/verify?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`,
+            `/users/signup/verify-email?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`,
             { method: "POST" }
         );
 
@@ -124,17 +115,36 @@ async function handleVerifyCode() {
             return;
         }
 
-        const isVerified = await response.json();
+        const payload = await response.json();
+        const result = payload.data;
 
-        if (isVerified === true) {
+        if (result && result.verified === true) {
             clearInterval(timerInterval);
             document.getElementById("timer-text").textContent = "";
-            emailVerified = true;
-            statusText.textContent = "인증되었습니다.";
-            statusText.style.color = "#16a34a";
             document.getElementById("verify-code").disabled = true;
+
+            if (result.eligibility === "AVAILABLE") {
+                emailChecked = true;
+                emailVerified = true;
+                statusText.textContent = "인증이 완료되었습니다. 가입을 진행해 주세요.";
+                statusText.style.color = "#16a34a";
+                return;
+            }
+
+            emailChecked = false;
+            emailVerified = false;
+            if (result.eligibility === "ALREADY_REGISTERED") {
+                statusText.textContent = "이미 가입된 이메일입니다.";
+            } else if (result.eligibility === "REJOIN_RESTRICTED") {
+                const availableDate = result.rejoinAvailableAt
+                    ? result.rejoinAvailableAt.slice(0, 10)
+                    : "30일 후";
+                statusText.textContent = `탈퇴 처리 후 30일 동안은 재가입할 수 없습니다. ${availableDate}부터 가능합니다.`;
+            }
+            statusText.style.color = "#dc2626";
         } else {
             emailVerified = false;
+            emailChecked = false;
             statusText.textContent = "인증번호가 올바르지 않아요. 다시 확인해 주세요.";
             statusText.style.color = "#dc2626";
         }

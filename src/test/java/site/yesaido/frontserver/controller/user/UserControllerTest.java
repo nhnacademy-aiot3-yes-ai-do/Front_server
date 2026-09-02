@@ -3,6 +3,7 @@ package site.yesaido.frontserver.controller.user;
 import feign.FeignException;
 import feign.Request;
 import feign.Response;
+import feign.form.FormData;
 import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
@@ -13,8 +14,10 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAu
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.mockito.ArgumentCaptor;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.NotificationClient;
 import site.yesaido.frontserver.client.UserClient;
@@ -22,7 +25,6 @@ import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.LoginRequest;
 import site.yesaido.frontserver.dto.user.request.LogoutRequest;
 import site.yesaido.frontserver.dto.user.request.PasswordResetRequest;
-import site.yesaido.frontserver.dto.user.request.UserSignUpRequest;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.exception.DormantUserException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
@@ -31,10 +33,12 @@ import site.yesaido.frontserver.util.ViewJsonWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(
@@ -76,7 +80,37 @@ class UserControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login"));
 
-        verify(userClient).signUp(any(UserSignUpRequest.class));
+        verify(userClient).signUp(any(FormData.class), isNull());
+    }
+
+    @Test
+    @DisplayName("프로필 사진을 포함한 회원가입 요청을 multipart로 전달한다")
+    void signupWithProfileImageSuccess() throws Exception {
+        MockMultipartFile profileImage = new MockMultipartFile(
+                "profileImage", "profile.png", "image/png", "image-content".getBytes()
+        );
+
+        mockMvc.perform(multipart("/signup")
+                        .file(profileImage)
+                        .param("email", "test@naver.com")
+                        .param("password", "nhn123!")
+                        .param("nickname", "nickTest"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+
+        ArgumentCaptor<FormData> requestCaptor = ArgumentCaptor.forClass(FormData.class);
+        verify(userClient).signUp(
+                requestCaptor.capture(),
+                argThat(file -> file != null && "profile.png".equals(file.getOriginalFilename()))
+        );
+
+        FormData requestPart = requestCaptor.getValue();
+        String requestJson = new String(requestPart.getData(), StandardCharsets.UTF_8);
+        assertEquals("application/json", requestPart.getContentType());
+        assertEquals("request.json", requestPart.getFileName());
+        assertTrue(requestJson.contains("\"email\":\"test@naver.com\""));
+        assertTrue(requestJson.contains("\"password\":\"nhn123!\""));
+        assertTrue(requestJson.contains("\"nickName\":\"nickTest\""));
     }
 
     @Test

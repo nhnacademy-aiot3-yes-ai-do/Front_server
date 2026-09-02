@@ -4,6 +4,8 @@ var INQUIRY_PAGE_SIZE = 8;
 var inquiryState = { page: 0, totalPages: 1 };
 var currentInquiryId = null;
 var currentInquiryDetail = null;
+var MAX_PHOTOS = 5;
+var replyFiles = [];
 
 function statusLabel(status) {
     return status === 'RESOLVED' ? '답변완료' : '답변대기';
@@ -29,6 +31,82 @@ async function fetchJson(url, options) {
         throw new Error((body && body.message) || '요청 처리 중 오류가 발생했어요.');
     }
     return body.data;
+}
+
+async function fetchMultipart(url, method, formData) {
+    var response = await fetch(url, { method: method, body: formData });
+    var body = await response.json().catch(function () { return null; });
+    if (!response.ok || !body || body.success === false) {
+        throw new Error((body && body.message) || '요청 처리 중 오류가 발생했어요.');
+    }
+    return body.data;
+}
+
+// ===== 사진 첨부 공통 로직 (support-index.js와 동일한 패턴) =====
+
+function addFilesToState(files, incoming) {
+    var accepted = files.slice();
+    var rejectedByCount = false;
+    for (var i = 0; i < incoming.length; i++) {
+        var file = incoming[i];
+        if (!file.type || file.type.indexOf('image/') !== 0) continue;
+        if (accepted.length >= MAX_PHOTOS) { rejectedByCount = true; break; }
+        accepted.push(file);
+    }
+    if (rejectedByCount) {
+        alert('사진은 최대 ' + MAX_PHOTOS + '장까지 첨부할 수 있어요.');
+    }
+    return accepted;
+}
+
+function renderReplyChips() {
+    var container = document.getElementById('iq-reply-chips');
+    container.innerHTML = '';
+    replyFiles.forEach(function (file, index) {
+        var chip = document.createElement('div');
+        chip.className = 'iq-attach-chip';
+        var url = URL.createObjectURL(file);
+        chip.innerHTML =
+            '<img src="' + url + '" alt="" />' +
+            '<span class="iq-attach-filename"></span>' +
+            '<button type="button" class="iq-attach-remove" title="첨부 취소">' +
+            '<i data-lucide="x"></i></button>';
+        chip.querySelector('.iq-attach-filename').textContent = file.name;
+        chip.querySelector('img').onload = function () { URL.revokeObjectURL(url); };
+        chip.querySelector('.iq-attach-remove').onclick = function () {
+            replyFiles.splice(index, 1);
+            renderReplyChips();
+        };
+        container.appendChild(chip);
+    });
+    lucide.createIcons();
+}
+
+function setupReplyAttachInput() {
+    var input = document.getElementById('iq-reply-photos');
+    var composer = document.querySelector('.iq-composer');
+
+    input.addEventListener('change', function () {
+        replyFiles = addFilesToState(replyFiles, input.files);
+        input.value = '';
+        renderReplyChips();
+    });
+
+    composer.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        composer.classList.add('drag-over');
+    });
+    composer.addEventListener('dragleave', function () {
+        composer.classList.remove('drag-over');
+    });
+    composer.addEventListener('drop', function (e) {
+        e.preventDefault();
+        composer.classList.remove('drag-over');
+        if (e.dataTransfer && e.dataTransfer.files) {
+            replyFiles = addFilesToState(replyFiles, e.dataTransfer.files);
+            renderReplyChips();
+        }
+    });
 }
 
 function handleInquiryFilterChange() {
@@ -93,6 +171,8 @@ function renderInquiryPagination() {
 
 async function openInquiryDetail(id) {
     currentInquiryId = id;
+    replyFiles = [];
+    renderReplyChips();
     try {
         var detail = await fetchJson('/admin/inquiries/' + id);
         currentInquiryDetail = detail;
@@ -100,6 +180,44 @@ async function openInquiryDetail(id) {
         openModal('modal-inquiry-detail');
     } catch (e) {
         alert(e.message);
+    }
+}
+
+function deleteCultivationFromInquiry() {
+    if (!currentInquiryDetail || !currentInquiryDetail.cultivationId) {
+        alert('삭제할 경작지 정보가 없습니다.');
+        return;
+    }
+
+    openDeleteConfirm();
+}
+
+function openDeleteConfirm() {
+    openModal('modal-delete-confirm');
+}
+
+async function confirmDeleteCultivation() {
+    if (!currentInquiryDetail || !currentInquiryDetail.cultivationId) {
+        alert('삭제할 경작지 정보가 없습니다.');
+        closeModal('modal-delete-confirm');
+        return;
+    }
+
+    try {
+        var response = await fetch('/cultivations/' + currentInquiryDetail.cultivationId, {
+            method: 'DELETE'
+        });
+        if (!response.ok) {
+            throw new Error('cultivation delete failed');
+        }
+
+        closeModal('modal-delete-confirm');
+        closeModal('modal-cultivation-mini');
+        closeModal('modal-inquiry-detail');
+        alert('경작지를 삭제했습니다.');
+        loadInquiries(inquiryState.page);
+    } catch (e) {
+        alert('경작지 삭제에 실패했습니다. 다시 시도해 주세요.');
     }
 }
 
@@ -128,9 +246,12 @@ function renderInquiryDetail(inquiry) {
     var chat = document.getElementById('iq-chat');
     chat.innerHTML = '';
     (inquiry.messages || []).forEach(function (m) {
-        appendAdminChatBubble(chat, inquiry.userNickname, m.content, formatDateTime(m.createdAt), false);
+        var photoUrls = m.photoUrls || [];
+        // 사진은 같은 InquiryAnswer 행에 붙기 때문에, 답변이 달린 메시지는 답변 쪽에,
+        // 아직 답변이 없는 메시지는 질문 쪽에 붙여서 보여줍니다. (support-index.js와 동일한 처리)
+        appendAdminChatBubble(chat, inquiry.userNickname, m.content, formatDateTime(m.createdAt), false, m.answerContent ? [] : photoUrls);
         if (m.answerContent) {
-            appendAdminChatBubble(chat, '관리자', m.answerContent, formatDateTime(m.createdAt), true);
+            appendAdminChatBubble(chat, '관리자', m.answerContent, formatDateTime(m.createdAt), true, photoUrls);
         }
     });
     chat.scrollTop = chat.scrollHeight;
@@ -141,7 +262,7 @@ function renderInquiryDetail(inquiry) {
     document.getElementById('iq-reply-input').value = '';
 }
 
-function appendAdminChatBubble(chat, name, content, time, isAdmin) {
+function appendAdminChatBubble(chat, name, content, time, isAdmin, photoUrls) {
     var row = document.createElement('div');
     row.className = 'iq-chat-msg' + (isAdmin ? ' from-admin' : '');
     row.innerHTML =
@@ -152,7 +273,16 @@ function appendAdminChatBubble(chat, name, content, time, isAdmin) {
         '<div class="iq-chat-time"></div>' +
         '</div>';
     row.querySelector('.iq-chat-name').textContent = name;
-    row.querySelector('.iq-chat-bubble span').textContent = content;
+    var bubble = row.querySelector('.iq-chat-bubble');
+    (photoUrls || []).forEach(function (url) {
+        var img = document.createElement('img');
+        img.className = 'iq-chat-photo';
+        img.src = url;
+        img.alt = '첨부 사진';
+        img.onclick = function () { window.open(url, '_blank'); };
+        bubble.insertBefore(img, bubble.firstChild);
+    });
+    bubble.querySelector('span').textContent = content;
     row.querySelector('.iq-chat-time').textContent = time;
     chat.appendChild(row);
 }
@@ -168,11 +298,14 @@ async function submitAdminReply(event) {
     if (!target || target.answerContent) return;
 
     try {
-        var detail = await fetchJson('/admin/inquiries/messages/' + target.id, {
-            method: 'PUT',
-            body: JSON.stringify({ content: text })
-        });
+        var formData = new FormData();
+        formData.append('request', new Blob([JSON.stringify({ content: text })], { type: 'application/json' }));
+        replyFiles.forEach(function (file) { formData.append('files', file); });
+
+        var detail = await fetchMultipart('/admin/inquiries/messages/' + target.id, 'PUT', formData);
         currentInquiryDetail = detail;
+        replyFiles = [];
+        renderReplyChips();
         renderInquiryDetail(detail);
         loadInquiries(inquiryState.page);
     } catch (e) {
@@ -180,6 +313,7 @@ async function submitAdminReply(event) {
     }
 }
 
+setupReplyAttachInput();
 loadInquiries(0);
 
 // 대시보드의 "최근 미답변 문의"에서 특정 문의를 클릭해 들어온 경우 바로 상세 열기

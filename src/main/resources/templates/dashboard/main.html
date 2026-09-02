@@ -66,6 +66,11 @@
             <button class="icon-btn" type="button" title="알림" onclick="togglePanel('notif-panel')">
                 <i data-lucide="bell"></i>
             </button>
+            <button class="icon-btn" type="button" title="수확 모드로 전환"
+                    th:if="${(myRole == 'OWNER' or myRole == 'MANAGER') and cultivation != null and cultivation.mode == 'GROWTH'}"
+                    onclick="openModal('modal-harvest-mode')">
+                <i data-lucide="package"></i>
+            </button>
             <button class="icon-btn danger" type="button" title="종료하기" th:if="${myRole == 'OWNER'}" onclick="openEndAmountModal()">
                 <i data-lucide="power"></i>
             </button>
@@ -92,7 +97,7 @@
                          th:style="${photos != null and !photos.isEmpty()} ? 'display:block;' : 'display:none;'"
                          alt="재배 사진" />
 
-                    <button class="photo-settings-btn" type="button" onclick="openEnvironmentSettingsModal()">
+                    <button class="photo-settings-btn" type="button" onclick="openModal('modal-settings')">
                         <i data-lucide="settings" style="width:20px;height:20px;"></i>
                     </button>
                 </div>
@@ -127,6 +132,7 @@
                 <div class="cultivation-name" th:if="${cultivation != null}">
                     <span th:text="${cultivation.name}">양송이 1번 재배지</span>
                     <span class="cultivation-mushroom-badge" th:if="${mushroomNameKo != null}" th:text="${mushroomNameKo}">양송이</span>
+                    <span class="cultivation-mode-badge cultivation-mode-badge--harvest" th:if="${cultivation.mode == 'HARVEST'}">수확 모드</span>
                 </div>
 
                 <div class="growth-days-box" th:if="${growthDays != null}">
@@ -232,7 +238,7 @@
             <div class="chatbot-messages" id="chatbot-messages">
                 <div class="chat-message bot">
                     <img src="/images/chatbot.png" alt="봇" class="chat-avatar" />
-                    <div class="chat-bubble">안녕하세요! AI 챗봇은 아직 준비 중인 기능이에요. 조금만 기다려 주세요 🍄</div>
+                    <div class="chat-bubble">안녕하세요! 스마트 버섯 재배 전문 AI 비서 머쉬봇이에요 🍄<br>버섯 재배법이나 현재 농장 온습도, 센서 수치 등 궁금한 점을 언제든 물어보세요!</div>
                 </div>
             </div>
 
@@ -257,57 +263,69 @@
         <h3 class="modal-title">환경 설정</h3>
 
         <div class="settings-modal-grid">
-            <div class="settings-photo-col">
+            <form id="photo-upload-form" class="settings-photo-col" method="post" enctype="multipart/form-data">
                 <div class="settings-photo-upload" id="photo-upload-preview" onclick="document.getElementById('settings-photo-input').click()">
                     <i data-lucide="upload" style="width:28px;height:28px;"></i>
                 </div>
-                <input type="file" id="settings-photo-input" accept="image/*" onchange="handlePhotoSelect(this)" style="display:none;" />
-            </div>
+                <input type="file" id="settings-photo-input" name="file" accept="image/*" onchange="submitPhotoUpload(this)" style="display:none;" />
+            </form>
 
-            <div class="settings-config-col" id="settings-config-col">
-                <div class="settings-empty-state" id="settings-empty" hidden>
-                    현재 경작지에 설정 가능한 센서가 없습니다.
-                </div>
-
-                <div class="settings-form-content" id="settings-form-content">
+            <div class="settings-config-col">
                 <div class="settings-sensor-row">
                     <span id="settings-sensor-icon-wrap"><i data-lucide="thermometer" style="width:20px;height:20px;"></i></span>
-                    <div class="settings-sensor-select-group">
-                        <label for="settings-sensor-select">센서 종류</label>
-                        <select id="settings-sensor-select" onchange="handleEnvironmentSensorChange()"></select>
+                    <div class="msh-select msh-select--settings" data-value="온도센서3" data-onchange="updateSettingsSensorIcon">
+                        <button type="button" class="msh-select-trigger" onclick="toggleMshSelect(this.parentElement)">
+                            <span class="msh-select-value">온도센서3</span>
+                            <i data-lucide="chevron-down" class="msh-select-chevron"></i>
+                        </button>
+                        <div class="msh-select-menu">
+                            <div class="msh-select-group-label">온도</div>
+                            <div class="msh-select-option" data-icon="thermometer" onclick="selectMshOption(this)">온도센서1</div>
+                            <div class="msh-select-option" data-icon="thermometer" onclick="selectMshOption(this)">온도센서2</div>
+                            <div class="msh-select-option selected" data-icon="thermometer" onclick="selectMshOption(this)">온도센서3</div>
+                            <div class="msh-select-group-label">습도</div>
+                            <div class="msh-select-option" data-icon="droplet" onclick="selectMshOption(this)">습도센서1</div>
+                            <div class="msh-select-option" data-icon="droplet" onclick="selectMshOption(this)">습도센서2</div>
+                            <div class="msh-select-group-label">CO2</div>
+                            <div class="msh-select-option" data-icon="cloudy" onclick="selectMshOption(this)">CO2센서1</div>
+                            <div class="msh-select-option" data-icon="cloudy" onclick="selectMshOption(this)">CO2센서2</div>
+                            <div class="msh-select-group-label">조도</div>
+                            <div class="msh-select-option" data-icon="sun" onclick="selectMshOption(this)">조도센서1</div>
+                            <div class="msh-select-option" data-icon="sun" onclick="selectMshOption(this)">조도센서2</div>
+                        </div>
                     </div>
                 </div>
-
-                <p class="settings-recommendation" id="settings-recommendation" aria-live="polite"></p>
 
                 <div class="settings-threshold-row">
                     <div class="settings-threshold-field">
-                        <label for="settings-threshold-min">최저값</label>
-                        <div class="settings-input-with-unit">
-                            <input id="settings-threshold-min" type="number" step="any" disabled oninput="handleEnvironmentThresholdInput()" />
-                            <span id="settings-threshold-min-unit"></span>
-                        </div>
+                        <label>최고값</label>
+                        <input type="number" value="365" />
                     </div>
                     <div class="settings-threshold-field">
-                        <label for="settings-threshold-max">최고값</label>
-                        <div class="settings-input-with-unit">
-                            <input id="settings-threshold-max" type="number" step="any" disabled oninput="handleEnvironmentThresholdInput()" />
-                            <span id="settings-threshold-max-unit"></span>
-                        </div>
+                        <label>최저값</label>
+                        <input type="number" value="365" />
                     </div>
-                </div>
-
-                <p class="settings-warning" id="settings-warning" role="alert"></p>
-                <p class="settings-error" id="settings-error" role="alert"></p>
-
-                <div class="settings-actions">
-                    <button class="btn btn-outline" id="settings-edit-btn" type="button" onclick="startEnvironmentSettingEdit()">수정</button>
-                    <button class="btn btn-outline" id="settings-cancel-btn" type="button" onclick="cancelEnvironmentSettingEdit()" hidden>취소</button>
-                    <button class="btn btn-primary" id="settings-save-btn" type="button" onclick="saveEnvironmentSetting()" hidden>저장</button>
-                </div>
+                    <button class="settings-confirm" type="button" title="저장" onclick="closeModal('modal-settings')">
+                        <i data-lucide="circle-check"></i>
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-harvest-mode">
+    <div class="modal-box">
+        <button class="modal-close" type="button" onclick="closeModal('modal-harvest-mode')">
+            <i data-lucide="x"></i>
+        </button>
+        <h3 class="modal-title">수확 모드로 전환</h3>
+        <p class="modal-desc">수확 모드로 전환하면 이 버섯의 수확기 환경 기준값이 자동으로 적용돼요. 전환 후에는 재배 모드로 되돌릴 수 없어요. 계속하시겠어요?</p>
+        <form class="modal-actions" id="harvest-mode-form" method="post">
+            <input name="_method" type="hidden" value="PUT" />
+            <button class="btn btn-outline" type="button" onclick="closeModal('modal-harvest-mode')">Cancel</button>
+            <button class="btn btn-primary" type="submit">전환</button>
+        </form>
     </div>
 </div>
 
@@ -494,7 +512,7 @@
     var PHOTOS = [(${photosJson})];
     var memberData = [(${membersJson})];
     var MY_ROLE = /*[[${myRole}]]*/ null;
-    var MUSHROOM_NAME = /*[[${mushroomNameKo}]]*/ null;
+    var CULTIVATION_MODE = /*[[${cultivation?.mode}]]*/ null;
     var SENSORS_BOOTSTRAP = [(${sensorsJson})];
     var SENSOR_VALUES_BOOTSTRAP = [(${sensorValuesJson})];
     var GROWTH_DAYS = /*[[${growthDays}]]*/ 0;

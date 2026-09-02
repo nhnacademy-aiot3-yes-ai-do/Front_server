@@ -3,6 +3,7 @@ package site.yesaido.frontserver.exception;
 import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,8 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
+import site.yesaido.frontserver.controller.AuthResultController;
+import site.yesaido.frontserver.dto.react.AuthResultResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 
 import java.io.IOException;
@@ -55,6 +58,7 @@ public class GlobalExceptionHandler {
             "InquiryClient", "문의 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요."
     );
     private static final String DEFAULT_UNAVAILABLE_MESSAGE = "외부 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
+    private static final String DEFAULT_CONFLICT_MESSAGE = "요청을 처리할 수 없는 상태예요. 새로고침 후 다시 시도해 주세요.";
 
     private final AuthCookieProvider authCookieProvider;
 
@@ -114,15 +118,31 @@ public class GlobalExceptionHandler {
         String clientName = extractClientName(e);
         log.error("{} 통신 실패 (Status: {}): {}", clientName, e.status(), e.getMessage());
 
-        HttpStatus status = e.status() == 404 ? HttpStatus.NOT_FOUND : HttpStatus.SERVICE_UNAVAILABLE;
-        String message = e.status() == 404
-                ? NOT_FOUND_MESSAGES.getOrDefault(clientName, DEFAULT_NOT_FOUND_MESSAGE)
-                : UNAVAILABLE_MESSAGES.getOrDefault(clientName, DEFAULT_UNAVAILABLE_MESSAGE);
+        HttpStatus status = resolveStatus(e.status());
+        String message = resolveMessage(status, clientName);
 
         if (wantsHtml(request)) {
             return errorView(request, status, message);
         }
         return ErrorResponse.create(e, status, message);
+    }
+
+    private HttpStatus resolveStatus(int feignStatus) {
+        return switch (feignStatus) {
+            case 404 -> HttpStatus.NOT_FOUND;
+            case 409 -> HttpStatus.CONFLICT;
+            default -> HttpStatus.SERVICE_UNAVAILABLE;
+        };
+    }
+
+    private String resolveMessage(HttpStatus status, String clientName) {
+        if (status == HttpStatus.NOT_FOUND) {
+            return NOT_FOUND_MESSAGES.getOrDefault(clientName, DEFAULT_NOT_FOUND_MESSAGE);
+        }
+        if (status == HttpStatus.CONFLICT) {
+            return DEFAULT_CONFLICT_MESSAGE;
+        }
+        return UNAVAILABLE_MESSAGES.getOrDefault(clientName, DEFAULT_UNAVAILABLE_MESSAGE);
     }
 
     private String extractClientName(FeignException e) {
@@ -133,9 +153,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DormantUserException.class)
-    public String handleDormantUserException(DormantUserException e, RedirectAttributes redirectAttributes) {
+    public String handleDormantUserException(
+            DormantUserException e,
+            RedirectAttributes redirectAttributes,
+            HttpSession session
+    ) {
         redirectAttributes.addFlashAttribute("isDormant", true);
         redirectAttributes.addFlashAttribute("dormantEmail", e.getEmail());
+        session.setAttribute(
+                AuthResultController.AUTH_RESULT_SESSION_KEY,
+                new AuthResultResponse("dormant", e.getMessage(), e.getEmail())
+        );
         return "redirect:/login";
     }
 
@@ -201,5 +229,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ErrorResponse handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
         return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, "사진 파일 크기는 8MB를 초과할 수 없습니다.");
+    }
+
+    @ExceptionHandler(TooManyFilesException.class)
+    public ErrorResponse handleTooManyFilesException(TooManyFilesException e) {
+        return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, e.getMessage());
     }
 }

@@ -1,7 +1,6 @@
 package site.yesaido.frontserver.controller;
 
 import jakarta.servlet.http.Cookie;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,21 +9,11 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAu
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import site.yesaido.frontserver.client.InquiryClient;
-import site.yesaido.frontserver.client.SensorClient;
-import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.controller.admin.AdminViewController;
-import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import site.yesaido.frontserver.util.ViewJsonWriter;
 
-import java.util.List;
-
-import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
@@ -43,32 +32,15 @@ class AdminControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
-    private InquiryClient inquiryClient;
-
-    @MockitoBean
-    private SensorClient sensorClient;
-
-    @MockitoBean
-    private UserClient userClient;
-
     private static final Cookie ADMIN_COOKIE = new Cookie("role", "ADMIN");
     private static final Cookie ACCESS_COOKIE = new Cookie("accessToken", "adminToken");
-
-    @BeforeEach
-    void setUp() {
-        given(sensorClient.getAllMushroomReferences())
-                .willReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
-        given(sensorClient.getSensorTypes())
-                .willReturn(ResponseEntity.ok(new SensorTypeInfoListResponse(List.of())));
-    }
 
     @Test
     @DisplayName("어드민 메인 화면 접근 - 로그인 및 ADMIN 쿠키 보유 시 정상")
     void adminIndexView() throws Exception {
         mockMvc.perform(get("/admin").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
                 .andExpect(status().isOk())
-                .andExpect(view().name("admin/index"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -76,7 +48,7 @@ class AdminControllerTest {
     void adminMembersView() throws Exception {
         mockMvc.perform(get("/admin/members").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
                 .andExpect(status().isOk())
-                .andExpect(view().name("admin/members"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -84,7 +56,7 @@ class AdminControllerTest {
     void adminInquiriesView() throws Exception {
         mockMvc.perform(get("/admin/inquiries").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
                 .andExpect(status().isOk())
-                .andExpect(view().name("admin/inquiries"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -92,6 +64,22 @@ class AdminControllerTest {
     void adminMushroomsView() throws Exception {
         mockMvc.perform(get("/admin/mushrooms").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
                 .andExpect(status().isOk())
-                .andExpect(view().name("admin/mushrooms"));
+                .andExpect(view().name("forward:/react/index.html"));
+    }
+
+    @Test
+    @DisplayName("어드민 센서 타입 화면 접근")
+    void adminSensorsView() throws Exception {
+        mockMvc.perform(get("/admin/sensors").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
+                .andExpect(status().isOk())
+                .andExpect(view().name("forward:/react/index.html"));
+    }
+
+    @Test
+    @DisplayName("어드민 알림 관리 화면 접근")
+    void adminNotificationsView() throws Exception {
+        mockMvc.perform(get("/admin/notification-events").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
+                .andExpect(status().isOk())
+                .andExpect(view().name("forward:/react/index.html"));
     }
 }

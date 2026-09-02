@@ -3,11 +3,14 @@ package site.yesaido.frontserver.controller.user;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
+import site.yesaido.frontserver.dto.user.response.SignupEmailVerificationResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
 import site.yesaido.frontserver.exception.MissingRefreshTokenException;
@@ -21,12 +24,6 @@ public class UserApiController {
 
     private final UserClient userClient;
     private final AuthCookieProvider authCookieProvider;
-
-    @GetMapping("/users/check-email")
-    public Boolean checkEmail(@RequestParam String email) {
-        ApiResponse<Boolean> response = userClient.checkEmail(email);
-        return response != null && Boolean.TRUE.equals(response.data());
-    }
 
     @GetMapping("/users/check-nickname")
     public Boolean checkNickname(@RequestParam String nickname) {
@@ -65,6 +62,11 @@ public class UserApiController {
         return response != null && Boolean.TRUE.equals(response.data());
     }
 
+    @PostMapping("/users/signup/verify-email")
+    public ApiResponse<SignupEmailVerificationResponse> verifySignupEmail(@RequestParam String email, @RequestParam String code) {
+        return userClient.verifySignupEmail(email.trim(), code.trim());
+    }
+
     // 토큰 시간 연장
     @PostMapping("/users/token/reissue")
     public ApiResponse<TokenResponse> reissue(@CookieValue(name = REFRESH_TOKEN, required = false) String refreshToken,
@@ -92,6 +94,15 @@ public class UserApiController {
     @PutMapping("/users/mypage")
     public ApiResponse<UserProfileResponse> updateMyPage(@RequestBody ProfileUpdateRequest request) {
         return userClient.updateMyPage(request);
+    }
+
+    @PutMapping("/users/mypage/password")
+    public ApiResponse<Void> changePassword(@RequestBody PasswordChangeRequest request, HttpServletResponse response){
+        ApiResponse<Void> apiResponse = userClient.changePassword(request);
+        if(apiResponse != null && apiResponse.success()){
+            authCookieProvider.clearAuthCookies(response);
+        }
+        return apiResponse;
     }
 
     // 프로필 수정 전 비밀번호 검증
@@ -127,5 +138,10 @@ public class UserApiController {
             authCookieProvider.clearAuthCookies(response);
         }
         return apiResponse;
+    }
+
+    @PutMapping(value = "/users/mypage/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<String> uploadProfileImage(@RequestPart("file")MultipartFile file){
+        return userClient.uploadProfileImage(file);
     }
 }

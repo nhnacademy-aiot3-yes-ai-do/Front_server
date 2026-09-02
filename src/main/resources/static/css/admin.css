@@ -713,6 +713,43 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 
 .row-actions button:hover { background: var(--sage-500); border-color: var(--sage-500); color: #fff; }
 
+.row-actions .dormant-release-button {
+    width: auto;
+    min-width: 5.2rem;
+    padding: 0 0.75rem;
+    background: var(--sage-500);
+    border-color: var(--sage-500);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.row-actions .dormant-release-button:hover {
+    background: var(--sage-600);
+    border-color: var(--sage-600);
+}
+
+.row-actions .force-withdraw-button {
+    width: auto;
+    min-width: 5.2rem;
+    padding: 0 0.75rem;
+    background: #fff;
+    border-color: #c2410c;
+    color: #c2410c;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.row-actions .force-withdraw-button:hover {
+    background: #c2410c;
+    border-color: #c2410c;
+    color: #fff;
+}
+
+.row-action-empty {
+    color: var(--brown-400);
+}
+
 /* ----- 페이지네이션 (회원 관리 전용, 숫자 버튼형) ----- */
 .pagination {
     margin-top: 1.4rem;
@@ -1461,6 +1498,105 @@ a.admin-activity-item:hover { background: rgba(139, 94, 60, 0.04); }
 
 .iq-composer-send:hover { background: var(--sage-600); }
 .iq-composer-send svg { width: 1.1rem; height: 1.1rem; }
+
+/* ===== 문의 답변 작성 시 사진 첨부 (support-index.js와 동일한 방식) ===== */
+.iq-attach-chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.iq-attach-chip-list:not(:empty) {
+    margin-bottom: 0.6rem;
+}
+
+.iq-attach-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem 0.3rem 0.3rem;
+    background: var(--cream-100);
+    border: 1px solid var(--brown-300);
+    border-radius: 999px;
+    max-width: 100%;
+    min-width: 0;
+    width: fit-content;
+}
+
+.iq-attach-chip img {
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.iq-attach-filename {
+    font-size: 0.78rem;
+    color: var(--brown-700);
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.iq-attach-remove {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    padding: 0;
+    background: rgba(139, 94, 60, 0.1);
+    border: none;
+    border-radius: 50%;
+    color: var(--brown-700);
+    cursor: pointer;
+}
+
+.iq-attach-remove:hover { background: rgba(192, 87, 74, 0.15); color: var(--danger); }
+.iq-attach-remove svg { width: 0.75rem; height: 0.75rem; }
+
+.iq-attach-icon-btn {
+    flex-shrink: 0;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 50%;
+    background: var(--cream-100);
+    border: 2px solid var(--brown-300);
+    color: var(--brown-700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.iq-attach-icon-btn:hover {
+    background: rgba(124, 148, 115, 0.12);
+    border-color: var(--sage-500);
+    color: var(--sage-600);
+}
+
+.iq-attach-icon-btn svg { width: 1.1rem; height: 1.1rem; }
+
+.iq-composer.drag-over textarea {
+    border-color: var(--sage-500);
+    border-style: dashed;
+    background: rgba(124, 148, 115, 0.08);
+}
+
+.iq-chat-photo {
+    display: block;
+    max-width: 12rem;
+    max-height: 12rem;
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 0.4rem;
+    cursor: zoom-in;
+}
 
 /* ===== 관리자 에러 페이지 (헤더 없이 배경 위에 카드 하나만 중앙 배치) =====
    카드 자체 생김새(.error-wrap/.error-card/.error-icon-wrap 등)는 common.css에 공통으로 있고,

@@ -1,33 +1,29 @@
 package site.yesaido.frontserver.client;
 
+import feign.form.FormData;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.user.request.*;
-import site.yesaido.frontserver.dto.user.response.EmailSendResponse;
-import site.yesaido.frontserver.dto.user.response.MemberSummaryPageResponse;
-import site.yesaido.frontserver.dto.user.response.TokenResponse;
-import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
+import site.yesaido.frontserver.dto.user.response.*;
 
 import java.util.List;
 
 @FeignClient(name = "userClient", url = "${feign.client.gateway.url}")
 public interface UserClient {
-    // 1. 이메일 중복 확인
-    @GetMapping("/api/v1/users/check-email")
-    ApiResponse<Boolean> checkEmail(@RequestParam("email") String email);
-
-    // 2. 닉네임 중복 확인
+    // 1. 닉네임 중복 확인
     @GetMapping("/api/v1/users/check-nickname")
     ApiResponse<Boolean> checkNickname(@RequestParam("nickname") String nickname);
 
     // 3. 회원가입
-    @PostMapping("/api/v1/users/signup")
-    ApiResponse<Object> signUp(@RequestBody UserSignUpRequest requestDto);
+    @PostMapping(value = "/api/v1/users/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ApiResponse<Object> signUp(@RequestPart("request") FormData request, @RequestPart(value = "profileImage", required = false) MultipartFile profileImage);
 
     // 4. 로그인
     @PostMapping("/api/v1/auth/login")
@@ -53,14 +49,19 @@ public interface UserClient {
     @PostMapping("/api/v1/auth/email/verify")
     ApiResponse<Boolean> verifyEmail(@RequestBody EmailVerifyRequest request);
 
+    @PostMapping("/api/v1/users/signup/verify-email")
+    ApiResponse<SignupEmailVerificationResponse> verifySignupEmail(@RequestParam("email") String email, @RequestParam("code") String code);
+
     // 10. 프로필 조회
     @GetMapping("/api/v1/users/mypage")
     ApiResponse<UserProfileResponse> getMyPage();
 
+    @PutMapping("/api/v1/users/mypage/password")
+    ApiResponse<Void> changePassword(@RequestBody PasswordChangeRequest request);
+
     // 11. 프로필 수정
     @PutMapping("/api/v1/users/mypage")
     ApiResponse<UserProfileResponse> updateMyPage(@RequestBody ProfileUpdateRequest request);
-
     // 12. 비밀번호 확인
     @PostMapping("/api/v1/users/verify-password")
     ApiResponse<Boolean> verifyPassword(@RequestBody PasswordVerifyRequest request);
@@ -82,4 +83,13 @@ public interface UserClient {
 
     @PostMapping("/api/v1/auth/password/reset")
     ApiResponse<Void> resetPassword(@RequestBody PasswordResetRequest resetRequest);
+
+    @PutMapping(value = "/api/v1/users/mypage/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ApiResponse<String> uploadProfileImage(@RequestPart("file")MultipartFile file);
+
+    @PutMapping("/api/v1/admin/members/{memberId}/dormant-release")
+    ApiResponse<Void> releaseDormantMember(@PathVariable("memberId") Long memberId);
+
+    @DeleteMapping("/api/v1/admin/members/{memberId}")
+    ApiResponse<Void> forceWithdraw(@PathVariable("memberId") Long memberId);
 }

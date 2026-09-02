@@ -1,5 +1,6 @@
 package site.yesaido.frontserver.controller;
 
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.security.oauth2.client.autoconfigure.OAuth2ClientAutoConfiguration;
@@ -30,8 +31,8 @@ class SupportControllerTest {
 
     @Test
     void supportPageReturnsIndexView() throws Exception {
-        mockMvc.perform(get("/support"))
+        mockMvc.perform(get("/support").cookie(new Cookie("accessToken", "demo-access-token")))
                 .andExpect(status().isOk())
-                .andExpect(view().name("support/index"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 }

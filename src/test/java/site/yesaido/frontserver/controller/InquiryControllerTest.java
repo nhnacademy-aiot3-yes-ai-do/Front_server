@@ -34,9 +34,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -134,16 +134,23 @@ class InquiryControllerTest {
         InquiryMessageRequest request = new InquiryMessageRequest("추가 문의 내용");
         InquiryDetailResponse detail = new InquiryDetailResponse(
                 1L, 10L, "닉네임", 1L, "재배 관련", "제목", null, LocalDateTime.now(), null, null, List.of());
-        when(inquiryClient.addFollowUp(eq(1L), any(InquiryMessageRequest.class)))
+        when(inquiryClient.addFollowUp(eq(1L), any(FormData.class), any()))
                 .thenReturn(new ApiResponse<>(true, "등록 성공", detail));
 
-        mockMvc.perform(post("/support/inquiries/{inquiry-id}/messages", 1L)
-                        .cookie(LOGGED_IN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+        MockMultipartFile requestPart = new MockMultipartFile(
+                "request", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+
+        mockMvc.perform(multipart("/support/inquiries/{inquiry-id}/messages", 1L)
+                        .file(requestPart)
+                        .cookie(LOGGED_IN))
                 .andExpect(status().isOk());
 
-        verify(inquiryClient).addFollowUp(1L, request);
+        ArgumentCaptor<FormData> captor = ArgumentCaptor.forClass(FormData.class);
+        verify(inquiryClient).addFollowUp(eq(1L), captor.capture(), isNull());
+
+        FormData sent = captor.getValue();
+        assertThat(sent.getContentType()).isEqualTo("application/json");
+        assertThat(objectMapper.readValue(sent.getData(), InquiryMessageRequest.class)).isEqualTo(request);
     }
 
     @Test
@@ -179,5 +186,26 @@ class InquiryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.cultivationSummaryResponses").isArray())
                 .andExpect(jsonPath("$.data.cultivationSummaryResponses").isEmpty());
+    }
+
+    @Test
+    @DisplayName("문의 등록 - 사진이 5장 초과면 400을 반환한다")
+    void createInquiry_tooManyFiles_returnsBadRequest() throws Exception {
+        InquiryCreateRequest request = new InquiryCreateRequest(1L, "제목", "내용", null);
+        MockMultipartFile requestPart = new MockMultipartFile(
+                "request", "", MediaType.APPLICATION_JSON_VALUE, objectMapper.writeValueAsBytes(request));
+
+        mockMvc.perform(multipart("/support/inquiries")
+                        .file(requestPart)
+                        .file(new MockMultipartFile("files", "1.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "2.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "3.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "4.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "5.jpg", "image/jpeg", "a".getBytes()))
+                        .file(new MockMultipartFile("files", "6.jpg", "image/jpeg", "a".getBytes()))
+                        .cookie(LOGGED_IN))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(inquiryClient);
     }
 }

@@ -10,6 +10,8 @@ public record UserProfileResponse (
         String role,
         String status,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        String photoUrl,
+        boolean hasPassword
 ){
 }

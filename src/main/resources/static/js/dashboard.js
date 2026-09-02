@@ -368,7 +368,7 @@ function stopChartPolling() {
 function pollChartValue() {
     if (!CHART_SELECTED) return;
     var isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    var gatewayOrigin = isLocal ? 'http://localhost:8000' : 'https://api.yes-nhn.site';
+    var gatewayOrigin = isLocal ? 'http://localhost:8080' : 'https://api.yes-nhn.site';
 
     fetch(gatewayOrigin + '/api/v1/cultivations/' + CULTIVATION_ID + '/sensor-values', {
         credentials: 'include'
@@ -390,14 +390,18 @@ function pollChartValue() {
             var now = Date.now();
             latestSensorValuesOf(payload).forEach(function (v) {
                 var key = chartKey(v.sensorType, v.deviceEui);
-                LATEST_VALUES[key] = { value: v.value, unit: v.unit };
                 if (v.value == null) return;
 
                 var bucket = getChartBucket(key);
-                bucket.history.push(v.value);
-                bucket.times.push(now);
-                bucket.unit = v.unit || bucket.unit;
-                trimChartBucket(bucket);
+                if (!bucket.unit) {
+                    bucket.unit = v.unit;
+                }
+                if (v.unit === bucket.unit) {
+                    LATEST_VALUES[key] = { value: v.value, unit: v.unit };
+                    bucket.history.push(v.value);
+                    bucket.times.push(now);
+                    trimChartBucket(bucket);
+                }
             });
             updateVisibleSensorValues();
 
@@ -425,6 +429,7 @@ function updateVisibleSensorValues() {
         if (!deviceEui) return;
         valueEl.textContent = formatSensorValue(LATEST_VALUES[type + '|' + deviceEui]);
     });
+    renderMainEnvStats();
 }
 
 function renderChartEmpty(message) {
@@ -558,6 +563,37 @@ var CHATBOT_PLACEHOLDER_REPLY = 'AI 챗봇은 아직 준비 중인 기능이에�
 // 자리(프레임)만 잡아둠. 실제 데이터 없이 골격만 있는 상태라 버튼은 openModal('modal-insight')로 바로 연결.
 // API가 생기면 openModal 앞뒤로 fetch 붙여서 #insight-my-card / #insight-similar-list를 채우면 됨.
 
+var CURRENT_CONVERSATION_ID = null;
+
+function loadChatHistory() {
+    if (typeof CULTIVATION_ID === 'undefined' || !CULTIVATION_ID) return;
+
+    fetch('/api/chat/history?cultivationId=' + CULTIVATION_ID)
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+                var list = document.getElementById('chatbot-messages');
+                list.innerHTML = '<div class="chat-message bot"><img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble">안녕하세요! 재배와 관련된 질문을 편하게 남겨주세요.</div></div>';
+
+                res.data.forEach(function(msg) {
+                    var msgEl = document.createElement('div');
+                    msgEl.className = msg.role === 'USER' ? 'chat-message user' : 'chat-message bot';
+                    if (msg.role === 'USER') {
+                        msgEl.innerHTML = '<div class="chat-bubble"></div>';
+                    } else {
+                        msgEl.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble" style="white-space: pre-wrap;"></div>';
+                    }
+                    msgEl.querySelector('.chat-bubble').textContent = msg.content;
+                    list.appendChild(msgEl);
+                });
+                list.scrollTop = list.scrollHeight;
+            }
+        })
+        .catch(function(err) {
+            console.error('대화 내역 불러오기 실패:', err);
+        });
+}
+
 function sendChatMessage(event) {
     event.preventDefault();
     var input = document.getElementById('chatbot-input');
@@ -575,14 +611,48 @@ function sendChatMessage(event) {
     input.value = '';
     list.scrollTop = list.scrollHeight;
 
-    window.setTimeout(function () {
-        var botMsg = document.createElement('div');
-        botMsg.className = 'chat-message bot';
-        botMsg.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble"></div>';
-        botMsg.querySelector('.chat-bubble').textContent = CHATBOT_PLACEHOLDER_REPLY;
-        list.appendChild(botMsg);
-        list.scrollTop = list.scrollHeight;
-    }, 500);
+    var loadingMsg = document.createElement('div');
+    loadingMsg.className = 'chat-message bot';
+    loadingMsg.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble">답변을 생각하고 있어요...</div>';
+    list.appendChild(loadingMsg);
+    list.scrollTop = list.scrollHeight;
+
+    fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            conversationId: CURRENT_CONVERSATION_ID,
+            cultivationId: (typeof CULTIVATION_ID !== 'undefined' && CULTIVATION_ID > 0) ? CULTIVATION_ID : null,
+            message: text,
+            channelId: 1
+        })
+    })
+        .then(function(res) { return res.json(); })
+        .then(function(res) {
+            if (loadingMsg.parentNode) {
+                list.removeChild(loadingMsg);
+            }
+            if (res && res.success && res.data) {
+                CURRENT_CONVERSATION_ID = res.data.conversationId;
+                var botMsg = document.createElement('div');
+                botMsg.className = 'chat-message bot';
+                botMsg.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble" style="white-space: pre-wrap;"></div>';
+                botMsg.querySelector('.chat-bubble').textContent = res.data.reply;
+                list.appendChild(botMsg);
+            } else {
+                var errBubble = document.createElement('div');
+                errBubble.className = 'chat-message bot';
+                errBubble.innerHTML = '<img src="/images/chatbot.png" alt="봇" class="chat-avatar" /><div class="chat-bubble">일시적으로 답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.</div>';
+                list.appendChild(errBubble);
+            }
+            list.scrollTop = list.scrollHeight;
+        })
+        .catch(function(err) {
+            if (loadingMsg.parentNode) {
+                list.removeChild(loadingMsg);
+            }
+            console.error('챗봇 통신 실패:', err);
+        });
 }
 
 function availableEnvironmentSettings(payload) {
@@ -949,6 +1019,11 @@ function switchTab(name) {
     });
     event.currentTarget.classList.add('active');
     document.getElementById('tab-' + name).classList.add('active');
+
+    // 챗봇 탭 클릭 시 이전 대화 내역 불러오기
+    if (name === 'chatbot') {
+        loadChatHistory();
+    }
 }
 
 function togglePanel(id) {
@@ -1308,6 +1383,10 @@ function handleCompareSelectChange() {
 }
 
 function openEndAmountModal() {
+    if (CULTIVATION_MODE !== 'HARVEST') {
+        alert('먼저 "수확 모드로 전환" 버튼으로 전환한 뒤에 수확을 기록할 수 있어요.');
+        return;
+    }
     document.getElementById('end-amount-input').value = '0';
     document.getElementById('end-memo-input').value = '';
     openModal('modal-end-amount');
@@ -1324,29 +1403,57 @@ function submitEndAmount() {
     }
 
     var memo = memoInput.value;
+    var body = JSON.stringify({ harvestWeight: amount, memo: memo });
 
-    fetch('/cultivations/' + CULTIVATION_ID + '/harvest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ harvestWeight: amount, memo: memo })
-    })
+    function postHarvest() {
+        return fetch('/cultivations/' + CULTIVATION_ID + '/harvest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        });
+    }
+
+    function proceed() {
+        harvestState.totalAmount = amount;
+        endReportStats = computeEndReportStats();
+        renderEndReport(endReportStats);
+        amountInput.value = '';
+        memoInput.value = '';
+        closeModal('modal-end-amount');
+        openModal('modal-end-report');
+    }
+
+    function retry() {
+        return postHarvest()
+            .then(function (res) {
+                // 재시도에서 409(이미 수확 기록 존재)가 뜨면 직전 요청이 실제로는 성공했다는 뜻이므로 정상 처리한다.
+                if (res.ok || res.status === 409) {
+                    proceed();
+                    return;
+                }
+                alert('수확 기록에 실패했습니다.');
+            })
+            .catch(function () {
+                alert('수확 기록에 실패했습니다.');
+            });
+    }
+
+    // 500번대 응답이나 네트워크 단절은 "서버엔 실제로 반영됐는데 응답만 못 받은" 경우일 수 있어 한 번만 조용히
+    // 재시도한다. 400/403/404 같은 명확한 클라이언트 에러는 재시도 없이 그대로 신뢰해서 보여준다.
+    postHarvest()
         .then(function (res) {
-            if (!res.ok) throw new Error('harvest failed');
-            return res.json();
+            if (res.ok) {
+                proceed();
+                return;
+            }
+            if (res.status >= 500) {
+                return retry();
+            }
+            alert('수확 기록에 실패했습니다.');
         })
-        .then(function () {
-            harvestState.totalAmount = amount;
-
-            endReportStats = computeEndReportStats();
-            renderEndReport(endReportStats);
-
-            amountInput.value = '';
-            memoInput.value = '';
-
-            closeModal('modal-end-amount');
-            openModal('modal-end-report');
-        })
-        .catch(function () { alert('수확 기록에 실패했습니다.'); });
+        .catch(function () {
+            retry();
+        });
 }
 
 function computeEndReportStats() {
@@ -1611,7 +1718,7 @@ function renderPhotoThumbs() {
     lucide.createIcons();
 }
 
-function handlePhotoSelect(input) {
+function submitPhotoUpload(input) {
     if (!input.files || !input.files[0]) return;
     var file = input.files[0];
 
@@ -1621,28 +1728,7 @@ function handlePhotoSelect(input) {
         return;
     }
 
-    var formData = new FormData();
-    formData.append('file', file);
-
-    fetch('/cultivations/' + CULTIVATION_ID + '/photos', {
-        method: 'POST',
-        body: formData
-    })
-        .then(function (res) {
-            if (!res.ok) throw new Error('upload failed');
-            return res.json();
-        })
-        .then(function (uploaded) {
-            PHOTOS.unshift(uploaded);
-            renderMainPhoto();
-            renderPhotoThumbs();
-            renderPhotoUploadPreview();
-            input.value = '';
-        })
-        .catch(function () {
-            alert('사진 업로드에 실패했습니다.');
-            input.value = '';
-        });
+    input.form.submit();
 }
 
 function deletePhoto(photoId) {
@@ -1661,6 +1747,51 @@ function deletePhoto(photoId) {
 var cultivationDeleteForm = document.getElementById('cultivation-delete-form');
 if (cultivationDeleteForm && typeof CULTIVATION_ID !== 'undefined') {
     cultivationDeleteForm.action = '/cultivations/' + CULTIVATION_ID;
+    cultivationDeleteForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        var submitBtn = cultivationDeleteForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        fetch(cultivationDeleteForm.action, { method: 'DELETE' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('cultivation delete failed');
+                window.location.href = '/cultivations';
+            })
+            .catch(function () {
+                alert('재배지 삭제에 실패했습니다. 다시 시도해 주세요.');
+                if (submitBtn) submitBtn.disabled = false;
+            });
+    });
+}
+
+var harvestModeForm = document.getElementById('harvest-mode-form');
+if (harvestModeForm && typeof CULTIVATION_ID !== 'undefined') {
+    harvestModeForm.action = '/cultivations/' + CULTIVATION_ID + '/harvest-mode';
+    harvestModeForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var submitBtn = harvestModeForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        fetch(harvestModeForm.action, { method: 'PUT' })
+            .then(function (res) {
+                if (!res.ok) throw new Error('harvest mode switch failed');
+                return res.json();
+            })
+            .then(function () {
+                closeModal('modal-harvest-mode');
+                location.reload();
+            })
+            .catch(function () {
+                alert('수확 모드 전환에 실패했습니다. 잠시 후 다시 시도해주세요.');
+                if (submitBtn) submitBtn.disabled = false;
+            });
+    });
+}
+
+var photoUploadForm = document.getElementById('photo-upload-form');
+if (photoUploadForm && typeof CULTIVATION_ID !== 'undefined') {
+    photoUploadForm.action = '/cultivations/' + CULTIVATION_ID + '/photos';
 }
 
 renderPhotoThumbs();

@@ -11,6 +11,6 @@ public class DashboardController {
 
     @GetMapping("/dashboard")
     public String mainDashboard() {
-        return "dashboard/main";
+        return "forward:/react/index.html";
     }
 }

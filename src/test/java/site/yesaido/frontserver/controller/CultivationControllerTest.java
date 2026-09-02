@@ -41,10 +41,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -105,14 +104,9 @@ class CultivationControllerTest {
         when(sensorClient.getSensors(1L)).thenReturn(ResponseEntity.ok(sensors));
         when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
-        String expectedJson = objectMapper.writeValueAsString(new CultivationListPageView(
-                List.of(new CultivationListItemView(summary, sensors)), List.of(sensorType)
-        ));
-
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivationListPageJson", expectedJson));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -124,8 +118,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/list"))
-                .andExpect(model().attribute("cultivationListPageJson", "{\"cultivations\":[],\"sensorTypes\":[]}"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -138,8 +131,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations/new").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/create"))
-                .andExpect(model().attribute("mushroomsJson", objectMapper.writeValueAsString(List.of(mushroom))));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -152,7 +144,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations/history").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/history"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -163,7 +155,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations/history").cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("cultivation/history"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -237,12 +229,7 @@ class CultivationControllerTest {
 
         mockMvc.perform(get("/cultivations/{cultivation-id}", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk())
-                .andExpect(view().name("dashboard/main"))
-                .andExpect(model().attribute("cultivation", detail))
-                .andExpect(model().attribute("membersJson", "[]"))
-                .andExpect(model().attribute("photosJson", "[]"))
-                .andExpect(model().attribute("sensorsJson", "{\"sensors\":[],\"environmentSettings\":[]}"))
-                .andExpect(model().attribute("sensorValuesJson", "{\"latestSensorValueResponses\":[]}"));
+                .andExpect(view().name("forward:/react/index.html"));
     }
 
     @Test
@@ -348,26 +335,37 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("사진 업로드 및 조회/삭제 테스트 분기")
-    void photoOperationsTest() throws Exception {
+    @DisplayName("HTML form 사진 업로드 성공 시 상세 페이지로 리다이렉트")
+    void uploadPhotoRedirectsToDetail() throws Exception {
         Long cultivationId = 1L;
         MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test data".getBytes());
         PhotoResponse photo = new PhotoResponse(100L, "key", "uri", "S3", LocalDateTime.now());
 
         when(cultivationClient.uploadPhoto(eq(cultivationId), any())).thenReturn(ResponseEntity.ok(photo));
-        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(new PhotoListResponse(List.of(photo))));
-        when(cultivationClient.deletePhoto(cultivationId, 100L)).thenReturn(ResponseEntity.ok().build());
 
         mockMvc.perform(multipart("/cultivations/{cultivation-id}/photos", cultivationId)
                         .file(file)
                         .cookie(LOGGED_IN))
-                .andExpect(status().isOk());
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cultivations/" + cultivationId));
+
+        verify(cultivationClient).uploadPhoto(eq(cultivationId), any());
+    }
+
+    @Test
+    @DisplayName("사진 조회/삭제 테스트")
+    void photoOperationsTest() throws Exception {
+        Long cultivationId = 1L;
+        PhotoResponse photo = new PhotoResponse(100L, "key", "uri", "S3", LocalDateTime.now());
+
+        when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(new PhotoListResponse(List.of(photo))));
+        when(cultivationClient.deletePhoto(cultivationId, 100L)).thenReturn(ResponseEntity.noContent().build());
 
         mockMvc.perform(get("/cultivations/{cultivation-id}/photos", cultivationId).cookie(LOGGED_IN))
                 .andExpect(status().isOk());
 
         mockMvc.perform(delete("/cultivations/{cultivation-id}/photos/100", cultivationId).cookie(LOGGED_IN))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     @Test

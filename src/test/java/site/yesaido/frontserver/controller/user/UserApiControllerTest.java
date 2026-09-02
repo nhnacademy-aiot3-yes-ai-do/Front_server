@@ -9,12 +9,15 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAu
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.user.request.*;
+import site.yesaido.frontserver.dto.user.response.SignupEmailVerificationResponse;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.dto.user.response.UserProfileResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
@@ -27,11 +30,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 
 @WebMvcTest(
         value = UserApiController.class,
@@ -55,26 +56,6 @@ class UserApiControllerTest {
 
     @MockitoBean
     private AuthCookieProvider authCookieProvider;
-
-    @Test
-    @DisplayName("이메일 중복 확인 - 성공 (true)")
-    void checkEmailSuccess() throws Exception {
-        given(userClient.checkEmail("test@naver.com")).willReturn(new ApiResponse<>(true, "조회 성공", true));
-
-        mockMvc.perform(get("/users/check-email").param("email", "test@naver.com"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("true"));
-    }
-
-    @Test
-    @DisplayName("이메일 중복 확인 - null 또는 false 분기")
-    void checkEmailFailedOrNull() throws Exception {
-        given(userClient.checkEmail("fail@naver.com")).willReturn(null);
-
-        mockMvc.perform(get("/users/check-email").param("email", "fail@naver.com"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("false"));
-    }
 
     @Test
     @DisplayName("닉네임 중복 확인 - 성공 (true)")
@@ -115,6 +96,21 @@ class UserApiControllerTest {
                         .param("code", "123456"))
                 .andExpect(status().isOk())
                 .andExpect(content().string("true"));
+    }
+
+    @Test
+    @DisplayName("회원가입 이메일 인증 결과를 그대로 반환한다")
+    void verifySignupEmailSuccess() throws Exception {
+        SignupEmailVerificationResponse result = new SignupEmailVerificationResponse(true, "AVAILABLE", null);
+        given(userClient.verifySignupEmail("test@naver.com", "123456"))
+                .willReturn(new ApiResponse<>(true, "회원가입 이메일 인증 결과입니다.", result));
+
+        mockMvc.perform(post("/users/signup/verify-email")
+                        .param("email", "test@naver.com")
+                        .param("code", "123456"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.verified").value(true))
+                .andExpect(jsonPath("$.data.eligibility").value("AVAILABLE"));
     }
 
     @Test
@@ -198,7 +194,7 @@ class UserApiControllerTest {
     @Test
     @DisplayName("프로필 마이페이지 조회")
     void getMyPageSuccess() throws Exception {
-        UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "이름", "닉네임", "USER", LocalDateTime.now(), LocalDateTime.now());
+        UserProfileResponse profileResponse = new UserProfileResponse(1L, "test@naver.com", "닉네임", "USER", "ACTIVE", LocalDateTime.now(), LocalDateTime.now(), null, true);
         given(userClient.getMyPage()).willReturn(new ApiResponse<>(true, "조회 성공", profileResponse));
 
         mockMvc.perform(get("/users/mypage"))
@@ -208,13 +204,49 @@ class UserApiControllerTest {
     @Test
     @DisplayName("프로필 수정")
     void updateMyPageSuccess() throws Exception {
-        ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임", "oldPass", "newPass");
+        ProfileUpdateRequest request = new ProfileUpdateRequest("새닉네임");
         given(userClient.updateMyPage(any())).willReturn(new ApiResponse<>(true, "수정 성공", null));
 
         mockMvc.perform(put("/users/mypage")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("프로필 사진 업로드 요청을 User 서버에 multipart 형식으로 전달한다")
+    void uploadProfileImageSuccess() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "profile.png",
+                MediaType.IMAGE_PNG_VALUE,
+                "image-content".getBytes()
+        );
+        given(userClient.uploadProfileImage(any()))
+                .willReturn(new ApiResponse<>(true, "프로필 이미지 업로드 성공", "profiles/1/image.png"));
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/users/mypage/profile-image")
+                        .file(file))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").value("profiles/1/image.png"));
+
+        verify(userClient).uploadProfileImage(any());
+    }
+
+    @Test
+    @DisplayName("비밀번호 변경 성공 시 User 서버에 요청을 전달하고 인증 쿠키를 삭제한다")
+    void changePasswordSuccess() throws Exception {
+        PasswordChangeRequest request = new PasswordChangeRequest("currentPass1!", "newPass1!");
+        given(userClient.changePassword(any())).willReturn(new ApiResponse<>(true, "비밀번호가 변경되었습니다.", null));
+
+        mockMvc.perform(put("/users/mypage/password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        verify(userClient).changePassword(request);
+        verify(authCookieProvider).clearAuthCookies(any());
     }
 
     @Test

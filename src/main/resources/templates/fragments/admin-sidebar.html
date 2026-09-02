@@ -45,7 +45,16 @@
         </div>
 
         <div class="admin-sidebar-profile">
-            <div class="avatar-circle"><i data-lucide="circle-user-round"></i></div>
+            <div class="avatar-circle">
+                <img id="topbar-profile-image"
+                     class="topbar-profile-image"
+                     src=""
+                     alt="프로필 사진"
+                     hidden />
+
+                <i id="topbar-default-icon"
+                   data-lucide="circle-user-round"></i>
+            </div>
             <span class="admin-sidebar-profile-name">관리자</span>
         </div>
         <button class="admin-sidebar-logout" type="button" onclick="handleLogout()">

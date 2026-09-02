@@ -385,6 +385,18 @@ body {
     border-radius: 999px;
     padding: 0.2rem 0.6rem;
 }
+.cultivation-mode-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 0.2rem 0.6rem;
+}
+
+.cultivation-mode-badge--harvest {
+    color: #b45309;
+    background: rgba(217, 119, 6, 0.14);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+}
 
 /* 사진 카드 아래에 붙는 날짜 선택 — 날짜별로 등록된 사진을 골라볼 수 있게 함 */
 .photo-date-picker {
