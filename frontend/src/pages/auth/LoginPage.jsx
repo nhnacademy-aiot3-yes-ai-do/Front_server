@@ -22,33 +22,33 @@ export default function LoginPage() {
 
   return (
     <div className="auth-content">
-      <p className="eyebrow">재배 중심 스마트팜</p>
-      <h1>다시 만나서 반가워요</h1>
-      <p className="auth-description">오늘의 재배 환경을 확인하려면 로그인해 주세요.</p>
       {resultQuery.data?.type !== "dormant" && <Notice notice={resultQuery.data} />}
       <form className="form-stack" method="post" action={backendUrl("/login")}>
-        <label>
-          이메일
-          <input name="email" type="email" autoComplete="username" required />
-        </label>
-        <label>
-          비밀번호
-          <input name="password" type="password" autoComplete="current-password" required />
-        </label>
+        <input name="email" type="email" placeholder="이메일" autoComplete="username" required />
+        <input
+          name="password"
+          type="password"
+          placeholder="비밀번호"
+          autoComplete="current-password"
+          required
+        />
         <button className="button button--primary button--wide" type="submit">
           로그인
         </button>
       </form>
-      <div className="auth-links">
-        <Link to="/find-password">비밀번호 찾기</Link>
-        <Link to="/signup">회원가입</Link>
-      </div>
+      <div className="auth-divider">또는</div>
       <a
         className="button button--google button--wide"
         href={backendUrl("/oauth2/authorization/google")}
       >
-        Google로 계속하기
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" width="18" height="18" />
+        Google 계정으로 로그인
       </a>
+      <div className="auth-links">
+        <Link to="/signup">회원가입</Link>
+        <span>|</span>
+        <Link to="/find-password">비밀번호 찾기</Link>
+      </div>
       {dormantOpen && (
         <DormantRecoveryModal
           email={resultQuery.data.email}
