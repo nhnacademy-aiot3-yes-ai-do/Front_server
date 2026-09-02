@@ -630,6 +630,10 @@ p {
   width: min(100%, 980px);
 }
 
+.modal-card--support {
+  width: min(100%, 760px);
+}
+
 .modal-card__header {
   display: flex;
   align-items: center;
@@ -741,7 +745,8 @@ p {
 
   .modal-card,
   .modal-card--wide,
-  .modal-card--guide {
+  .modal-card--guide,
+  .modal-card--support {
     width: 100%;
     max-height: 92vh;
     border-radius: 20px 20px 0 0;
