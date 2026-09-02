@@ -66,7 +66,7 @@ class ReactCultivationPageDataControllerTest {
     @Test
     void previewSelectsNewestPhotoAndCalculatesGrowthDays() {
         Long cultivationId = 10L;
-        LocalDateTime startedAt = LocalDateTime.now().minusDays(4);
+        LocalDateTime startedAt = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).minusDays(4).atStartOfDay();
         PhotoResponse oldPhoto = new PhotoResponse(1L, "old", "/old", "S3", startedAt);
         PhotoResponse newestPhoto = new PhotoResponse(2L, "new", "/new", "S3", startedAt.plusDays(1));
         when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(

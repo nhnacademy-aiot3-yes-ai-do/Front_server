@@ -51,10 +51,6 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
     });
   };
 
-  const clearValidation = (id) => {
-    setValidations((current) => ({ ...current, [id]: null }));
-  };
-
   const validateThreshold = async (type) => {
     const form = formRef.current;
     const minimum = Number(form?.elements.namedItem(`min-${type.id}`)?.value);
@@ -246,7 +242,12 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
                       name={`min-${type.id}`}
                       type="number"
                       step="any"
-                      onChange={() => clearValidation(type.id)}
+                      onChange={() =>
+                        setValidations((prev) => ({
+                          ...prev,
+                          [type.id]: { ...prev[type.id], valid: false },
+                        }))
+                      }
                       required
                     />
                   </label>
@@ -256,7 +257,12 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
                       name={`max-${type.id}`}
                       type="number"
                       step="any"
-                      onChange={() => clearValidation(type.id)}
+                      onChange={() =>
+                        setValidations((prev) => ({
+                          ...prev,
+                          [type.id]: { ...prev[type.id], valid: false },
+                        }))
+                      }
                       required
                     />
                   </label>
