@@ -3,18 +3,20 @@ import { useEffect, useRef } from "react";
 
 export default function Modal({ title, children, onClose, className = "" }) {
   const dialogRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     const previouslyFocused = document.activeElement;
     const dialog = dialogRef.current;
     const focusableSelector =
-      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
     const focusableElements = () => [...(dialog?.querySelectorAll(focusableSelector) || [])];
 
     focusableElements()[0]?.focus();
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab") return;
@@ -43,7 +45,7 @@ export default function Modal({ title, children, onClose, className = "" }) {
       window.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div
