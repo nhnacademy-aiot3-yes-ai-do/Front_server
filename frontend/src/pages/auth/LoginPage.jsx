@@ -41,7 +41,12 @@ export default function LoginPage() {
         className="button button--google button--wide"
         href={backendUrl("/oauth2/authorization/google")}
       >
-        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" width="18" height="18" />
+        <img
+          src="https://developers.google.com/identity/images/g-logo.png"
+          alt="Google"
+          width="18"
+          height="18"
+        />
         Google 계정으로 로그인
       </a>
       <div className="auth-links">

@@ -257,7 +257,8 @@ function MiniDatePicker({ value, onChange, minDate, maxDate }) {
   const [minYear, minMonth] = minDate ? minDate.split("-").map(Number) : [null, null];
   const [maxYear, maxMonth] = maxDate.split("-").map(Number);
   const prevDisabled =
-    minYear != null && (view.year < minYear || (view.year === minYear && view.month <= minMonth - 1));
+    minYear != null &&
+    (view.year < minYear || (view.year === minYear && view.month <= minMonth - 1));
   const nextDisabled = view.year > maxYear || (view.year === maxYear && view.month >= maxMonth - 1);
 
   const firstDayOfWeek = new Date(view.year, view.month, 1).getDay();
@@ -662,67 +663,69 @@ export default function CultivationDetailPage() {
           ref={tabPanelRef}
           style={{ display: "flex", flexDirection: "column", height: tabPanelHeight || undefined }}
         >
-        {activeTab === "dashboard" && (
-          <section
-            aria-labelledby="detail-dashboard-tab"
-            className="detail-tab-panel"
-            id="detail-dashboard-panel"
-            role="tabpanel"
-          >
-            <section className="dashboard-top-grid">
-              <article className="detail-photo panel-card">
-                {displayedPhoto ? (
-                  <img src={displayedPhoto.uri} alt={`${cultivation.name} 재배 사진`} />
-                ) : (
-                  <div className="detail-photo__empty">
-                    {photoDateFilter ? "이 날짜엔 등록된 사진이 없어요." : "등록된 재배 사진이 없습니다."}
-                  </div>
-                )}
-                <div className="detail-photo__overlay">
-                  <MiniDatePicker
-                    value={photoDateFilter}
-                    onChange={setPhotoDateFilter}
-                    minDate={photoMinDate}
-                    maxDate={photoMaxDate}
-                  />
-                  {photoDateFilter && (
-                    <button
-                      type="button"
-                      className="detail-photo__reset"
-                      title="최신 사진으로"
-                      onClick={() => setPhotoDateFilter(null)}
-                    >
-                      <History aria-hidden="true" />
-                    </button>
+          {activeTab === "dashboard" && (
+            <section
+              aria-labelledby="detail-dashboard-tab"
+              className="detail-tab-panel"
+              id="detail-dashboard-panel"
+              role="tabpanel"
+            >
+              <section className="dashboard-top-grid">
+                <article className="detail-photo panel-card">
+                  {displayedPhoto ? (
+                    <img src={displayedPhoto.uri} alt={`${cultivation.name} 재배 사진`} />
+                  ) : (
+                    <div className="detail-photo__empty">
+                      {photoDateFilter
+                        ? "이 날짜엔 등록된 사진이 없어요."
+                        : "등록된 재배 사진이 없습니다."}
+                    </div>
                   )}
-                </div>
-              </article>
-              <EnvironmentBriefing compliance={data.dailyCompliance} />
-              <CompliancePanel compliance={data.dailyCompliance} />
+                  <div className="detail-photo__overlay">
+                    <MiniDatePicker
+                      value={photoDateFilter}
+                      onChange={setPhotoDateFilter}
+                      minDate={photoMinDate}
+                      maxDate={photoMaxDate}
+                    />
+                    {photoDateFilter && (
+                      <button
+                        type="button"
+                        className="detail-photo__reset"
+                        title="최신 사진으로"
+                        onClick={() => setPhotoDateFilter(null)}
+                      >
+                        <History aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                </article>
+                <EnvironmentBriefing compliance={data.dailyCompliance} />
+                <CompliancePanel compliance={data.dailyCompliance} />
+              </section>
+
+              <RealTimeSensorPanel
+                latestQuery={latestQuery}
+                sensorOptions={sensorOptions}
+                trendQueries={trendQueries}
+              />
             </section>
+          )}
 
-            <RealTimeSensorPanel
-              latestQuery={latestQuery}
-              sensorOptions={sensorOptions}
-              trendQueries={trendQueries}
-            />
-          </section>
-        )}
+          {activeTab === "report" && (
+            <AiReportPanel compliance={data.dailyCompliance} cultivationName={cultivation.name} />
+          )}
 
-        {activeTab === "report" && (
-          <AiReportPanel compliance={data.dailyCompliance} cultivationName={cultivation.name} />
-        )}
-
-        {activeTab === "chatbot" && (
-          <section
-            aria-labelledby="detail-chatbot-tab"
-            className="detail-tab-panel"
-            id="detail-chatbot-panel"
-            role="tabpanel"
-          >
-            <ChatPanel cultivationId={id} />
-          </section>
-        )}
+          {activeTab === "chatbot" && (
+            <section
+              aria-labelledby="detail-chatbot-tab"
+              className="detail-tab-panel"
+              id="detail-chatbot-panel"
+              role="tabpanel"
+            >
+              <ChatPanel cultivationId={id} />
+            </section>
+          )}
         </div>
       </section>
 

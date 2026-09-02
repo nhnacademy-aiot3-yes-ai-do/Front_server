@@ -232,9 +232,7 @@ export default function ProfilePage() {
 
       {modal === "password" && (
         <Modal title="비밀번호 변경" onClose={() => setModal(null)}>
-          <p className="modal-desc">
-            안전한 비밀번호를 위해 현재 비밀번호를 먼저 확인해주세요.
-          </p>
+          <p className="modal-desc">안전한 비밀번호를 위해 현재 비밀번호를 먼저 확인해주세요.</p>
           <form className="form-stack" onSubmit={changePassword}>
             <label>
               현재 비밀번호
@@ -295,7 +293,13 @@ export default function ProfilePage() {
             <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
             <label>
               비밀번호 확인
-              <input autoComplete="current-password" autoFocus name="password" required type="password" />
+              <input
+                autoComplete="current-password"
+                autoFocus
+                name="password"
+                required
+                type="password"
+              />
             </label>
             <div className="modal-actions">
               <button

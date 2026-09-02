@@ -57,8 +57,12 @@
 .auth-card input:-webkit-autofill:focus {
   border-color: var(--brown-300);
   -webkit-text-fill-color: var(--brown-900);
-  -webkit-box-shadow: 0 0 0 1000px #fff inset, 4px 4px 0 #d8c6a5;
-  box-shadow: 0 0 0 1000px #fff inset, 4px 4px 0 #d8c6a5;
+  -webkit-box-shadow:
+    0 0 0 1000px #fff inset,
+    4px 4px 0 #d8c6a5;
+  box-shadow:
+    0 0 0 1000px #fff inset,
+    4px 4px 0 #d8c6a5;
   transition: background-color 9999s ease-in-out 0s;
 }
 
