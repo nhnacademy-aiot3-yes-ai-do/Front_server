@@ -53,7 +53,7 @@ public class UserController {
             return REDIRECT_PREFIX + LOGIN_URL;
         } catch (Exception exception) {
             log.warn("회원가입 실패: {}", exception.getMessage());
-            setAuthResult(session, AUTH_ERROR, "회원가입을 완료하지 못했습니다. 입력 내용을 확인해 주세요.");
+            setAuthResult(session, AUTH_ERROR, "회원가입을 완료하지 못했습니다.\n입력 내용을 확인해 주세요.");
             return REDIRECT_PREFIX + "/signup";
         }
     }
