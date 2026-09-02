@@ -28,6 +28,7 @@ import site.yesaido.frontserver.dto.react.CultivationDetailPageData;
 import site.yesaido.frontserver.dto.react.CultivationListPageData;
 import site.yesaido.frontserver.dto.react.CultivationPreviewData;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -143,7 +144,7 @@ public class ReactCultivationPageDataController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return cultivationClient.getHistory(page, size);
+        return UpstreamResponseUtils.isolate(cultivationClient.getHistory(page, size));
     }
 
     private List<CultivationHistoryResponse> pastCultivations(Long cultivationId) {
