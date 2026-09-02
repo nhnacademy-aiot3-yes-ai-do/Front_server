@@ -288,14 +288,14 @@ p {
 .workspace-page,
 .detail-page {
   width: min(100% - 48px, 1720px);
-  margin: 24px auto 40px;
+  margin: 14px auto 20px;
 }
 
 .workspace-panel,
 .detail-workspace {
   border: 1px solid rgba(255, 255, 255, 0.76);
   border-radius: 28px;
-  padding: 28px 30px 42px;
+  padding: 18px 30px 24px;
   background: rgba(255, 252, 240, 0.94);
   box-shadow:
     var(--shadow),
@@ -315,7 +315,7 @@ p {
 
 .page-heading,
 .detail-heading {
-  margin-bottom: 22px;
+  margin-bottom: 14px;
 }
 
 .page-heading h1,
@@ -626,6 +626,10 @@ p {
   width: min(100%, 820px);
 }
 
+.modal-card--guide {
+  width: min(100%, 980px);
+}
+
 .modal-card__header {
   display: flex;
   align-items: center;
@@ -736,7 +740,8 @@ p {
   }
 
   .modal-card,
-  .modal-card--wide {
+  .modal-card--wide,
+  .modal-card--guide {
     width: 100%;
     max-height: 92vh;
     border-radius: 20px 20px 0 0;

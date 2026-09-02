@@ -73,7 +73,7 @@ export default function CultivationActions({ cultivation, growthDays, pastCultiv
   };
 
   return (
-    <Modal title="재배지 관리" onClose={onClose} className="modal-card--wide">
+    <Modal title="재배지 관리" onClose={onClose}>
       <Notice notice={notice} onDismiss={() => setNotice(null)} />
 
       {view === "actions" && (
