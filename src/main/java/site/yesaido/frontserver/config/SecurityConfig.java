@@ -24,7 +24,6 @@ import site.yesaido.frontserver.util.AuthCookieProvider;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final UserClient userClient;
     private final AuthCookieProvider authCookieProvider;
 
@@ -110,4 +109,5 @@ public class SecurityConfig {
             response.sendRedirect("/login?error=oauth_failed");
         };
     }
+
 }

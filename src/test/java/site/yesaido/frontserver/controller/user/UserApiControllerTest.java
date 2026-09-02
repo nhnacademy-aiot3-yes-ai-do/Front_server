@@ -250,6 +250,19 @@ class UserApiControllerTest {
     }
 
     @Test
+    @DisplayName("Google 전용 계정 탈퇴 성공 시 User 서버에 요청을 전달하고 인증 쿠키를 삭제한다")
+    void withdrawOAuthSuccess() throws Exception {
+        given(userClient.withdrawGoogle()).willReturn(new ApiResponse<>(true, "탈퇴가 완료되었습니다.", null));
+
+        mockMvc.perform(delete("/users/withdraw/oauth"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(userClient).withdrawGoogle();
+        verify(authCookieProvider).clearAuthCookies(any());
+    }
+
+    @Test
     @DisplayName("비밀번호 검증")
     void verifyPasswordSuccess() throws Exception {
         PasswordVerifyRequest request = new PasswordVerifyRequest("password123");

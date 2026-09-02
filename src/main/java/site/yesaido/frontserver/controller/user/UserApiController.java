@@ -140,8 +140,22 @@ public class UserApiController {
         return apiResponse;
     }
 
+    @DeleteMapping("/users/withdraw/oauth")
+    public ApiResponse<Void> withdrawOAuth(HttpServletResponse response){
+        ApiResponse<Void> apiResponse = userClient.withdrawGoogle();
+        if(apiResponse != null && apiResponse.success()){
+            authCookieProvider.clearAuthCookies(response);
+        }
+        return apiResponse;
+    }
+
     @PutMapping(value = "/users/mypage/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<String> uploadProfileImage(@RequestPart("file")MultipartFile file){
         return userClient.uploadProfileImage(file);
+    }
+
+    @PostMapping("/users/password-reset/email/send")
+    public ApiResponse<Void> sendPasswordResetEmail(@RequestBody EmailSendResponse response){
+        return userClient.sendPasswordResetEmail(response);
     }
 }
