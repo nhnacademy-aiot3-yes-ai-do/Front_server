@@ -13,10 +13,10 @@ export default function FindPasswordPage() {
   const sendCode = async () => {
     if (!emailRef.current?.reportValidity()) return;
     try {
-      const body = new URLSearchParams({ email: emailRef.current.value.trim() });
-      await request("/users/email/send", {
+      const body = JSON.stringify({email: emailRef.current.value.trim(),});
+      await request("/users/password-reset/email/send", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: { "Content-Type": "application/json" },
         body,
       });
       setCodeSent(true);

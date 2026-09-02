@@ -97,6 +97,18 @@ export default function ProfilePage() {
     }
   };
 
+  const withdrawGoogleAccount = async () => {
+    setBusy(true);
+    setWithdrawNotice(null);
+    try {
+      await request("/users/withdraw/oauth", { method: "DELETE" }).then(unwrapApiResponse);
+      window.location.assign("/login?withdrawn=true");
+    } catch (error) {
+      setWithdrawNotice({ type: "error", message: error.message });
+      setBusy(false);
+    }
+  };
+
   if (profileQuery.isLoading) return <LoadingState message="내 정보를 불러오고 있어요." />;
   if (profileQuery.isError)
     return <ErrorState error={profileQuery.error} onRetry={profileQuery.refetch} />;
@@ -208,34 +220,60 @@ export default function ProfilePage() {
       </section>
       {withdrawOpen && (
         <Modal title="정말 탈퇴하시겠어요?" onClose={() => setWithdrawOpen(false)}>
-          <form className="form-stack" onSubmit={withdraw}>
-            <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
-            <p className="danger-description">
-              탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며 복구할 수 없습니다.
-            </p>
-            <label>
-              비밀번호 확인
-              <input
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                autoFocus
-              />
-            </label>
-            <div className="modal-actions">
-              <button
-                className="button button--secondary"
-                type="button"
-                onClick={() => setWithdrawOpen(false)}
-              >
-                취소
-              </button>
-              <button className="button button--danger" type="submit" disabled={busy}>
-                {busy ? "처리 중…" : "탈퇴하기"}
-              </button>
+          {profile.hasPassword ? (
+            <form className="form-stack" onSubmit={withdraw}>
+              <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
+              <p className="danger-description">
+                탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며 복구할 수 없습니다.
+              </p>
+              <label>
+                비밀번호 확인
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  autoFocus
+                />
+              </label>
+              <div className="modal-actions">
+                <button
+                  className="button button--secondary"
+                  type="button"
+                  onClick={() => setWithdrawOpen(false)}
+                >
+                  취소
+                </button>
+                <button className="button button--danger" type="submit" disabled={busy}>
+                  {busy ? "처리 중…" : "탈퇴하기"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="form-stack">
+              <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
+              <p className="danger-description">
+                탈퇴하면 재배지와 센서, 재배 이력 데이터는 복구할 수 없습니다. 그래도 탈퇴하시겠어요?
+              </p>
+              <div className="modal-actions">
+                <button
+                  className="button button--secondary"
+                  type="button"
+                  onClick={() => setWithdrawOpen(false)}
+                >
+                  취소
+                </button>
+                <button
+                  className="button button--danger"
+                  type="button"
+                  onClick={withdrawGoogleAccount}
+                  disabled={busy}
+                >
+                  {busy ? "처리 중…" : "탈퇴하기"}
+                </button>
+              </div>
             </div>
-          </form>
+          )}
         </Modal>
       )}
     </main>

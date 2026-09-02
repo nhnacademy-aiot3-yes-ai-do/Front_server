@@ -142,4 +142,5 @@ class SecurityConfigTest {
         method.setAccessible(true);
         return (AuthenticationFailureHandler) method.invoke(securityConfig);
     }
+
 }
