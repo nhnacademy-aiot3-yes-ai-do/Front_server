@@ -5,7 +5,9 @@ export default function AppLayout() {
   return (
     <div className="app-shell">
       <AppHeader />
-      <Outlet />
+      <div className="app-content">
+        <Outlet />
+      </div>
     </div>
   );
 }

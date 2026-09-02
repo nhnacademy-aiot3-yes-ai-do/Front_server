@@ -1,37 +1,45 @@
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { cultivationKeys, getCultivationListPage } from "../../api/cultivations";
+import AdminPagination from "../../components/admin/AdminPagination";
 import { EmptyState, ErrorState, LoadingState } from "../../components/PageState";
 import CultivationCard from "../../features/cultivations/CultivationCard";
 import { normalizeList } from "../../utils/formatters";
+
+const PAGE_SIZE = 6;
 
 export default function CultivationListPage() {
   const listQuery = useQuery({
     queryKey: cultivationKeys.list(),
     queryFn: getCultivationListPage,
   });
+  const [page, setPage] = useState(0);
+
+  const cultivations = normalizeList(listQuery.data?.cultivations);
+  const totalPages = Math.max(1, Math.ceil(cultivations.length / PAGE_SIZE));
+
+  useEffect(() => {
+    if (page > totalPages - 1) setPage(0);
+  }, [totalPages, page]);
 
   if (listQuery.isLoading) return <LoadingState message="나의 재배지를 불러오고 있어요." />;
   if (listQuery.isError) return <ErrorState error={listQuery.error} onRetry={listQuery.refetch} />;
 
-  const cultivations = normalizeList(listQuery.data?.cultivations);
   const mushrooms = new Map(
     normalizeList(listQuery.data?.mushrooms).map((mushroom) => [
       mushroom.id,
       mushroom.mushroomNameKo,
     ]),
   );
+  const pagedCultivations = cultivations.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
     <main className="workspace-page cultivation-list-page">
       <section className="workspace-panel">
         <header className="page-heading">
-          <div>
-            <p className="eyebrow">오늘 관리할 재배지</p>
-            <h1>나의 재배지</h1>
-            <p>재배 상태와 등록된 센서 흐름을 한눈에 살펴보세요.</p>
-          </div>
+          <h1>나의 재배지</h1>
           <div className="page-heading__actions">
             <span className="summary-chip">
               전체 <strong>{cultivations.length}</strong>
@@ -56,15 +64,18 @@ export default function CultivationListPage() {
             }
           />
         ) : (
-          <div className="cultivation-list">
-            {cultivations.map((cultivation) => (
-              <CultivationCard
-                key={cultivation.cultivationId}
-                cultivation={cultivation}
-                mushroomName={mushrooms.get(cultivation.mushroomId)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="cultivation-list">
+              {pagedCultivations.map((cultivation) => (
+                <CultivationCard
+                  key={cultivation.cultivationId}
+                  cultivation={cultivation}
+                  mushroomName={mushrooms.get(cultivation.mushroomId)}
+                />
+              ))}
+            </div>
+            <AdminPagination page={page} totalPages={totalPages} onChange={setPage} />
+          </>
         )}
       </section>
     </main>

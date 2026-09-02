@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bot, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useRef, useState } from "react";
 import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
 import Notice from "../../components/Notice";
@@ -70,7 +70,6 @@ export default function ChatPanel({ cultivationId }) {
           <h2>MushMush AI 챗봇</h2>
           <p>현재 재배지 정보를 바탕으로 질문할 수 있습니다.</p>
         </div>
-        <Bot aria-hidden="true" />
       </header>
       <Notice notice={notice} onDismiss={() => setNotice(null)} />
       <div className="chat-messages" aria-live="polite">
@@ -79,7 +78,9 @@ export default function ChatPanel({ cultivationId }) {
             className={`chat-message ${message.role === "USER" ? "chat-message--user" : ""}`}
             key={message.id || `${message.sequenceNumber}-${message.createdAt}`}
           >
-            {message.role !== "USER" && <Bot aria-hidden="true" />}
+            {message.role !== "USER" && (
+              <img src="/images/chatbot.png" alt="봇" className="chat-avatar" />
+            )}
             <p>{message.content}</p>
           </div>
         ))}
