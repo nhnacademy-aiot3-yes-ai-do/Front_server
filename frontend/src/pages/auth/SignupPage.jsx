@@ -151,9 +151,7 @@ export default function SignupPage() {
               minLength="8"
               required
             />
-            <p className="help-text">
-              ※ 비밀번호는 영문, 숫자, 특수문자(@$!%*#?&.) 포함 8자 이상
-            </p>
+            <p className="help-text">※ 비밀번호는 영문, 숫자, 특수문자(@$!%*#?&.) 포함 8자 이상</p>
           </div>
           <div className="field">
             <input
@@ -165,7 +163,11 @@ export default function SignupPage() {
               required
             />
           </div>
-          <button className="button button--primary button--wide" type="button" onClick={goToProfile}>
+          <button
+            className="button button--primary button--wide"
+            type="button"
+            onClick={goToProfile}
+          >
             다음
           </button>
           <div className="auth-links">
