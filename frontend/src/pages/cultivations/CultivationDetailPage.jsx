@@ -48,6 +48,7 @@ import {
   formatSensorType,
   normalizeList,
 } from "../../utils/formatters";
+import { getInsightCandidates, getInsightDetail } from "../../api/insights";
 
 function buildSensorOptions(data, latestValues) {
   return normalizeList(data?.sensors?.sensors).flatMap((sensor) =>
@@ -185,6 +186,202 @@ function AiReportPanel({ compliance, cultivationName }) {
         </div>
       </article>
     </section>
+  );
+}
+
+function HarvestInsightModal({ cultivationId, mushroomName }) {
+  const [candidates, setCandidates] = useState([]);
+  const [selectedDetail, setSelectedDetail] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchCandidates = () => {
+    if (!cultivationId) return;
+    setLoading(true);
+    setError(null);
+    getInsightCandidates(cultivationId)
+        .then((res) => {
+          const list = Array.isArray(res?.data) ? res.data : res?.data?.candidates;
+          if (Array.isArray(list)) setCandidates(list);
+        })
+        .catch((err) => {
+          console.error("인사이트 조회 실패:", err);
+          setError(err);
+        })
+        .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchCandidates();
+  }, [cultivationId]);
+
+  if (error) {
+    return (
+        <div className="pending-widget">
+          인사이트 데이터를 불러오지 못했습니다.
+          <button className="text-button" type="button" onClick={fetchCandidates}>
+            다시 시도
+          </button>
+        </div>
+    );
+  }
+
+  if (loading) {
+    return <p className="pending-widget">과거 우수 수확 데이터를 분석하고 있습니다.</p>;
+  }
+
+  // 상세 분석 보기 (카드 클릭 시)
+  if (selectedDetail) {
+    const hasTimeline = selectedDetail.dailyTimelines && selectedDetail.dailyTimelines.length > 0;
+
+    return (
+        <section
+            className={hasTimeline ? "guide-grid" : ""}
+            style={{
+              width: "100%",
+              display: hasTimeline ? undefined : "flex",
+              flexDirection: "column",
+              gap: "16px",
+            }}
+        >
+          <article className="panel-card guide-card" style={{ width: "100%", boxSizing: "border-box" }}>
+            <header className="panel-card__heading">
+              <div>
+                <button
+                    type="button"
+                    className="text-button"
+                    style={{ marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}
+                    onClick={() => setSelectedDetail(null)}
+                >
+                  ← 추천 목록으로 돌아가기
+                </button>
+                <h2>{mushroomName || "버섯"} 우수 수확 AI 성공 요인 분석</h2>
+                <p style={{ lineHeight: "1.6", whiteSpace: "pre-wrap", marginTop: "10px", fontSize: "14px" }}>
+                  {selectedDetail.summary}
+                </p>
+              </div>
+            </header>
+            <div className="guide-callouts" style={{ marginTop: "16px" }}>
+              <div>
+                <strong>최종 수확량</strong>
+                <p>{selectedDetail.harvestWeightGrams != null ? `${Number(selectedDetail.harvestWeightGrams).toLocaleString()} g` : "-"}</p>
+              </div>
+              <div>
+                <strong>환경 유지 점수</strong>
+                <p>{selectedDetail.growthScore != null ? `${selectedDetail.growthScore}점` : "-"}</p>
+              </div>
+            </div>
+          </article>
+
+          {hasTimeline && (
+              <article className="panel-card recipe-card" style={{ boxSizing: "border-box" }}>
+                <header className="panel-card__heading">
+                  <h2>일자별 환경 유지율 이력</h2>
+                  <span>{selectedDetail.dailyTimelines.length}일간 기록</span>
+                </header>
+                <div className="recipe-list" style={{ maxHeight: "350px", overflowY: "auto" }}>
+                  {selectedDetail.dailyTimelines.map((dt) => (
+                      <details key={dt.targetDate} style={{ marginBottom: "8px" }}>
+                        <summary style={{ fontWeight: "bold" }}>📅 {dt.targetDate} 환경 유지율</summary>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", fontSize: "12px", color: "#555", marginTop: "6px" }}>
+                          <span>온도: {dt.compliance?.temperatureRate != null ? `${dt.compliance.temperatureRate}%` : "-"}</span>
+                          <span>습도: {dt.compliance?.humidityRate != null ? `${dt.compliance.humidityRate}%` : "-"}</span>
+                          <span>CO₂: {dt.compliance?.co2Rate != null ? `${dt.compliance.co2Rate}%` : "-"}</span>
+                          <span>조도: {dt.compliance?.lightRate != null ? `${dt.compliance.lightRate}%` : "-"}</span>
+                        </div>
+                      </details>
+                  ))}
+                </div>
+              </article>
+          )}
+        </section>
+    );
+  }
+
+  if (candidates.length === 0) {
+    return (
+        <p className="pending-widget">
+          {mushroomName || "해당 버섯"}의 과거 우수 수확 데이터가 아직 충분하지 않습니다.
+        </p>
+    );
+  }
+
+  // 추천 카드 목록 보기
+  return (
+      <article className="panel-card guide-card" style={{width: "100%", boxSizing: "border-box"}}>
+        <header className="panel-card__heading">
+          <div>
+            <h2>유사 환경 우수 수확 추천 사례 (TOP {candidates.length})</h2>
+            <p>카드를 클릭하시면 해당 농가의 AI 성공 분석과 일자별 관리 이력을 확인하실 수 있습니다.</p>
+          </div>
+        </header>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: "12px",
+          marginTop: "12px"
+        }}>
+          {candidates.map((c, idx) => {
+            const cardId = c.insightId || c.id;
+            return (
+                <div
+                    key={cardId || idx}
+                    onClick={() => getInsightDetail(cardId).then((res) => setSelectedDetail(res.data))}
+                    style={{
+                      padding: "16px",
+                      borderRadius: "10px",
+                      backgroundColor: "#fff",
+                      border: "1px solid rgba(112, 141, 102, 0.3)",
+                      boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                      transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <strong style={{ color: "#708d66", fontSize: "15px" }}>{idx + 1}위 추천 수확</strong>
+                    <span style={{ fontSize: "12px", fontWeight: "bold", backgroundColor: "#708d66", color: "#fff", padding: "3px 8px", borderRadius: "12px" }}>
+                          환경 {c.growthScore ?? "-"}점
+                        </span>
+                  </div>
+
+                  <div style={{ fontSize: "18px", fontWeight: "bold", color: "#333" }}>
+                    {c.harvestWeightGrams != null ? Number(c.harvestWeightGrams).toLocaleString() : "0"} <span style={{ fontSize: "14px", fontWeight: "normal" }}>g 수확</span>
+                  </div>
+
+                  {/* 긴 요약은 2줄로 깔끔하게 말줄임 처리 (따옴표 "vertical" 적용) */}
+                  <p style={{
+                    margin: 0,
+                    fontSize: "13px",
+                    lineHeight: "1.5",
+                    color: "#666",
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis"
+                  }}>
+                    {c.summary}
+                  </p>
+
+                  {/* 온습도 정보 뱃지 */}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", fontSize: "11px", color: "#555", marginTop: "auto" }}>
+                    <span style={{ backgroundColor: "#f3f4f6", padding: "3px 6px", borderRadius: "4px" }}>🌡️ {c.avgTemperature != null ? Number(c.avgTemperature).toFixed(1) : "-"}℃</span>
+                    <span style={{ backgroundColor: "#f3f4f6", padding: "3px 6px", borderRadius: "4px" }}>💧 {c.avgHumidity != null ? Number(c.avgHumidity).toFixed(1) : "-"}%</span>
+                    <span style={{ backgroundColor: "#f3f4f6", padding: "3px 6px", borderRadius: "4px" }}>☁️ {c.avgCo2 != null ? Number(c.avgCo2).toFixed(0) : "-"}ppm</span>
+                    <span style={{ backgroundColor: "#f3f4f6", padding: "3px 6px", borderRadius: "4px" }}>☀️ {c.avgLight != null ? Number(c.avgLight).toFixed(0) : "-"}lx</span>
+                  </div>
+
+                  <div style={{ fontSize: "11px", color: "#708d66", fontWeight: "bold", textAlign: "right" }}>
+                    상세 분석 보기 →
+                  </div>
+                </div>
+            );
+          })}
+        </div>
+      </article>
   );
 }
 
@@ -633,6 +830,9 @@ export default function CultivationDetailPage() {
         <button type="button" onClick={() => setModal("guide")}>
           <Bot aria-hidden="true" /> AI 가이드
         </button>
+        <button type="button" onClick={() => setModal("insight")}>
+          <Sparkles aria-hidden="true" /> AI 인사이트
+        </button>
         {canOpenActions && (
           <button type="button" onClick={() => setModal("actions")}>
             <MoreHorizontal aria-hidden="true" /> 관리
@@ -765,6 +965,15 @@ export default function CultivationDetailPage() {
             onRetry={guideQuery.refetch}
           />
         </Modal>
+      )}
+      {modal === "insight" && (
+          <Modal
+              title={`AI ${mushroomName || "버섯"} 인사이트`}
+              onClose={() => setModal(null)}
+              className="modal-card--guide"
+          >
+            <HarvestInsightModal cultivationId={id} mushroomName={mushroomName} />
+          </Modal>
       )}
       {modal === "actions" && (
         <CultivationActions
