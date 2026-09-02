@@ -109,7 +109,8 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
       return;
     }
 
-    const values = new FormData(event.currentTarget);
+    const form = event.currentTarget; // [핵심 1] 비동기 통신 전에 form 객체를 미리 보관
+    const values = new FormData(form);
     const sensorSettings = selectedTypes.map((type) => ({
       sensorTypeId: type.id,
       thresholdMin: Number(values.get(`min-${type.id}`)),
@@ -126,7 +127,7 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
         locationDetail: String(values.get("locationDetail")).trim(),
         sensorSettings,
       });
-      event.currentTarget.reset();
+      form?.reset(); // [핵심 2] null이 되지 않는 form 변수로 reset 호출
       setSelectedTypeIds([]);
       setValidations({});
       setNotice({ type: "success", message: "센서를 등록했습니다." });
