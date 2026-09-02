@@ -51,10 +51,6 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
     });
   };
 
-  const clearValidation = (id) => {
-    setValidations((current) => ({ ...current, [id]: null }));
-  };
-
   const validateThreshold = async (type) => {
     const form = formRef.current;
     const minimum = Number(form?.elements.namedItem(`min-${type.id}`)?.value);
@@ -243,21 +239,31 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
                   <label>
                     최소값
                     <input
-                        name={`min-${type.id}`}
-                        type="number"
-                        step="any"
-                        onChange={() => setValidations(prev => ({ ...prev, [type.id]: { ...prev[type.id], valid: false } }))}
-                        required
+                      name={`min-${type.id}`}
+                      type="number"
+                      step="any"
+                      onChange={() =>
+                        setValidations((prev) => ({
+                          ...prev,
+                          [type.id]: { ...prev[type.id], valid: false },
+                        }))
+                      }
+                      required
                     />
                   </label>
                   <label>
                     최대값
                     <input
-                        name={`max-${type.id}`}
-                        type="number"
-                        step="any"
-                        onChange={() => setValidations(prev => ({ ...prev, [type.id]: { ...prev[type.id], valid: false } }))}
-                        required
+                      name={`max-${type.id}`}
+                      type="number"
+                      step="any"
+                      onChange={() =>
+                        setValidations((prev) => ({
+                          ...prev,
+                          [type.id]: { ...prev[type.id], valid: false },
+                        }))
+                      }
+                      required
                     />
                   </label>
                   <div className="threshold-actions">
