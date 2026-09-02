@@ -24,7 +24,8 @@
   align-items: center;
   gap: 10px;
   margin: 0 8px 34px;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif;
+  font-weight: 700;
   font-size: 20px;
 }
 
@@ -197,7 +198,8 @@
 }
 
 .admin-page-header h1 {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif;
+  font-weight: 700;
   font-size: clamp(30px, 3vw, 42px);
   font-weight: 500;
 }
@@ -346,7 +348,8 @@
 }
 
 .admin-stat-grid strong {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif;
+  font-weight: 700;
   font-size: 26px;
   line-height: 1;
 }

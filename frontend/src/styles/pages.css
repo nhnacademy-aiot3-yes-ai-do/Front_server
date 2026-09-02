@@ -7,9 +7,17 @@
   font-size: 12px;
 }
 
+.cultivation-list-page .page-heading {
+  align-items: center;
+}
+
+.cultivation-list-page .page-heading h1 {
+  font-size: clamp(22px, 1.8vw, 28px);
+}
+
 .cultivation-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
   align-items: start;
   gap: 18px;
 }
@@ -55,7 +63,7 @@
   display: block;
   width: 100%;
   min-height: 0;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: 17px;
   background: var(--cream-300);
@@ -159,7 +167,8 @@
 
 .cultivation-card__title-row h2 {
   margin: 0;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif;
+  font-weight: 700;
   font-size: clamp(22px, 1.7vw, 30px);
 }
 
@@ -471,8 +480,8 @@
   border-top-color: var(--sage-500);
   border-radius: 50%;
   font:
-    700 23px Georgia,
-    serif;
+    700 23px "Gaegu",
+    sans-serif;
   place-items: center;
 }
 

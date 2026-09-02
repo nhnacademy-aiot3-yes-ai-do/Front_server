@@ -8,6 +8,8 @@ export default function SignupPage() {
   const [step, setStep] = useState(1);
   const [notice, setNotice] = useState(null);
   const [verified, setVerified] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
   const formRef = useRef(null);
   const resultQuery = useQuery({
     queryKey: ["auth-result", "signup"],
@@ -21,7 +23,7 @@ export default function SignupPage() {
   const sendCode = async () => {
     const emailInput = field("email");
     if (!emailInput?.reportValidity()) return;
-    setNotice({ type: "info", message: "인증번호를 보내고 있어요." });
+    setNotice(null);
     try {
       const body = new URLSearchParams({ email: emailInput.value.trim() });
       await request("/users/email/send", {
@@ -29,10 +31,19 @@ export default function SignupPage() {
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body,
       });
-      setNotice({ type: "success", message: "이메일로 인증번호를 보냈습니다." });
+      setCodeSent(true);
     } catch (error) {
       setNotice({ type: "error", message: error.message });
     }
+  };
+
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setAvatarPreview(null);
+      return;
+    }
+    setAvatarPreview(URL.createObjectURL(file));
   };
 
   const verifyCode = async () => {
@@ -49,7 +60,7 @@ export default function SignupPage() {
       const data = unwrapApiResponse(result);
       if (!data?.verified && data !== true) throw new Error("인증번호가 일치하지 않습니다.");
       setVerified(true);
-      setNotice({ type: "success", message: "이메일 인증이 완료되었습니다." });
+      setNotice(null);
     } catch (error) {
       setVerified(false);
       setNotice({ type: "error", message: error.message });
@@ -91,91 +102,125 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="auth-content auth-content--wide">
-      <p className="eyebrow">MushMush 시작하기</p>
-      <h1>새 계정을 만들어요</h1>
-      <div className="step-indicator" aria-label="가입 진행 단계">
-        <span className={step === 1 ? "active" : "done"}>1. 계정</span>
-        <span className={step === 2 ? "active" : ""}>2. 프로필</span>
-      </div>
+    <div className="auth-content">
       <Notice notice={notice || resultQuery.data} onDismiss={() => setNotice(null)} />
       <form
         ref={formRef}
-        className="form-stack"
         method="post"
         action={backendUrl("/signup")}
         encType="multipart/form-data"
       >
         <fieldset hidden={step !== 1}>
-          <label>
-            이메일
-            <span className="field-action">
-              <input name="email" type="email" autoComplete="username" required />
-              <button type="button" onClick={sendCode}>
-                인증번호 발송
+          <div className="field">
+            <div className="field-inline">
+              <input
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="username"
+                required
+              />
+              <button type="button" className="btn-inline" onClick={sendCode}>
+                이메일 인증
               </button>
-            </span>
-          </label>
-          <label>
-            인증번호
-            <span className="field-action">
-              <input name="verificationCode" inputMode="numeric" required />
-              <button type="button" onClick={verifyCode}>
-                확인
-              </button>
-            </span>
-          </label>
-          <label>
-            비밀번호
+            </div>
+          </div>
+          {codeSent && (
+            <div className="field">
+              <div className="field-inline">
+                <input
+                  name="verificationCode"
+                  placeholder="인증번호 6자리"
+                  inputMode="numeric"
+                  maxLength="6"
+                  required
+                />
+                <button type="button" className="btn-inline" onClick={verifyCode}>
+                  인증확인
+                </button>
+              </div>
+              {verified && <p className="help-text ok">이메일 인증이 완료되었습니다.</p>}
+            </div>
+          )}
+          <div className="field">
+            <label className="sr-only" htmlFor="signup-password">
+              비밀번호
+            </label>
             <input
+              id="signup-password"
               name="password"
               type="password"
+              placeholder="비밀번호"
               autoComplete="new-password"
               minLength="8"
               required
             />
-          </label>
-          <label>
-            비밀번호 확인
+            <p className="help-text">※ 비밀번호는 영문, 숫자, 특수문자(@$!%*#?&.) 포함 8자 이상</p>
+          </div>
+          <div className="field">
+            <label className="sr-only" htmlFor="signup-confirm-password">
+              비밀번호 확인
+            </label>
             <input
+              id="signup-confirm-password"
               name="confirmPassword"
               type="password"
+              placeholder="비밀번호 확인"
               autoComplete="new-password"
               minLength="8"
               required
             />
-          </label>
-          <button className="button button--primary" type="button" onClick={goToProfile}>
+          </div>
+          <button
+            className="button button--primary button--wide"
+            type="button"
+            onClick={goToProfile}
+          >
             다음
           </button>
-        </fieldset>
-        <fieldset hidden={step !== 2}>
-          <label>
-            닉네임
-            <span className="field-action">
-              <input name="nickname" maxLength="30" required />
-              <button type="button" onClick={checkNickname}>
-                중복 확인
-              </button>
-            </span>
-          </label>
-          <label>
-            프로필 사진 <small>선택 사항</small>
-            <input name="profileImage" type="file" accept="image/*" />
-          </label>
-          <div className="form-actions">
-            <button className="button button--secondary" type="button" onClick={() => setStep(1)}>
-              이전
-            </button>
-            <button className="button button--primary" type="submit">
-              가입 완료
-            </button>
+          <div className="auth-links">
+            <span>이미 계정이 있으신가요?</span>
+            <Link to="/login">로그인</Link>
           </div>
         </fieldset>
+        <fieldset hidden={step !== 2}>
+          <div className="profile-row">
+            <div className="avatar-upload">
+              <label>
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="선택한 프로필 사진 미리보기" />
+                ) : (
+                  <span>+</span>
+                )}
+                <input
+                  name="profileImage"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarChange}
+                />
+              </label>
+            </div>
+            <div className="field">
+              <div className="field-inline">
+                <input name="nickname" placeholder="닉네임" maxLength="30" required />
+                <button type="button" className="btn-inline" onClick={checkNickname}>
+                  중복확인
+                </button>
+              </div>
+            </div>
+          </div>
+          <button className="button button--primary button--wide" type="submit">
+            가입 완료
+          </button>
+          <button
+            className="button button--secondary button--wide"
+            type="button"
+            onClick={() => setStep(1)}
+          >
+            이전
+          </button>
+        </fieldset>
       </form>
-      <p className="auth-bottom-link">
-        이미 계정이 있나요? <Link to="/login">로그인</Link>
-      </p>
     </div>
   );
 }
