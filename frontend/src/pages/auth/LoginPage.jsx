@@ -25,17 +25,17 @@ export default function LoginPage() {
       {resultQuery.data?.type !== "dormant" && <Notice notice={resultQuery.data} />}
       <form className="form-stack" method="post" action={backendUrl("/login")}>
         <input name="email" type="email" placeholder="이메일" autoComplete="username" required />
-          <label className="sr-only" htmlFor="login-password">
-              비밀번호
-          </label>
-          <input
-              id="login-password"
-              name="password"
-              type="password"
-              placeholder="비밀번호"
-              autoComplete="current-password"
-              required
-          />
+        <label className="sr-only" htmlFor="login-password">
+          비밀번호
+        </label>
+        <input
+          id="login-password"
+          name="password"
+          type="password"
+          placeholder="비밀번호"
+          autoComplete="current-password"
+          required
+        />
         <button className="button button--primary button--wide" type="submit">
           로그인
         </button>
