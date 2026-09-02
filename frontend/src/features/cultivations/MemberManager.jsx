@@ -98,7 +98,7 @@ export default function MemberManager({ cultivationId, members, myRole, onClose 
   };
 
   return (
-    <Modal title="담당자 관리" onClose={onClose} className="modal-card--wide">
+    <Modal title="담당자 관리" onClose={onClose}>
       <Notice notice={notice} onDismiss={() => setNotice(null)} />
       {isOwner && (
         <form className="inline-search" onSubmit={search}>
@@ -111,8 +111,13 @@ export default function MemberManager({ cultivationId, members, myRole, onClose 
             onChange={(event) => setKeyword(event.target.value)}
             placeholder="이메일 또는 닉네임"
           />
-          <button className="button button--secondary" type="submit" disabled={busy}>
-            <Search aria-hidden="true" /> 검색
+          <button
+            className="button button--secondary inline-search__submit"
+            type="submit"
+            aria-label="검색"
+            disabled={busy}
+          >
+            <Search aria-hidden="true" />
           </button>
         </form>
       )}

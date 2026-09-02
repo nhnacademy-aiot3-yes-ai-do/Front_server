@@ -1,5 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, KeyRound, Save, Trash2 } from "lucide-react";
+import {
+  Camera,
+  CalendarClock,
+  CalendarPlus,
+  CircleUserRound,
+  KeyRound,
+  Mail,
+  Pencil,
+  TriangleAlert,
+  User,
+} from "lucide-react";
 import { useState } from "react";
 import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
 import Modal from "../../components/Modal";
@@ -10,7 +20,7 @@ import { formatDate } from "../../utils/formatters";
 export default function ProfilePage() {
   const [notice, setNotice] = useState(null);
   const [withdrawNotice, setWithdrawNotice] = useState(null);
-  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [modal, setModal] = useState(null);
   const [busy, setBusy] = useState(false);
   const queryClient = useQueryClient();
   const profileQuery = useQuery({
@@ -27,6 +37,7 @@ export default function ProfilePage() {
         nickname: String(values.get("nickname")).trim(),
       }).then(unwrapApiResponse);
       await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+      setModal(null);
       setNotice({ type: "success", message: "프로필을 수정했습니다." });
     } catch (error) {
       setNotice({ type: "error", message: error.message });
@@ -54,6 +65,7 @@ export default function ProfilePage() {
       setNotice({ type: "error", message: error.message });
     } finally {
       setBusy(false);
+      event.target.value = "";
     }
   };
 
@@ -103,135 +115,201 @@ export default function ProfilePage() {
 
   const profile = profileQuery.data;
   const displayName = profile.nickname || "사용자";
+
   return (
     <main className="workspace-page">
-      <section className="workspace-panel profile-page">
-        <header className="page-heading">
-          <div>
-            <p className="eyebrow">내 계정</p>
-            <h1>내 정보</h1>
-            <p>프로필과 로그인 정보를 안전하게 관리하세요.</p>
-          </div>
-        </header>
-        <Notice notice={notice} onDismiss={() => setNotice(null)} />
-        <section className="profile-grid">
-          <article className="panel-card profile-summary">
-            <label className="profile-photo" aria-label="프로필 사진 변경">
+      <section className="profile-card-wrap">
+        <article className="panel-card profile-card">
+          <div className="profile-image-section">
+            <div className="profile-avatar">
               {profile.photoUrl ? (
-                <img src={profile.photoUrl} alt="현재 프로필" />
+                <img alt="현재 프로필" src={profile.photoUrl} />
               ) : (
-                <span>{displayName.slice(0, 1)}</span>
+                <CircleUserRound aria-hidden="true" />
               )}
-              <Camera aria-hidden="true" />
+            </div>
+            <label className="profile-image-upload-button">
+              <Camera aria-hidden="true" /> 사진 변경
               <input
-                type="file"
                 accept="image/jpeg,image/png,image/webp"
-                onChange={uploadPhoto}
                 disabled={busy}
+                hidden
+                onChange={uploadPhoto}
+                type="file"
               />
             </label>
-            <h2>{displayName}</h2>
-            <p>{profile.email}</p>
-            <small>{formatDate(profile.createdAt)} 가입</small>
-          </article>
-          <div className="profile-forms">
-            <form className="panel-card form-stack" onSubmit={updateProfile}>
-              <h2>기본 정보</h2>
-              <label>
-                이메일
-                <input value={profile.email} readOnly />
-              </label>
-              <label>
-                닉네임
-                <input name="nickname" defaultValue={displayName} maxLength="30" required />
-              </label>
-              <button className="button button--primary" type="submit" disabled={busy}>
-                <Save aria-hidden="true" /> 저장
-              </button>
-            </form>
-            {profile.hasPassword && (
-              <form className="panel-card form-stack" onSubmit={changePassword}>
-                <h2>비밀번호 변경</h2>
-                <label>
-                  현재 비밀번호
-                  <input
-                    name="currentPassword"
-                    type="password"
-                    autoComplete="current-password"
-                    required
-                  />
-                </label>
-                <label>
-                  새 비밀번호
-                  <input
-                    name="newPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    minLength="8"
-                    required
-                  />
-                </label>
-                <label>
-                  새 비밀번호 확인
-                  <input
-                    name="confirmPassword"
-                    type="password"
-                    autoComplete="new-password"
-                    minLength="8"
-                    required
-                  />
-                </label>
-                <button className="button button--secondary" type="submit" disabled={busy}>
-                  <KeyRound aria-hidden="true" /> 비밀번호 변경
-                </button>
-              </form>
-            )}
-            <section className="panel-card profile-danger-zone">
-              <div>
-                <h2>회원 탈퇴</h2>
-                <p>탈퇴하면 재배지와 센서, 재배 이력 데이터는 복구할 수 없습니다.</p>
-              </div>
-              <button
-                className="button button--danger"
-                type="button"
-                onClick={() => {
-                  setWithdrawNotice(null);
-                  setWithdrawOpen(true);
-                }}
-                disabled={busy}
-              >
-                <Trash2 aria-hidden="true" /> 회원 탈퇴
-              </button>
-            </section>
           </div>
-        </section>
+
+          <h2 className="profile-name">{displayName}</h2>
+
+          <Notice notice={notice} onDismiss={() => setNotice(null)} />
+
+          <div className="info-rows">
+            <div className="info-row">
+              <span className="info-label">
+                <Mail aria-hidden="true" />
+                이메일
+              </span>
+              <span className="info-value">{profile.email}</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">
+                <User aria-hidden="true" />
+                닉네임
+              </span>
+              <span className="info-value">{displayName}</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">
+                <CalendarPlus aria-hidden="true" />
+                가입일
+              </span>
+              <span className="info-value">{formatDate(profile.createdAt)}</span>
+            </div>
+            <div className="info-row">
+              <span className="info-label">
+                <CalendarClock aria-hidden="true" />
+                최종 수정일
+              </span>
+              <span className="info-value">{formatDate(profile.updatedAt)}</span>
+            </div>
+          </div>
+
+          <button
+            className="button button--primary profile-full-btn"
+            onClick={() => setModal("edit")}
+            type="button"
+          >
+            <Pencil aria-hidden="true" /> 회원정보 수정
+          </button>
+
+          {profile.hasPassword && (
+            <button
+              className="button button--secondary profile-full-btn"
+              onClick={() => setModal("password")}
+              type="button"
+            >
+              <KeyRound aria-hidden="true" /> 비밀번호 변경
+            </button>
+          )}
+
+          <button
+            className="profile-delete-link"
+            onClick={() => {
+              setWithdrawNotice(null);
+              setModal("withdraw");
+            }}
+            type="button"
+          >
+            회원 탈퇴
+          </button>
+        </article>
       </section>
-      {withdrawOpen && (
-        <Modal title="정말 탈퇴하시겠어요?" onClose={() => setWithdrawOpen(false)}>
-          <form className="form-stack" onSubmit={withdraw}>
-            <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
-            <p className="danger-description">
-              탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며 복구할 수 없습니다.
-            </p>
+
+      {modal === "edit" && (
+        <Modal title="회원정보 수정" onClose={() => setModal(null)}>
+          <p className="modal-desc">닉네임을 수정할 수 있어요.</p>
+          <form className="form-stack" onSubmit={updateProfile}>
             <label>
-              비밀번호 확인
+              닉네임
+              <input defaultValue={displayName} maxLength="30" name="nickname" required />
+            </label>
+            <div className="modal-actions">
+              <button
+                className="button button--secondary"
+                onClick={() => setModal(null)}
+                type="button"
+              >
+                취소
+              </button>
+              <button className="button button--primary" disabled={busy} type="submit">
+                저장
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {modal === "password" && (
+        <Modal title="비밀번호 변경" onClose={() => setModal(null)}>
+          <p className="modal-desc">안전한 비밀번호를 위해 현재 비밀번호를 먼저 확인해주세요.</p>
+          <form className="form-stack" onSubmit={changePassword}>
+            <label>
+              현재 비밀번호
               <input
-                name="password"
-                type="password"
                 autoComplete="current-password"
+                name="currentPassword"
                 required
-                autoFocus
+                type="password"
+              />
+            </label>
+            <label>
+              새 비밀번호
+              <input
+                autoComplete="new-password"
+                minLength="8"
+                name="newPassword"
+                required
+                type="password"
+              />
+            </label>
+            <label>
+              새 비밀번호 확인
+              <input
+                autoComplete="new-password"
+                minLength="8"
+                name="confirmPassword"
+                required
+                type="password"
               />
             </label>
             <div className="modal-actions">
               <button
                 className="button button--secondary"
+                onClick={() => setModal(null)}
                 type="button"
-                onClick={() => setWithdrawOpen(false)}
               >
                 취소
               </button>
-              <button className="button button--danger" type="submit" disabled={busy}>
+              <button className="button button--primary" disabled={busy} type="submit">
+                비밀번호 변경
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {modal === "withdraw" && (
+        <Modal title="정말 탈퇴하시겠어요?" onClose={() => setModal(null)}>
+          <div className="delete-warning-icon">
+            <TriangleAlert aria-hidden="true" />
+          </div>
+          <div className="delete-warning-box">
+            탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며
+            <br />
+            복구할 수 없어요.
+          </div>
+          <form className="form-stack" onSubmit={withdraw}>
+            <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
+            <label>
+              비밀번호 확인
+              <input
+                autoComplete="current-password"
+                autoFocus
+                name="password"
+                required
+                type="password"
+              />
+            </label>
+            <div className="modal-actions">
+              <button
+                className="button button--secondary"
+                onClick={() => setModal(null)}
+                type="button"
+              >
+                취소
+              </button>
+              <button className="button button--danger" disabled={busy} type="submit">
                 {busy ? "처리 중…" : "탈퇴하기"}
               </button>
             </div>
