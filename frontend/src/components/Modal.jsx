@@ -10,7 +10,7 @@ export default function Modal({ title, children, onClose, className = "" }) {
     const previouslyFocused = document.activeElement;
     const dialog = dialogRef.current;
     const focusableSelector =
-        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
     const focusableElements = () => [...(dialog?.querySelectorAll(focusableSelector) || [])];
 
     focusableElements()[0]?.focus();
