@@ -27,6 +27,7 @@ const AdminNotificationsPage = lazy(() => import("./pages/admin/AdminNotificatio
 const AdminSensorsPage = lazy(() => import("./pages/admin/AdminSensorsPage"));
 
 export default function App() {
+  useAutoSession();
   return (
     <Suspense fallback={<div className="route-loading">화면을 준비하고 있어요…</div>}>
       <Routes>
@@ -56,6 +57,10 @@ export default function App() {
           <Route
             path="/cultivations/:cultivationId/setup"
             element={<CultivationSensorSetupPage />}
+          />
+          <Route
+            path="/cultivations/:cultivationId/daily-feedbacks/:feedbackDate"
+            element={<CultivationDetailPage />}
           />
           <Route path="/cultivations/:cultivationId" element={<CultivationDetailPage />} />
           <Route path="/support" element={<SupportPage />} />

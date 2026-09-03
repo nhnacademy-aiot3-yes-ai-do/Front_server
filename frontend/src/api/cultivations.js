@@ -1,4 +1,4 @@
-import { jsonRequest, request, unwrapApiResponse } from "./http";
+import { jsonRequest, request } from "./http";
 
 export const cultivationKeys = {
   all: ["cultivations"],
@@ -6,6 +6,12 @@ export const cultivationKeys = {
   preview: (id) => [...cultivationKeys.all, "preview", Number(id)],
   detail: (id) => [...cultivationKeys.all, "detail", Number(id)],
   setup: (id) => [...cultivationKeys.all, "setup", Number(id)],
+  dailyFeedback: (id, feedbackDate) => [
+    ...cultivationKeys.all,
+    "daily-feedback",
+    Number(id),
+    feedbackDate,
+  ],
   latest: (id) => [...cultivationKeys.all, "latest", Number(id)],
   trend: (id, deviceEui, sensorType, unit) => [
     ...cultivationKeys.all,
@@ -32,6 +38,10 @@ export function getCultivationDetailPage(id) {
 
 export function getCultivationSetupPage(id) {
   return request(`/cultivations/${id}/setup-data`);
+}
+
+export function getDailyFeedback(id, feedbackDate) {
+  return request(`/api/cultivations/${id}/daily-feedbacks/${feedbackDate}`).then(unwrapApiResponse);
 }
 
 export function getLatestSensorValues(id) {

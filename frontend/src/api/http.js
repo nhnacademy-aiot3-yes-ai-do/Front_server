@@ -16,17 +16,21 @@ export async function request(path, options = {}) {
 
   if (response.status === 401 || (response.redirected && response.url.includes("/login"))) {
     window.location.assign("/login");
-    throw new Error("로그인이 필요합니다.");
+    const error = new Error("로그인이 필요합니다.");
+    error.status = response.status;
+    throw error;
   }
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(
+    const error = new Error(
       body?.message ||
         body?.detail ||
         body?.error ||
         `요청을 처리하지 못했습니다. (${response.status})`,
     );
+    error.status = response.status;
+    throw error;
   }
 
   if (response.status === 204) {
