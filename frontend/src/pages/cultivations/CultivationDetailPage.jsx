@@ -739,6 +739,8 @@ function LiveSensorCard({ color, option, initialHistory, selectedHours }) {
               />
             </LineChart>
           </ResponsiveContainer>
+        ) : chartPoints.length === 1 ? (
+          <p className="pending-widget">측정값 1건만 있어 그래프를 표시할 수 없습니다.</p>
         ) : (
           <p className="pending-widget">선택한 기간의 센서 데이터가 없습니다.</p>
         )}
