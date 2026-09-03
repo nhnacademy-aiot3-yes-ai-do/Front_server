@@ -96,42 +96,43 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
 
   const registerSensor = async (event) => {
     event.preventDefault();
+    const form = event.currentTarget;   // await 전에 캡처
+
     if (selectedTypes.length === 0) {
-      setNotice({ type: "error", message: "측정 타입을 하나 이상 추가해 주세요." });
-      return;
+        setNotice({ type: "error", message: "측정 타입을 하나 이상 추가해 주세요." });
+        return;
     }
     if (selectedTypes.some((type) => !validations[type.id]?.valid)) {
-      setNotice({ type: "error", message: "모든 측정 범위의 AI 검증을 통과해 주세요." });
-      return;
+        setNotice({ type: "error", message: "모든 측정 범위의 AI 검증을 통과해 주세요." });
+        return;
     }
 
-    const form = event.currentTarget; // [핵심 1] 비동기 통신 전에 form 객체를 미리 보관
     const values = new FormData(form);
     const sensorSettings = selectedTypes.map((type) => ({
-      sensorTypeId: type.id,
-      thresholdMin: Number(values.get(`min-${type.id}`)),
-      thresholdMax: Number(values.get(`max-${type.id}`)),
+        sensorTypeId: type.id,
+        thresholdMin: Number(values.get(`min-${type.id}`)),
+        thresholdMax: Number(values.get(`max-${type.id}`)),
     }));
 
     setBusy(true);
     try {
-      await jsonRequest(`/cultivations/${cultivationId}/sensors`, "POST", {
-        deviceEui: String(values.get("deviceEui")).trim(),
-        deviceModel: String(values.get("deviceModel")).trim(),
-        deviceName: String(values.get("deviceName")).trim(),
-        location: String(values.get("location")).trim(),
-        locationDetail: String(values.get("locationDetail")).trim(),
-        sensorSettings,
-      });
-      form?.reset(); // [핵심 2] null이 되지 않는 form 변수로 reset 호출
-      setSelectedTypeIds([]);
-      setValidations({});
-      setNotice({ type: "success", message: "센서를 등록했습니다." });
-      await refresh();
+        await jsonRequest(`/cultivations/${cultivationId}/sensors`, "POST", {
+            deviceEui: String(values.get("deviceEui")).trim(),
+            deviceModel: String(values.get("deviceModel")).trim(),
+            deviceName: String(values.get("deviceName")).trim(),
+            location: String(values.get("location")).trim(),
+            locationDetail: String(values.get("locationDetail")).trim(),
+            sensorSettings,
+        });
+        form.reset();   // 캡처해둔 참조 사용
+        setSelectedTypeIds([]);
+        setValidations({});
+        setNotice({ type: "success", message: "센서를 등록했습니다." });
+        await refresh();
     } catch (error) {
-      setNotice({ type: "error", message: error.message });
+        setNotice({ type: "error", message: error.message });
     } finally {
-      setBusy(false);
+        setBusy(false);
     }
   };
 
