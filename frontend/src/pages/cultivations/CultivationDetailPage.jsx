@@ -181,6 +181,30 @@ function mergeSensorHistory(history, latestValues, now = Date.now()) {
   return merged;
 }
 
+const MAX_CHART_POINTS = 240;
+
+function chartPointLimit(rangeMinutes) {
+  if (rangeMinutes <= 10) return 200;
+  if (rangeMinutes <= 30) return 180;
+  if (rangeMinutes <= 60) return 240;
+  if (rangeMinutes <= 360) return 300;
+  return 144;
+}
+
+function sensorRangeLabel(rangeMinutes) {
+  return rangeMinutes < 60 ? `최근 ${rangeMinutes}분` : `최근 ${rangeMinutes / 60}시간`;
+}
+
+function downsampleChartPoints(points, maxPoints = MAX_CHART_POINTS) {
+  if (points.length <= maxPoints) return points;
+
+  const bucketSize = Math.ceil(points.length / maxPoints);
+  return Array.from({ length: Math.ceil(points.length / bucketSize) }, (_, bucketIndex) => {
+    const endIndex = Math.min((bucketIndex + 1) * bucketSize, points.length);
+    return points[endIndex - 1];
+  });
+}
+
 function complianceRows(compliance) {
   return [
     ["온도", compliance?.temperatureCompliance],
@@ -799,19 +823,22 @@ function getSensorState(option) {
   return { label: "안정", tone: "stable" };
 }
 
-function LiveSensorCard({ color, option, initialHistory, selectedHours }) {
+function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
   const state = getSensorState(option);
   const unit = normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit);
-  const cutoff = Date.now() - selectedHours * 60 * 60 * 1000;
-  const chartPoints = normalizeList(initialHistory)
-    .filter((point) => {
-      const measuredAt = new Date(point.measuredAt).getTime();
-      return Number.isFinite(measuredAt) && measuredAt >= cutoff;
-    })
-    .map((point) => ({
-      measuredAt: formatDateTime(point.measuredAt),
-      value: point.value,
-    }));
+  const cutoff = Date.now() - rangeMinutes * 60 * 1000;
+  const chartPoints = downsampleChartPoints(
+    normalizeList(initialHistory)
+      .filter((point) => {
+        const measuredAt = new Date(point.measuredAt).getTime();
+        return Number.isFinite(measuredAt) && measuredAt >= cutoff;
+      })
+      .map((point) => ({
+        measuredAt: formatDateTime(point.measuredAt),
+        value: point.value,
+      })),
+    chartPointLimit(rangeMinutes),
+  );
 
   return (
     <article className={`live-sensor-card live-sensor-card--${state.tone}`}>
@@ -829,7 +856,7 @@ function LiveSensorCard({ color, option, initialHistory, selectedHours }) {
       <div className="live-sensor-card__reading">
         <strong>{option.latest?.value ?? "-"}</strong>
         <span>{unit}</span>
-        <small>최근 {selectedHours}시간 · 측정값</small>
+        <small>{sensorRangeLabel(rangeMinutes)} · 측정값</small>
       </div>
 
       <div className="live-sensor-chart" aria-label={`${option.sensor.deviceName} 센서 추이`}>
@@ -879,12 +906,12 @@ const SENSOR_PAGE_SIZE = 2;
 
 function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
   const [page, setPage] = useState(0);
-  const [selectedHours, setSelectedHours] = useState(12);
+  const [selectedRangeMinutes, setSelectedRangeMinutes] = useState(720);
   const [sensorHistory, setSensorHistory] = useState(() => normalizeList(sensorHistory12h));
   const totalPages = Math.max(1, Math.ceil(sensorOptions.length / SENSOR_PAGE_SIZE));
 
   useEffect(() => {
-    setSensorHistory(normalizeList(sensorHistory12h));
+    setSensorHistory((history) => mergeSensorHistory(history, normalizeList(sensorHistory12h)));
   }, [sensorHistory12h]);
 
   useEffect(() => {
@@ -918,13 +945,15 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
           <label htmlFor="sensor-history-range">그래프 기간</label>
           <select
             id="sensor-history-range"
-            value={selectedHours}
-            onChange={(event) => setSelectedHours(Number(event.target.value))}
+            value={selectedRangeMinutes}
+            onChange={(event) => setSelectedRangeMinutes(Number(event.target.value))}
           >
-            <option value={1}>최근 1시간</option>
-            <option value={3}>최근 3시간</option>
-            <option value={6}>최근 6시간</option>
-            <option value={12}>최근 12시간</option>
+            <option value={10}>최근 10분</option>
+            <option value={30}>최근 30분</option>
+            <option value={60}>최근 1시간</option>
+            <option value={180}>최근 3시간</option>
+            <option value={360}>최근 6시간</option>
+            <option value={720}>최근 12시간</option>
           </select>
           <span>{latestQuery.isFetching ? "최신값 확인 중" : "3초마다 최신값 갱신"}</span>
         </div>
@@ -947,7 +976,7 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
                 color={sensorChartColors[(start + index) % sensorChartColors.length]}
                 key={option.key}
                 option={option}
-                selectedHours={selectedHours}
+                rangeMinutes={selectedRangeMinutes}
                 initialHistory={sensorHistory.filter(
                   (point) =>
                     point.deviceEui === option.sensor.deviceEui &&
