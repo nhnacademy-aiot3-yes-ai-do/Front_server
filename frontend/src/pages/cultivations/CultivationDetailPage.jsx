@@ -135,6 +135,8 @@ function NotificationBellPanel({ onClose }) {
       )}
     </div>
   );
+}
+
 const SENSOR_HISTORY_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 function sensorHistoryPointKey(point) {
