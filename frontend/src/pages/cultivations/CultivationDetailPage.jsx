@@ -1025,6 +1025,13 @@ export default function CultivationDetailPage() {
   if (detailQuery.isLoading) return <LoadingState message="재배 상세 정보를 불러오고 있어요." />;
   if (detailQuery.isError)
     return <ErrorState error={detailQuery.error} onRetry={detailQuery.refetch} />;
+  if (!data?.cultivation)
+    return (
+      <ErrorState
+        error={new Error("재배지 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.")}
+        onRetry={detailQuery.refetch}
+      />
+    );
 
   const cultivation = data.cultivation;
   const photos = normalizeList(data.photos)
