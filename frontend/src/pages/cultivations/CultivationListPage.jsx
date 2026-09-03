@@ -71,6 +71,9 @@ export default function CultivationListPage() {
                   key={cultivation.cultivationId}
                   cultivation={cultivation}
                   mushroomName={mushrooms.get(cultivation.mushroomId)}
+                  latestSensorValues={
+                    listQuery.data?.latestSensorValuesByCultivationId?.[cultivation.cultivationId]
+                  }
                 />
               ))}
             </div>

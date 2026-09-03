@@ -14,7 +14,9 @@ import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationDetailResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryPageResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationMetadataListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationMetadataResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
@@ -35,7 +37,10 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -50,35 +55,59 @@ public class ReactCultivationPageDataController {
 
     @GetMapping("/page-data")
     public CultivationListPageData listPageData() {
-        CultivationSummaryListResponse cultivationResponse = cultivationClient.getCultivations().getBody();
+        CultivationMetadataListResponse metadataResponse = isolated(
+                "list cultivation metadata",
+                () -> body(cultivationClient.getMetadataList()),
+                null
+        );
+        List<CultivationSummaryResponse> cultivations = metadataResponse == null
+                ? List.of()
+                : metadataResponse.cultivations().stream()
+                .filter(Objects::nonNull)
+                .map(CultivationMetadataListResponse.CultivationMetadataListItemResponse::cultivation)
+                .filter(Objects::nonNull)
+                .toList();
+        Map<Long, List<site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse>> latestValues =
+                metadataResponse == null ? Map.of() : metadataResponse.cultivations().stream()
+                .filter(Objects::nonNull)
+                .filter(item -> item.cultivation() != null && item.cultivation().cultivationId() != null)
+                .collect(Collectors.toMap(
+                        item -> item.cultivation().cultivationId(),
+                        CultivationMetadataListResponse.CultivationMetadataListItemResponse::latestSensorValues
+                ));
         MushroomReferenceInfoListResponse mushroomResponse = isolated(
                 "list mushroom references",
-                () -> sensorClient.getAllMushroomReferences().getBody(),
+                () -> body(sensorClient.getAllMushroomReferences()),
                 new MushroomReferenceInfoListResponse(List.of())
         );
 
         return new CultivationListPageData(
-                cultivationResponse == null ? List.of() : cultivationResponse.cultivationSummaryResponses(),
-                mushroomResponse == null ? List.of() : mushroomResponse.mushroomReferenceInfoResponses()
+                cultivations,
+                mushroomResponse == null ? List.of() : mushroomResponse.mushroomReferenceInfoResponses(),
+                latestValues
         );
     }
 
     @GetMapping("/{cultivation-id}/preview")
     public CultivationPreviewData preview(@PathVariable("cultivation-id") Long cultivationId) {
-        CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
+        CultivationDetailResponse cultivation = isolated(
+                "preview cultivation",
+                () -> body(cultivationClient.getDetailCultivation(cultivationId)),
+                null
+        );
         List<PhotoResponse> photos = safePhotos(isolated(
                 "preview photos",
-                () -> cultivationClient.getPhoto(cultivationId).getBody(),
+                () -> body(cultivationClient.getPhoto(cultivationId)),
                 new PhotoListResponse(List.of())
         ));
         CultivationSensorListResponse sensors = isolated(
                 "preview sensors",
-                () -> sensorClient.getSensors(cultivationId).getBody(),
+                () -> body(sensorClient.getSensors(cultivationId)),
                 emptySensors()
         );
         LatestSensorValueListResponse latestValues = isolated(
                 "preview latest values",
-                () -> sensorClient.getLatestSensorValues(cultivationId).getBody(),
+                () -> body(sensorClient.getLatestSensorValues(cultivationId)),
                 new LatestSensorValueListResponse(List.of())
         );
 
@@ -98,31 +127,32 @@ public class ReactCultivationPageDataController {
 
     @GetMapping("/{cultivation-id}/page-data")
     public CultivationDetailPageData detailPageData(@PathVariable("cultivation-id") Long cultivationId) {
-        CultivationDetailResponse cultivation = cultivationClient.getDetailCultivation(cultivationId).getBody();
-        MemberListResponse memberResponse = cultivationClient.getMembers(cultivationId).getBody();
+        CultivationMetadataResponse metadata = isolated(
+                "detail cultivation metadata",
+                () -> body(cultivationClient.getMetadata(cultivationId)),
+                null
+        );
+        CultivationDetailResponse cultivation = metadata == null ? null : metadata.cultivation();
+        CultivationSensorListResponse sensors = metadata == null || metadata.sensors() == null
+                ? emptySensors() : metadata.sensors();
+        LatestSensorValueListResponse latestValues = new LatestSensorValueListResponse(List.of());
+        List<site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse> sensorHistory12h =
+                metadata == null || metadata.sensorHistory12h() == null ? List.of() : metadata.sensorHistory12h();
+        List<MushroomReferenceInfoResponse> mushrooms = metadata == null || metadata.mushroom() == null
+                ? List.of() : List.of(metadata.mushroom());
+        MemberListResponse memberResponse = isolated(
+                "detail members",
+                () -> body(cultivationClient.getMembers(cultivationId)),
+                new MemberListResponse(List.of())
+        );
         List<PhotoResponse> photos = safePhotos(isolated(
                 "detail photos",
-                () -> cultivationClient.getPhoto(cultivationId).getBody(),
+                () -> body(cultivationClient.getPhoto(cultivationId)),
                 new PhotoListResponse(List.of())
         ));
-        CultivationSensorListResponse sensors = isolated(
-                "detail sensors",
-                () -> sensorClient.getSensors(cultivationId).getBody(),
-                emptySensors()
-        );
-        LatestSensorValueListResponse latestValues = isolated(
-                "detail latest values",
-                () -> sensorClient.getLatestSensorValues(cultivationId).getBody(),
-                new LatestSensorValueListResponse(List.of())
-        );
-        MushroomReferenceInfoListResponse mushroomResponse = isolated(
-                "detail mushroom references",
-                () -> sensorClient.getAllMushroomReferences().getBody(),
-                new MushroomReferenceInfoListResponse(List.of())
-        );
         EnvironmentComplianceResponse compliance = isolated(
                 "daily environment compliance",
-                () -> sensorClient.getDailyEnvironmentCompliance(cultivationId, LocalDate.now(BUSINESS_ZONE)).getBody(),
+                () -> body(sensorClient.getDailyEnvironmentCompliance(cultivationId, LocalDate.now(BUSINESS_ZONE))),
                 null
         );
 
@@ -133,8 +163,9 @@ public class ReactCultivationPageDataController {
                 photos,
                 sensors,
                 latestValues,
+                sensorHistory12h,
                 pastCultivations(cultivationId),
-                safeMushrooms(mushroomResponse),
+                mushrooms,
                 compliance
         );
     }
@@ -150,7 +181,7 @@ public class ReactCultivationPageDataController {
     private List<CultivationHistoryResponse> pastCultivations(Long cultivationId) {
         CultivationHistoryPageResponse response = isolated(
                 "past cultivations",
-                () -> cultivationClient.getHistory(0, 50).getBody(),
+                () -> body(cultivationClient.getHistory(0, 50)),
                 null
         );
         if (response == null || response.content() == null) {
@@ -202,5 +233,9 @@ public class ReactCultivationPageDataController {
             log.warn("React page data dependency failed: operation={}, status={}", operation, exception.status());
             return fallback;
         }
+    }
+
+    private <T> T body(ResponseEntity<T> response) {
+        return response == null ? null : response.getBody();
     }
 }

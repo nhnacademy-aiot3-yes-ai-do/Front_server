@@ -54,3 +54,10 @@ export function formatRole(role) {
 export function normalizeList(value) {
   return Array.isArray(value) ? value : [];
 }
+
+export function normalizeSensorUnit(unit) {
+  if (unit == null) return unit;
+  const normalized = String(unit).trim();
+  if (!normalized) return normalized;
+  return normalized === "℃" ? "°C" : normalized;
+}

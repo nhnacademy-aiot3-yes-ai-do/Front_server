@@ -8,6 +8,7 @@ import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomRefere
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.EnvironmentComplianceResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse;
 
 import java.util.List;
 
@@ -18,6 +19,7 @@ public record CultivationDetailPageData(
         List<PhotoResponse> photos,
         CultivationSensorListResponse sensors,
         LatestSensorValueListResponse latestSensorValues,
+        List<LatestSensorValueResponse> sensorHistory12h,
         List<CultivationHistoryResponse> pastCultivations,
         List<MushroomReferenceInfoResponse> mushrooms,
         EnvironmentComplianceResponse dailyCompliance
@@ -25,6 +27,7 @@ public record CultivationDetailPageData(
     public CultivationDetailPageData {
         members = members == null ? List.of() : List.copyOf(members);
         photos = photos == null ? List.of() : List.copyOf(photos);
+        sensorHistory12h = sensorHistory12h == null ? List.of() : List.copyOf(sensorHistory12h);
         pastCultivations = pastCultivations == null ? List.of() : List.copyOf(pastCultivations);
         mushrooms = mushrooms == null ? List.of() : List.copyOf(mushrooms);
     }

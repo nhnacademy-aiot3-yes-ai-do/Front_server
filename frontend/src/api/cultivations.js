@@ -6,12 +6,13 @@ export const cultivationKeys = {
   preview: (id) => [...cultivationKeys.all, "preview", Number(id)],
   detail: (id) => [...cultivationKeys.all, "detail", Number(id)],
   latest: (id) => [...cultivationKeys.all, "latest", Number(id)],
-  trend: (id, deviceEui, sensorType) => [
+  trend: (id, deviceEui, sensorType, unit) => [
     ...cultivationKeys.all,
     "trend",
     Number(id),
     deviceEui,
     sensorType,
+    unit,
   ],
 };
 
@@ -31,10 +32,11 @@ export function getLatestSensorValues(id) {
   return request(`/cultivations/${id}/sensor-values`);
 }
 
-export function getSensorTrend(id, deviceEui, sensorType) {
+export function getSensorTrend(id, deviceEui, sensorType, unit) {
   const search = new URLSearchParams({
     "device-eui": deviceEui,
     "sensor-type": sensorType,
+    unit,
   });
   return request(`/cultivations/${id}/sensor-values/trend?${search}`);
 }
