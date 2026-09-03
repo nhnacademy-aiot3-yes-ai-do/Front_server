@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Bell,
   Bot,
   Camera,
   CalendarDays,
@@ -70,6 +71,70 @@ function buildSensorOptions(data, latestValues) {
   );
 }
 
+const NOTIF_PAGE_SIZE = 8;
+
+function NotificationBellPanel({ onClose }) {
+  const [page, setPage] = useState(0);
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    const handleClick = (event) => {
+      if (panelRef.current && !panelRef.current.contains(event.target)) onClose();
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [onClose]);
+
+  const notifQuery = useQuery({
+    queryKey: ["cultivation-notif-panel", page],
+    queryFn: () => request(`/notifications?page=${page}&size=${NOTIF_PAGE_SIZE}`),
+  });
+
+  const items = normalizeList(notifQuery.data?.content);
+  const totalPages = Math.max(1, notifQuery.data?.totalPages || 1);
+
+  return (
+    <div className="dropdown-panel is-open" ref={panelRef}>
+      <div className="dropdown-panel-title">알림</div>
+      <div className="notif-list">
+        {notifQuery.isLoading && <div className="notif-row">불러오는 중...</div>}
+        {notifQuery.isError && <div className="notif-row">알림을 불러오지 못했습니다.</div>}
+        {!notifQuery.isLoading && !notifQuery.isError && items.length === 0 && (
+          <div className="notif-row">알림이 없습니다.</div>
+        )}
+        {!notifQuery.isLoading &&
+          !notifQuery.isError &&
+          items.map((item) => (
+            <div className="notif-row" key={item.id}>
+              {item.message || "(메시지 없음)"}
+            </div>
+          ))}
+      </div>
+      {totalPages > 1 && (
+        <div className="panel-pagination">
+          <button
+            type="button"
+            disabled={page === 0}
+            onClick={() => setPage((current) => current - 1)}
+            aria-label="이전 페이지"
+          >
+            <ChevronLeft aria-hidden="true" />
+          </button>
+          <span>
+            {page + 1} / {totalPages}
+          </span>
+          <button
+            type="button"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((current) => current + 1)}
+            aria-label="다음 페이지"
+          >
+            <ChevronRight aria-hidden="true" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
 const SENSOR_HISTORY_WINDOW_MS = 12 * 60 * 60 * 1000;
 
 function sensorHistoryPointKey(point) {
@@ -905,6 +970,7 @@ export default function CultivationDetailPage() {
   const id = Number(cultivationId);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [modal, setModal] = useState(null);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [photoDateFilter, setPhotoDateFilter] = useState(null);
   const tabPanelRef = useRef(null);
   const [tabPanelHeight, setTabPanelHeight] = useState(0);
@@ -918,7 +984,7 @@ export default function CultivationDetailPage() {
     const observer = new ResizeObserver((entries) => {
       const height = entries[0]?.contentRect.height;
       if (!height) return;
-      setTabPanelHeight((prev) => (height > prev ? height : prev));
+      setTabPanelHeight(height);
     });
     observer.observe(node);
     return () => observer.disconnect();
@@ -985,6 +1051,12 @@ export default function CultivationDetailPage() {
         <button type="button" onClick={() => setModal("members")}>
           <Users aria-hidden="true" /> 담당자
         </button>
+        <div className="notif-bell-wrap">
+          <button type="button" onClick={() => setNotifOpen((open) => !open)}>
+            <Bell aria-hidden="true" /> 알림
+          </button>
+          {notifOpen && <NotificationBellPanel onClose={() => setNotifOpen(false)} />}
+        </div>
         <button type="button" onClick={() => setModal("photos")}>
           <Camera aria-hidden="true" /> 사진
         </button>
@@ -1025,7 +1097,11 @@ export default function CultivationDetailPage() {
 
         <div
           ref={tabPanelRef}
-          style={{ display: "flex", flexDirection: "column", height: tabPanelHeight || undefined }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            height: activeTab === "dashboard" ? undefined : tabPanelHeight || undefined,
+          }}
         >
           {activeTab === "dashboard" && (
             <section
