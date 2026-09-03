@@ -103,10 +103,10 @@ describe("CultivationSensorSetupStep", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: /기존 토양 센서/ }));
 
-    expect(screen.getByRole("textbox", { name: "센서 고유번호" }))
-      .toBeDisabled();
-    expect(screen.getByRole("textbox", { name: "센서 고유번호" }))
-      .toHaveClass("sensor-device-eui--locked");
+    expect(screen.getByRole("textbox", { name: "센서 고유번호" })).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "센서 고유번호" })).toHaveClass(
+      "sensor-device-eui--locked",
+    );
   });
 
   it("센서 등록이 완료되면 성공 안내를 표시하고 안내 위치로 이동한다", async () => {

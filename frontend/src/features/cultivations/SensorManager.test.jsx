@@ -72,10 +72,7 @@ describe("SensorManager", () => {
 
     fireEvent.click(screen.getByRole("tab", { name: "센서 추가" }));
 
-    expect(screen.getByRole("tab", { name: "센서 추가" })).toHaveAttribute(
-      "aria-selected",
-      "true",
-    );
+    expect(screen.getByRole("tab", { name: "센서 추가" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("재배지 41 · 임계값 1개")).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "등록 센서 목록" })).not.toBeInTheDocument();
   });
