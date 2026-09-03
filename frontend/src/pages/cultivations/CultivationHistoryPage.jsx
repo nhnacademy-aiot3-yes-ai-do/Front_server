@@ -6,6 +6,8 @@ import { request } from "../../api/http";
 import { EmptyState, ErrorState, LoadingState } from "../../components/PageState";
 import { formatDate, normalizeList } from "../../utils/formatters";
 
+const GRADE_TONE = { TOP: "warning", HIGH: "stable", MID: "waiting", LOW: "low" };
+
 export default function CultivationHistoryPage() {
   const [page, setPage] = useState(0);
   const historyQuery = useQuery({
@@ -51,12 +53,26 @@ export default function CultivationHistoryPage() {
                     <dd>{formatDate(item.finishedAt)}</dd>
                   </div>
                   <div>
-                    <dt>수확량</dt>
-                    <dd>{item.harvestWeight != null ? `${item.harvestWeight}g` : "-"}</dd>
+                      <dt>수확량</dt>
+                      <dd>{item.harvestWeight != null ? `${item.harvestWeight}g` : "-"}</dd>
                   </div>
                   <div>
-                    <dt>상품 등급</dt>
-                    <dd>{item.productGrade || "평가 전"}</dd>
+                      <dt>상품 점수</dt>
+                      <dd>{item.productScore != null ? `${item.productScore}점` : "-"}</dd>
+                  </div>
+                  <div>
+                      <dt>상품 등급</dt>
+                      <dd>
+                          {item.productGrade ? (
+                              <span
+                                  className={`status-badge status-badge--${GRADE_TONE[item.productGrade] || "waiting"}`}
+                              >
+                        {formatProductGrade(item.productGrade)}
+                      </span>
+                          ) : (
+                              "평가 전"
+                          )}
+                      </dd>
                   </div>
                 </dl>
               </Link>
