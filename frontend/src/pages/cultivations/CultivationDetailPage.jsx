@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   CartesianGrid,
   Line,
@@ -37,6 +37,11 @@ import Modal from "../../components/Modal";
 import { ErrorState, LoadingState } from "../../components/PageState";
 import ChatPanel from "../../features/cultivations/ChatPanel";
 import CultivationActions from "../../features/cultivations/CultivationActions";
+import DailyFeedbackPanel from "../../features/cultivations/DailyFeedbackPanel";
+import {
+  getPreviousDateInKorea,
+  isDailyFeedbackDate,
+} from "../../features/cultivations/dailyFeedbackDates";
 import MemberManager from "../../features/cultivations/MemberManager";
 import PhotoManager from "../../features/cultivations/PhotoManager";
 import SensorManager from "../../features/cultivations/SensorManager";
@@ -289,42 +294,6 @@ function DetailTabs({ activeTab, onChange }) {
         );
       })}
     </div>
-  );
-}
-
-function AiReportPanel({ compliance, cultivationName }) {
-  return (
-    <section
-      aria-labelledby="detail-report-tab"
-      className="detail-tab-panel"
-      id="detail-report-panel"
-      role="tabpanel"
-    >
-      <header className="section-heading ai-report-heading">
-        <div>
-          <h2>AI 재배 리포트</h2>
-          <p>{cultivationName}의 실제 환경 유지율을 리포트 형태로 정리했습니다.</p>
-        </div>
-        <span>{formatDate(new Date())}</span>
-      </header>
-
-      <section className="report-overview-grid">
-        <EnvironmentBriefing compliance={compliance} />
-        <CompliancePanel compliance={compliance} />
-      </section>
-
-      <article className="panel-card ai-report-insight">
-        <Sparkles aria-hidden="true" />
-        <div>
-          <h2>AI 성장 분석</h2>
-          <p>
-            센서 기반 일일 요약과 행동 제안을 생성하는 공개 API가 아직 없어 임의의 분석을 표시하지
-            않습니다.
-          </p>
-          <div className="pending-widget">AI 분석 데이터 준비 중</div>
-        </div>
-      </article>
-    </section>
   );
 }
 
@@ -997,14 +966,27 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
 }
 
 export default function CultivationDetailPage() {
-  const { cultivationId } = useParams();
+  const { cultivationId, feedbackDate: routeFeedbackDate } = useParams();
+  const navigate = useNavigate();
   const id = Number(cultivationId);
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const feedbackMaxDate = getPreviousDateInKorea();
+  const [activeTab, setActiveTab] = useState(routeFeedbackDate ? "report" : "dashboard");
+  const [selectedFeedbackDate, setSelectedFeedbackDate] = useState(() =>
+    isDailyFeedbackDate(routeFeedbackDate) ? routeFeedbackDate : feedbackMaxDate,
+  );
   const [modal, setModal] = useState(null);
   const [notifOpen, setNotifOpen] = useState(false);
   const [photoDateFilter, setPhotoDateFilter] = useState(null);
   const tabPanelRef = useRef(null);
   const [tabPanelHeight, setTabPanelHeight] = useState(0);
+
+  useEffect(() => {
+    if (!routeFeedbackDate) return;
+    setActiveTab("report");
+    if (isDailyFeedbackDate(routeFeedbackDate)) {
+      setSelectedFeedbackDate(routeFeedbackDate);
+    }
+  }, [routeFeedbackDate]);
 
   useEffect(() => {
     // 대시보드 탭 콘텐츠 높이만 기준으로 삼음 — 챗봇 메시지가 늘어나거나 다른 탭
@@ -1079,6 +1061,31 @@ export default function CultivationDetailPage() {
   const mushroomName = normalizeList(data.mushrooms).find(
     (mushroom) => mushroom.id === cultivation.mushroomId,
   )?.mushroomNameKo;
+  const cultivationStartDate = String(cultivation.startedAt || "").slice(0, 10);
+  const feedbackMinDate = isDailyFeedbackDate(cultivationStartDate)
+    ? cultivationStartDate
+    : undefined;
+
+  const handleTabChange = (nextTab) => {
+    setActiveTab(nextTab);
+    if (nextTab !== "report" && routeFeedbackDate) {
+      navigate(`/cultivations/${id}`, { replace: true });
+    }
+  };
+
+  const handleFeedbackDateChange = (nextDate) => {
+    if (!isDailyFeedbackDate(nextDate)) return;
+    setSelectedFeedbackDate(nextDate);
+    navigate(`/cultivations/${id}/daily-feedbacks/${nextDate}`, { replace: true });
+  };
+
+  const handleOpenFeedbackReport = (nextDate) => {
+    const targetDate = isDailyFeedbackDate(nextDate) ? nextDate : feedbackMaxDate;
+    setSelectedFeedbackDate(targetDate);
+    setActiveTab("report");
+    navigate(`/cultivations/${id}/daily-feedbacks/${targetDate}`);
+  };
+
   return (
     <main className="detail-page">
       <nav className="detail-toolbar" aria-label="재배 상세 메뉴">
@@ -1131,14 +1138,15 @@ export default function CultivationDetailPage() {
           </div>
         </header>
 
-        <DetailTabs activeTab={activeTab} onChange={setActiveTab} />
+        <DetailTabs activeTab={activeTab} onChange={handleTabChange} />
 
         <div
           ref={tabPanelRef}
           style={{
             display: "flex",
             flexDirection: "column",
-            height: activeTab === "dashboard" ? undefined : tabPanelHeight || undefined,
+            height: activeTab === "chatbot" ? tabPanelHeight || undefined : undefined,
+            minHeight: activeTab === "report" ? tabPanelHeight || undefined : undefined,
           }}
         >
           {activeTab === "dashboard" && (
@@ -1182,6 +1190,16 @@ export default function CultivationDetailPage() {
                 <CompliancePanel compliance={data.dailyCompliance} />
               </section>
 
+              <DailyFeedbackPanel
+                cultivationId={id}
+                cultivationName={cultivation.name}
+                feedbackDate={feedbackMaxDate}
+                maxDate={feedbackMaxDate}
+                minDate={feedbackMinDate}
+                variant="preview"
+                onOpenReport={handleOpenFeedbackReport}
+              />
+
               <RealTimeSensorPanel
                 latestQuery={latestQuery}
                 sensorOptions={sensorOptions}
@@ -1191,7 +1209,14 @@ export default function CultivationDetailPage() {
           )}
 
           {activeTab === "report" && (
-            <AiReportPanel compliance={data.dailyCompliance} cultivationName={cultivation.name} />
+            <DailyFeedbackPanel
+              cultivationId={id}
+              cultivationName={cultivation.name}
+              feedbackDate={selectedFeedbackDate}
+              maxDate={feedbackMaxDate}
+              minDate={feedbackMinDate}
+              onFeedbackDateChange={handleFeedbackDateChange}
+            />
           )}
 
           {activeTab === "chatbot" && (
