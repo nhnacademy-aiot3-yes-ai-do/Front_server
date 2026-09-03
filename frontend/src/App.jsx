@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { useAutoSession } from "./utils/useAutoSession";
 
 const AppLayout = lazy(() => import("./layouts/AppLayout"));
 const AdminLayout = lazy(() => import("./layouts/AdminLayout"));
@@ -24,6 +25,7 @@ const AdminNotificationsPage = lazy(() => import("./pages/admin/AdminNotificatio
 const AdminSensorsPage = lazy(() => import("./pages/admin/AdminSensorsPage"));
 
 export default function App() {
+  useAutoSession();
   return (
     <Suspense fallback={<div className="route-loading">화면을 준비하고 있어요…</div>}>
       <Routes>

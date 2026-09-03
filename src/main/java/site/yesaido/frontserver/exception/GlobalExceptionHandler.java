@@ -63,7 +63,7 @@ public class GlobalExceptionHandler {
             "InquiryClient", "문의 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요."
     );
     private static final String DEFAULT_UNAVAILABLE_MESSAGE = "외부 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
-    private static final String DEFAULT_CONFLICT_MESSAGE = "요청을 처리할 수 없는 상태예요. 새로고침 후 다시 시도해 주세요.";
+    private static final String DEFAULT_CLIENT_ERROR_MESSAGE = "요청을 처리할 수 없습니다. 입력 값을 확인해 주세요.";
 
     private final AuthCookieProvider authCookieProvider;
     private final ObjectMapper objectMapper;
@@ -122,7 +122,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FeignException.class)
     public Object handleFeignException(FeignException e, HttpServletRequest request) {
         String clientName = extractClientName(e);
-        log.error("{} 통신 실패 (Status: {}): {}", clientName, e.status(), e.getMessage());
+        logFeignException(clientName, e);
 
         HttpStatus status = resolveStatus(e.status());
         String message = resolveMessage(e, status, clientName);
@@ -136,23 +136,33 @@ public class GlobalExceptionHandler {
     private HttpStatus resolveStatus(int feignStatus) {
         return switch (feignStatus) {
             case 400 -> HttpStatus.BAD_REQUEST;
+            case 403 -> HttpStatus.FORBIDDEN;
             case 404 -> HttpStatus.NOT_FOUND;
+            case 405 -> HttpStatus.METHOD_NOT_ALLOWED;
             case 409 -> HttpStatus.CONFLICT;
+            case 413 -> HttpStatus.CONTENT_TOO_LARGE;
+            case 415 -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+            case 429 -> HttpStatus.TOO_MANY_REQUESTS;
             default -> HttpStatus.SERVICE_UNAVAILABLE;
         };
     }
 
     private String resolveMessage(FeignException exception, HttpStatus status, String clientName) {
-        if(status == HttpStatus.BAD_REQUEST){
-            return extractFeignMessage(exception, "요청이 올바르지 않습니다.");
-        }
         if (status == HttpStatus.NOT_FOUND) {
             return NOT_FOUND_MESSAGES.getOrDefault(clientName, DEFAULT_NOT_FOUND_MESSAGE);
         }
-        if (status == HttpStatus.CONFLICT) {
-            return DEFAULT_CONFLICT_MESSAGE;
+        if (status.is4xxClientError()) {
+            return extractFeignMessage(exception, DEFAULT_CLIENT_ERROR_MESSAGE);
         }
         return UNAVAILABLE_MESSAGES.getOrDefault(clientName, DEFAULT_UNAVAILABLE_MESSAGE);
+    }
+
+    private void logFeignException(String clientName, FeignException exception) {
+        if (exception.status() >= 400 && exception.status() < 500) {
+            log.warn("{} 요청 거절 (Status: {}): {}", clientName, exception.status(), exception.getMessage());
+            return;
+        }
+        log.error("{} 통신 실패 (Status: {}): {}", clientName, exception.status(), exception.getMessage());
     }
 
     private String extractFeignMessage(FeignException exception, String fallback) {
@@ -248,7 +258,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ErrorResponse handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
-        return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, "사진 파일 크기는 8MB를 초과할 수 없습니다.");
+        return ErrorResponse.create(e, HttpStatus.CONTENT_TOO_LARGE, "사진 파일 크기는 8MB를 초과할 수 없습니다.");
     }
 
     @ExceptionHandler(TooManyFilesException.class)
