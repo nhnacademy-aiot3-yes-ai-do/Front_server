@@ -47,15 +47,18 @@ import {
   formatRole,
   formatSensorType,
   normalizeList,
+  normalizeSensorUnit,
 } from "../../utils/formatters";
 import { getInsightCandidates, getInsightDetail } from "../../api/insights";
 
 function buildSensorOptions(data, latestValues) {
   return normalizeList(data?.sensors?.sensors).flatMap((sensor) =>
     normalizeList(sensor.sensorTypes).map((sensorType) => ({
-      key: `${sensor.deviceEui}|${sensorType.type}`,
+      key: `${sensor.deviceEui}|${sensorType.type}|${normalizeSensorUnit(sensorType.valueUnit)}`,
       latest: latestValues.find(
-        (value) => value.deviceEui === sensor.deviceEui && value.sensorType === sensorType.type,
+        (value) => value.deviceEui === sensor.deviceEui
+          && value.sensorType === sensorType.type
+          && normalizeSensorUnit(value.unit || sensorType.valueUnit) === normalizeSensorUnit(sensorType.valueUnit),
       ),
       sensor,
       sensorType,
@@ -684,10 +687,12 @@ function getSensorState(option) {
   return { label: "안정", tone: "stable" };
 }
 
-function LiveSensorCard({ color, option, trendQuery }) {
+function LiveSensorCard({ color, option, trendQuery, initialHistory }) {
   const state = getSensorState(option);
-  const unit = option.latest?.unit || option.sensorType.valueUnit;
-  const chartPoints = normalizeList(trendQuery.data?.responses).map((point) => ({
+  const unit = normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit);
+  const chartPoints = normalizeList(
+    trendQuery.data?.responses?.length ? trendQuery.data.responses : initialHistory,
+  ).map((point) => ({
     measuredAt: formatDateTime(point.measuredAt),
     value: point.value,
   }));
@@ -712,7 +717,17 @@ function LiveSensorCard({ color, option, trendQuery }) {
       </div>
 
       <div className="live-sensor-chart" aria-label={`${option.sensor.deviceName} 센서 추이`}>
-        {trendQuery.isLoading ? (
+        {chartPoints.length > 1 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartPoints} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
+              <CartesianGrid stroke="rgba(117,91,65,.12)" vertical={false} />
+              <XAxis dataKey="measuredAt" minTickGap={34} tick={{ fontSize: 10 }} />
+              <YAxis width={42} tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Line dataKey="value" dot={false} isAnimationActive={false} stroke={color} strokeWidth={2.5} type="monotone" />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : trendQuery.isLoading ? (
           <p className="pending-widget">센서 추이를 불러오는 중</p>
         ) : trendQuery.isError ? (
           <div className="pending-widget">
@@ -721,23 +736,6 @@ function LiveSensorCard({ color, option, trendQuery }) {
               다시 시도
             </button>
           </div>
-        ) : chartPoints.length > 1 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartPoints} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-              <CartesianGrid stroke="rgba(117,91,65,.12)" vertical={false} />
-              <XAxis dataKey="measuredAt" minTickGap={34} tick={{ fontSize: 10 }} />
-              <YAxis width={42} tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Line
-                dataKey="value"
-                dot={false}
-                isAnimationActive={false}
-                stroke={color}
-                strokeWidth={2.5}
-                type="monotone"
-              />
-            </LineChart>
-          </ResponsiveContainer>
         ) : (
           <p className="pending-widget">센서 추이 데이터 준비 중</p>
         )}
@@ -763,7 +761,7 @@ function LiveSensorCard({ color, option, trendQuery }) {
 
 const SENSOR_PAGE_SIZE = 2;
 
-function RealTimeSensorPanel({ latestQuery, sensorOptions, trendQueries }) {
+function RealTimeSensorPanel({ latestQuery, sensorOptions, trendQueries, sensorHistory12h }) {
   const [page, setPage] = useState(0);
   const totalPages = Math.max(1, Math.ceil(sensorOptions.length / SENSOR_PAGE_SIZE));
 
@@ -802,6 +800,11 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, trendQueries }) {
                 key={option.key}
                 option={option}
                 trendQuery={pagedTrendQueries[index]}
+                initialHistory={normalizeList(sensorHistory12h).filter(
+                  (point) => point.deviceEui === option.sensor.deviceEui
+                    && point.sensorType === option.sensorType.type
+                    && normalizeSensorUnit(point.unit || option.sensorType.valueUnit) === normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit),
+                )}
               />
             ))}
           </div>
@@ -859,8 +862,19 @@ export default function CultivationDetailPage() {
   const sensorOptions = useMemo(() => buildSensorOptions(data, latestValues), [data, latestValues]);
   const trendQueries = useQueries({
     queries: sensorOptions.map((option) => ({
-      queryKey: cultivationKeys.trend(id, option.sensor.deviceEui, option.sensorType.type),
-      queryFn: () => getSensorTrend(id, option.sensor.deviceEui, option.sensorType.type),
+      queryKey: cultivationKeys.trend(
+        id,
+        option.sensor.deviceEui,
+        option.sensorType.type,
+        normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit),
+      ),
+      queryFn: () =>
+        getSensorTrend(
+          id,
+          option.sensor.deviceEui,
+          option.sensorType.type,
+          normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit),
+        ),
       enabled: activeTab === "dashboard",
       staleTime: 30_000,
       refetchInterval: 30_000,
@@ -995,6 +1009,7 @@ export default function CultivationDetailPage() {
                 latestQuery={latestQuery}
                 sensorOptions={sensorOptions}
                 trendQueries={trendQueries}
+                sensorHistory12h={data.sensorHistory12h}
               />
             </section>
           )}

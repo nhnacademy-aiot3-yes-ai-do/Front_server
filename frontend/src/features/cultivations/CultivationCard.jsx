@@ -2,17 +2,31 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cultivationKeys, getCultivationPreview } from "../../api/cultivations";
-import { formatMode, formatRelativeTime, formatRole, normalizeList } from "../../utils/formatters";
+import { formatMode, formatRelativeTime, formatRole, normalizeList, normalizeSensorUnit } from "../../utils/formatters";
 import SensorSparkline from "./SensorSparkline";
 
-function sensorPreviews(preview) {
-  const latestValues = normalizeList(preview?.latestSensorValues?.latestSensorValueResponses);
+function sensorPreviews(preview, suppliedLatestValues) {
+  const latestValues = suppliedLatestValues?.length
+    ? suppliedLatestValues
+    : normalizeList(preview?.latestSensorValues?.latestSensorValueResponses);
   const settings = normalizeList(preview?.sensors?.environmentSettings);
+  const sensors = normalizeList(preview?.sensors?.sensors);
 
-  return normalizeList(preview?.sensors?.sensors).flatMap((sensor) =>
+  if (!sensors.length) {
+    return latestValues.map((latest) => ({
+      latest,
+      sensor: latest,
+      sensorType: { type: latest.sensorType, valueUnit: latest.unit },
+      setting: undefined,
+    }));
+  }
+
+  return sensors.flatMap((sensor) =>
     normalizeList(sensor.sensorTypes).map((sensorType) => ({
       latest: latestValues.find(
-        (value) => value.deviceEui === sensor.deviceEui && value.sensorType === sensorType.type,
+        (value) => value.deviceEui === sensor.deviceEui
+          && value.sensorType === sensorType.type
+          && normalizeSensorUnit(value.unit || sensorType.valueUnit) === normalizeSensorUnit(sensorType.valueUnit),
       ),
       sensor,
       sensorType,
@@ -36,14 +50,14 @@ function cardStatus(entries) {
   return warning ? { label: "환경 확인 필요", tone: "warning" } : { label: "안정", tone: "stable" };
 }
 
-export default function CultivationCard({ cultivation, mushroomName }) {
+export default function CultivationCard({ cultivation, mushroomName, latestSensorValues }) {
   const previewQuery = useQuery({
     queryKey: cultivationKeys.preview(cultivation.cultivationId),
     queryFn: () => getCultivationPreview(cultivation.cultivationId),
     staleTime: 30_000,
   });
   const preview = previewQuery.data;
-  const entries = sensorPreviews(preview);
+  const entries = sensorPreviews(preview, latestSensorValues);
   const status = cardStatus(entries);
   const mostRecentMeasurement = entries
     .map((entry) => entry.latest?.measuredAt)
@@ -129,7 +143,7 @@ export default function CultivationCard({ cultivation, mushroomName }) {
         )}
         {entries.map((entry) => (
           <SensorSparkline
-            key={`${entry.sensor.deviceEui}-${entry.sensorType.type}`}
+            key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
             cultivationId={cultivation.cultivationId}
             {...entry}
           />
