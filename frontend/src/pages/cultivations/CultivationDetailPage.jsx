@@ -70,6 +70,50 @@ function buildSensorOptions(data, latestValues) {
   );
 }
 
+const SENSOR_HISTORY_WINDOW_MS = 12 * 60 * 60 * 1000;
+
+function sensorHistoryPointKey(point) {
+  return [
+    point.deviceEui,
+    point.sensorType,
+    normalizeSensorUnit(point.unit),
+    point.measuredAt,
+  ].join("|");
+}
+
+function trimSensorHistory(history, now = Date.now()) {
+  const normalizedHistory = normalizeList(history);
+  const cutoff = now - SENSOR_HISTORY_WINDOW_MS;
+  const trimmed = normalizedHistory.filter((point) => {
+    const measuredAt = new Date(point.measuredAt).getTime();
+    return Number.isFinite(measuredAt) && measuredAt >= cutoff;
+  });
+  return trimmed.length === normalizedHistory.length ? history : trimmed;
+}
+
+function mergeSensorHistory(history, latestValues, now = Date.now()) {
+  const normalizedHistory = normalizeList(history);
+  const cutoff = now - SENSOR_HISTORY_WINDOW_MS;
+  const pointsByKey = new Map();
+
+  [...normalizedHistory, ...normalizeList(latestValues)].forEach((point) => {
+    const measuredAt = new Date(point.measuredAt).getTime();
+    if (!Number.isFinite(measuredAt) || measuredAt < cutoff) return;
+    pointsByKey.set(sensorHistoryPointKey(point), point);
+  });
+
+  const merged = [...pointsByKey.values()].sort(
+    (left, right) => new Date(left.measuredAt).getTime() - new Date(right.measuredAt).getTime(),
+  );
+  if (
+    merged.length === normalizedHistory.length &&
+    merged.every((point, index) => point === normalizedHistory[index])
+  ) {
+    return history;
+  }
+  return merged;
+}
+
 function complianceRows(compliance) {
   return [
     ["온도", compliance?.temperatureCompliance],
@@ -769,7 +813,26 @@ const SENSOR_PAGE_SIZE = 2;
 function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
   const [page, setPage] = useState(0);
   const [selectedHours, setSelectedHours] = useState(12);
+  const [sensorHistory, setSensorHistory] = useState(() => normalizeList(sensorHistory12h));
   const totalPages = Math.max(1, Math.ceil(sensorOptions.length / SENSOR_PAGE_SIZE));
+
+  useEffect(() => {
+    setSensorHistory(normalizeList(sensorHistory12h));
+  }, [sensorHistory12h]);
+
+  useEffect(() => {
+    const latestValues = latestQuery.data?.latestSensorValueResponses;
+    if (!latestValues) return;
+    setSensorHistory((history) => mergeSensorHistory(history, latestValues));
+  }, [latestQuery.data]);
+
+  useEffect(() => {
+    const prune = () => {
+      setSensorHistory((history) => trimSensorHistory(history));
+    };
+    const intervalId = window.setInterval(prune, 3_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (page > totalPages - 1) setPage(0);
@@ -818,7 +881,7 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
                 key={option.key}
                 option={option}
                 selectedHours={selectedHours}
-                initialHistory={normalizeList(sensorHistory12h).filter(
+                initialHistory={sensorHistory.filter(
                   (point) =>
                     point.deviceEui === option.sensor.deviceEui &&
                     point.sensorType === option.sensorType.type &&
