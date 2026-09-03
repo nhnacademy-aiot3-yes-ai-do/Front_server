@@ -52,6 +52,10 @@ export default function App() {
           <Route path="/cultivations" element={<CultivationListPage />} />
           <Route path="/cultivations/new" element={<CultivationCreatePage />} />
           <Route path="/cultivations/history" element={<CultivationHistoryPage />} />
+          <Route
+            path="/cultivations/:cultivationId/daily-feedbacks/:feedbackDate"
+            element={<CultivationDetailPage />}
+          />
           <Route path="/cultivations/:cultivationId" element={<CultivationDetailPage />} />
           <Route path="/support" element={<SupportPage />} />
           <Route path="/mypage" element={<ProfilePage />} />
