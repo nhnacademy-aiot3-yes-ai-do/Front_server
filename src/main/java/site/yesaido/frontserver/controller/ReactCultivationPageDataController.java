@@ -140,7 +140,11 @@ public class ReactCultivationPageDataController {
                 metadata == null || metadata.sensorHistory12h() == null ? List.of() : metadata.sensorHistory12h();
         List<MushroomReferenceInfoResponse> mushrooms = metadata == null || metadata.mushroom() == null
                 ? List.of() : List.of(metadata.mushroom());
-        MemberListResponse memberResponse = body(cultivationClient.getMembers(cultivationId));
+        MemberListResponse memberResponse = isolated(
+                "detail members",
+                () -> body(cultivationClient.getMembers(cultivationId)),
+                new MemberListResponse(List.of())
+        );
         List<PhotoResponse> photos = safePhotos(isolated(
                 "detail photos",
                 () -> body(cultivationClient.getPhoto(cultivationId)),
