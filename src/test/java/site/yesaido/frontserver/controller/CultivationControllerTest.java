@@ -136,6 +136,14 @@ class CultivationControllerTest {
     }
 
     @Test
+    @DisplayName("미완료 재배지 센서 설정 페이지 반환")
+    void cultivationSensorSetupPageReturnsReactView() throws Exception {
+        mockMvc.perform(get("/cultivations/{cultivation-id}/setup", 41L).cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(view().name("forward:/react/index.html"));
+    }
+
+    @Test
     @DisplayName("재배 이력 조회 성공 - 일반 데이터 분기")
     void cultivationHistoryReturnsHistoryView() throws Exception {
         CultivationHistoryResponse contentItem = new CultivationHistoryResponse(1L, "재배명", 10L, "FINISHED", new BigDecimal("5.0"), "A", LocalDateTime.now());

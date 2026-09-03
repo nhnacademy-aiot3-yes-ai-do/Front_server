@@ -18,6 +18,7 @@ import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import { ErrorState, LoadingState } from "../../components/PageState";
 import CultivationSensorSetupStep from "../../features/cultivations/CultivationSensorSetupStep";
+import CultivationCreationStepper from "../../features/cultivations/CultivationCreationStepper";
 import { formatSensorType, normalizeList } from "../../utils/formatters";
 
 const DEFAULT_ENVIRONMENT_TYPES = [
@@ -25,12 +26,6 @@ const DEFAULT_ENVIRONMENT_TYPES = [
   { conditionKey: "humidity", type: "HUMIDITY", unit: "%" },
   { conditionKey: "co2", type: "CO2", unit: "ppm" },
   { conditionKey: "light", type: "LIGHT", unit: "lux" },
-];
-
-const CREATION_STEPS = [
-  { number: 1, label: "재배지 정보" },
-  { number: 2, label: "환경 설정" },
-  { number: 3, label: "센서 등록" },
 ];
 
 const SENSOR_TYPE_PRESENTATION = {
@@ -113,30 +108,6 @@ function validateEnvironmentSettings(settings) {
         Number(setting.thresholdMax) > setting.recommendedMax,
     ),
   };
-}
-
-function CreationStepper({ currentStep }) {
-  return (
-    <ol className="creation-stepper" aria-label="재배지 생성 단계">
-      {CREATION_STEPS.map((step) => {
-        const state =
-          step.number < currentStep ? "done" : step.number === currentStep ? "active" : "";
-
-        return (
-          <li
-            key={step.number}
-            className={state ? `creation-stepper__step is-${state}` : "creation-stepper__step"}
-            aria-current={step.number === currentStep ? "step" : undefined}
-          >
-            <span className="creation-stepper__number">
-              {step.number < currentStep ? <Check aria-hidden="true" /> : step.number}
-            </span>
-            <span>{step.label}</span>
-          </li>
-        );
-      })}
-    </ol>
-  );
 }
 
 export default function CultivationCreatePage() {
@@ -266,7 +237,7 @@ export default function CultivationCreatePage() {
           </div>
         </header>
 
-        <CreationStepper currentStep={currentStep} />
+        <CultivationCreationStepper currentStep={currentStep} />
         <Notice notice={notice} onDismiss={() => setNotice(null)} />
 
         {currentStep === 1 && (
@@ -454,11 +425,7 @@ export default function CultivationCreatePage() {
                           />
                         </label>
                         {settingError ? (
-                          <small
-                            id={errorId}
-                            className="threshold-card__error"
-                            role="alert"
-                          >
+                          <small id={errorId} className="threshold-card__error" role="alert">
                             {settingError}
                           </small>
                         ) : outsideRecommendation ? (

@@ -36,6 +36,7 @@ import Modal from "../../components/Modal";
 import { ErrorState, LoadingState } from "../../components/PageState";
 import ChatPanel from "../../features/cultivations/ChatPanel";
 import CultivationActions from "../../features/cultivations/CultivationActions";
+import { requiresSensorSetup } from "../../features/cultivations/cultivationSetup";
 import MemberManager from "../../features/cultivations/MemberManager";
 import PhotoManager from "../../features/cultivations/PhotoManager";
 import SensorManager from "../../features/cultivations/SensorManager";
@@ -972,6 +973,35 @@ export default function CultivationDetailPage() {
   const canOpenActions =
     cultivation.myRole === "OWNER" ||
     (cultivation.myRole === "MANAGER" && cultivation.mode !== "HARVEST");
+  const setupRequired = requiresSensorSetup(cultivation, data?.sensors?.sensors);
+
+  if (setupRequired) {
+    return (
+      <main className="workspace-page cultivation-setup-required-page">
+        <section className="workspace-panel setup-required-state">
+          <div className="setup-required-state__icon">
+            <Cpu aria-hidden="true" />
+          </div>
+          <p className="eyebrow">{cultivation.name}</p>
+          <h1>센서 연결을 마쳐 주세요</h1>
+          <p>
+            재배지는 생성됐지만 사용할 센서가 아직 없습니다. 센서를 하나 이상 연결한 뒤 대시보드를
+            열 수 있습니다.
+          </p>
+          <div className="form-actions">
+            <Link className="button button--secondary" to="/cultivations">
+              나의 재배지
+            </Link>
+            {canManage && (
+              <Link className="button button--primary" to={`/cultivations/${id}/setup`}>
+                마저 진행하기 <ChevronRight aria-hidden="true" />
+              </Link>
+            )}
+          </div>
+        </section>
+      </main>
+    );
+  }
   const mushroomName = normalizeList(data.mushrooms).find(
     (mushroom) => mushroom.id === cultivation.mushroomId,
   )?.mushroomNameKo;

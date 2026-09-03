@@ -1,9 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2 } from "lucide-react";
-import { useState } from "react";
+import { CheckCircle2, Plus, TriangleAlert } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
+import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import { formatSensorType, normalizeList } from "../../utils/formatters";
+
+const EMPTY_SENSOR = {
+  deviceEui: "",
+  deviceModel: "",
+  deviceName: "",
+  location: "",
+  locationDetail: "",
+};
 
 function initialSetting(type, environmentSettings) {
   const recommended = environmentSettings.find((setting) => setting.sensorTypeId === type.id);
@@ -13,9 +22,28 @@ function initialSetting(type, environmentSettings) {
     thresholdMax: recommended?.thresholdMax ?? "",
     requiresValidation: !recommended,
     validation: recommended
-      ? { valid: true, message: "2단계에서 확정한 재배 환경 범위를 적용합니다." }
+      ? {
+          valid: true,
+          status: "approved",
+          message: "현재 재배지의 환경 임계값을 적용합니다.",
+        }
       : null,
   };
+}
+
+function hasValidThreshold(setting) {
+  const minimumText = String(setting?.thresholdMin ?? "").trim();
+  const maximumText = String(setting?.thresholdMax ?? "").trim();
+  const minimum = Number(minimumText);
+  const maximum = Number(maximumText);
+
+  return (
+    minimumText !== "" &&
+    maximumText !== "" &&
+    Number.isFinite(minimum) &&
+    Number.isFinite(maximum) &&
+    minimum < maximum
+  );
 }
 
 export default function CultivationSensorSetupStep({
@@ -23,20 +51,101 @@ export default function CultivationSensorSetupStep({
   environmentSettings,
   onRegistered,
 }) {
+  const [sourceMode, setSourceMode] = useState("new");
+  const [catalogModeInitialized, setCatalogModeInitialized] = useState(false);
+  const [selectedDeviceEui, setSelectedDeviceEui] = useState(null);
+  const [sensorForm, setSensorForm] = useState(EMPTY_SENSOR);
   const [selectedTypeIds, setSelectedTypeIds] = useState([]);
   const [settings, setSettings] = useState({});
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [registrationWarning, setRegistrationWarning] = useState(null);
+  const successNoticeRef = useRef(null);
   const sensorTypesQuery = useQuery({
     queryKey: ["sensor-types"],
     queryFn: () => request("/cultivations/sensor-types"),
     staleTime: 300_000,
   });
+  const reusableSensorsQuery = useQuery({
+    queryKey: ["reusable-sensors", Number(cultivationId)],
+    queryFn: () =>
+      request(`/cultivations/reusable-sensors?exclude-cultivation-id=${cultivationId}`),
+    enabled: Number.isFinite(Number(cultivationId)),
+  });
 
   const sensorTypes = normalizeList(sensorTypesQuery.data?.sensorTypeInfoResponses);
+  const reusableSensors = normalizeList(reusableSensorsQuery.data?.sensors);
   const selectedTypes = selectedTypeIds
     .map((id) => sensorTypes.find((type) => type.id === id))
     .filter(Boolean);
+  const requiredFieldsComplete = Object.values(sensorForm).every(
+    (value) => String(value ?? "").trim().length > 0,
+  );
+  const selectedSettingsReady =
+    selectedTypes.length > 0 &&
+    selectedTypes.every((type) => {
+      const setting = settings[type.id];
+      if (!hasValidThreshold(setting)) return false;
+      if (!setting?.requiresValidation) return true;
+
+      return ["approved", "warning", "unavailable"].includes(setting.validation?.status);
+    });
+  const hasSelectedExistingSensor = sourceMode !== "existing" || Boolean(selectedDeviceEui);
+  const canSubmit =
+    requiredFieldsComplete && selectedSettingsReady && hasSelectedExistingSensor && !busy;
+  const showSensorForm = sourceMode === "new" || Boolean(selectedDeviceEui);
+
+  useEffect(() => {
+    if (catalogModeInitialized || reusableSensorsQuery.isLoading) return;
+    if (reusableSensors.length > 0) setSourceMode("existing");
+    setCatalogModeInitialized(true);
+  }, [catalogModeInitialized, reusableSensors, reusableSensorsQuery.isLoading]);
+
+  useEffect(() => {
+    if (notice?.type !== "success") return;
+    successNoticeRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }, [notice]);
+
+  const clearSelection = (mode) => {
+    setSourceMode(mode);
+    setSelectedDeviceEui(null);
+    setSensorForm(EMPTY_SENSOR);
+    setSelectedTypeIds([]);
+    setSettings({});
+    setNotice(null);
+    setRegistrationWarning(null);
+  };
+
+  const selectReusableSensor = (sensor) => {
+    const typeIds = normalizeList(sensor.sensorTypes)
+      .map((type) => type.sensorTypeId)
+      .filter((id) => sensorTypes.some((type) => type.id === id));
+
+    setSourceMode("existing");
+    setSelectedDeviceEui(sensor.deviceEui);
+    setSensorForm({
+      deviceEui: sensor.deviceEui || "",
+      deviceModel: sensor.deviceModel || "",
+      deviceName: sensor.deviceName || "",
+      location: sensor.location || "",
+      locationDetail: sensor.locationDetail || "",
+    });
+    setSelectedTypeIds(typeIds);
+    setSettings(
+      Object.fromEntries(
+        typeIds.map((id) => {
+          const type = sensorTypes.find((item) => item.id === id);
+          return [id, initialSetting(type, environmentSettings)];
+        }),
+      ),
+    );
+    setNotice(null);
+    setRegistrationWarning(null);
+  };
+
+  const updateSensorField = (field, value) => {
+    setSensorForm((current) => ({ ...current, [field]: value }));
+  };
 
   const toggleType = (type) => {
     if (selectedTypeIds.includes(type.id)) {
@@ -72,13 +181,14 @@ export default function CultivationSensorSetupStep({
     const minimum = Number(setting?.thresholdMin);
     const maximum = Number(setting?.thresholdMax);
 
-    if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum) {
+    if (!hasValidThreshold(setting)) {
       setSettings((current) => ({
         ...current,
         [type.id]: {
           ...current[type.id],
           validation: {
             valid: false,
+            status: "invalid",
             message: "최소값은 최대값보다 작은 숫자여야 합니다.",
           },
         },
@@ -90,7 +200,12 @@ export default function CultivationSensorSetupStep({
       ...current,
       [type.id]: {
         ...current[type.id],
-        validation: { valid: false, pending: true, message: "AI 검증 중..." },
+        validation: {
+          valid: false,
+          status: "pending",
+          pending: true,
+          message: "AI 검증 중...",
+        },
       },
     }));
 
@@ -103,12 +218,15 @@ export default function CultivationSensorSetupStep({
         userMax: maximum,
       }).then(unwrapApiResponse);
 
+      const isValid = result?.isValid ?? result?.valid;
+
       setSettings((current) => ({
         ...current,
         [type.id]: {
           ...current[type.id],
           validation: {
-            valid: Boolean(result?.isValid ?? result?.valid),
+            valid: isValid === true,
+            status: isValid === true ? "approved" : isValid === false ? "warning" : "unavailable",
             message: result?.message || "검증 결과를 확인하지 못했습니다.",
           },
         },
@@ -118,62 +236,26 @@ export default function CultivationSensorSetupStep({
         ...current,
         [type.id]: {
           ...current[type.id],
-          validation: { valid: false, message: error.message },
+          validation: {
+            valid: false,
+            status: "unavailable",
+            message: error.message || "AI 검증을 완료하지 못했습니다.",
+          },
         },
       }));
     }
   };
 
-  const registerSensor = async (event) => {
-    event.preventDefault();
-
-    if (selectedTypes.length === 0) {
-      setNotice({ type: "error", message: "측정 타입을 하나 이상 선택해 주세요." });
-      return;
-    }
-
-    const hasInvalidSetting = selectedTypes.some((type) => {
-      const setting = settings[type.id];
-      const minimum = Number(setting?.thresholdMin);
-      const maximum = Number(setting?.thresholdMax);
-      return (
-        !Number.isFinite(minimum) ||
-        !Number.isFinite(maximum) ||
-        minimum >= maximum ||
-        !setting?.validation?.valid
-      );
-    });
-
-    if (hasInvalidSetting) {
-      setNotice({
-        type: "error",
-        message: "선택한 모든 측정 타입의 범위를 확인해 주세요.",
-      });
-      return;
-    }
-
-    const form = event.currentTarget;
-    const values = new FormData(form);
-    const sensor = {
-      deviceEui: String(values.get("deviceEui")).trim(),
-      deviceModel: String(values.get("deviceModel")).trim(),
-      deviceName: String(values.get("deviceName")).trim(),
-      location: String(values.get("location")).trim(),
-      locationDetail: String(values.get("locationDetail")).trim(),
-      sensorSettings: selectedTypes.map((type) => ({
-        sensorTypeId: type.id,
-        thresholdMin: Number(settings[type.id].thresholdMin),
-        thresholdMax: Number(settings[type.id].thresholdMax),
-      })),
-    };
-
+  const persistSensor = async (sensor) => {
+    setRegistrationWarning(null);
     setBusy(true);
     try {
       await jsonRequest(`/cultivations/${cultivationId}/sensors`, "POST", sensor);
-      form.reset();
+      setNotice({ type: "success", message: `${sensor.deviceName} 기기 등록이 완료되었습니다.` });
+      setSelectedDeviceEui(null);
+      setSensorForm(EMPTY_SENSOR);
       setSelectedTypeIds([]);
       setSettings({});
-      setNotice({ type: "success", message: `${sensor.deviceName} 센서를 등록했습니다.` });
       onRegistered(sensor);
     } catch (error) {
       setNotice({ type: "error", message: error.message });
@@ -182,130 +264,348 @@ export default function CultivationSensorSetupStep({
     }
   };
 
+  const registerSensor = async (event) => {
+    event.preventDefault();
+
+    if (sourceMode === "existing" && !selectedDeviceEui) {
+      setNotice({ type: "error", message: "가져올 기존 센서를 선택해 주세요." });
+      return;
+    }
+    if (selectedTypes.length === 0) {
+      setNotice({ type: "error", message: "측정 타입을 하나 이상 선택해 주세요." });
+      return;
+    }
+    if (!requiredFieldsComplete) {
+      setNotice({ type: "error", message: "센서의 필수 정보를 모두 입력해 주세요." });
+      return;
+    }
+
+    const hasInvalidSetting = selectedTypes.some((type) => {
+      const setting = settings[type.id];
+      if (!hasValidThreshold(setting)) return true;
+      if (!setting?.requiresValidation) return false;
+
+      return !["approved", "warning", "unavailable"].includes(setting.validation?.status);
+    });
+
+    if (hasInvalidSetting) {
+      setNotice({ type: "error", message: "선택한 모든 측정 타입의 범위를 확인해 주세요." });
+      return;
+    }
+
+    const sensor = {
+      ...sensorForm,
+      deviceEui: sensorForm.deviceEui.trim(),
+      deviceModel: sensorForm.deviceModel.trim(),
+      deviceName: sensorForm.deviceName.trim(),
+      location: sensorForm.location.trim(),
+      locationDetail: sensorForm.locationDetail.trim(),
+      sensorSettings: selectedTypes.map((type) => ({
+        sensorTypeId: type.id,
+        thresholdMin: Number(settings[type.id].thresholdMin),
+        thresholdMax: Number(settings[type.id].thresholdMax),
+      })),
+    };
+
+    const validationStatuses = selectedTypes.map((type) => settings[type.id]?.validation?.status);
+    const hasOutsideRange = validationStatuses.includes("warning");
+    const hasUnavailableValidation = validationStatuses.includes("unavailable");
+
+    if (hasOutsideRange || hasUnavailableValidation) {
+      setRegistrationWarning({ sensor, hasOutsideRange, hasUnavailableValidation });
+      return;
+    }
+
+    await persistSensor(sensor);
+  };
+
   return (
-    <form className="form-stack sensor-setup-form" onSubmit={registerSensor}>
-      <Notice notice={notice} onDismiss={() => setNotice(null)} />
-
-      <div className="form-field-grid">
-        <label>
-          센서 이름
-          <input name="deviceName" placeholder="예: 1번 선반 온습도 센서" required />
-        </label>
-        <label>
-          모델명
-          <input name="deviceModel" placeholder="예: TH-100" required />
-        </label>
-        <label>
-          위치
-          <input name="location" maxLength="10" placeholder="예: 광주" required />
-        </label>
-        <label>
-          상세 위치
-          <input name="locationDetail" placeholder="예: 1번 선반" required />
-        </label>
-      </div>
-      <label>
-        센서 고유번호
-        <input name="deviceEui" maxLength="32" placeholder="센서에 표시된 EUI" required />
-      </label>
-
-      <fieldset className="sensor-type-picker">
-        <legend>이 센서가 측정하는 항목</legend>
-        <p>여러 항목을 측정하는 센서라면 모두 선택하세요.</p>
-        {sensorTypesQuery.isLoading && <span>측정 타입을 불러오는 중...</span>}
-        {sensorTypesQuery.isError && (
-          <button className="text-button" type="button" onClick={() => sensorTypesQuery.refetch()}>
-            측정 타입 다시 불러오기
-          </button>
-        )}
-        <div className="sensor-type-options">
-          {sensorTypes.map((type) => {
-            const checked = selectedTypeIds.includes(type.id);
-            const recommended = environmentSettings.some(
-              (setting) => setting.sensorTypeId === type.id,
-            );
-
-            return (
-              <label key={type.id} className={`sensor-type-option ${checked ? "is-selected" : ""}`}>
-                <input
-                  aria-label={`${formatSensorType(type.type)} (${type.valueUnit})`}
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleType(type)}
-                />
-                <span>
-                  <strong>{formatSensorType(type.type)}</strong>
-                  <small>
-                    {type.valueUnit} {recommended ? "· 추천 범위 적용" : "· AI 검증 필요"}
-                  </small>
-                </span>
-                {checked && <CheckCircle2 aria-hidden="true" />}
-              </label>
-            );
-          })}
+    <div className="sensor-setup-workspace">
+      {notice?.type === "success" && (
+        <div ref={successNoticeRef}>
+          <Notice notice={notice} onDismiss={() => setNotice(null)} />
         </div>
-      </fieldset>
+      )}
 
-      <div className="sensor-threshold-list">
-        {selectedTypes.map((type) => {
-          const setting = settings[type.id];
-          const locked = !setting?.requiresValidation;
-          const validation = setting?.validation;
-
-          return (
-            <fieldset key={type.id}>
-              <legend>
-                {formatSensorType(type.type)} ({type.valueUnit})
-              </legend>
-              <label>
-                최소값
-                <input
-                  aria-label={`${formatSensorType(type.type)} 최소 임계값`}
-                  type="number"
-                  step="any"
-                  value={setting?.thresholdMin ?? ""}
-                  onChange={(event) => updateThreshold(type.id, "thresholdMin", event.target.value)}
-                  disabled={locked}
-                  required
-                />
-              </label>
-              <label>
-                최대값
-                <input
-                  aria-label={`${formatSensorType(type.type)} 최대 임계값`}
-                  type="number"
-                  step="any"
-                  value={setting?.thresholdMax ?? ""}
-                  onChange={(event) => updateThreshold(type.id, "thresholdMax", event.target.value)}
-                  disabled={locked}
-                  required
-                />
-              </label>
-              {!locked && (
-                <div className="threshold-actions">
-                  <button
-                    className="button button--secondary"
-                    type="button"
-                    onClick={() => validateThreshold(type)}
-                    disabled={validation?.pending}
-                  >
-                    {validation?.pending ? "검증 중..." : "AI 범위 검증"}
-                  </button>
-                </div>
-              )}
-              {validation && (
-                <p className={validation.valid ? "validation-success" : "validation-error"}>
-                  {validation.message}
-                </p>
-              )}
-            </fieldset>
-          );
-        })}
+      <div className="sensor-source-segments" role="group" aria-label="센서 등록 방식">
+        <button
+          type="button"
+          className={sourceMode === "existing" ? "is-active" : ""}
+          aria-pressed={sourceMode === "existing"}
+          onClick={() => clearSelection("existing")}
+        >
+          기존 기기에서 가져오기
+        </button>
+        <button
+          type="button"
+          className={sourceMode === "new" ? "is-active" : ""}
+          aria-pressed={sourceMode === "new"}
+          onClick={() => clearSelection("new")}
+        >
+          <Plus aria-hidden="true" /> 새 기기 등록
+        </button>
       </div>
 
-      <button className="button button--primary button--wide" type="submit" disabled={busy}>
-        {busy ? "등록 중..." : "센서 등록"}
-      </button>
-    </form>
+      {sourceMode === "existing" && (
+        <section className="reusable-sensor-catalog" aria-label="기존 센서 목록">
+          {reusableSensorsQuery.isLoading && <p>기존 센서를 불러오는 중...</p>}
+          {reusableSensorsQuery.isError && (
+            <div className="sensor-column-state">
+              <span>기존 센서를 불러오지 못했습니다.</span>
+              <button type="button" className="text-button" onClick={reusableSensorsQuery.refetch}>
+                다시 시도
+              </button>
+            </div>
+          )}
+          {!reusableSensorsQuery.isLoading &&
+            !reusableSensorsQuery.isError &&
+            reusableSensors.length === 0 && (
+              <div className="sensor-catalog-empty">
+                <strong>가져올 기존 센서가 없습니다.</strong>
+                <span>새 기기 등록을 선택해 첫 센서를 연결하세요.</span>
+              </div>
+            )}
+          <div className="reusable-sensor-options">
+            {reusableSensors.map((sensor) => (
+              <button
+                key={sensor.deviceEui}
+                type="button"
+                className={selectedDeviceEui === sensor.deviceEui ? "is-selected" : ""}
+                aria-pressed={selectedDeviceEui === sensor.deviceEui}
+                onClick={() => selectReusableSensor(sensor)}
+              >
+                <span>
+                  <strong>{sensor.deviceName}</strong>
+                  <small>{sensor.deviceEui}</small>
+                </span>
+                <small>
+                  {normalizeList(sensor.sensorTypes)
+                    .map((type) => `${formatSensorType(type.type)} ${type.valueUnit}`)
+                    .join(" · ") || "측정 타입을 다시 선택해 주세요"}
+                </small>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {showSensorForm && (
+        <form className="form-stack sensor-setup-form" onSubmit={registerSensor}>
+          {notice?.type !== "success" && (
+            <Notice notice={notice} onDismiss={() => setNotice(null)} />
+          )}
+
+          <div className="form-field-grid">
+            <label>
+              센서 이름
+              <input
+                name="deviceName"
+                value={sensorForm.deviceName}
+                onChange={(event) => updateSensorField("deviceName", event.target.value)}
+                placeholder="예: 1번 선반 온습도 센서"
+                required
+              />
+            </label>
+            <label>
+              모델명
+              <input
+                name="deviceModel"
+                value={sensorForm.deviceModel}
+                onChange={(event) => updateSensorField("deviceModel", event.target.value)}
+                placeholder="예: TH-100"
+                required
+              />
+            </label>
+            <label>
+              위치
+              <input
+                name="location"
+                value={sensorForm.location}
+                onChange={(event) => updateSensorField("location", event.target.value)}
+                maxLength="10"
+                placeholder="예: 광주"
+                required
+              />
+            </label>
+            <label>
+              상세 위치
+              <input
+                name="locationDetail"
+                value={sensorForm.locationDetail}
+                onChange={(event) => updateSensorField("locationDetail", event.target.value)}
+                placeholder="예: 1번 선반"
+                required
+              />
+            </label>
+          </div>
+          <label>
+            센서 고유번호
+            <input
+              aria-label="센서 고유번호"
+              className={sourceMode === "existing" ? "sensor-device-eui--locked" : undefined}
+              name="deviceEui"
+              value={sensorForm.deviceEui}
+              onChange={(event) => updateSensorField("deviceEui", event.target.value)}
+              maxLength="32"
+              placeholder="센서에 표시된 EUI"
+              disabled={sourceMode === "existing"}
+              required
+            />
+            {sourceMode === "existing" && <small>기존 기기의 고유번호는 변경할 수 없습니다.</small>}
+          </label>
+
+          <fieldset className="sensor-type-picker">
+            <legend>이 센서가 측정하는 항목</legend>
+            <p>선택한 종류를 인식해 이 재배지의 임계값을 연결합니다.</p>
+            {sensorTypesQuery.isLoading && <span>측정 타입을 불러오는 중...</span>}
+            {sensorTypesQuery.isError && (
+              <button className="text-button" type="button" onClick={sensorTypesQuery.refetch}>
+                측정 타입 다시 불러오기
+              </button>
+            )}
+            <div className="sensor-type-options">
+              {sensorTypes.map((type) => {
+                const checked = selectedTypeIds.includes(type.id);
+                const recommended = environmentSettings.some(
+                  (setting) => setting.sensorTypeId === type.id,
+                );
+
+                return (
+                  <label
+                    key={type.id}
+                    className={`sensor-type-option ${checked ? "is-selected" : ""}`}
+                  >
+                    <input
+                      aria-label={`${formatSensorType(type.type)} (${type.valueUnit})`}
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleType(type)}
+                    />
+                    <span>
+                      <strong>{formatSensorType(type.type)}</strong>
+                      <small>
+                        {type.valueUnit} {recommended ? "· 재배지 임계값 적용" : "· AI 검증 필요"}
+                      </small>
+                    </span>
+                    {checked && <CheckCircle2 aria-hidden="true" />}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+
+          <div className="sensor-threshold-list">
+            {selectedTypes.map((type) => {
+              const setting = settings[type.id];
+              const locked = !setting?.requiresValidation;
+              const validation = setting?.validation;
+
+              return (
+                <fieldset key={type.id}>
+                  <legend>
+                    {formatSensorType(type.type)} ({type.valueUnit})
+                  </legend>
+                  <label>
+                    최소값
+                    <input
+                      aria-label={`${formatSensorType(type.type)} 최소 임계값`}
+                      type="number"
+                      step="any"
+                      value={setting?.thresholdMin ?? ""}
+                      onChange={(event) =>
+                        updateThreshold(type.id, "thresholdMin", event.target.value)
+                      }
+                      disabled={locked}
+                      required
+                    />
+                  </label>
+                  <label>
+                    최대값
+                    <input
+                      aria-label={`${formatSensorType(type.type)} 최대 임계값`}
+                      type="number"
+                      step="any"
+                      value={setting?.thresholdMax ?? ""}
+                      onChange={(event) =>
+                        updateThreshold(type.id, "thresholdMax", event.target.value)
+                      }
+                      disabled={locked}
+                      required
+                    />
+                  </label>
+                  {!locked && (
+                    <div className="threshold-actions">
+                      <button
+                        className="button button--secondary"
+                        type="button"
+                        onClick={() => validateThreshold(type)}
+                        disabled={validation?.pending}
+                      >
+                        {validation?.pending ? "검증 중..." : "AI 범위 검증"}
+                      </button>
+                    </div>
+                  )}
+                  {validation && (
+                    <p className={validation.valid ? "validation-success" : "validation-error"}>
+                      {validation.message}
+                    </p>
+                  )}
+                </fieldset>
+              );
+            })}
+          </div>
+
+          <button
+            className="button button--primary button--wide"
+            type="submit"
+            disabled={!canSubmit}
+          >
+            {busy ? "등록 중..." : "센서 등록"}
+          </button>
+        </form>
+      )}
+
+      {registrationWarning && (
+        <Modal
+          title="AI 검증 경고"
+          className="modal-card--warning"
+          onClose={() => setRegistrationWarning(null)}
+        >
+          <div className="range-warning-dialog">
+            <TriangleAlert aria-hidden="true" />
+            {registrationWarning.hasOutsideRange && (
+              <p>
+                AI 권장 범위를 벗어난 임계값이 있습니다. 예상과 다른 재배 환경이 만들어질 수 있지만,
+                등록 후 재배지에서 다시 수정할 수 있습니다.
+              </p>
+            )}
+            {registrationWarning.hasUnavailableValidation && (
+              <p>
+                AI 검증을 완료하지 못했습니다. 입력한 값으로 우선 등록할 수 있으며, 등록 후
+                재배지에서 다시 검증하거나 수정할 수 있습니다.
+              </p>
+            )}
+            <div className="form-actions">
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={() => setRegistrationWarning(null)}
+                disabled={busy}
+              >
+                다시 확인
+              </button>
+              <button
+                className="button button--warning"
+                type="button"
+                onClick={() => persistSensor(registrationWarning.sensor)}
+                disabled={busy}
+              >
+                {busy ? "등록 중..." : "경고 확인 후 등록"}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
   );
 }

@@ -86,6 +86,9 @@ beforeEach(() => {
     if (path === "/cultivations/sensor-types") {
       return Promise.resolve({ sensorTypeInfoResponses: sensorTypes });
     }
+    if (path === "/cultivations/reusable-sensors?exclude-cultivation-id=41") {
+      return Promise.resolve({ sensors: [] });
+    }
     return Promise.resolve(null);
   });
   createCultivation.mockResolvedValue({ cultivationId: 41 });
@@ -222,5 +225,54 @@ describe("CultivationCreatePage", () => {
       }),
     );
     expect(screen.getByRole("button", { name: "설정 완료" })).toBeEnabled();
+  });
+
+  it("기존 센서를 선택하면 EUI를 잠그고 선택한 타입에 현재 재배지 임계값을 적용한다", async () => {
+    getMushroomGuide.mockResolvedValue(guide(18, 24));
+    request.mockImplementation((path) => {
+      if (path === "/cultivations/mushroom-references") {
+        return Promise.resolve({
+          mushroomReferenceInfoResponses: [mushroom(1, "느타리버섯")],
+        });
+      }
+      if (path === "/cultivations/sensor-types") {
+        return Promise.resolve({ sensorTypeInfoResponses: sensorTypes });
+      }
+      if (path === "/cultivations/reusable-sensors?exclude-cultivation-id=41") {
+        return Promise.resolve({
+          sensors: [
+            {
+              sourceCultivationId: 9,
+              deviceEui: "EUI-OLD",
+              deviceModel: "TH-OLD",
+              deviceName: "기존 온도 센서",
+              location: "서울",
+              locationDetail: "이전 선반",
+              sensorTypes: [{ sensorTypeId: 1, type: "TEMPERATURE", valueUnit: "°C" }],
+            },
+          ],
+        });
+      }
+      return Promise.resolve(null);
+    });
+
+    renderPage();
+    await moveToEnvironmentStep();
+    fireEvent.click(screen.getByRole("button", { name: "재배지 생성 후 센서 등록" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: /기존 온도 센서/ }));
+    expect(screen.getByRole("textbox", { name: "센서 고유번호" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "센서 등록" }));
+
+    await waitFor(() =>
+      expect(jsonRequest).toHaveBeenCalledWith("/cultivations/41/sensors", "POST", {
+        deviceEui: "EUI-OLD",
+        deviceModel: "TH-OLD",
+        deviceName: "기존 온도 센서",
+        location: "서울",
+        locationDetail: "이전 선반",
+        sensorSettings: [{ sensorTypeId: 1, thresholdMin: 18, thresholdMax: 24 }],
+      }),
+    );
   });
 });

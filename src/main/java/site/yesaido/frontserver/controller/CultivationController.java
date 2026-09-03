@@ -77,6 +77,11 @@ public class CultivationController {
         return REACT_APP;
     }
 
+    @GetMapping("/{cultivation-id}/setup")
+    public String sensorSetup(@PathVariable("cultivation-id") Long cultivationId) {
+        return REACT_APP;
+    }
+
     @PutMapping("/{cultivation-id}/harvest-mode")
     public ResponseEntity<CultivationModeChangeResponse> switchToHarvestMode(@PathVariable("cultivation-id") Long cultivationId) {
         ResponseEntity<CultivationModeChangeResponse> response = cultivationClient.switchToHarvestMode(cultivationId);

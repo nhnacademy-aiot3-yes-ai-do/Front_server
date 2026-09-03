@@ -19,6 +19,8 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivation.EnvironmentS
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.ReusableCultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.ReusableCultivationSensorResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
@@ -135,6 +137,26 @@ class SensorControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(header().doesNotExist("X-Upstream-Only"))
                 .andExpect(jsonPath("$.sensors").isArray());
+    }
+
+    @Test
+    void getReusableSensorsDelegatesExcludedCultivationId() throws Exception {
+        ReusableCultivationSensorResponse sensor = new ReusableCultivationSensorResponse(
+                4L, "EUI-001", "MODEL-A", "온습도 센서", "광주", "1번 선반", List.of()
+        );
+        when(sensorClient.getReusableSensors(10L))
+                .thenReturn(ResponseEntity.ok(
+                        new ReusableCultivationSensorListResponse(List.of(sensor))
+                ));
+
+        mockMvc.perform(get("/cultivations/reusable-sensors")
+                        .cookie(LOGGED_IN)
+                        .param("exclude-cultivation-id", "10"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.sensors[0].deviceEui").value("EUI-001"));
+
+        verify(sensorClient).getReusableSensors(10L);
     }
 
     @Test

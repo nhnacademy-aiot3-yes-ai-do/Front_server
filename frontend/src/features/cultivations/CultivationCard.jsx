@@ -9,6 +9,7 @@ import {
   normalizeList,
   normalizeSensorUnit,
 } from "../../utils/formatters";
+import { requiresSensorSetup } from "./cultivationSetup";
 import SensorSparkline from "./SensorSparkline";
 
 function sensorPreviews(preview, suppliedLatestValues) {
@@ -66,7 +67,13 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
   });
   const preview = previewQuery.data;
   const entries = sensorPreviews(preview, latestSensorValues);
-  const status = cardStatus(entries);
+  const setupRequired =
+    previewQuery.isSuccess &&
+    requiresSensorSetup({ ...cultivation, ...preview?.cultivation }, preview?.sensors?.sensors);
+  const status = setupRequired ? { label: "설정 필요", tone: "setup" } : cardStatus(entries);
+  const targetPath = setupRequired
+    ? `/cultivations/${cultivation.cultivationId}/setup`
+    : `/cultivations/${cultivation.cultivationId}`;
   const mostRecentMeasurement = entries
     .map((entry) => entry.latest?.measuredAt)
     .filter(Boolean)
@@ -76,7 +83,7 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
   return (
     <article className={`cultivation-card cultivation-card--${status.tone}`}>
       <div className="cultivation-card__identity">
-        <Link className="cultivation-photo" to={`/cultivations/${cultivation.cultivationId}`}>
+        <Link className="cultivation-photo" to={targetPath}>
           {previewQuery.isError ? (
             <span className="cultivation-photo__empty">
               <ImageOff aria-hidden="true" />
@@ -102,8 +109,12 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
               <p>{mushroomName || "버섯 종류 정보 없음"}</p>
             </div>
             <Link
-              aria-label={`${cultivation.name} 상세 보기`}
-              to={`/cultivations/${cultivation.cultivationId}`}
+              aria-label={
+                setupRequired
+                  ? `${cultivation.name} 설정 화면 열기`
+                  : `${cultivation.name} 상세 보기`
+              }
+              to={targetPath}
             >
               <ChevronRight aria-hidden="true" />
             </Link>
@@ -126,10 +137,23 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
               <dd>{cultivation.memberCount ?? 0}명</dd>
             </div>
           </dl>
-          <div className="pending-progress">
-            <span>성장 단계 및 재배 진행률</span>
-            <strong>데이터 준비 중</strong>
-          </div>
+          {setupRequired ? (
+            <Link
+              className="cultivation-setup-resume"
+              aria-label={`${cultivation.name} 설정 마저 진행하기`}
+              to={targetPath}
+            >
+              <span>센서 연결이 완료되지 않았습니다.</span>
+              <strong>
+                마저 진행하기 <ChevronRight aria-hidden="true" />
+              </strong>
+            </Link>
+          ) : (
+            <div className="pending-progress">
+              <span>성장 단계 및 재배 진행률</span>
+              <strong>데이터 준비 중</strong>
+            </div>
+          )}
         </div>
       </div>
       <section className="cultivation-card__sensors" aria-label={`${cultivation.name} 센서 추이`}>
@@ -147,7 +171,9 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
           </div>
         )}
         {!previewQuery.isLoading && !previewQuery.isError && entries.length === 0 && (
-          <p className="sensor-column-state">등록된 센서가 없습니다.</p>
+          <p className="sensor-column-state">
+            {setupRequired ? "센서를 연결하면 측정 현황이 표시됩니다." : "등록된 센서가 없습니다."}
+          </p>
         )}
         {entries.map((entry) => (
           <SensorSparkline

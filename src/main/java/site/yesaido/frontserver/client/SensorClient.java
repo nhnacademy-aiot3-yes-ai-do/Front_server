@@ -61,6 +61,11 @@ public interface SensorClient {
     @GetMapping("/api/v1/cultivations/{cultivation-id}/sensors")
     ResponseEntity<CultivationSensorListResponse> getSensors(@PathVariable("cultivation-id") long cultivationId);
 
+    @GetMapping("/api/v1/sensors/reusable")
+    ResponseEntity<ReusableCultivationSensorListResponse> getReusableSensors(
+            @RequestParam("exclude-cultivation-id") long excludedCultivationId
+    );
+
     @PutMapping("/api/v1/cultivations/{cultivation-id}/environment-settings")
     ResponseEntity<Void> updateEnvironmentSetting(
             @PathVariable("cultivation-id") long cultivationId,

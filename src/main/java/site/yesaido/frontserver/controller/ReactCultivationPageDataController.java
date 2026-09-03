@@ -4,11 +4,13 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationDetailResponse;
@@ -30,6 +32,7 @@ import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValu
 import site.yesaido.frontserver.dto.react.CultivationDetailPageData;
 import site.yesaido.frontserver.dto.react.CultivationListPageData;
 import site.yesaido.frontserver.dto.react.CultivationPreviewData;
+import site.yesaido.frontserver.dto.react.CultivationSetupPageData;
 import site.yesaido.frontserver.util.LoginRequired;
 import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
@@ -126,6 +129,30 @@ public class ReactCultivationPageDataController {
         );
     }
 
+    @GetMapping("/{cultivation-id}/setup-data")
+    public CultivationSetupPageData setupPageData(
+            @PathVariable("cultivation-id") Long cultivationId
+    ) {
+        CultivationDetailResponse cultivation = body(
+                cultivationClient.getDetailCultivation(cultivationId)
+        );
+        CultivationSensorListResponse sensors = body(
+                sensorClient.getSensors(cultivationId)
+        );
+
+        if (cultivation == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Cultivation service returned an empty cultivation response"
+            );
+        }
+
+        return new CultivationSetupPageData(
+                cultivation,
+                sensors == null ? emptySensors() : sensors
+        );
+    }
+
     @GetMapping("/{cultivation-id}/page-data")
     public CultivationDetailPageData detailPageData(@PathVariable("cultivation-id") Long cultivationId) {
         CultivationMetadataResponse metadata = isolated(
@@ -134,8 +161,22 @@ public class ReactCultivationPageDataController {
                 null
         );
         CultivationDetailResponse cultivation = metadata == null ? null : metadata.cultivation();
+        if (cultivation == null) {
+            cultivation = body(cultivationClient.getDetailCultivation(cultivationId));
+        }
+        if (cultivation == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_GATEWAY,
+                    "Cultivation service returned an empty cultivation response"
+            );
+        }
+
         CultivationSensorListResponse sensors = metadata == null || metadata.sensors() == null
-                ? emptySensors() : metadata.sensors();
+                ? body(sensorClient.getSensors(cultivationId))
+                : metadata.sensors();
+        if (sensors == null) {
+            sensors = emptySensors();
+        }
         LatestSensorValueListResponse latestValues = new LatestSensorValueListResponse(List.of());
         List<site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse> sensorHistory12h =
                 metadata == null || metadata.sensorHistory12h() == null ? List.of() : metadata.sensorHistory12h();

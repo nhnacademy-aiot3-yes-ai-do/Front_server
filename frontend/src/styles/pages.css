@@ -51,6 +51,16 @@
   background: #8b8279;
 }
 
+.cultivation-card--setup {
+  border-color: rgba(80, 109, 77, 0.42);
+  background: color-mix(in srgb, var(--sage-200) 24%, white);
+}
+
+.cultivation-card--setup::before {
+  width: 7px;
+  background: var(--sage-600);
+}
+
 .cultivation-card__identity {
   display: flex;
   flex-direction: column;
@@ -139,6 +149,40 @@
 .status-badge--waiting {
   background: #ece7df;
   color: #766d65;
+}
+
+.status-badge--setup {
+  background: var(--sage-600);
+  color: white;
+}
+
+.cultivation-setup-resume {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(80, 109, 77, 0.28);
+  border-radius: 10px;
+  padding: 11px 13px;
+  background: var(--sage-200);
+  color: var(--sage-700);
+  text-decoration: none;
+}
+
+.cultivation-setup-resume span {
+  font-size: 12px;
+}
+
+.cultivation-setup-resume strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.cultivation-setup-resume svg {
+  width: 16px;
+  height: 16px;
 }
 
 .cultivation-photo__updated {
@@ -1128,6 +1172,53 @@
   gap: 10px;
 }
 
+.sensor-manager-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sensor-manager-tabs button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--brown-500);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sensor-manager-tabs button:hover,
+.sensor-manager-tabs button:focus-visible {
+  color: var(--sage-700);
+}
+
+.sensor-manager-tabs button:focus-visible {
+  outline: 2px solid var(--sage-500);
+  outline-offset: -3px;
+}
+
+.sensor-manager-tabs button.is-active {
+  border-bottom-color: var(--sage-600);
+  color: var(--sage-700);
+  background: color-mix(in srgb, var(--sage-200) 48%, transparent);
+}
+
+.sensor-manager-tabs svg {
+  width: 18px;
+  height: 18px;
+}
+
+.sensor-manager-panel--add > .manager-section-heading {
+  margin-bottom: 18px;
+}
+
 .registered-sensor-list {
   display: flex;
   flex-direction: column;
@@ -1182,6 +1273,84 @@
   margin: 0 0 4px;
   font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif;
   font-weight: 700;
+}
+
+.manager-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.manager-section-heading h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.manager-section-heading p {
+  margin: 4px 0 0;
+  color: var(--brown-500);
+  font-size: 12px;
+}
+
+.environment-setting-manager {
+  margin-bottom: 24px;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.environment-setting-manager__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 13px;
+}
+
+.environment-setting-manager__grid fieldset {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 13px;
+  background: var(--cream-100);
+}
+
+.environment-setting-manager__grid legend {
+  padding-inline: 5px;
+  color: var(--sage-700);
+  font-weight: 800;
+}
+
+.environment-setting-manager__grid button {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
+.sensor-applied-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sensor-applied-settings > div {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) auto auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 10px 12px;
+  background: var(--cream-100);
+}
+
+.sensor-applied-settings span:first-child {
+  display: flex;
+  gap: 6px;
+}
+
+.sensor-applied-settings small {
+  color: var(--brown-500);
 }
 
 .form-field-grid {
@@ -1719,6 +1888,146 @@
 .sensor-setup-form {
   border-top: 1px solid var(--line);
   padding-top: 22px;
+}
+
+.sensor-setup-form .sensor-device-eui--locked:disabled {
+  border-color: #aaa092;
+  background: #ded9d0;
+  color: #514a42;
+  -webkit-text-fill-color: #514a42;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.sensor-setup-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sensor-source-segments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-bottom: 1px solid var(--line);
+}
+
+.sensor-source-segments button {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--brown-500);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sensor-source-segments button.is-active {
+  border-bottom-color: var(--sage-600);
+  color: var(--sage-700);
+}
+
+.sensor-source-segments svg {
+  width: 18px;
+  height: 18px;
+}
+
+.reusable-sensor-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.reusable-sensor-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.reusable-sensor-options > button {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 13px;
+  background: var(--cream-100);
+  color: var(--brown-700);
+  text-align: left;
+  cursor: pointer;
+}
+
+.reusable-sensor-options > button.is-selected {
+  border-color: var(--sage-600);
+  background: var(--sage-200);
+  box-shadow: inset 0 0 0 1px var(--sage-600);
+}
+
+.reusable-sensor-options span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.reusable-sensor-options small,
+.sensor-catalog-empty span {
+  color: var(--brown-500);
+  font-size: 11px;
+}
+
+.sensor-catalog-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+}
+
+.setup-required-state {
+  display: flex;
+  width: min(100%, 680px);
+  min-height: 420px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.setup-required-state__icon {
+  display: grid;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 14px;
+  border-radius: 50%;
+  background: var(--sage-200);
+  color: var(--sage-700);
+  place-items: center;
+}
+
+.setup-required-state__icon svg {
+  width: 30px;
+  height: 30px;
+}
+
+.setup-required-state h1 {
+  margin: 5px 0 8px;
+  font-size: 25px;
+}
+
+.setup-required-state > p:not(.eyebrow) {
+  max-width: 520px;
+  margin: 0;
+  color: var(--brown-500);
+  line-height: 1.7;
 }
 
 .sensor-setup-form .sensor-type-picker {
@@ -2758,6 +3067,11 @@
   }
 
   .sensor-type-options {
+    grid-template-columns: 1fr;
+  }
+
+  .reusable-sensor-options,
+  .environment-setting-manager__grid {
     grid-template-columns: 1fr;
   }
 

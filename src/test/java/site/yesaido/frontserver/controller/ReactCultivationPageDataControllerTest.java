@@ -15,11 +15,14 @@ import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValu
 import site.yesaido.frontserver.dto.react.CultivationDetailPageData;
 import site.yesaido.frontserver.dto.react.CultivationListPageData;
 import site.yesaido.frontserver.dto.react.CultivationPreviewData;
+import site.yesaido.frontserver.dto.react.CultivationSetupPageData;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -99,13 +102,41 @@ class ReactCultivationPageDataControllerTest {
     }
 
     @Test
-    void detailPageDataUsesSafeEmptyValuesAndExcludesCurrentCultivationFromHistory() {
+    void setupPageDataLoadsOnlyCultivationAndSensorSettings() {
+        Long cultivationId = 12L;
+        CultivationDetailResponse cultivation = new CultivationDetailResponse(
+                cultivationId, "setup cultivation", 1L, "GROWING", "GROWTH", "OWNER",
+                null, null, null, null
+        );
+        CultivationSensorListResponse sensors = new CultivationSensorListResponse(List.of(), List.of());
+        when(cultivationClient.getDetailCultivation(cultivationId))
+                .thenReturn(ResponseEntity.ok(cultivation));
+        when(sensorClient.getSensors(cultivationId))
+                .thenReturn(ResponseEntity.ok(sensors));
+
+        CultivationSetupPageData result = controller.setupPageData(cultivationId);
+
+        assertThat(result.cultivation()).isSameAs(cultivation);
+        assertThat(result.sensors()).isSameAs(sensors);
+        verify(cultivationClient, never()).getMetadata(cultivationId);
+        verify(sensorClient, never()).getLatestSensorValues(cultivationId);
+    }
+
+    @Test
+    void detailPageDataFallsBackToCoreApisWhenMetadataIsEmpty() {
         Long cultivationId = 20L;
+        CultivationDetailResponse cultivation = new CultivationDetailResponse(
+                cultivationId, "current", 1L, "GROWING", "GROWTH", "OWNER",
+                LocalDateTime.now(), null, LocalDateTime.now(), LocalDateTime.now()
+        );
+        CultivationSensorListResponse sensors = new CultivationSensorListResponse(List.of(), List.of());
         CultivationHistoryResponse current = new CultivationHistoryResponse(cultivationId, "current", 1L,
                 "GROWING", null, null, null);
         CultivationHistoryResponse previous = new CultivationHistoryResponse(21L, "previous", 1L,
                 "FINISHED", null, null, null);
         when(cultivationClient.getMetadata(cultivationId)).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(cultivation));
+        when(sensorClient.getSensors(cultivationId)).thenReturn(ResponseEntity.ok(sensors));
         when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(null));
         when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(null));
 
@@ -116,7 +147,8 @@ class ReactCultivationPageDataControllerTest {
 
         CultivationDetailPageData result = controller.detailPageData(cultivationId);
 
-        assertThat(result.cultivation()).isNull();
+        assertThat(result.cultivation()).isSameAs(cultivation);
+        assertThat(result.sensors()).isSameAs(sensors);
         assertThat(result.members()).isEmpty();
         assertThat(result.photos()).isEmpty();
         assertThat(result.pastCultivations()).containsExactly(previous);

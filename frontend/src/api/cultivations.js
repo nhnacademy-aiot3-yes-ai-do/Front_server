@@ -5,6 +5,7 @@ export const cultivationKeys = {
   list: () => [...cultivationKeys.all, "list"],
   preview: (id) => [...cultivationKeys.all, "preview", Number(id)],
   detail: (id) => [...cultivationKeys.all, "detail", Number(id)],
+  setup: (id) => [...cultivationKeys.all, "setup", Number(id)],
   latest: (id) => [...cultivationKeys.all, "latest", Number(id)],
   trend: (id, deviceEui, sensorType, unit) => [
     ...cultivationKeys.all,
@@ -27,6 +28,10 @@ export function getCultivationPreview(id) {
 
 export function getCultivationDetailPage(id) {
   return request(`/cultivations/${id}/page-data`);
+}
+
+export function getCultivationSetupPage(id) {
+  return request(`/cultivations/${id}/setup-data`);
 }
 
 export function getLatestSensorValues(id) {

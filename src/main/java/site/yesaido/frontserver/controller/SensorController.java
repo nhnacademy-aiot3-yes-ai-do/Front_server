@@ -15,6 +15,7 @@ import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationR
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.ReusableCultivationSensorListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidationResponse;
@@ -44,6 +45,13 @@ public class SensorController {
     public ResponseEntity<CultivationSensorListResponse> getSensors(@PathVariable("cultivation-id") Long cultivationId) {
         ResponseEntity<CultivationSensorListResponse> upstream = sensorClient.getSensors(cultivationId);
         return jsonResponse(upstream);
+    }
+
+    @GetMapping(value = "/reusable-sensors", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ReusableCultivationSensorListResponse> getReusableSensors(
+            @RequestParam("exclude-cultivation-id") Long excludedCultivationId
+    ) {
+        return jsonResponse(sensorClient.getReusableSensors(excludedCultivationId));
     }
 
     @PostMapping("/{cultivation-id}/sensors")
