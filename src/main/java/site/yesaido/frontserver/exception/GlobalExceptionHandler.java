@@ -16,6 +16,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -64,6 +65,8 @@ public class GlobalExceptionHandler {
     );
     private static final String DEFAULT_UNAVAILABLE_MESSAGE = "외부 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
     private static final String DEFAULT_CONFLICT_MESSAGE = "요청을 처리할 수 없는 상태예요. 새로고침 후 다시 시도해 주세요.";
+    private static final String DEFAULT_FORBIDDEN_MESSAGE = "요청한 정보에 접근할 권한이 없습니다.";
+    private static final String DAILY_FEEDBACK_NOT_FOUND_MESSAGE = "해당 날짜의 일일 피드백을 찾을 수 없습니다.";
 
     private final AuthCookieProvider authCookieProvider;
     private final ObjectMapper objectMapper;
@@ -136,6 +139,7 @@ public class GlobalExceptionHandler {
     private HttpStatus resolveStatus(int feignStatus) {
         return switch (feignStatus) {
             case 400 -> HttpStatus.BAD_REQUEST;
+            case 403 -> HttpStatus.FORBIDDEN;
             case 404 -> HttpStatus.NOT_FOUND;
             case 409 -> HttpStatus.CONFLICT;
             default -> HttpStatus.SERVICE_UNAVAILABLE;
@@ -143,10 +147,16 @@ public class GlobalExceptionHandler {
     }
 
     private String resolveMessage(FeignException exception, HttpStatus status, String clientName) {
-        if(status == HttpStatus.BAD_REQUEST){
+        if (status == HttpStatus.BAD_REQUEST) {
             return extractFeignMessage(exception, "요청이 올바르지 않습니다.");
         }
+        if (status == HttpStatus.FORBIDDEN) {
+            return extractFeignMessage(exception, DEFAULT_FORBIDDEN_MESSAGE);
+        }
         if (status == HttpStatus.NOT_FOUND) {
+            if (isDailyFeedbackRequest(exception)) {
+                return extractFeignMessage(exception, DAILY_FEEDBACK_NOT_FOUND_MESSAGE);
+            }
             return NOT_FOUND_MESSAGES.getOrDefault(clientName, DEFAULT_NOT_FOUND_MESSAGE);
         }
         if (status == HttpStatus.CONFLICT) {
@@ -159,10 +169,18 @@ public class GlobalExceptionHandler {
         try {
             JsonNode response = objectMapper.readTree(exception.contentUTF8());
             String message = response.path(MESSAGE).asString();
+            if (message.isBlank()) {
+                message = response.path("detail").asString();
+            }
             return message.isBlank() ? fallback : message;
         } catch (Exception ignored) {
             return fallback;
         }
+    }
+
+    private boolean isDailyFeedbackRequest(FeignException exception) {
+        return exception.request() != null
+                && exception.request().url().contains("/daily-feedbacks/");
     }
 
     private String extractClientName(FeignException e) {
@@ -233,6 +251,12 @@ public class GlobalExceptionHandler {
         String defaultMessage = (fieldError != null) ? fieldError.getDefaultMessage() : null;
         String message = Objects.requireNonNullElse(defaultMessage, "잘못된 요청입니다.");
 
+        return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ErrorResponse handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        String message = "요청 값의 형식이 올바르지 않습니다: " + e.getName();
         return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, message);
     }
 
