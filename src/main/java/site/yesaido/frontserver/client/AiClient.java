@@ -8,7 +8,6 @@ import site.yesaido.frontserver.dto.ai.chat.ChatMessageDto;
 import site.yesaido.frontserver.dto.ai.chat.ChatMessageRequest;
 import site.yesaido.frontserver.dto.ai.chat.ChatMessageResponse;
 import site.yesaido.frontserver.dto.ai.insight.InsightCandidateResponse;
-import site.yesaido.frontserver.dto.ai.insight.InsightCandidatesResponse;
 import site.yesaido.frontserver.dto.ai.insight.InsightDetailResponse;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationRequest;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidationResponse;
