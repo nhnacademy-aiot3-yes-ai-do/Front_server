@@ -198,12 +198,6 @@ public class ReactCultivationPageDataController {
                 : response.memberResponses();
     }
 
-    private List<MushroomReferenceInfoResponse> safeMushrooms(MushroomReferenceInfoListResponse response) {
-        return response == null || response.mushroomReferenceInfoResponses() == null
-                ? List.of()
-                : response.mushroomReferenceInfoResponses();
-    }
-
     private List<PhotoResponse> safePhotos(PhotoListResponse response) {
         return response == null || response.photoUploadResponses() == null
                 ? List.of()
