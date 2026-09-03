@@ -76,6 +76,13 @@ public class ReactCultivationPageDataController {
                         item -> item.cultivation().cultivationId(),
                         CultivationMetadataListResponse.CultivationMetadataListItemResponse::latestSensorValues
                 ));
+        Map<Long, List<site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse>> trend1h = metadataResponse == null ? Map.of() : metadataResponse.cultivations().stream()
+                .filter(Objects::nonNull)
+                .filter(item -> item.cultivation() != null && item.cultivation().cultivationId() != null)
+                .collect(Collectors.toMap(
+                        item -> item.cultivation().cultivationId(),
+                        CultivationMetadataListResponse.CultivationMetadataListItemResponse::sensorTrend1h
+                ));
         MushroomReferenceInfoListResponse mushroomResponse = isolated(
                 "list mushroom references",
                 () -> body(sensorClient.getAllMushroomReferences()),
@@ -85,7 +92,8 @@ public class ReactCultivationPageDataController {
         return new CultivationListPageData(
                 cultivations,
                 mushroomResponse == null ? List.of() : mushroomResponse.mushroomReferenceInfoResponses(),
-                latestValues
+                latestValues,
+                trend1h
         );
     }
 

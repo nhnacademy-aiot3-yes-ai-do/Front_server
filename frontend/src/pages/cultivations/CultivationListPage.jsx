@@ -74,6 +74,9 @@ export default function CultivationListPage() {
                   latestSensorValues={
                     listQuery.data?.latestSensorValuesByCultivationId?.[cultivation.cultivationId]
                   }
+                  sensorTrend1h={
+                    listQuery.data?.sensorTrend1hByCultivationId?.[cultivation.cultivationId]
+                  }
                 />
               ))}
             </div>
