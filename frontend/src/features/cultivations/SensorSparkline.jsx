@@ -1,17 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { cultivationKeys, getSensorTrend } from "../../api/cultivations";
-import { formatSensorType } from "../../utils/formatters";
+import { formatSensorType, normalizeSensorUnit } from "../../utils/formatters";
 
 export default function SensorSparkline({ cultivationId, sensor, sensorType, latest, setting }) {
+  const unit = normalizeSensorUnit(latest?.unit || sensorType.valueUnit);
   const gradientId =
-    `spark-${cultivationId}-${sensor.deviceEui}-${sensorType.sensorTypeId}`.replace(
+    `spark-${cultivationId}-${sensor.deviceEui}-${sensorType.sensorTypeId ?? sensorType.type}-${normalizeSensorUnit(latest?.unit || sensorType.valueUnit)}`.replace(
       /[^a-zA-Z0-9_-]/g,
       "-",
     );
   const trendQuery = useQuery({
-    queryKey: cultivationKeys.trend(cultivationId, sensor.deviceEui, sensorType.type),
-    queryFn: () => getSensorTrend(cultivationId, sensor.deviceEui, sensorType.type),
+    queryKey: cultivationKeys.trend(cultivationId, sensor.deviceEui, sensorType.type, unit),
+    queryFn: () => getSensorTrend(cultivationId, sensor.deviceEui, sensorType.type, unit),
     staleTime: 60_000,
     retry: 1,
   });
@@ -29,7 +30,7 @@ export default function SensorSparkline({ cultivationId, sensor, sensorType, lat
           <span>{formatSensorType(sensorType.type)}</span>
           <strong>
             {value ?? "-"}
-            <small>{latest?.unit || sensorType.valueUnit || ""}</small>
+            <small>{unit || ""}</small>
           </strong>
         </div>
         <span className="sensor-spark__state">
@@ -71,7 +72,7 @@ export default function SensorSparkline({ cultivationId, sensor, sensorType, lat
         <span>{sensor.deviceName}</span>
         <span>
           {setting?.thresholdMin ?? "-"}–{setting?.thresholdMax ?? "-"}
-          {sensorType.valueUnit}
+          {unit || ""}
         </span>
       </div>
     </article>
