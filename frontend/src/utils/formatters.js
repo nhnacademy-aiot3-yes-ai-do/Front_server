@@ -63,6 +63,6 @@ export function normalizeSensorUnit(unit) {
 }
 
 export function formatProductGrade(grade) {
-    const labels = { TOP: "최상", HIGH: "상", MID: "중", LOW: "하" };
-    return labels[grade] || null;
+  const labels = { TOP: "최상", HIGH: "상", MID: "중", LOW: "하" };
+  return labels[grade] || null;
 }
