@@ -1,4 +1,4 @@
-import { jsonRequest, request } from "./http";
+import { jsonRequest, request, unwrapApiResponse } from "./http";
 
 export const cultivationKeys = {
   all: ["cultivations"],
@@ -14,6 +14,7 @@ export const cultivationKeys = {
     sensorType,
     unit,
   ],
+  guide: (mushroomId) => [...cultivationKeys.all, "mushroom-guide", Number(mushroomId)],
 };
 
 export function getCultivationListPage() {
@@ -43,4 +44,7 @@ export function getSensorTrend(id, deviceEui, sensorType, unit) {
 
 export function createCultivation(payload) {
   return jsonRequest("/cultivations", "POST", payload);
+}
+export function getMushroomGuide(mushroomId) {
+  return request(`/cultivations/mushrooms/${mushroomId}/guide`).then(unwrapApiResponse);
 }
