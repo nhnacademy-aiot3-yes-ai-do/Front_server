@@ -156,7 +156,6 @@ public class CultivationController {
     }
 
     // 사진
-    /
     @PostMapping("/{cultivation-id}/photos")
     public String uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
                                                      @RequestParam("file") MultipartFile file) {
