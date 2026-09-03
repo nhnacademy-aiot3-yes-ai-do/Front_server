@@ -23,9 +23,12 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import site.yesaido.frontserver.controller.AuthResultController;
 import site.yesaido.frontserver.dto.react.AuthResultResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -36,7 +39,9 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
     private static final Pattern METHOD_KEY_PATTERN = Pattern.compile("\\[(\\w+)#");
+    private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
     private static final String ERROR = "error";
+    private static final String MESSAGE = "message";
 
     private static final Map<String, String> NOT_FOUND_MESSAGES = Map.of(
             "AiClient", "해당 버섯 가이드 정보를 찾을 수 없습니다.",
@@ -61,6 +66,7 @@ public class GlobalExceptionHandler {
     private static final String DEFAULT_CONFLICT_MESSAGE = "요청을 처리할 수 없는 상태예요. 새로고침 후 다시 시도해 주세요.";
 
     private final AuthCookieProvider authCookieProvider;
+    private final ObjectMapper objectMapper;
 
     // 브라우저가 페이지를 직접 열 때(주소 입력, 링크 클릭, 폼 제출 등)는 Accept 헤더에 text/html이
     // 명시적으로 들어감. dashboard.js 등의 fetch() 호출은 Accept를 따로 안 지정해서 기본값(*/*)이라
@@ -79,9 +85,9 @@ public class GlobalExceptionHandler {
         mav.setStatus(status);
         mav.addObject("status", status.value());
         mav.addObject(ERROR, status.getReasonPhrase());
-        mav.addObject("message", message);
+        mav.addObject(MESSAGE, message);
         mav.addObject("path", errorPagePath(request));
-        mav.addObject("timestamp", new Date());
+        mav.addObject("timestamp", LocalDateTime.now(KOREA_ZONE));
         return mav;
     }
 
@@ -99,8 +105,8 @@ public class GlobalExceptionHandler {
             } else {
                 log.warn("응답이 이미 커밋되어 /login으로 리다이렉트하지 못했습니다.");
             }
-        } catch (Throwable t) {
-            log.error("handleUnauthorized 처리 중 예외 발생: {}", t.getClass().getName(), t);
+        } catch (Exception e) {
+            log.error("handleUnauthorized 처리 중 예외 발생: {}", e.getClass().getName(), e);
             try {
                 if (!response.isCommitted()) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -119,7 +125,7 @@ public class GlobalExceptionHandler {
         log.error("{} 통신 실패 (Status: {}): {}", clientName, e.status(), e.getMessage());
 
         HttpStatus status = resolveStatus(e.status());
-        String message = resolveMessage(status, clientName);
+        String message = resolveMessage(e, status, clientName);
 
         if (wantsHtml(request)) {
             return errorView(request, status, message);
@@ -129,13 +135,17 @@ public class GlobalExceptionHandler {
 
     private HttpStatus resolveStatus(int feignStatus) {
         return switch (feignStatus) {
+            case 400 -> HttpStatus.BAD_REQUEST;
             case 404 -> HttpStatus.NOT_FOUND;
             case 409 -> HttpStatus.CONFLICT;
             default -> HttpStatus.SERVICE_UNAVAILABLE;
         };
     }
 
-    private String resolveMessage(HttpStatus status, String clientName) {
+    private String resolveMessage(FeignException exception, HttpStatus status, String clientName) {
+        if(status == HttpStatus.BAD_REQUEST){
+            return extractFeignMessage(exception, "요청이 올바르지 않습니다.");
+        }
         if (status == HttpStatus.NOT_FOUND) {
             return NOT_FOUND_MESSAGES.getOrDefault(clientName, DEFAULT_NOT_FOUND_MESSAGE);
         }
@@ -143,6 +153,16 @@ public class GlobalExceptionHandler {
             return DEFAULT_CONFLICT_MESSAGE;
         }
         return UNAVAILABLE_MESSAGES.getOrDefault(clientName, DEFAULT_UNAVAILABLE_MESSAGE);
+    }
+
+    private String extractFeignMessage(FeignException exception, String fallback) {
+        try {
+            JsonNode response = objectMapper.readTree(exception.contentUTF8());
+            String message = response.path(MESSAGE).asString();
+            return message.isBlank() ? fallback : message;
+        } catch (Exception ignored) {
+            return fallback;
+        }
     }
 
     private String extractClientName(FeignException e) {
@@ -204,7 +224,7 @@ public class GlobalExceptionHandler {
             return errorView(request, HttpStatus.INTERNAL_SERVER_ERROR, message);
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(ERROR, "internal_server_error", "message", message));
+                .body(Map.of(ERROR, "internal_server_error", MESSAGE, message));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

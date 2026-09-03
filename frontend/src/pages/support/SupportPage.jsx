@@ -239,7 +239,9 @@ function InquiryDetail({ inquiryId, onClose }) {
               <h2 className="support-detail-title">{inquiry.title}</h2>
               <span className="support-detail-date">{formatDate(inquiry.createdAt)} 작성</span>
             </div>
-            <span className={`support-status-badge support-status-badge--${statusTone(inquiry.status)}`}>
+            <span
+              className={`support-status-badge support-status-badge--${statusTone(inquiry.status)}`}
+            >
               {statusLabel(inquiry.status)}
             </span>
           </header>
@@ -443,7 +445,9 @@ export default function SupportPage() {
           onClose={() => setModal(null)}
         />
       )}
-      {typeof modal === "number" && <InquiryDetail inquiryId={modal} onClose={() => setModal(null)} />}
+      {typeof modal === "number" && (
+        <InquiryDetail inquiryId={modal} onClose={() => setModal(null)} />
+      )}
     </main>
   );
 }

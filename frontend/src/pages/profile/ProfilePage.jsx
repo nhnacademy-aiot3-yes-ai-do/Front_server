@@ -109,6 +109,18 @@ export default function ProfilePage() {
     }
   };
 
+  const withdrawGoogleAccount = async () => {
+    setBusy(true);
+    setWithdrawNotice(null);
+    try {
+      await request("/users/withdraw/oauth", { method: "DELETE" }).then(unwrapApiResponse);
+      window.location.assign("/login?withdrawn=true");
+    } catch (error) {
+      setWithdrawNotice({ type: "error", message: error.message });
+      setBusy(false);
+    }
+  };
+
   if (profileQuery.isLoading) return <LoadingState message="내 정보를 불러오고 있어요." />;
   if (profileQuery.isError)
     return <ErrorState error={profileQuery.error} onRetry={profileQuery.refetch} />;
@@ -232,9 +244,7 @@ export default function ProfilePage() {
 
       {modal === "password" && (
         <Modal title="비밀번호 변경" onClose={() => setModal(null)}>
-          <p className="modal-desc">
-            안전한 비밀번호를 위해 현재 비밀번호를 먼저 확인해주세요.
-          </p>
+          <p className="modal-desc">안전한 비밀번호를 위해 현재 비밀번호를 먼저 확인해주세요.</p>
           <form className="form-stack" onSubmit={changePassword}>
             <label>
               현재 비밀번호
@@ -286,30 +296,64 @@ export default function ProfilePage() {
           <div className="delete-warning-icon">
             <TriangleAlert aria-hidden="true" />
           </div>
-          <div className="delete-warning-box">
-            탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며
-            <br />
-            복구할 수 없어요.
-          </div>
-          <form className="form-stack" onSubmit={withdraw}>
-            <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
-            <label>
-              비밀번호 확인
-              <input autoComplete="current-password" autoFocus name="password" required type="password" />
-            </label>
-            <div className="modal-actions">
-              <button
-                className="button button--secondary"
-                onClick={() => setModal(null)}
-                type="button"
-              >
-                취소
-              </button>
-              <button className="button button--danger" disabled={busy} type="submit">
-                {busy ? "처리 중…" : "탈퇴하기"}
-              </button>
+          {profile.hasPassword ? (
+            <form className="form-stack" onSubmit={withdraw}>
+              <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
+              <div className="delete-warning-box">
+                탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며
+                <br />
+                복구할 수 없어요.
+              </div>
+              <label>
+                비밀번호 확인
+                <input
+                  autoComplete="current-password"
+                  autoFocus
+                  name="password"
+                  required
+                  type="password"
+                />
+              </label>
+              <div className="modal-actions">
+                <button
+                  className="button button--secondary"
+                  onClick={() => setModal(null)}
+                  type="button"
+                >
+                  취소
+                </button>
+                <button className="button button--danger" disabled={busy} type="submit">
+                  {busy ? "처리 중…" : "탈퇴하기"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="form-stack">
+              <Notice notice={withdrawNotice} onDismiss={() => setWithdrawNotice(null)} />
+              <div className="delete-warning-box">
+                탈퇴하면 재배지, 센서, 재배 이력 등 모든 데이터가 삭제되며
+                <br />
+                복구할 수 없어요. 그래도 탈퇴하시겠어요?
+              </div>
+              <div className="modal-actions">
+                <button
+                  className="button button--secondary"
+                  onClick={() => setModal(null)}
+                  type="button"
+                >
+                  취소
+                </button>
+                <button
+                  className="button button--danger"
+                  disabled={busy}
+                  onClick={withdrawGoogleAccount}
+                  type="button"
+                >
+                  {busy ? "처리 중…" : "탈퇴하기"}
+                </button>
+              </div>
             </div>
-          </form>
+          )}
         </Modal>
       )}
     </main>

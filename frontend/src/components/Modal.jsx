@@ -3,6 +3,8 @@ import { useEffect, useRef } from "react";
 
 export default function Modal({ title, children, onClose, className = "" }) {
   const dialogRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     const previouslyFocused = document.activeElement;
@@ -14,7 +16,7 @@ export default function Modal({ title, children, onClose, className = "" }) {
     focusableElements()[0]?.focus();
     const handleKeyDown = (event) => {
       if (event.key === "Escape") {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== "Tab") return;
@@ -43,7 +45,7 @@ export default function Modal({ title, children, onClose, className = "" }) {
       window.removeEventListener("keydown", handleKeyDown);
       previouslyFocused?.focus?.();
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div

@@ -5,8 +5,8 @@ import feign.Request;
 import feign.Response;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -18,6 +18,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap;
 import site.yesaido.frontserver.controller.AuthResultController;
 import site.yesaido.frontserver.dto.react.AuthResultResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -32,8 +34,13 @@ class GlobalExceptionHandlerTest {
     @Mock
     private AuthCookieProvider authCookieProvider;
 
-    @InjectMocks
     private GlobalExceptionHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        ObjectMapper objectMapper = JsonMapper.builder().build();
+        handler = new GlobalExceptionHandler(authCookieProvider, objectMapper);
+    }
 
     @Test
     @DisplayName("handleUnauthorized - 쿠키 클리어 및 /login 리다이렉트 처리")
@@ -82,6 +89,26 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(404, result.getStatusCode().value());
         assertEquals("해당 버섯 가이드 정보를 찾을 수 없습니다.", result.getBody().getDetail());
+    }
+
+    @Test
+    @DisplayName("Feign 400 발생 시 upstream 안내 메시지와 상태를 그대로 반환")
+    void handleFeignExceptionReturns400WithUpstreamMessage() {
+        Request request = Request.create(
+                Request.HttpMethod.POST, "/api/v1/auth/password-reset/email/send",
+                Collections.emptyMap(), null, StandardCharsets.UTF_8, null
+        );
+        Response response = Response.builder()
+                .status(400).reason("Bad Request").request(request)
+                .headers(Collections.emptyMap())
+                .body("{\"message\":\"Google로 가입한 계정입니다. Google로 로그인해 주세요.\"}", StandardCharsets.UTF_8)
+                .build();
+        FeignException exception = FeignException.errorStatus("UserClient#sendPasswordResetEmail(EmailSendResponse)", response);
+
+        ErrorResponse result = (ErrorResponse) handler.handleFeignException(exception, new MockHttpServletRequest());
+
+        assertEquals(400, result.getStatusCode().value());
+        assertEquals("Google로 가입한 계정입니다. Google로 로그인해 주세요.", result.getBody().getDetail());
     }
 
     @Test
