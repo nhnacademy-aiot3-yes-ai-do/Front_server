@@ -26,6 +26,7 @@ import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomRefere
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.EnvironmentComplianceResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse;
 import site.yesaido.frontserver.dto.react.CultivationDetailPageData;
 import site.yesaido.frontserver.dto.react.CultivationListPageData;
 import site.yesaido.frontserver.dto.react.CultivationPreviewData;
@@ -67,7 +68,7 @@ public class ReactCultivationPageDataController {
                 .map(CultivationMetadataListResponse.CultivationMetadataListItemResponse::cultivation)
                 .filter(Objects::nonNull)
                 .toList();
-        Map<Long, List<site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueResponse>> latestValues =
+        Map<Long, List<LatestSensorValueResponse>> latestValues =
                 metadataResponse == null ? Map.of() : metadataResponse.cultivations().stream()
                 .filter(Objects::nonNull)
                 .filter(item -> item.cultivation() != null && item.cultivation().cultivationId() != null)
