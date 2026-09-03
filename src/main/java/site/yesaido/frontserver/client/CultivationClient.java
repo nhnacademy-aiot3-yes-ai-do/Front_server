@@ -21,11 +21,17 @@ public interface CultivationClient {
     @PostMapping("/api/v1/cultivations")
     ResponseEntity<CultivationCreateResponse> createCultivation(@RequestBody CultivationCreateRequest request);
 
+    @GetMapping("/api/v1/cultivations/metadata")
+    ResponseEntity<CultivationMetadataListResponse> getMetadataList();
+
     @GetMapping("/api/v1/cultivations")
     ResponseEntity<CultivationSummaryListResponse> getCultivations();
 
     @GetMapping("/api/v1/cultivations/{cultivation-id}")
     ResponseEntity<CultivationDetailResponse> getDetailCultivation(@PathVariable("cultivation-id") Long cultivationId);
+
+    @GetMapping("/api/v1/cultivations/{cultivation-id}/metadata")
+    ResponseEntity<CultivationMetadataResponse> getMetadata(@PathVariable("cultivation-id") Long cultivationId);
 
     @PutMapping("/api/v1/cultivations/{cultivation-id}/finish")
     ResponseEntity<CultivationFinishResponse> finishCultivation(@PathVariable("cultivation-id") Long cultivationId);
