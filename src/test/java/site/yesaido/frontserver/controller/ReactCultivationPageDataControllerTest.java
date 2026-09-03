@@ -8,12 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.ResponseEntity;
 import site.yesaido.frontserver.client.CultivationClient;
 import site.yesaido.frontserver.client.SensorClient;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationDetailResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryPageResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationHistoryResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationSummaryListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.*;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
@@ -41,8 +36,8 @@ class ReactCultivationPageDataControllerTest {
 
     @Test
     void listPageDataReturnsCultivationsAndMushroomReferences() {
-        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(
-                new CultivationSummaryListResponse(List.of())));
+        when(cultivationClient.getMetadataList()).thenReturn(ResponseEntity.ok(
+                new CultivationMetadataListResponse(List.of())));
         when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(
                 new MushroomReferenceInfoListResponse(List.of())));
 
@@ -54,7 +49,7 @@ class ReactCultivationPageDataControllerTest {
 
     @Test
     void listPageDataUsesEmptyListsWhenResponseBodiesAreNull() {
-        when(cultivationClient.getCultivations()).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getMetadataList()).thenReturn(null);
         when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(null));
 
         CultivationListPageData result = controller.listPageData();
@@ -110,12 +105,10 @@ class ReactCultivationPageDataControllerTest {
                 "GROWING", null, null, null);
         CultivationHistoryResponse previous = new CultivationHistoryResponse(21L, "previous", 1L,
                 "FINISHED", null, null, null);
-        when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(null));
+        when(cultivationClient.getMetadata(cultivationId)).thenReturn(ResponseEntity.ok(null));
         when(cultivationClient.getMembers(cultivationId)).thenReturn(ResponseEntity.ok(null));
         when(cultivationClient.getPhoto(cultivationId)).thenReturn(ResponseEntity.ok(null));
-        when(sensorClient.getSensors(cultivationId)).thenReturn(ResponseEntity.ok(null));
-        when(sensorClient.getLatestSensorValues(cultivationId)).thenReturn(ResponseEntity.ok(null));
-        when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(null));
+
         when(cultivationClient.getHistory(0, 50)).thenReturn(ResponseEntity.ok(
                 new CultivationHistoryPageResponse(List.of(current, previous), 1, 2, 0, 50)));
         when(sensorClient.getDailyEnvironmentCompliance(org.mockito.ArgumentMatchers.eq(cultivationId), org.mockito.ArgumentMatchers.any()))
