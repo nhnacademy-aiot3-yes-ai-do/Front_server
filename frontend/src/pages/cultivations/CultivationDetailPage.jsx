@@ -56,9 +56,11 @@ function buildSensorOptions(data, latestValues) {
     normalizeList(sensor.sensorTypes).map((sensorType) => ({
       key: `${sensor.deviceEui}|${sensorType.type}|${normalizeSensorUnit(sensorType.valueUnit)}`,
       latest: latestValues.find(
-        (value) => value.deviceEui === sensor.deviceEui
-          && value.sensorType === sensorType.type
-          && normalizeSensorUnit(value.unit || sensorType.valueUnit) === normalizeSensorUnit(sensorType.valueUnit),
+        (value) =>
+          value.deviceEui === sensor.deviceEui &&
+          value.sensorType === sensorType.type &&
+          normalizeSensorUnit(value.unit || sensorType.valueUnit) ===
+            normalizeSensorUnit(sensorType.valueUnit),
       ),
       sensor,
       sensorType,
@@ -724,7 +726,14 @@ function LiveSensorCard({ color, option, trendQuery, initialHistory }) {
               <XAxis dataKey="measuredAt" minTickGap={34} tick={{ fontSize: 10 }} />
               <YAxis width={42} tick={{ fontSize: 10 }} />
               <Tooltip />
-              <Line dataKey="value" dot={false} isAnimationActive={false} stroke={color} strokeWidth={2.5} type="monotone" />
+              <Line
+                dataKey="value"
+                dot={false}
+                isAnimationActive={false}
+                stroke={color}
+                strokeWidth={2.5}
+                type="monotone"
+              />
             </LineChart>
           </ResponsiveContainer>
         ) : trendQuery.isLoading ? (
@@ -801,9 +810,11 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, trendQueries, sensorH
                 option={option}
                 trendQuery={pagedTrendQueries[index]}
                 initialHistory={normalizeList(sensorHistory12h).filter(
-                  (point) => point.deviceEui === option.sensor.deviceEui
-                    && point.sensorType === option.sensorType.type
-                    && normalizeSensorUnit(point.unit || option.sensorType.valueUnit) === normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit),
+                  (point) =>
+                    point.deviceEui === option.sensor.deviceEui &&
+                    point.sensorType === option.sensorType.type &&
+                    normalizeSensorUnit(point.unit || option.sensorType.valueUnit) ===
+                      normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit),
                 )}
               />
             ))}

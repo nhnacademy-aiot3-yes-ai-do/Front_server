@@ -2,7 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cultivationKeys, getCultivationPreview } from "../../api/cultivations";
-import { formatMode, formatRelativeTime, formatRole, normalizeList, normalizeSensorUnit } from "../../utils/formatters";
+import {
+  formatMode,
+  formatRelativeTime,
+  formatRole,
+  normalizeList,
+  normalizeSensorUnit,
+} from "../../utils/formatters";
 import SensorSparkline from "./SensorSparkline";
 
 function sensorPreviews(preview, suppliedLatestValues) {
@@ -24,9 +30,11 @@ function sensorPreviews(preview, suppliedLatestValues) {
   return sensors.flatMap((sensor) =>
     normalizeList(sensor.sensorTypes).map((sensorType) => ({
       latest: latestValues.find(
-        (value) => value.deviceEui === sensor.deviceEui
-          && value.sensorType === sensorType.type
-          && normalizeSensorUnit(value.unit || sensorType.valueUnit) === normalizeSensorUnit(sensorType.valueUnit),
+        (value) =>
+          value.deviceEui === sensor.deviceEui &&
+          value.sensorType === sensorType.type &&
+          normalizeSensorUnit(value.unit || sensorType.valueUnit) ===
+            normalizeSensorUnit(sensorType.valueUnit),
       ),
       sensor,
       sensorType,

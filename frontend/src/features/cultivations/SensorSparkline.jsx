@@ -12,8 +12,7 @@ export default function SensorSparkline({ cultivationId, sensor, sensorType, lat
     );
   const trendQuery = useQuery({
     queryKey: cultivationKeys.trend(cultivationId, sensor.deviceEui, sensorType.type, unit),
-    queryFn: () =>
-      getSensorTrend(cultivationId, sensor.deviceEui, sensorType.type, unit),
+    queryFn: () => getSensorTrend(cultivationId, sensor.deviceEui, sensorType.type, unit),
     staleTime: 60_000,
     retry: 1,
   });
