@@ -1,15 +1,20 @@
 package site.yesaido.frontserver.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.ai.MushGuideResponse;
 import site.yesaido.frontserver.dto.ai.chat.ChatMessageDto;
 import site.yesaido.frontserver.dto.ai.chat.ChatMessageRequest;
 import site.yesaido.frontserver.dto.ai.chat.ChatMessageResponse;
+import site.yesaido.frontserver.dto.ai.daily_feedback.DailyFeedbackResponse;
+import site.yesaido.frontserver.dto.ai.insight.InsightCandidateResponse;
+import site.yesaido.frontserver.dto.ai.insight.InsightDetailResponse;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationRequest;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidationResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @FeignClient(name = "aiClient", url = "${feign.client.gateway.url}")
@@ -24,6 +29,14 @@ public interface AiClient {
             @PathVariable("cultivation-id") Long cultivationId,
             @RequestBody SensorValidationRequest request);
 
+    @GetMapping("/api/v1/ai/cultivations/{cultivation-id}/daily-feedbacks/{feedback-date}")
+    ApiResponse<DailyFeedbackResponse> getDailyFeedback(
+            @PathVariable("cultivation-id") Long cultivationId,
+            @PathVariable("feedback-date")
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+            LocalDate feedbackDate
+    );
+
     @PostMapping("/api/v1/ai/chat")
     ApiResponse<ChatMessageResponse> chat(@RequestBody ChatMessageRequest request);
 
@@ -31,5 +44,22 @@ public interface AiClient {
     ApiResponse<List<ChatMessageDto>> getChatHistory(
             @RequestParam(value = "conversationId", required = false) Long conversationId,
             @RequestParam(value = "cultivationId", required = false) Long cultivationId
+    );
+
+    /**
+     * 유사 환경 우수 수확 추천 사례 TOP 5 조회
+     */
+    @GetMapping("/api/v1/ai/insights/candidates")
+    ApiResponse<List<InsightCandidateResponse>> getInsightCandidates(
+            @RequestParam("cultivationId") Long cultivationId
+    );
+
+    /**
+     * 특정 인사이트의 상세 분석 및 일자별 환경/센서 타임라인 조회
+     */
+    @GetMapping("/api/v1/ai/insights/{insight-id}")
+    ApiResponse<InsightDetailResponse> getInsightDetail(
+            @PathVariable("insight-id") Long insightId,
+            @RequestParam(value = "targetDate", required = false) String targetDate
     );
 }

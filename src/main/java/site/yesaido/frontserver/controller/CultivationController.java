@@ -2,7 +2,6 @@ package site.yesaido.frontserver.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,6 +18,7 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.Member
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberRoleUpdateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationModeChangeResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
@@ -26,6 +26,7 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.Membe
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -63,13 +64,13 @@ public class CultivationController {
     }
 
     @PostMapping(
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<Void> createCultivation(
+    public ResponseEntity<CultivationCreateResponse> createCultivation(
             @Valid @RequestBody CultivationCreateRequest request
     ) {
-        cultivationClient.createCultivation(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return cultivationClient.createCultivation(request);
     }
 
     @GetMapping("/{cultivation-id}")
@@ -77,10 +78,22 @@ public class CultivationController {
         return REACT_APP;
     }
 
+    @GetMapping("/{cultivation-id}/setup")
+    public String sensorSetup(@PathVariable("cultivation-id") Long cultivationId) {
+        return REACT_APP;
+    }
+
+    @GetMapping("/{cultivation-id}/daily-feedbacks/{feedback-date}")
+    public String dailyFeedback(
+            @PathVariable("cultivation-id") Long cultivationId,
+            @PathVariable("feedback-date") String feedbackDate
+    ) {
+        return REACT_APP;
+    }
+
     @PutMapping("/{cultivation-id}/harvest-mode")
     public ResponseEntity<CultivationModeChangeResponse> switchToHarvestMode(@PathVariable("cultivation-id") Long cultivationId) {
-        ResponseEntity<CultivationModeChangeResponse> response = cultivationClient.switchToHarvestMode(cultivationId);
-        return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+        return UpstreamResponseUtils.isolate(cultivationClient.switchToHarvestMode(cultivationId));
     }
 
     @PostMapping("/{cultivation-id}/finish")
@@ -98,7 +111,7 @@ public class CultivationController {
     // CultivationMember
     @GetMapping("/{cultivation-id}/members")
     public ResponseEntity<MemberListResponse> getMembers(@PathVariable("cultivation-id") Long cultivationId) {
-        return cultivationClient.getMembers(cultivationId);
+        return UpstreamResponseUtils.isolate(cultivationClient.getMembers(cultivationId));
     }
 
     @GetMapping("/{cultivation-id}/members/search")
@@ -152,26 +165,25 @@ public class CultivationController {
     @PostMapping("/{cultivation-id}/harvest")
     public ResponseEntity<HarvestCreateResponse> createHarvest(@PathVariable("cultivation-id") Long cultivationId,
                                                                @RequestBody HarvestCreateRequest request) {
-        return cultivationClient.createHarvest(cultivationId, request);
+        return UpstreamResponseUtils.isolate(cultivationClient.createHarvest(cultivationId, request));
     }
 
     // 사진
     @PostMapping("/{cultivation-id}/photos")
     public String uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
-                                                     @RequestParam("file") MultipartFile file) {
+                              @RequestParam("file") MultipartFile file) {
         cultivationClient.uploadPhoto(cultivationId, file);
         return "redirect:/cultivations/" + cultivationId;
     }
 
     @GetMapping("{cultivation-id}/photos")
     public ResponseEntity<PhotoListResponse> getPhoto(@PathVariable("cultivation-id") Long cultivationId) {
-        return cultivationClient.getPhoto(cultivationId);
+        return UpstreamResponseUtils.isolate(cultivationClient.getPhoto(cultivationId));
     }
 
     @DeleteMapping("/{cultivation-id}/photos/{photo-id}")
     public ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                             @PathVariable("photo-id") Long photoId) {
-        return cultivationClient.deletePhoto(cultivationId, photoId);
+        return UpstreamResponseUtils.isolate(cultivationClient.deletePhoto(cultivationId, photoId));
     }
-
 }

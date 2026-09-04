@@ -2,17 +2,40 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cultivationKeys, getCultivationPreview } from "../../api/cultivations";
-import { formatMode, formatRelativeTime, formatRole, normalizeList } from "../../utils/formatters";
+import {
+  formatMode,
+  formatRelativeTime,
+  formatRole,
+  normalizeList,
+  normalizeSensorUnit,
+} from "../../utils/formatters";
+import { requiresSensorSetup } from "./cultivationSetup";
 import SensorSparkline from "./SensorSparkline";
 
-function sensorPreviews(preview) {
-  const latestValues = normalizeList(preview?.latestSensorValues?.latestSensorValueResponses);
+function sensorPreviews(preview, suppliedLatestValues) {
+  const latestValues = suppliedLatestValues?.length
+    ? suppliedLatestValues
+    : normalizeList(preview?.latestSensorValues?.latestSensorValueResponses);
   const settings = normalizeList(preview?.sensors?.environmentSettings);
+  const sensors = normalizeList(preview?.sensors?.sensors);
 
-  return normalizeList(preview?.sensors?.sensors).flatMap((sensor) =>
+  if (!sensors.length) {
+    return latestValues.map((latest) => ({
+      latest,
+      sensor: latest,
+      sensorType: { type: latest.sensorType, valueUnit: latest.unit },
+      setting: undefined,
+    }));
+  }
+
+  return sensors.flatMap((sensor) =>
     normalizeList(sensor.sensorTypes).map((sensorType) => ({
       latest: latestValues.find(
-        (value) => value.deviceEui === sensor.deviceEui && value.sensorType === sensorType.type,
+        (value) =>
+          value.deviceEui === sensor.deviceEui &&
+          value.sensorType === sensorType.type &&
+          normalizeSensorUnit(value.unit || sensorType.valueUnit) ===
+            normalizeSensorUnit(sensorType.valueUnit),
       ),
       sensor,
       sensorType,
@@ -36,15 +59,21 @@ function cardStatus(entries) {
   return warning ? { label: "환경 확인 필요", tone: "warning" } : { label: "안정", tone: "stable" };
 }
 
-export default function CultivationCard({ cultivation, mushroomName }) {
+export default function CultivationCard({ cultivation, mushroomName, latestSensorValues }) {
   const previewQuery = useQuery({
     queryKey: cultivationKeys.preview(cultivation.cultivationId),
     queryFn: () => getCultivationPreview(cultivation.cultivationId),
     staleTime: 30_000,
   });
   const preview = previewQuery.data;
-  const entries = sensorPreviews(preview);
-  const status = cardStatus(entries);
+  const entries = sensorPreviews(preview, latestSensorValues);
+  const setupRequired =
+    previewQuery.isSuccess &&
+    requiresSensorSetup({ ...cultivation, ...preview?.cultivation }, preview?.sensors?.sensors);
+  const status = setupRequired ? { label: "설정 필요", tone: "setup" } : cardStatus(entries);
+  const targetPath = setupRequired
+    ? `/cultivations/${cultivation.cultivationId}/setup`
+    : `/cultivations/${cultivation.cultivationId}`;
   const mostRecentMeasurement = entries
     .map((entry) => entry.latest?.measuredAt)
     .filter(Boolean)
@@ -54,7 +83,7 @@ export default function CultivationCard({ cultivation, mushroomName }) {
   return (
     <article className={`cultivation-card cultivation-card--${status.tone}`}>
       <div className="cultivation-card__identity">
-        <Link className="cultivation-photo" to={`/cultivations/${cultivation.cultivationId}`}>
+        <Link className="cultivation-photo" to={targetPath}>
           {previewQuery.isError ? (
             <span className="cultivation-photo__empty">
               <ImageOff aria-hidden="true" />
@@ -80,8 +109,12 @@ export default function CultivationCard({ cultivation, mushroomName }) {
               <p>{mushroomName || "버섯 종류 정보 없음"}</p>
             </div>
             <Link
-              aria-label={`${cultivation.name} 상세 보기`}
-              to={`/cultivations/${cultivation.cultivationId}`}
+              aria-label={
+                setupRequired
+                  ? `${cultivation.name} 설정 화면 열기`
+                  : `${cultivation.name} 상세 보기`
+              }
+              to={targetPath}
             >
               <ChevronRight aria-hidden="true" />
             </Link>
@@ -104,16 +137,29 @@ export default function CultivationCard({ cultivation, mushroomName }) {
               <dd>{cultivation.memberCount ?? 0}명</dd>
             </div>
           </dl>
-          <div className="pending-progress">
-            <span>성장 단계 및 재배 진행률</span>
-            <strong>데이터 준비 중</strong>
-          </div>
+          {setupRequired ? (
+            <Link
+              className="cultivation-setup-resume"
+              aria-label={`${cultivation.name} 설정 마저 진행하기`}
+              to={targetPath}
+            >
+              <span>센서 연결이 완료되지 않았습니다.</span>
+              <strong>
+                마저 진행하기 <ChevronRight aria-hidden="true" />
+              </strong>
+            </Link>
+          ) : (
+            <div className="pending-progress">
+              <span>성장 단계 및 재배 진행률</span>
+              <strong>데이터 준비 중</strong>
+            </div>
+          )}
         </div>
       </div>
       <section className="cultivation-card__sensors" aria-label={`${cultivation.name} 센서 추이`}>
         <header>
           <strong>등록 센서 추이</strong>
-          <span>최근 24시간</span>
+          <span>실시간</span>
         </header>
         {previewQuery.isLoading && <p className="sensor-column-state">센서 정보를 불러오는 중</p>}
         {previewQuery.isError && (
@@ -125,12 +171,13 @@ export default function CultivationCard({ cultivation, mushroomName }) {
           </div>
         )}
         {!previewQuery.isLoading && !previewQuery.isError && entries.length === 0 && (
-          <p className="sensor-column-state">등록된 센서가 없습니다.</p>
+          <p className="sensor-column-state">
+            {setupRequired ? "센서를 연결하면 측정 현황이 표시됩니다." : "등록된 센서가 없습니다."}
+          </p>
         )}
         {entries.map((entry) => (
           <SensorSparkline
-            key={`${entry.sensor.deviceEui}-${entry.sensorType.type}`}
-            cultivationId={cultivation.cultivationId}
+            key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
             {...entry}
           />
         ))}

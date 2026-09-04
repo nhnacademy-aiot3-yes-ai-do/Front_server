@@ -54,3 +54,15 @@ export function formatRole(role) {
 export function normalizeList(value) {
   return Array.isArray(value) ? value : [];
 }
+
+export function normalizeSensorUnit(unit) {
+  if (unit == null) return unit;
+  const normalized = String(unit).trim();
+  if (!normalized) return normalized;
+  return normalized === "℃" ? "°C" : normalized;
+}
+
+export function formatProductGrade(grade) {
+  const labels = { TOP: "최상", HIGH: "상", MID: "중", LOW: "하" };
+  return labels[grade] || null;
+}

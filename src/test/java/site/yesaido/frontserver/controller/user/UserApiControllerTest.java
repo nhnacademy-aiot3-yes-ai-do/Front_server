@@ -11,8 +11,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.UserClient;
 import site.yesaido.frontserver.common.ApiResponse;
@@ -246,6 +246,19 @@ class UserApiControllerTest {
                 .andExpect(status().isOk());
 
         verify(userClient).changePassword(request);
+        verify(authCookieProvider).clearAuthCookies(any());
+    }
+
+    @Test
+    @DisplayName("Google 전용 계정 탈퇴 성공 시 User 서버에 요청을 전달하고 인증 쿠키를 삭제한다")
+    void withdrawOAuthSuccess() throws Exception {
+        given(userClient.withdrawGoogle()).willReturn(new ApiResponse<>(true, "탈퇴가 완료되었습니다.", null));
+
+        mockMvc.perform(delete("/users/withdraw/oauth"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        verify(userClient).withdrawGoogle();
         verify(authCookieProvider).clearAuthCookies(any());
     }
 

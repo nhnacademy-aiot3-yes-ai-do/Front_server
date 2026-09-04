@@ -1,18 +1,17 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
-import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
+import { ListChecks, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { jsonRequest, request } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import { formatSensorType, normalizeList } from "../../utils/formatters";
+import CultivationSensorSetupStep from "./CultivationSensorSetupStep";
 
 export default function SensorManager({ cultivationId, sensors, canManage, onClose }) {
-  const [selectedTypeIds, setSelectedTypeIds] = useState([]);
-  const [typeToAdd, setTypeToAdd] = useState("");
-  const [validations, setValidations] = useState({});
+  const [activeTab, setActiveTab] = useState("registered");
+  const [thresholdDrafts, setThresholdDrafts] = useState({});
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
-  const formRef = useRef(null);
   const queryClient = useQueryClient();
   const sensorTypesQuery = useQuery({
     queryKey: ["sensor-types"],
@@ -22,114 +21,81 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
   });
 
   const registeredSensors = normalizeList(sensors?.sensors);
+  const environmentSettings = normalizeList(sensors?.environmentSettings);
   const sensorTypes = normalizeList(sensorTypesQuery.data?.sensorTypeInfoResponses);
-  const selectedTypes = selectedTypeIds
-    .map((id) => sensorTypes.find((type) => type.id === id))
-    .filter(Boolean);
+  const registeredTypeIds = useMemo(
+    () =>
+      new Set(
+        registeredSensors.flatMap((sensor) =>
+          normalizeList(sensor.sensorTypes).map((type) => type.sensorTypeId),
+        ),
+      ),
+    [registeredSensors],
+  );
+  const editableSettings = environmentSettings.filter((setting) =>
+    registeredTypeIds.has(setting.sensorTypeId),
+  );
+
+  useEffect(() => {
+    setThresholdDrafts(
+      Object.fromEntries(
+        environmentSettings.map((setting) => [
+          setting.sensorTypeId,
+          {
+            thresholdMin: String(setting.thresholdMin ?? ""),
+            thresholdMax: String(setting.thresholdMax ?? ""),
+          },
+        ]),
+      ),
+    );
+  }, [environmentSettings]);
 
   const refresh = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["cultivations", "detail", cultivationId] }),
       queryClient.invalidateQueries({ queryKey: ["cultivations", "preview", cultivationId] }),
       queryClient.invalidateQueries({ queryKey: ["cultivations", "list"] }),
+      queryClient.invalidateQueries({ queryKey: ["reusable-sensors", Number(cultivationId)] }),
     ]);
   };
 
-  const addType = () => {
-    const id = Number(typeToAdd);
-    if (!id || selectedTypeIds.includes(id)) return;
-    setSelectedTypeIds((ids) => [...ids, id]);
-    setTypeToAdd("");
+  const handleSensorRegistered = async (sensor) => {
+    await refresh();
+    setNotice({ type: "success", message: `${sensor.deviceName} 센서를 등록했습니다.` });
+    setActiveTab("registered");
   };
 
-  const removeType = (id) => {
-    setSelectedTypeIds((ids) => ids.filter((item) => item !== id));
-    setValidations((current) => {
-      const next = { ...current };
-      delete next[id];
-      return next;
-    });
-  };
-
-  const clearValidation = (id) => {
-    setValidations((current) => ({ ...current, [id]: null }));
-  };
-
-  const validateThreshold = async (type) => {
-    const form = formRef.current;
-    const minimum = Number(form?.elements.namedItem(`min-${type.id}`)?.value);
-    const maximum = Number(form?.elements.namedItem(`max-${type.id}`)?.value);
-
-    if (!Number.isFinite(minimum) || !Number.isFinite(maximum) || minimum >= maximum) {
-      setValidations((current) => ({
-        ...current,
-        [type.id]: {
-          valid: false,
-          message: "최소값은 최대값보다 작은 숫자여야 합니다.",
-        },
-      }));
-      return;
-    }
-
-    setValidations((current) => ({
+  const updateThresholdDraft = (sensorTypeId, field, value) => {
+    setThresholdDrafts((current) => ({
       ...current,
-      [type.id]: { valid: false, pending: true, message: "AI 검증 중…" },
+      [sensorTypeId]: { ...current[sensorTypeId], [field]: value },
     }));
-    try {
-      const result = await jsonRequest(`/cultivations/${cultivationId}/sensor-validation`, "POST", {
-        sensorTypeId: type.id,
-        sensorTypeName: type.type,
-        sensorUnit: type.valueUnit,
-        userMin: minimum,
-        userMax: maximum,
-      }).then(unwrapApiResponse);
-      setValidations((current) => ({
-        ...current,
-        [type.id]: {
-          valid: Boolean(result?.isValid ?? result?.valid),
-          message: result?.message || "검증 결과를 확인하지 못했습니다.",
-        },
-      }));
-    } catch (error) {
-      setValidations((current) => ({
-        ...current,
-        [type.id]: { valid: false, message: error.message },
-      }));
-    }
   };
 
-  const registerSensor = async (event) => {
-    event.preventDefault();
-    if (selectedTypes.length === 0) {
-      setNotice({ type: "error", message: "측정 타입을 하나 이상 추가해 주세요." });
-      return;
-    }
-    if (selectedTypes.some((type) => !validations[type.id]?.valid)) {
-      setNotice({ type: "error", message: "모든 측정 범위의 AI 검증을 통과해 주세요." });
-      return;
-    }
+  const updateEnvironmentSetting = async (setting) => {
+    const draft = thresholdDrafts[setting.sensorTypeId];
+    const thresholdMin = Number(draft?.thresholdMin);
+    const thresholdMax = Number(draft?.thresholdMax);
+    const type = sensorTypes.find((item) => item.id === setting.sensorTypeId);
+    const typeName = formatSensorType(type?.type);
 
-    const values = new FormData(event.currentTarget);
-    const sensorSettings = selectedTypes.map((type) => ({
-      sensorTypeId: type.id,
-      thresholdMin: Number(values.get(`min-${type.id}`)),
-      thresholdMax: Number(values.get(`max-${type.id}`)),
-    }));
+    if (
+      !Number.isFinite(thresholdMin) ||
+      !Number.isFinite(thresholdMax) ||
+      thresholdMin >= thresholdMax
+    ) {
+      setNotice({ type: "error", message: `${typeName}: 최소값은 최대값보다 작아야 합니다.` });
+      return;
+    }
 
     setBusy(true);
     try {
-      await jsonRequest(`/cultivations/${cultivationId}/sensors`, "POST", {
-        deviceEui: String(values.get("deviceEui")).trim(),
-        deviceModel: String(values.get("deviceModel")).trim(),
-        deviceName: String(values.get("deviceName")).trim(),
-        location: String(values.get("location")).trim(),
-        locationDetail: String(values.get("locationDetail")).trim(),
-        sensorSettings,
+      await jsonRequest(`/cultivations/${cultivationId}/environment-settings`, "PUT", {
+        sensorTypeId: setting.sensorTypeId,
+        thresholdMin,
+        thresholdMax,
       });
-      event.currentTarget.reset();
-      setSelectedTypeIds([]);
-      setValidations({});
-      setNotice({ type: "success", message: "센서를 등록했습니다." });
+      setNotice({ type: "success", message: `${typeName} 임계값을 수정했습니다.` });
       await refresh();
     } catch (error) {
       setNotice({ type: "error", message: error.message });
@@ -155,140 +121,169 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
   };
 
   return (
-    <Modal title="센서 및 환경 범위 관리" onClose={onClose} className="modal-card--wide">
+    <Modal title="센서 관리" onClose={onClose} className="modal-card--wide">
       <Notice notice={notice} onDismiss={() => setNotice(null)} />
-      <section className="registered-sensor-list" aria-label="등록 센서 목록">
-        {registeredSensors.map((sensor) => (
-          <article key={sensor.sensorId}>
-            <div>
-              <strong>{sensor.deviceName}</strong>
-              <span>
-                {sensor.deviceModel} · {sensor.deviceEui}
-              </span>
-              <small>
-                {sensor.location} {sensor.locationDetail} ·
-                {normalizeList(sensor.sensorTypes)
-                  .map((type) => formatSensorType(type.type))
-                  .join(", ")}
-              </small>
-            </div>
-            {canManage && (
-              <button
-                className="icon-button icon-button--danger"
-                type="button"
-                aria-label={`${sensor.deviceName} 삭제`}
-                onClick={() => deleteSensor(sensor)}
-                disabled={busy}
-              >
-                <Trash2 aria-hidden="true" />
-              </button>
-            )}
-          </article>
-        ))}
-        {registeredSensors.length === 0 && <p className="modal-empty">등록된 센서가 없습니다.</p>}
-      </section>
-
       {canManage && (
-        <form ref={formRef} className="form-stack sensor-register-form" onSubmit={registerSensor}>
-          <h3>새 센서 등록</h3>
-          <div className="form-field-grid">
-            <label>
-              센서 이름
-              <input name="deviceName" placeholder="예: 1번 선반 온습도센서" required />
-            </label>
-            <label>
-              모델명
-              <input name="deviceModel" required />
-            </label>
-            <label>
-              위치
-              <input name="location" maxLength="10" placeholder="예: 광주광역시" required />
-            </label>
-            <label>
-              상세 위치
-              <input name="locationDetail" placeholder="예: 1번 선반" required />
-            </label>
-          </div>
-          <label>
-            센서 고유번호
-            <input name="deviceEui" required />
-          </label>
-          <div className="sensor-type-adder">
-            <label>
-              측정 타입
-              <select value={typeToAdd} onChange={(event) => setTypeToAdd(event.target.value)}>
-                <option value="">추가할 타입을 선택하세요</option>
-                {sensorTypes
-                  .filter((type) => !selectedTypeIds.includes(type.id))
-                  .map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {formatSensorType(type.type)} ({type.valueUnit})
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <button className="button button--secondary" type="button" onClick={addType}>
-              <Plus aria-hidden="true" /> 추가
-            </button>
-          </div>
-          <div className="sensor-threshold-list">
-            {selectedTypes.map((type) => {
-              const result = validations[type.id];
-              return (
-                <fieldset key={type.id}>
-                  <legend>
-                    {formatSensorType(type.type)} ({type.valueUnit})
-                  </legend>
-                  <label>
-                    최소값
-                    <input
-                      name={`min-${type.id}`}
-                      type="number"
-                      step="any"
-                      onChange={() => clearValidation(type.id)}
-                      required
-                    />
-                  </label>
-                  <label>
-                    최대값
-                    <input
-                      name={`max-${type.id}`}
-                      type="number"
-                      step="any"
-                      onChange={() => clearValidation(type.id)}
-                      required
-                    />
-                  </label>
-                  <div className="threshold-actions">
-                    <button
-                      className="button button--secondary"
-                      type="button"
-                      onClick={() => validateThreshold(type)}
-                      disabled={result?.pending}
-                    >
-                      범위 검증
-                    </button>
-                    <button
-                      className="text-button text-button--danger"
-                      type="button"
-                      onClick={() => removeType(type.id)}
-                    >
-                      제거
-                    </button>
-                  </div>
-                  {result && (
-                    <p className={result.valid ? "validation-success" : "validation-error"}>
-                      {result.message}
-                    </p>
-                  )}
-                </fieldset>
-              );
-            })}
-          </div>
-          <button className="button button--primary" type="submit" disabled={busy}>
-            {busy ? "등록 중…" : "센서 등록"}
+        <div className="sensor-manager-tabs" role="tablist" aria-label="센서 관리 보기">
+          <button
+            id="sensor-manager-registered-tab"
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "registered"}
+            aria-controls="sensor-manager-registered-panel"
+            className={activeTab === "registered" ? "is-active" : ""}
+            onClick={() => setActiveTab("registered")}
+          >
+            <ListChecks aria-hidden="true" /> 등록된 센서
           </button>
-        </form>
+          <button
+            id="sensor-manager-add-tab"
+            type="button"
+            role="tab"
+            aria-selected={activeTab === "add"}
+            aria-controls="sensor-manager-add-panel"
+            className={activeTab === "add" ? "is-active" : ""}
+            onClick={() => setActiveTab("add")}
+          >
+            <Plus aria-hidden="true" /> 센서 추가
+          </button>
+        </div>
+      )}
+
+      {(!canManage || activeTab === "registered") && (
+        <div
+          id="sensor-manager-registered-panel"
+          role={canManage ? "tabpanel" : undefined}
+          aria-labelledby={canManage ? "sensor-manager-registered-tab" : undefined}
+          className="sensor-manager-panel"
+        >
+          <section className="registered-sensor-list" aria-label="등록 센서 목록">
+            <div className="manager-section-heading">
+              <div>
+                <h3>이 재배지의 센서</h3>
+                <p>실제 연결된 기기와 측정 항목을 확인합니다.</p>
+              </div>
+            </div>
+            {registeredSensors.map((sensor) => (
+              <article key={sensor.sensorId}>
+                <div>
+                  <strong>{sensor.deviceName}</strong>
+                  <span>
+                    {sensor.deviceModel} · {sensor.deviceEui}
+                  </span>
+                  <small>
+                    {sensor.location} {sensor.locationDetail} ·{" "}
+                    {normalizeList(sensor.sensorTypes)
+                      .map((type) => formatSensorType(type.type))
+                      .join(", ")}
+                  </small>
+                </div>
+                {canManage && (
+                  <button
+                    className="icon-button icon-button--danger"
+                    type="button"
+                    aria-label={`${sensor.deviceName} 삭제`}
+                    onClick={() => deleteSensor(sensor)}
+                    disabled={busy}
+                  >
+                    <Trash2 aria-hidden="true" />
+                  </button>
+                )}
+              </article>
+            ))}
+            {registeredSensors.length === 0 && (
+              <p className="modal-empty">등록된 센서가 없습니다.</p>
+            )}
+          </section>
+
+          {canManage && editableSettings.length > 0 && (
+            <section className="environment-setting-manager" aria-label="재배 환경 임계값">
+              <div className="manager-section-heading">
+                <div>
+                  <h3>재배 환경 임계값</h3>
+                  <p>임계값은 센서 한 대가 아니라 이 재배지의 측정 종류에 적용됩니다.</p>
+                </div>
+              </div>
+              <div className="environment-setting-manager__grid">
+                {editableSettings.map((setting) => {
+                  const type = sensorTypes.find((item) => item.id === setting.sensorTypeId);
+                  const typeName = formatSensorType(type?.type);
+                  const draft = thresholdDrafts[setting.sensorTypeId] || {};
+
+                  return (
+                    <fieldset key={setting.sensorTypeId}>
+                      <legend>
+                        {typeName} ({type?.valueUnit || "-"})
+                      </legend>
+                      <label>
+                        최소값
+                        <input
+                          aria-label={`${typeName} 최소값`}
+                          type="number"
+                          step="any"
+                          value={draft.thresholdMin ?? ""}
+                          onChange={(event) =>
+                            updateThresholdDraft(
+                              setting.sensorTypeId,
+                              "thresholdMin",
+                              event.target.value,
+                            )
+                          }
+                        />
+                      </label>
+                      <label>
+                        최대값
+                        <input
+                          aria-label={`${typeName} 최대값`}
+                          type="number"
+                          step="any"
+                          value={draft.thresholdMax ?? ""}
+                          onChange={(event) =>
+                            updateThresholdDraft(
+                              setting.sensorTypeId,
+                              "thresholdMax",
+                              event.target.value,
+                            )
+                          }
+                        />
+                      </label>
+                      <button
+                        className="button button--secondary"
+                        type="button"
+                        aria-label={`${typeName} 임계값 저장`}
+                        onClick={() => updateEnvironmentSetting(setting)}
+                        disabled={busy}
+                      >
+                        저장
+                      </button>
+                    </fieldset>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+
+      {canManage && activeTab === "add" && (
+        <div
+          id="sensor-manager-add-panel"
+          role="tabpanel"
+          aria-labelledby="sensor-manager-add-tab"
+          className="sensor-manager-panel sensor-manager-panel--add"
+        >
+          <div className="manager-section-heading">
+            <div>
+              <h3>이 재배지에 센서 추가</h3>
+              <p>기존 기기를 가져오거나 새 기기를 등록하고 측정 타입을 연결합니다.</p>
+            </div>
+          </div>
+          <CultivationSensorSetupStep
+            cultivationId={cultivationId}
+            environmentSettings={environmentSettings}
+            onRegistered={handleSensorRegistered}
+          />
+        </div>
       )}
     </Modal>
   );

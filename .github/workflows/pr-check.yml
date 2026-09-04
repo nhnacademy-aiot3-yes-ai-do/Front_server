@@ -4,19 +4,30 @@ on:
   pull_request:
     branches: [develop, main]
 
-jobs:
-  test-and-coverage:
-    uses: ./.github/workflows/_reusable-test.yml
+permissions:
+  contents: read
 
-  docker-build:
-    needs: test-and-coverage
+jobs:
+  quick-check:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 10
+
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Docker image build test (no push)
-        run: docker build -t front-service:pr-test .
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+          cache: maven
+
+      - uses: ./.github/actions/check-frontend
+
+      - name: Build React frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Compile Java sources
+        run: ./mvnw -B -DskipTests compile

@@ -92,4 +92,10 @@ public interface UserClient {
 
     @DeleteMapping("/api/v1/admin/members/{memberId}")
     ApiResponse<Void> forceWithdraw(@PathVariable("memberId") Long memberId);
+
+    @PostMapping("/api/v1/auth/password-reset/email/send")
+    ApiResponse<Void> sendPasswordResetEmail(@RequestBody EmailSendResponse response);
+
+    @DeleteMapping("/api/v1/users/withdraw/oauth")
+    ApiResponse<Void> withdrawGoogle();
 }

@@ -16,6 +16,7 @@ import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -23,9 +24,12 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 import site.yesaido.frontserver.controller.AuthResultController;
 import site.yesaido.frontserver.dto.react.AuthResultResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -36,7 +40,10 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class GlobalExceptionHandler {
     private static final Pattern METHOD_KEY_PATTERN = Pattern.compile("\\[(\\w+)#");
+    private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
     private static final String ERROR = "error";
+    private static final String MESSAGE = "message";
+    private static final String DETAIL = "detail";
 
     private static final Map<String, String> NOT_FOUND_MESSAGES = Map.of(
             "AiClient", "해당 버섯 가이드 정보를 찾을 수 없습니다.",
@@ -58,9 +65,12 @@ public class GlobalExceptionHandler {
             "InquiryClient", "문의 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요."
     );
     private static final String DEFAULT_UNAVAILABLE_MESSAGE = "외부 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
-    private static final String DEFAULT_CONFLICT_MESSAGE = "요청을 처리할 수 없는 상태예요. 새로고침 후 다시 시도해 주세요.";
+    private static final String DEFAULT_FORBIDDEN_MESSAGE = "요청한 정보에 접근할 권한이 없습니다.";
+    private static final String DAILY_FEEDBACK_NOT_FOUND_MESSAGE = "해당 날짜의 일일 피드백을 찾을 수 없습니다.";
+    private static final String DEFAULT_CLIENT_ERROR_MESSAGE = "요청을 처리할 수 없습니다. 입력 값을 확인해 주세요.";
 
     private final AuthCookieProvider authCookieProvider;
+    private final ObjectMapper objectMapper;
 
     // 브라우저가 페이지를 직접 열 때(주소 입력, 링크 클릭, 폼 제출 등)는 Accept 헤더에 text/html이
     // 명시적으로 들어감. dashboard.js 등의 fetch() 호출은 Accept를 따로 안 지정해서 기본값(*/*)이라
@@ -79,9 +89,9 @@ public class GlobalExceptionHandler {
         mav.setStatus(status);
         mav.addObject("status", status.value());
         mav.addObject(ERROR, status.getReasonPhrase());
-        mav.addObject("message", message);
+        mav.addObject(MESSAGE, message);
         mav.addObject("path", errorPagePath(request));
-        mav.addObject("timestamp", new Date());
+        mav.addObject("timestamp", LocalDateTime.now(KOREA_ZONE));
         return mav;
     }
 
@@ -99,8 +109,8 @@ public class GlobalExceptionHandler {
             } else {
                 log.warn("응답이 이미 커밋되어 /login으로 리다이렉트하지 못했습니다.");
             }
-        } catch (Throwable t) {
-            log.error("handleUnauthorized 처리 중 예외 발생: {}", t.getClass().getName(), t);
+        } catch (Exception e) {
+            log.error("handleUnauthorized 처리 중 예외 발생: {}", e.getClass().getName(), e);
             try {
                 if (!response.isCommitted()) {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -116,10 +126,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(FeignException.class)
     public Object handleFeignException(FeignException e, HttpServletRequest request) {
         String clientName = extractClientName(e);
-        log.error("{} 통신 실패 (Status: {}): {}", clientName, e.status(), e.getMessage());
+        logFeignException(clientName, e);
 
         HttpStatus status = resolveStatus(e.status());
-        String message = resolveMessage(status, clientName);
+        String message = resolveMessage(e, status, clientName);
 
         if (wantsHtml(request)) {
             return errorView(request, status, message);
@@ -129,20 +139,61 @@ public class GlobalExceptionHandler {
 
     private HttpStatus resolveStatus(int feignStatus) {
         return switch (feignStatus) {
+            case 400 -> HttpStatus.BAD_REQUEST;
+            case 403 -> HttpStatus.FORBIDDEN;
             case 404 -> HttpStatus.NOT_FOUND;
+            case 405 -> HttpStatus.METHOD_NOT_ALLOWED;
             case 409 -> HttpStatus.CONFLICT;
+            case 413 -> HttpStatus.CONTENT_TOO_LARGE;
+            case 415 -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+            case 429 -> HttpStatus.TOO_MANY_REQUESTS;
             default -> HttpStatus.SERVICE_UNAVAILABLE;
         };
     }
 
-    private String resolveMessage(HttpStatus status, String clientName) {
+    private String resolveMessage(FeignException exception, HttpStatus status, String clientName) {
+        if (status == HttpStatus.BAD_REQUEST) {
+            return extractFeignMessage(exception, "요청이 올바르지 않습니다.");
+        }
+        if (status == HttpStatus.FORBIDDEN) {
+            return extractFeignMessage(exception, DEFAULT_FORBIDDEN_MESSAGE);
+        }
         if (status == HttpStatus.NOT_FOUND) {
+            if (isDailyFeedbackRequest(exception)) {
+                return extractFeignMessage(exception, DAILY_FEEDBACK_NOT_FOUND_MESSAGE);
+            }
             return NOT_FOUND_MESSAGES.getOrDefault(clientName, DEFAULT_NOT_FOUND_MESSAGE);
         }
-        if (status == HttpStatus.CONFLICT) {
-            return DEFAULT_CONFLICT_MESSAGE;
+        if (status.is4xxClientError()) {
+            return extractFeignMessage(exception, DEFAULT_CLIENT_ERROR_MESSAGE);
         }
         return UNAVAILABLE_MESSAGES.getOrDefault(clientName, DEFAULT_UNAVAILABLE_MESSAGE);
+    }
+
+    private void logFeignException(String clientName, FeignException exception) {
+        if (exception.status() >= 400 && exception.status() < 500) {
+            log.warn("{} 요청 거절 (Status: {}): {}", clientName, exception.status(), exception.getMessage());
+            return;
+        }
+        log.error("{} 통신 실패 (Status: {}): {}", clientName, exception.status(), exception.getMessage());
+    }
+
+    private String extractFeignMessage(FeignException exception, String fallback) {
+        try {
+            JsonNode response = objectMapper.readTree(exception.contentUTF8());
+            String message = response.path(MESSAGE).asString();
+            if (message.isBlank()) {
+                message = response.path(DETAIL).asString();
+            }
+            return message.isBlank() ? fallback : message;
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
+    private boolean isDailyFeedbackRequest(FeignException exception) {
+        return exception.request() != null
+                && exception.request().url().contains("/daily-feedbacks/");
     }
 
     private String extractClientName(FeignException e) {
@@ -171,7 +222,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleMissingRefreshToken(MissingRefreshTokenException exception) {
         return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("detail", "로그인이 필요합니다."));
+                .body(Map.of(DETAIL, "로그인이 필요합니다."));
     }
 
     // css/js 정적 리소스는 파일 내용 해시가 URL에 붙는 캐시버스팅 방식(WebConfig의 VersionResourceResolver)을
@@ -193,7 +244,7 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(500)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("detail", message));
+                .body(Map.of(DETAIL, message));
     }
 
     @ExceptionHandler(Throwable.class)
@@ -204,7 +255,7 @@ public class GlobalExceptionHandler {
             return errorView(request, HttpStatus.INTERNAL_SERVER_ERROR, message);
         }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(ERROR, "internal_server_error", "message", message));
+                .body(Map.of(ERROR, "internal_server_error", MESSAGE, message));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -213,6 +264,12 @@ public class GlobalExceptionHandler {
         String defaultMessage = (fieldError != null) ? fieldError.getDefaultMessage() : null;
         String message = Objects.requireNonNullElse(defaultMessage, "잘못된 요청입니다.");
 
+        return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ErrorResponse handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException e) {
+        String message = "요청 값의 형식이 올바르지 않습니다: " + e.getName();
         return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, message);
     }
 
@@ -228,7 +285,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ErrorResponse handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
-        return ErrorResponse.create(e, HttpStatus.BAD_REQUEST, "사진 파일 크기는 8MB를 초과할 수 없습니다.");
+        return ErrorResponse.create(e, HttpStatus.CONTENT_TOO_LARGE, "사진 파일 크기는 8MB를 초과할 수 없습니다.");
     }
 
     @ExceptionHandler(TooManyFilesException.class)
