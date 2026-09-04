@@ -19,6 +19,7 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.Member
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberRoleUpdateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationModeChangeResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
@@ -64,17 +65,22 @@ public class CultivationController {
     }
 
     @PostMapping(
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<Void> createCultivation(
+    public ResponseEntity<CultivationCreateResponse> createCultivation(
             @Valid @RequestBody CultivationCreateRequest request
     ) {
-        cultivationClient.createCultivation(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return cultivationClient.createCultivation(request);
     }
 
     @GetMapping("/{cultivation-id}")
     public String detail(@PathVariable("cultivation-id") Long cultivationId) {
+        return REACT_APP;
+    }
+
+    @GetMapping("/{cultivation-id}/setup")
+    public String sensorSetup(@PathVariable("cultivation-id") Long cultivationId) {
         return REACT_APP;
     }
 

@@ -58,7 +58,7 @@ jobs:
         run: |
           ./mvnw -B sonar:sonar \
             -Dsonar.qualitygate.wait=true \
-            -Dsonar.qualitygate.timeout=300
+            -Dsonar.qualitygate.timeout=600
 
       - name: Read SonarQube coverage and JaCoCo policy
         id: sonar_metrics

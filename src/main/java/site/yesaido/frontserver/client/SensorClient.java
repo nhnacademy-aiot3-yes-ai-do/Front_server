@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import site.yesaido.frontserver.dto.cultivation.request.cultivation.EnvironmentSettingRequest;
 import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorTypeRequest;
@@ -59,6 +60,17 @@ public interface SensorClient {
 
     @GetMapping("/api/v1/cultivations/{cultivation-id}/sensors")
     ResponseEntity<CultivationSensorListResponse> getSensors(@PathVariable("cultivation-id") long cultivationId);
+
+    @GetMapping("/api/v1/sensors/reusable")
+    ResponseEntity<ReusableCultivationSensorListResponse> getReusableSensors(
+            @RequestParam("exclude-cultivation-id") long excludedCultivationId
+    );
+
+    @PutMapping("/api/v1/cultivations/{cultivation-id}/environment-settings")
+    ResponseEntity<Void> updateEnvironmentSetting(
+            @PathVariable("cultivation-id") long cultivationId,
+            @Valid @RequestBody EnvironmentSettingRequest request
+    );
 
     // 실시간 센서값
     @GetMapping("/api/v1/cultivations/{cultivation-id}/sensor-values")

@@ -15,14 +15,18 @@ import org.springframework.test.web.servlet.MockMvc;
 import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.config.MethodOverrideConfig;
+import site.yesaido.frontserver.dto.cultivation.request.cultivation.EnvironmentSettingRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.ReusableCultivationSensorListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.ReusableCultivationSensorResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import tools.jackson.databind.ObjectMapper;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -136,6 +140,26 @@ class SensorControllerTest {
     }
 
     @Test
+    void getReusableSensorsDelegatesExcludedCultivationId() throws Exception {
+        ReusableCultivationSensorResponse sensor = new ReusableCultivationSensorResponse(
+                4L, "EUI-001", "MODEL-A", "온습도 센서", "광주", "1번 선반", List.of()
+        );
+        when(sensorClient.getReusableSensors(10L))
+                .thenReturn(ResponseEntity.ok(
+                        new ReusableCultivationSensorListResponse(List.of(sensor))
+                ));
+
+        mockMvc.perform(get("/cultivations/reusable-sensors")
+                        .cookie(LOGGED_IN)
+                        .param("exclude-cultivation-id", "10"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.sensors[0].deviceEui").value("EUI-001"));
+
+        verify(sensorClient).getReusableSensors(10L);
+    }
+
+    @Test
     void getSensorTrendDelegatesQueryParametersAndReturnsJson() throws Exception {
         SensorTrendPointListResponse trend = new SensorTrendPointListResponse(
                 10L, "device-eui", "temperature", "°C", List.of()
@@ -183,6 +207,25 @@ class SensorControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(sensorClient).deleteSensor(10L, 20L);
+    }
+
+    @Test
+    void updateEnvironmentSettingDelegatesRequestAndPreservesNoContentStatus() throws Exception {
+        EnvironmentSettingRequest request = new EnvironmentSettingRequest(
+                3L,
+                new BigDecimal("19.0"),
+                new BigDecimal("25.0")
+        );
+        when(sensorClient.updateEnvironmentSetting(eq(10L), any(EnvironmentSettingRequest.class)))
+                .thenReturn(ResponseEntity.noContent().build());
+
+        mockMvc.perform(put("/cultivations/{cultivation-id}/environment-settings", 10L)
+                        .cookie(LOGGED_IN)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNoContent());
+
+        verify(sensorClient).updateEnvironmentSetting(10L, request);
     }
 
     @Test

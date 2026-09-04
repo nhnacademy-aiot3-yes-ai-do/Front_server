@@ -7,6 +7,13 @@ var SENSOR_TYPE_ICONS = { TEMPERATURE: 'thermometer', HUMIDITY: 'droplet', CO2: 
 var SENSOR_TYPE_ICON_FALLBACK = 'cpu';
 var SENSOR_DEVICES_BY_TYPE = {};
 var LATEST_VALUES = {};
+var ENVIRONMENT_SETTINGS = [];
+var environmentEditing = false;
+var environmentSaving = false;
+var environmentRecommendation = null;
+var environmentRecommendationLoading = false;
+var environmentRecommendationSequence = 0;
+var pendingThresholdConfirmation = null;
 
 // 카드로 보여줄 센서 타입 순서: 기본 4종(등록된 기기가 없어도 항상 표시) + 이 재배지에
 // 실제로 값이 있는 그 외 타입(관리자 페이지에서 새로 만든 커스텀 타입 등, 이름 순 정렬)
@@ -46,6 +53,7 @@ function initializeSensorBootstrap() {
     renderSensorPanel();
     renderMainEnvStats();
     populateChartSensorSelect();
+    initializeEnvironmentSettingsModal(sensorsRes);
 }
 
 function formatSensorValue(entry) {
@@ -647,11 +655,359 @@ function sendChatMessage(event) {
         });
 }
 
-function updateSettingsSensorIcon(wrapperEl, optionEl) {
-    var iconName = optionEl.dataset.icon;
+function availableEnvironmentSettings(payload) {
+    var registeredTypeById = {};
+    var settingById = {};
+
+    (payload && payload.sensors || []).forEach(function (sensor) {
+        (sensor.sensorTypes || []).forEach(function (sensorType) {
+            var sensorTypeId = Number(sensorType.sensorTypeId);
+            if (Number.isFinite(sensorTypeId) && !registeredTypeById[sensorTypeId]) {
+                registeredTypeById[sensorTypeId] = sensorType;
+            }
+        });
+    });
+
+    (payload && payload.environmentSettings || []).forEach(function (environmentSetting) {
+        var sensorTypeId = Number(environmentSetting.sensorTypeId);
+        if (Number.isFinite(sensorTypeId) && !settingById[sensorTypeId]) {
+            settingById[sensorTypeId] = environmentSetting;
+        }
+    });
+
+    return Object.keys(settingById)
+        .map(function (sensorTypeId) {
+            var sensorType = registeredTypeById[sensorTypeId];
+            var setting = settingById[sensorTypeId];
+            if (!sensorType || !setting) return null;
+
+            return {
+                sensorTypeId: Number(sensorTypeId),
+                type: sensorType.type,
+                valueUnit: sensorType.valueUnit || '',
+                thresholdMin: Number(setting.thresholdMin),
+                thresholdMax: Number(setting.thresholdMax)
+            };
+        })
+        .filter(function (setting) { return setting !== null; })
+        .sort(function (left, right) {
+            var leftIndex = CANONICAL_SENSOR_TYPES.indexOf(left.type);
+            var rightIndex = CANONICAL_SENSOR_TYPES.indexOf(right.type);
+            leftIndex = leftIndex === -1 ? Number.MAX_SAFE_INTEGER : leftIndex;
+            rightIndex = rightIndex === -1 ? Number.MAX_SAFE_INTEGER : rightIndex;
+            if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+            return String(left.type).localeCompare(String(right.type));
+        });
+}
+
+function initializeEnvironmentSettingsModal(payload) {
+    ENVIRONMENT_SETTINGS = availableEnvironmentSettings(payload);
+    var select = document.getElementById('settings-sensor-select');
+    var emptyState = document.getElementById('settings-empty');
+    var formContent = document.getElementById('settings-form-content');
+    if (!select || !emptyState || !formContent) return;
+
+    select.innerHTML = '';
+    ENVIRONMENT_SETTINGS.forEach(function (setting) {
+        var option = document.createElement('option');
+        option.value = String(setting.sensorTypeId);
+        option.textContent = environmentSensorLabel(setting) + (setting.valueUnit ? ' (' + setting.valueUnit + ')' : '');
+        select.appendChild(option);
+    });
+
+    var hasSettings = ENVIRONMENT_SETTINGS.length > 0;
+    emptyState.hidden = hasSettings;
+    formContent.hidden = !hasSettings;
+    environmentEditing = false;
+    environmentSaving = false;
+    environmentRecommendation = null;
+    environmentRecommendationLoading = false;
+    resetEnvironmentConfirmation();
+    clearEnvironmentError();
+
+    if (hasSettings) {
+        renderSelectedEnvironmentSetting();
+    }
+}
+
+function openEnvironmentSettingsModal() {
+    if (environmentSaving) {
+        openModal('modal-settings');
+        return;
+    }
+    environmentEditing = false;
+    resetEnvironmentConfirmation();
+    clearEnvironmentError();
+
+    if (ENVIRONMENT_SETTINGS.length > 0) {
+        renderSelectedEnvironmentSetting();
+        fetchEnvironmentRecommendation(selectedEnvironmentSetting());
+    }
+    openModal('modal-settings');
+}
+
+function selectedEnvironmentSetting() {
+    var select = document.getElementById('settings-sensor-select');
+    if (!select) return null;
+    var sensorTypeId = Number(select.value);
+    return ENVIRONMENT_SETTINGS.find(function (setting) {
+        return setting.sensorTypeId === sensorTypeId;
+    }) || null;
+}
+
+function environmentSensorLabel(setting) {
+    return SENSOR_TYPE_LABELS[setting.type] || setting.type || '센서';
+}
+
+function formatThresholdNumber(value) {
+    return Number.isFinite(Number(value)) ? String(Number(value)) : '';
+}
+
+function renderSelectedEnvironmentSetting() {
+    var setting = selectedEnvironmentSetting();
+    if (!setting) return;
+
+    document.getElementById('settings-threshold-min').value = formatThresholdNumber(setting.thresholdMin);
+    document.getElementById('settings-threshold-max').value = formatThresholdNumber(setting.thresholdMax);
+    document.getElementById('settings-threshold-min-unit').textContent = setting.valueUnit;
+    document.getElementById('settings-threshold-max-unit').textContent = setting.valueUnit;
+    updateEnvironmentSensorIcon(setting.type);
+    updateEnvironmentSettingControls();
+}
+
+function updateEnvironmentSensorIcon(sensorType) {
+    var iconName = SENSOR_TYPE_ICONS[sensorType] || SENSOR_TYPE_ICON_FALLBACK;
     var wrap = document.getElementById('settings-sensor-icon-wrap');
     wrap.innerHTML = '<i data-lucide="' + iconName + '" style="width:20px;height:20px;"></i>';
     lucide.createIcons();
+}
+
+function canEditEnvironmentSettings() {
+    return MY_ROLE === 'OWNER' || MY_ROLE === 'MANAGER';
+}
+
+function updateEnvironmentSettingControls() {
+    var config = document.getElementById('settings-config-col');
+    var select = document.getElementById('settings-sensor-select');
+    var minInput = document.getElementById('settings-threshold-min');
+    var maxInput = document.getElementById('settings-threshold-max');
+    var editButton = document.getElementById('settings-edit-btn');
+    var cancelButton = document.getElementById('settings-cancel-btn');
+    var saveButton = document.getElementById('settings-save-btn');
+    var editingAllowed = canEditEnvironmentSettings();
+
+    config.classList.toggle('is-editing', environmentEditing);
+    select.disabled = environmentSaving;
+    minInput.disabled = !environmentEditing || environmentSaving;
+    maxInput.disabled = !environmentEditing || environmentSaving;
+    editButton.hidden = !editingAllowed || environmentEditing;
+    editButton.disabled = environmentSaving;
+    cancelButton.hidden = !environmentEditing;
+    cancelButton.disabled = environmentSaving;
+    saveButton.hidden = !environmentEditing;
+    saveButton.disabled = environmentSaving || environmentRecommendationLoading;
+}
+
+function handleEnvironmentSensorChange() {
+    environmentEditing = false;
+    resetEnvironmentConfirmation();
+    clearEnvironmentError();
+    environmentRecommendation = null;
+    renderSelectedEnvironmentSetting();
+    fetchEnvironmentRecommendation(selectedEnvironmentSetting());
+}
+
+function handleEnvironmentThresholdInput() {
+    resetEnvironmentConfirmation();
+    clearEnvironmentError();
+}
+
+function startEnvironmentSettingEdit() {
+    if (environmentSaving || !canEditEnvironmentSettings() || !selectedEnvironmentSetting()) return;
+    environmentEditing = true;
+    resetEnvironmentConfirmation();
+    clearEnvironmentError();
+    updateEnvironmentSettingControls();
+    fetchEnvironmentRecommendation(selectedEnvironmentSetting());
+    document.getElementById('settings-threshold-min').focus();
+}
+
+function cancelEnvironmentSettingEdit() {
+    if (environmentSaving) return;
+    environmentEditing = false;
+    resetEnvironmentConfirmation();
+    clearEnvironmentError();
+    renderSelectedEnvironmentSetting();
+}
+
+function fetchEnvironmentRecommendation(setting) {
+    var recommendationEl = document.getElementById('settings-recommendation');
+    if (!setting || !recommendationEl) return;
+
+    var requestSequence = ++environmentRecommendationSequence;
+    environmentRecommendation = null;
+    environmentRecommendationLoading = true;
+    recommendationEl.className = 'settings-recommendation is-loading';
+    recommendationEl.textContent = 'AI 권장값을 확인하고 있습니다.';
+    updateEnvironmentSettingControls();
+
+    fetch('/cultivations/' + CULTIVATION_ID + '/sensor-validation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sensorTypeId: setting.sensorTypeId,
+            sensorTypeName: setting.type,
+            sensorUnit: setting.valueUnit,
+            userMin: Number(document.getElementById('settings-threshold-min').value),
+            userMax: Number(document.getElementById('settings-threshold-max').value)
+        })
+    })
+        .then(function (response) {
+            if (!response.ok) throw new Error('recommendation request failed: ' + response.status);
+            return response.json();
+        })
+        .then(function (result) {
+            if (requestSequence !== environmentRecommendationSequence) return;
+            var data = result && result.data;
+            var hasRange = data
+                && data.recommendedMin != null
+                && data.recommendedMax != null
+                && Number.isFinite(Number(data.recommendedMin))
+                && Number.isFinite(Number(data.recommendedMax));
+            if (!hasRange) throw new Error('recommendation range is missing');
+
+            environmentRecommendation = {
+                sensorTypeId: setting.sensorTypeId,
+                recommendedMin: Number(data.recommendedMin),
+                recommendedMax: Number(data.recommendedMax)
+            };
+            environmentRecommendationLoading = false;
+            recommendationEl.className = 'settings-recommendation is-available';
+            recommendationEl.textContent = (MUSHROOM_NAME || '버섯') + '의 적정 '
+                + environmentSensorLabel(setting) + ' 설정 권장값은 '
+                + formatThresholdNumber(environmentRecommendation.recommendedMin) + setting.valueUnit + '에서 '
+                + formatThresholdNumber(environmentRecommendation.recommendedMax) + setting.valueUnit + ' 사이입니다.';
+            updateEnvironmentSettingControls();
+        })
+        .catch(function () {
+            if (requestSequence !== environmentRecommendationSequence) return;
+            environmentRecommendation = null;
+            environmentRecommendationLoading = false;
+            recommendationEl.className = 'settings-recommendation is-unavailable';
+            recommendationEl.textContent = 'AI 권장값을 불러올 수 없습니다.';
+            updateEnvironmentSettingControls();
+        });
+}
+
+function resetEnvironmentConfirmation() {
+    pendingThresholdConfirmation = null;
+    var config = document.getElementById('settings-config-col');
+    var warning = document.getElementById('settings-warning');
+    var saveButton = document.getElementById('settings-save-btn');
+    if (config) config.classList.remove('has-warning');
+    if (warning) {
+        warning.textContent = '';
+        warning.classList.remove('is-visible');
+    }
+    if (saveButton) saveButton.textContent = '저장';
+}
+
+function clearEnvironmentError() {
+    var error = document.getElementById('settings-error');
+    if (!error) return;
+    error.textContent = '';
+    error.classList.remove('is-visible');
+}
+
+function showEnvironmentError(message) {
+    var error = document.getElementById('settings-error');
+    error.textContent = message;
+    error.classList.add('is-visible');
+}
+
+function environmentThresholdValues() {
+    var minInput = document.getElementById('settings-threshold-min');
+    var maxInput = document.getElementById('settings-threshold-max');
+    if (minInput.value.trim() === '' || maxInput.value.trim() === '') {
+        showEnvironmentError('최저값과 최고값을 모두 입력해주세요.');
+        return null;
+    }
+
+    var thresholdMin = Number(minInput.value);
+    var thresholdMax = Number(maxInput.value);
+    if (!Number.isFinite(thresholdMin) || !Number.isFinite(thresholdMax)) {
+        showEnvironmentError('임계값은 숫자로 입력해주세요.');
+        return null;
+    }
+    if (thresholdMin > thresholdMax) {
+        showEnvironmentError('최저값은 최고값보다 클 수 없습니다.');
+        return null;
+    }
+
+    return { thresholdMin: thresholdMin, thresholdMax: thresholdMax };
+}
+
+function saveEnvironmentSetting() {
+    if (environmentSaving || !environmentEditing || !canEditEnvironmentSettings()) return;
+    clearEnvironmentError();
+
+    var setting = selectedEnvironmentSetting();
+    var values = environmentThresholdValues();
+    if (!setting || !values) return;
+
+    var signature = setting.sensorTypeId + '|' + values.thresholdMin + '|' + values.thresholdMax;
+    var outsideRecommendation = environmentRecommendation
+        && environmentRecommendation.sensorTypeId === setting.sensorTypeId
+        && (values.thresholdMin < environmentRecommendation.recommendedMin
+            || values.thresholdMax > environmentRecommendation.recommendedMax);
+
+    if (outsideRecommendation && pendingThresholdConfirmation !== signature) {
+        pendingThresholdConfirmation = signature;
+        var warning = document.getElementById('settings-warning');
+        warning.textContent = '권장 재배 환경을 벗어난 설정입니다. 작물의 생육 상태와 수확 결과가 예상과 달라질 수 있습니다. 계속하시겠습니까?';
+        warning.classList.add('is-visible');
+        document.getElementById('settings-config-col').classList.add('has-warning');
+        document.getElementById('settings-save-btn').textContent = '그래도 저장';
+        return;
+    }
+
+    environmentSaving = true;
+    updateEnvironmentSettingControls();
+
+    fetch('/cultivations/' + CULTIVATION_ID + '/environment-settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            sensorTypeId: setting.sensorTypeId,
+            thresholdMin: values.thresholdMin,
+            thresholdMax: values.thresholdMax
+        })
+    })
+        .then(function (response) {
+            if (response.ok) return null;
+            return response.text().then(function (body) {
+                var message = '임계값 설정을 저장하지 못했습니다.';
+                if (body) {
+                    try {
+                        var errorBody = JSON.parse(body);
+                        message = errorBody.detail || errorBody.message || message;
+                    } catch (ignored) {
+                        message = body;
+                    }
+                }
+                throw new Error(message);
+            });
+        })
+        .then(function () {
+            setting.thresholdMin = values.thresholdMin;
+            setting.thresholdMax = values.thresholdMax;
+            window.location.reload();
+        })
+        .catch(function (error) {
+            environmentSaving = false;
+            showEnvironmentError(error.message || '임계값 설정을 저장하지 못했습니다.');
+            updateEnvironmentSettingControls();
+        });
 }
 
 function switchTab(name) {
