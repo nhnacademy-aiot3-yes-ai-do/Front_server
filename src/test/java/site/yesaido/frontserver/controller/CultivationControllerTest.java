@@ -158,7 +158,7 @@ class CultivationControllerTest {
     @Test
     @DisplayName("재배 이력 조회 성공 - 일반 데이터 분기")
     void cultivationHistoryReturnsHistoryView() throws Exception {
-        CultivationHistoryResponse contentItem = new CultivationHistoryResponse(1L, "재배명", 10L, "FINISHED", new BigDecimal("5.0"), "A", LocalDateTime.now());
+        CultivationHistoryResponse contentItem = new CultivationHistoryResponse(1L, "재배명", 10L, "FINISHED", new BigDecimal("5.0"), new BigDecimal("5.0"), "A", LocalDateTime.now());
         CultivationHistoryPageResponse history = new CultivationHistoryPageResponse(List.of(contentItem), 1, 1L, 0, 20);
         when(cultivationClient.getHistory(0, 20)).thenReturn(ResponseEntity.ok(history));
         when(sensorClient.getAllMushroomReferences()).thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
