@@ -2,6 +2,7 @@ package site.yesaido.frontserver.client;
 
 import jakarta.validation.Valid;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.EnvironmentSettingRequest;
@@ -85,6 +86,7 @@ public interface SensorClient {
     @GetMapping("/api/v1/cultivations/{cultivation-id}/environment-compliance/daily")
     ResponseEntity<EnvironmentComplianceResponse> getDailyEnvironmentCompliance(
             @PathVariable("cultivation-id") Long cultivationId,
-            @RequestParam(value = "date", required = false) LocalDate date
+            @RequestParam(value = "date", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     );
 }
