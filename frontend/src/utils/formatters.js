@@ -61,3 +61,8 @@ export function normalizeSensorUnit(unit) {
   if (!normalized) return normalized;
   return normalized === "℃" ? "°C" : normalized;
 }
+
+export function formatProductGrade(grade) {
+  const labels = { TOP: "최상", HIGH: "상", MID: "중", LOW: "하" };
+  return labels[grade] || null;
+}
