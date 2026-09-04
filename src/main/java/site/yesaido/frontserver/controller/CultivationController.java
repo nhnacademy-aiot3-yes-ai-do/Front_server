@@ -71,7 +71,7 @@ public class CultivationController {
     public ResponseEntity<CultivationCreateResponse> createCultivation(
             @Valid @RequestBody CultivationCreateRequest request
     ) {
-        return cultivationClient.createCultivation(request);
+        return UpstreamResponseUtils.isolate(cultivationClient.createCultivation(request));
     }
 
     @GetMapping("/{cultivation-id}")
@@ -104,9 +104,8 @@ public class CultivationController {
     }
 
     @DeleteMapping("/{cultivation-id}")
-    public String deleteCultivationForm(@PathVariable("cultivation-id") Long cultivationId) {
-        cultivationClient.deleteCultivation(cultivationId);
-        return "redirect:/cultivations";
+    public ResponseEntity<Void> deleteCultivation(@PathVariable("cultivation-id") Long cultivationId) {
+        return UpstreamResponseUtils.isolate(cultivationClient.deleteCultivation(cultivationId));
     }
 
     // CultivationMember

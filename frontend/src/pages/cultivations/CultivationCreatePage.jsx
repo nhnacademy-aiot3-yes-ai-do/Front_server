@@ -500,6 +500,7 @@ export default function CultivationCreatePage() {
             <CultivationSensorSetupStep
               cultivationId={createdCultivationId}
               environmentSettings={environmentSettings}
+              registeredSensors={registeredSensors}
               onRegistered={(sensor) => setRegisteredSensors((current) => [...current, sensor])}
             />
 
