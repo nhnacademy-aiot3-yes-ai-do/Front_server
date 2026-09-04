@@ -32,8 +32,7 @@ function preferredType(variants, environmentSettings) {
   if (variants[0]?.type === "TEMPERATURE") {
     return (
       variants.find(
-        (type) =>
-          normalizeSensorUnit(type.valueUnit) === "°C" && environmentTypeIds.has(type.id),
+        (type) => normalizeSensorUnit(type.valueUnit) === "°C" && environmentTypeIds.has(type.id),
       ) ||
       variants.find((type) => normalizeSensorUnit(type.valueUnit) === "°C") ||
       variants.find((type) => environmentTypeIds.has(type.id)) ||
@@ -144,7 +143,11 @@ export default function CultivationSensorSetupStep({
   const reusableSensors = normalizeList(reusableSensorsQuery.data?.sensors);
   const registeredDeviceEuis = new Set(
     normalizeList(registeredSensors)
-      .map((sensor) => String(sensor.deviceEui ?? "").trim().toUpperCase())
+      .map((sensor) =>
+        String(sensor.deviceEui ?? "")
+          .trim()
+          .toUpperCase(),
+      )
       .filter(Boolean),
   );
   const normalizedDeviceEui = sensorForm.deviceEui.trim().toUpperCase();
@@ -378,7 +381,7 @@ export default function CultivationSensorSetupStep({
       setSensorForm(EMPTY_SENSOR);
       setSelectedTypeIds([]);
       setSettings({});
-      onRegistered(sensor);
+      await onRegistered?.(sensor);
     } catch (error) {
       setNotice({ type: "error", message: error.message });
     } finally {
@@ -494,7 +497,9 @@ export default function CultivationSensorSetupStep({
           <div className="reusable-sensor-options">
             {reusableSensors.map((sensor) => {
               const alreadyRegistered = registeredDeviceEuis.has(
-                String(sensor.deviceEui ?? "").trim().toUpperCase(),
+                String(sensor.deviceEui ?? "")
+                  .trim()
+                  .toUpperCase(),
               );
 
               return (
@@ -682,7 +687,10 @@ export default function CultivationSensorSetupStep({
               const validation = setting?.validation;
 
               return (
-                <fieldset key={type.id}>
+                <fieldset
+                  key={type.id}
+                  className={locked ? "sensor-threshold-list__item--locked" : undefined}
+                >
                   <legend>
                     {formatSensorType(type.type)} ({type.valueUnit})
                   </legend>

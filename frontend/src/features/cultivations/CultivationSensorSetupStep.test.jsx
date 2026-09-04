@@ -137,6 +137,9 @@ describe("CultivationSensorSetupStep", () => {
     expect(screen.getByRole("radio", { name: "온도 °F" })).toBeChecked();
     expect(screen.getByRole("spinbutton", { name: "온도 최소 임계값" })).toHaveValue(65.07);
     expect(screen.getByRole("spinbutton", { name: "온도 최대 임계값" })).toHaveValue(76.69);
+    expect(
+      screen.getByRole("spinbutton", { name: "온도 최소 임계값" }).closest("fieldset"),
+    ).toHaveClass("sensor-threshold-list__item--locked");
 
     fireEvent.click(screen.getByRole("button", { name: "센서 등록" }));
 

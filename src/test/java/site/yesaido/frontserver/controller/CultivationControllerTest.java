@@ -180,14 +180,14 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("HTML form 재배 삭제 성공 시 목록으로 리다이렉트")
-    void deleteCultivationFormRedirectsToList() throws Exception {
-        mockMvc.perform(post("/cultivations/{cultivation-id}", 5L)
-                        .cookie(LOGGED_IN)
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("_method", "DELETE"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cultivations"));
+    @DisplayName("재배 삭제 성공 시 204를 반환한다")
+    void deleteCultivationReturnsNoContent() throws Exception {
+        when(cultivationClient.deleteCultivation(5L))
+                .thenReturn(ResponseEntity.noContent().build());
+
+        mockMvc.perform(delete("/cultivations/{cultivation-id}", 5L)
+                        .cookie(LOGGED_IN))
+                .andExpect(status().isNoContent());
 
         verify(cultivationClient).deleteCultivation(5L);
     }

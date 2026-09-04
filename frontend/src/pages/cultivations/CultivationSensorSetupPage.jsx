@@ -1,8 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, CheckCircle2 } from "lucide-react";
+import { Check, CheckCircle2, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { cultivationKeys, getCultivationSetupPage } from "../../api/cultivations";
+import {
+  cultivationKeys,
+  deleteCultivation,
+  getCultivationSetupPage,
+} from "../../api/cultivations";
+import Notice from "../../components/Notice";
 import { ErrorState, LoadingState } from "../../components/PageState";
 import CultivationCreationStepper from "../../features/cultivations/CultivationCreationStepper";
 import CultivationSensorSetupStep from "../../features/cultivations/CultivationSensorSetupStep";
@@ -19,6 +24,8 @@ export default function CultivationSensorSetupPage() {
     enabled: Number.isFinite(id),
   });
   const [newlyRegisteredSensors, setNewlyRegisteredSensors] = useState([]);
+  const [notice, setNotice] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   if (setupQuery.isLoading) return <LoadingState message="센서 설정을 불러오고 있어요." />;
   if (setupQuery.isError)
@@ -35,7 +42,25 @@ export default function CultivationSensorSetupPage() {
   const cultivation = setupQuery.data.cultivation;
   const savedSensors = normalizeList(setupQuery.data?.sensors?.sensors);
   const environmentSettings = normalizeList(setupQuery.data?.sensors?.environmentSettings);
-  const registeredSensors = [...savedSensors, ...newlyRegisteredSensors];
+  const registeredSensors = [...savedSensors, ...newlyRegisteredSensors].filter(
+    (sensor, index, sensors) =>
+      sensors.findIndex(
+        (candidate) =>
+          String(candidate.deviceEui).trim().toLowerCase() ===
+          String(sensor.deviceEui).trim().toLowerCase(),
+      ) === index,
+  );
+
+  const handleSensorRegistered = async (sensor) => {
+    setNewlyRegisteredSensors((current) => [...current, sensor]);
+    await Promise.allSettled([
+      queryClient.invalidateQueries({ queryKey: cultivationKeys.setup(id) }),
+      queryClient.invalidateQueries({ queryKey: cultivationKeys.detail(id) }),
+      queryClient.invalidateQueries({ queryKey: cultivationKeys.preview(id) }),
+      queryClient.invalidateQueries({ queryKey: cultivationKeys.list() }),
+      queryClient.invalidateQueries({ queryKey: ["reusable-sensors", id] }),
+    ]);
+  };
 
   const completeSetup = async () => {
     await Promise.all([
@@ -44,6 +69,23 @@ export default function CultivationSensorSetupPage() {
       queryClient.invalidateQueries({ queryKey: cultivationKeys.list() }),
     ]);
     navigate(`/cultivations/${id}`);
+  };
+
+  const deleteCurrentCultivation = async () => {
+    if (!window.confirm("재배지와 연결된 정보를 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) {
+      return;
+    }
+
+    setDeleting(true);
+    setNotice(null);
+    try {
+      await deleteCultivation(id);
+      queryClient.removeQueries({ queryKey: cultivationKeys.all });
+      navigate("/cultivations", { replace: true });
+    } catch (error) {
+      setNotice({ type: "error", message: error.message });
+      setDeleting(false);
+    }
   };
 
   return (
@@ -65,6 +107,8 @@ export default function CultivationSensorSetupPage() {
             </div>
           </div>
 
+          <Notice notice={notice} onDismiss={() => setNotice(null)} />
+
           {registeredSensors.length > 0 && (
             <section className="setup-registered-sensors" aria-label="등록 완료 센서">
               <h2>등록 완료 센서</h2>
@@ -84,17 +128,29 @@ export default function CultivationSensorSetupPage() {
             cultivationId={id}
             environmentSettings={environmentSettings}
             registeredSensors={registeredSensors}
-            onRegistered={(sensor) => setNewlyRegisteredSensors((current) => [...current, sensor])}
+            onRegistered={handleSensorRegistered}
           />
 
           <div className="form-actions form-actions--between">
-            <Link className="button button--secondary" to="/cultivations">
-              나중에 계속하기
-            </Link>
+            <div className="setup-secondary-actions">
+              {cultivation.myRole === "OWNER" && (
+                <button
+                  className="button button--danger"
+                  type="button"
+                  onClick={deleteCurrentCultivation}
+                  disabled={deleting}
+                >
+                  <Trash2 aria-hidden="true" /> {deleting ? "삭제 중..." : "재배지 삭제"}
+                </button>
+              )}
+              <Link className="button button--secondary" to="/cultivations">
+                나중에 계속하기
+              </Link>
+            </div>
             <button
               className="button button--primary"
               type="button"
-              disabled={registeredSensors.length === 0}
+              disabled={registeredSensors.length === 0 || deleting}
               onClick={completeSetup}
             >
               <Check aria-hidden="true" /> 재배지 설정 완료

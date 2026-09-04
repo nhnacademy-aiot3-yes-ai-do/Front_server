@@ -60,6 +60,11 @@ export function getSensorTrend(id, deviceEui, sensorType, unit) {
 export function createCultivation(payload) {
   return jsonRequest("/cultivations", "POST", payload);
 }
+
+export function deleteCultivation(id) {
+  return request(`/cultivations/${id}`, { method: "DELETE" });
+}
+
 export function getMushroomGuide(mushroomId) {
   return request(`/cultivations/mushrooms/${mushroomId}/guide`).then(unwrapApiResponse);
 }

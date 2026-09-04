@@ -27,7 +27,7 @@ function renderCard(cultivation = {}) {
 describe("CultivationCard", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("활성 센서가 없으면 설정 필요 상태와 이어서 설정 링크를 표시한다", async () => {
+  it("활성 센서가 없으면 중복 안내 없이 센서 설정 행동을 표시한다", async () => {
     getCultivationPreview.mockResolvedValue({
       cultivation: { mode: "GROWTH", myRole: "OWNER" },
       sensors: { sensors: [], environmentSettings: [] },
@@ -37,10 +37,13 @@ describe("CultivationCard", () => {
     renderCard();
 
     expect(await screen.findByText("설정 필요")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "느타리 재배지 설정 마저 진행하기" })).toHaveAttribute(
+    expect(screen.getByRole("heading", { name: "센서 연결 대기" })).toBeInTheDocument();
+    expect(screen.getByText("센서를 연결하면 측정 현황을 확인할 수 있습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "느타리 재배지 센서 설정 계속하기" })).toHaveAttribute(
       "href",
       "/cultivations/41/setup",
     );
+    expect(screen.queryByText("센서 연결이 완료되지 않았습니다.")).not.toBeInTheDocument();
   });
 
   it("종료된 재배지는 센서가 없어도 설정 미완료로 표시하지 않는다", async () => {

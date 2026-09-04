@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ImageOff } from "lucide-react";
+import { Cable, ChevronRight, ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cultivationKeys, getCultivationPreview } from "../../api/cultivations";
 import {
@@ -137,18 +137,7 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
               <dd>{cultivation.memberCount ?? 0}명</dd>
             </div>
           </dl>
-          {setupRequired ? (
-            <Link
-              className="cultivation-setup-resume"
-              aria-label={`${cultivation.name} 설정 마저 진행하기`}
-              to={targetPath}
-            >
-              <span>센서 연결이 완료되지 않았습니다.</span>
-              <strong>
-                마저 진행하기 <ChevronRight aria-hidden="true" />
-              </strong>
-            </Link>
-          ) : (
+          {!setupRequired && (
             <div className="pending-progress">
               <span>성장 단계 및 재배 진행률</span>
               <strong>데이터 준비 중</strong>
@@ -156,31 +145,59 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
           )}
         </div>
       </div>
-      <section className="cultivation-card__sensors" aria-label={`${cultivation.name} 센서 추이`}>
-        <header>
-          <strong>등록 센서 추이</strong>
-          <span>실시간</span>
-        </header>
-        {previewQuery.isLoading && <p className="sensor-column-state">센서 정보를 불러오는 중</p>}
-        {previewQuery.isError && (
-          <div className="sensor-column-state">
-            <span>센서 정보를 불러오지 못했습니다.</span>
-            <button className="text-button" type="button" onClick={() => previewQuery.refetch()}>
-              다시 시도
-            </button>
+      <section
+        className={`cultivation-card__sensors${setupRequired ? " cultivation-card__sensors--setup" : ""}`}
+        aria-label={`${cultivation.name} 센서 추이`}
+      >
+        {setupRequired ? (
+          <div className="cultivation-setup-action">
+            <span className="cultivation-setup-action__icon">
+              <Cable aria-hidden="true" />
+            </span>
+            <div>
+              <h3>센서 연결 대기</h3>
+              <p>센서를 연결하면 측정 현황을 확인할 수 있습니다.</p>
+            </div>
+            <Link
+              className="button button--secondary cultivation-setup-action__link"
+              aria-label={`${cultivation.name} 센서 설정 계속하기`}
+              to={targetPath}
+            >
+              설정 계속하기 <ChevronRight aria-hidden="true" />
+            </Link>
           </div>
+        ) : (
+          <>
+            <header>
+              <strong>등록 센서 추이</strong>
+              <span>실시간</span>
+            </header>
+            {previewQuery.isLoading && (
+              <p className="sensor-column-state">센서 정보를 불러오는 중</p>
+            )}
+            {previewQuery.isError && (
+              <div className="sensor-column-state">
+                <span>센서 정보를 불러오지 못했습니다.</span>
+                <button
+                  className="text-button"
+                  type="button"
+                  onClick={() => previewQuery.refetch()}
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
+            {!previewQuery.isLoading && !previewQuery.isError && entries.length === 0 && (
+              <p className="sensor-column-state">등록된 센서가 없습니다.</p>
+            )}
+            {entries.map((entry) => (
+              <SensorSparkline
+                key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
+                {...entry}
+              />
+            ))}
+          </>
         )}
-        {!previewQuery.isLoading && !previewQuery.isError && entries.length === 0 && (
-          <p className="sensor-column-state">
-            {setupRequired ? "센서를 연결하면 측정 현황이 표시됩니다." : "등록된 센서가 없습니다."}
-          </p>
-        )}
-        {entries.map((entry) => (
-          <SensorSparkline
-            key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
-            {...entry}
-          />
-        ))}
       </section>
     </article>
   );

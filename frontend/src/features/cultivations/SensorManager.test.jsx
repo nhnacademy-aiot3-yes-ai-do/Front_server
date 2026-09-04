@@ -105,6 +105,13 @@ describe("SensorManager", () => {
     renderManager();
 
     const editor = await screen.findByRole("region", { name: "재배 환경 임계값" });
+    expect(
+      within(editor).getByText("경작지에서 관리할 고유한 센서 임계값 설정입니다."),
+    ).toBeInTheDocument();
+    expect(
+      await within(editor).findByRole("group", { name: "온도 °C 임계값" }),
+    ).toBeInTheDocument();
+    expect(within(editor).getByText("재배지 기준")).toBeInTheDocument();
     const minimumInput = await within(editor).findByRole("spinbutton", { name: "온도 최소값" });
     fireEvent.change(minimumInput, {
       target: { value: "19" },
