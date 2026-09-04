@@ -13,13 +13,9 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivation.EnvironmentS
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorValidationRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.LatestSensorValueListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.ReusableCultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorValidationResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.*;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
 @LoginRequired
 @Controller
@@ -57,13 +53,13 @@ public class SensorController {
     @PostMapping("/{cultivation-id}/sensors")
     public ResponseEntity<Void> registerSensor(@PathVariable("cultivation-id") Long cultivationId,
                                                @RequestBody CreateCultivationSensorRequest request) {
-        return sensorClient.registerSensor(cultivationId, request);
+        return UpstreamResponseUtils.isolate(sensorClient.registerSensor(cultivationId, request));
     }
 
     @DeleteMapping("/{cultivation-id}/sensors/{sensor-id}")
     public ResponseEntity<Void> deleteSensor(@PathVariable("cultivation-id") Long cultivationId,
                                              @PathVariable("sensor-id") Long sensorId) {
-        return sensorClient.deleteSensor(cultivationId, sensorId);
+        return UpstreamResponseUtils.isolate(sensorClient.deleteSensor(cultivationId, sensorId));
     }
 
     @PutMapping("/{cultivation-id}/environment-settings")
@@ -71,7 +67,7 @@ public class SensorController {
             @PathVariable("cultivation-id") Long cultivationId,
             @Valid @RequestBody EnvironmentSettingRequest request
     ) {
-        return sensorClient.updateEnvironmentSetting(cultivationId, request);
+        return UpstreamResponseUtils.isolate(sensorClient.updateEnvironmentSetting(cultivationId, request));
     }
 
     @GetMapping(value = "/{cultivation-id}/sensor-values/trend", produces = MediaType.APPLICATION_JSON_VALUE)

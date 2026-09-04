@@ -9,6 +9,7 @@ import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.dto.cultivation.request.mushroom.MushroomReferenceRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
 @Controller
 @LoginRequired(adminOnly = true)
@@ -19,18 +20,18 @@ public class AdminMushroomReferenceController {
 
     @GetMapping
     public ResponseEntity<MushroomReferenceInfoListResponse> getMushroomReferences() {
-        return sensorClient.getAllMushroomReferencesByAdmin();
+        return UpstreamResponseUtils.isolate(sensorClient.getAllMushroomReferencesByAdmin());
     }
 
     @PostMapping
     public ResponseEntity<Void> createMushroomReference(@Valid @RequestBody MushroomReferenceRequest request) {
-        return sensorClient.registerMushroomReference(request);
+        return UpstreamResponseUtils.isolateWithLocation(sensorClient.registerMushroomReference(request));
     }
 
     @PutMapping("{mushroom-reference-id}")
     public ResponseEntity<Void> updateMushroomReference(@PathVariable("mushroom-reference-id") Long id,
                                                         @Valid @RequestBody MushroomReferenceRequest request) {
-        return sensorClient.updateMushroomReference(id, request);
+        return UpstreamResponseUtils.isolate(sensorClient.updateMushroomReference(id, request));
     }
 
     @DeleteMapping("/{mushroom-reference-id}")
