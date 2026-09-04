@@ -103,7 +103,7 @@ public class CultivationController {
     // CultivationMember
     @GetMapping("/{cultivation-id}/members")
     public ResponseEntity<MemberListResponse> getMembers(@PathVariable("cultivation-id") Long cultivationId) {
-        return cultivationClient.getMembers(cultivationId);
+        return UpstreamResponseUtils.isolate(cultivationClient.getMembers(cultivationId));
     }
 
     @GetMapping("/{cultivation-id}/members/search")
@@ -170,12 +170,12 @@ public class CultivationController {
 
     @GetMapping("{cultivation-id}/photos")
     public ResponseEntity<PhotoListResponse> getPhoto(@PathVariable("cultivation-id") Long cultivationId) {
-        return cultivationClient.getPhoto(cultivationId);
+        return UpstreamResponseUtils.isolate(cultivationClient.getPhoto(cultivationId));
     }
 
     @DeleteMapping("/{cultivation-id}/photos/{photo-id}")
     public ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                             @PathVariable("photo-id") Long photoId) {
-        return cultivationClient.deletePhoto(cultivationId, photoId);
+        return UpstreamResponseUtils.isolate(cultivationClient.deletePhoto(cultivationId, photoId));
     }
 }
