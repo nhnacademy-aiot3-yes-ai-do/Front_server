@@ -1,8 +1,13 @@
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {fireEvent, render, screen, waitFor, within} from "@testing-library/react";
-import {MemoryRouter} from "react-router-dom";
-import {beforeEach, describe, expect, it, vi} from "vitest";
-import {answerAdminInquiry, deleteAdminInquiryCultivation, getAdminInquiries, getAdminInquiry,} from "../../api/admin";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  answerAdminInquiry,
+  deleteAdminInquiryCultivation,
+  getAdminInquiries,
+  getAdminInquiry,
+} from "../../api/admin";
 import AdminInquiriesPage from "./AdminInquiriesPage";
 
 vi.mock("../../api/admin", () => ({

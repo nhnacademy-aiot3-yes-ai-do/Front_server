@@ -1,21 +1,37 @@
-import {useQuery} from "@tanstack/react-query";
-import {ChevronRight, ImageOff} from "lucide-react";
-import {Link} from "react-router-dom";
-import {cultivationKeys, getCultivationPreview} from "../../api/cultivations";
-import {formatMode, formatRelativeTime, formatRole, normalizeList, normalizeSensorUnit,} from "../../utils/formatters";
-import {requiresSensorSetup} from "./cultivationSetup";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronRight, ImageOff } from "lucide-react";
+import { Link } from "react-router-dom";
+import { cultivationKeys, getCultivationPreview } from "../../api/cultivations";
+import {
+  formatMode,
+  formatRelativeTime,
+  formatRole,
+  normalizeList,
+  normalizeSensorUnit,
+} from "../../utils/formatters";
+import { requiresSensorSetup } from "./cultivationSetup";
 import SensorSparkline from "./SensorSparkline";
 
-function sensorPreviews(preview, suppliedLatestValues) {
+function sensorPreviews(preview, suppliedLatestValues, suppliedTrend) {
   const latestValues = suppliedLatestValues?.length
     ? suppliedLatestValues
     : normalizeList(preview?.latestSensorValues?.latestSensorValueResponses);
+  const trendValues = normalizeList(suppliedTrend);
   const settings = normalizeList(preview?.sensors?.environmentSettings);
   const sensors = normalizeList(preview?.sensors?.sensors);
+
+  const trendFor = (deviceEui, sensorType, valueUnit) =>
+    trendValues.filter(
+      (point) =>
+        point.deviceEui === deviceEui &&
+        point.sensorType === sensorType &&
+        normalizeSensorUnit(point.unit || valueUnit) === normalizeSensorUnit(valueUnit),
+    );
 
   if (!sensors.length) {
     return latestValues.map((latest) => ({
       latest,
+      trend: trendFor(latest.deviceEui, latest.sensorType, latest.unit),
       sensor: latest,
       sensorType: { type: latest.sensorType, valueUnit: latest.unit },
       setting: undefined,
@@ -34,6 +50,7 @@ function sensorPreviews(preview, suppliedLatestValues) {
       sensor,
       sensorType,
       setting: settings.find((setting) => setting.sensorTypeId === sensorType.sensorTypeId),
+      trend: trendFor(sensor.deviceEui, sensorType.type, sensorType.valueUnit),
     })),
   );
 }
@@ -65,7 +82,7 @@ export default function CultivationCard({
     staleTime: 30_000,
   });
   const preview = previewQuery.data;
-  const entries = sensorPreviews(preview, latestSensorValues);
+  const entries = sensorPreviews(preview, latestSensorValues, sensorTrend1h);
   const setupRequired =
     previewQuery.isSuccess &&
     requiresSensorSetup({ ...cultivation, ...preview?.cultivation }, preview?.sensors?.sensors);
@@ -178,14 +195,11 @@ export default function CultivationCard({
           <SensorSparkline
             key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
             cultivationId={cultivation.cultivationId}
-            trend={normalizeList(sensorTrend1h).filter(
-              (point) =>
-                point.deviceEui === entry.sensor.deviceEui &&
-                point.sensorType === entry.sensorType.type &&
-                normalizeSensorUnit(point.unit || entry.sensorType.valueUnit) ===
-                  normalizeSensorUnit(entry.sensorType.valueUnit),
-            )}
-            {...entry}
+            latest={entry.latest}
+            sensor={entry.sensor}
+            sensorType={entry.sensorType}
+            setting={entry.setting}
+            trend={entry.trend}
           />
         ))}
       </section>

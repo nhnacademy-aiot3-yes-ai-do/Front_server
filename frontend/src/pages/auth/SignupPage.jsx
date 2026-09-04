@@ -1,7 +1,7 @@
-import {useQuery} from "@tanstack/react-query";
-import {useRef, useState} from "react";
-import {Link} from "react-router-dom";
-import {backendUrl, request, unwrapApiResponse} from "../../api/http";
+import { useQuery } from "@tanstack/react-query";
+import { useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { backendUrl, request, unwrapApiResponse } from "../../api/http";
 import Notice from "../../components/Notice";
 
 export default function SignupPage() {

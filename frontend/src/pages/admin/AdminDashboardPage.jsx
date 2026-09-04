@@ -1,15 +1,15 @@
-import {useQueries} from "@tanstack/react-query";
-import {Bell, Cpu, MessageSquare, Package, Users} from "lucide-react";
-import {Link} from "react-router-dom";
+import { useQueries } from "@tanstack/react-query";
+import { Bell, Cpu, MessageSquare, Package, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
-    getAdminInquiries,
-    getAdminMembers,
-    getAdminMushrooms,
-    getAdminSensorTypes,
-    getNotificationEvents,
+  getAdminInquiries,
+  getAdminMembers,
+  getAdminMushrooms,
+  getAdminSensorTypes,
+  getNotificationEvents,
 } from "../../api/admin";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
-import {formatDate} from "../../utils/formatters";
+import { formatDate } from "../../utils/formatters";
 
 const dayNames = ["일", "월", "화", "수", "목", "금", "토"];
 
