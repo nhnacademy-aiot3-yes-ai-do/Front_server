@@ -43,6 +43,7 @@ public class GlobalExceptionHandler {
     private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
     private static final String ERROR = "error";
     private static final String MESSAGE = "message";
+    private static final String DETAIL = "detail";
 
     private static final Map<String, String> NOT_FOUND_MESSAGES = Map.of(
             "AiClient", "해당 버섯 가이드 정보를 찾을 수 없습니다.",
@@ -183,7 +184,7 @@ public class GlobalExceptionHandler {
             JsonNode response = objectMapper.readTree(exception.contentUTF8());
             String message = response.path(MESSAGE).asString();
             if (message.isBlank()) {
-                message = response.path("detail").asString();
+                message = response.path(DETAIL).asString();
             }
             return message.isBlank() ? fallback : message;
         } catch (Exception ignored) {
@@ -222,7 +223,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleMissingRefreshToken(MissingRefreshTokenException exception) {
         return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("detail", "로그인이 필요합니다."));
+                .body(Map.of(DETAIL, "로그인이 필요합니다."));
     }
 
     // css/js 정적 리소스는 파일 내용 해시가 URL에 붙는 캐시버스팅 방식(WebConfig의 VersionResourceResolver)을
@@ -244,7 +245,7 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(500)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("detail", message));
+                .body(Map.of(DETAIL, message));
     }
 
     @ExceptionHandler(Throwable.class)

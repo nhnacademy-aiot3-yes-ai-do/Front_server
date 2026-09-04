@@ -3,6 +3,10 @@ import { MemoryRouter, Outlet, useParams } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import App from "./App";
 
+vi.mock("./utils/useAutoSession", () => ({
+  useAutoSession: vi.fn(),
+}));
+
 vi.mock("./layouts/AppLayout", () => ({
   default: () => <Outlet />,
 }));
