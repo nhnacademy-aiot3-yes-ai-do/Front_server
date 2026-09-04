@@ -1,8 +1,8 @@
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {cleanup, render, screen} from "@testing-library/react";
-import {MemoryRouter} from "react-router-dom";
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
-import {getCultivationPreview} from "../../api/cultivations";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getCultivationPreview } from "../../api/cultivations";
 import CultivationCard from "./CultivationCard";
 
 vi.mock("../../api/cultivations", () => ({
@@ -10,7 +10,7 @@ vi.mock("../../api/cultivations", () => ({
   getCultivationPreview: vi.fn(),
 }));
 
-function renderCard(cultivation = {}) {
+function renderCard(cultivation = {}, props = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
@@ -18,6 +18,7 @@ function renderCard(cultivation = {}) {
         <CultivationCard
           cultivation={{ cultivationId: 41, name: "느타리 재배지", memberCount: 1, ...cultivation }}
           mushroomName="느타리버섯"
+          {...props}
         />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -44,6 +45,32 @@ describe("CultivationCard", () => {
       "/cultivations/41/setup",
     );
     expect(screen.queryByText("센서 연결이 완료되지 않았습니다.")).not.toBeInTheDocument();
+  });
+
+  it("빈 최신값 응답은 preview 최신값으로 대체하지 않는다", async () => {
+    getCultivationPreview.mockResolvedValue({
+      cultivation: { mode: "GROWTH", myRole: "OWNER" },
+      sensors: {
+        sensors: [
+          {
+            deviceEui: "EUI-001",
+            deviceName: "센서 1",
+            sensorTypes: [{ type: "TEMPERATURE", valueUnit: "°C", sensorTypeId: 1 }],
+          },
+        ],
+        environmentSettings: [],
+      },
+      latestSensorValues: {
+        latestSensorValueResponses: [
+          { deviceEui: "EUI-001", sensorType: "TEMPERATURE", value: 22 },
+        ],
+      },
+    });
+
+    renderCard({}, { latestSensorValues: [] });
+
+    expect(await screen.findByText("데이터 수집 중")).toBeInTheDocument();
+    expect(screen.queryByText("22°C")).not.toBeInTheDocument();
   });
 
   it("종료된 재배지는 센서가 없어도 설정 미완료로 표시하지 않는다", async () => {

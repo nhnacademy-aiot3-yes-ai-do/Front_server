@@ -1,9 +1,14 @@
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {render, screen} from "@testing-library/react";
-import {MemoryRouter, Route, Routes} from "react-router-dom";
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import CultivationDetailPage from "./CultivationDetailPage";
-import {requiresSensorSetup} from "../../features/cultivations/cultivationSetup";
+import {
+  aggregateChartPoints,
+  chartBucketMinutes,
+  preferNonEmptyLatestValues,
+} from "../../features/cultivations/sensorChartUtils";
+import { requiresSensorSetup } from "../../features/cultivations/cultivationSetup";
 
 const mocks = vi.hoisted(() => ({
   getCultivationDetailPage: vi.fn(),
@@ -39,6 +44,31 @@ vi.mock("../../api/insights", () => ({
   getInsightCandidates: vi.fn(),
   getInsightDetail: vi.fn(),
 }));
+
+describe("CultivationDetailPage chart aggregation", () => {
+  it("12시간 그래프는 15분 버킷별 평균값만 점으로 만든다", () => {
+    expect(chartBucketMinutes(720)).toBe(15);
+    const points = aggregateChartPoints(
+      [
+        { measuredAt: "2026-09-04T00:01:00Z", value: 10 },
+        { measuredAt: "2026-09-04T00:10:00Z", value: 20 },
+        { measuredAt: "2026-09-04T00:16:00Z", value: 30 },
+      ],
+      720,
+    );
+
+    expect(points).toHaveLength(2);
+    expect(points.map((point) => point.value)).toEqual([15, 30]);
+  });
+
+  it("빈 최신값 응답은 초기 최신값을 유지한다", () => {
+    const fallback = [{ deviceEui: "sensor-1", value: 22 }];
+    expect(preferNonEmptyLatestValues([], fallback)).toBe(fallback);
+    expect(preferNonEmptyLatestValues([{ deviceEui: "sensor-1", value: 23 }], fallback)).toEqual([
+      { deviceEui: "sensor-1", value: 23 },
+    ]);
+  });
+});
 
 describe("CultivationDetailPage sensor setup", () => {
   beforeEach(() => {

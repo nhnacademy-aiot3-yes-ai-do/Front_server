@@ -1,11 +1,31 @@
-import {afterEach, describe, expect, it, vi} from "vitest";
-import {request} from "./http";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { gatewayRequest, gatewayUrl, request } from "./http";
 
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe("request", () => {
+  it("Gateway 직통 요청은 Gateway URL과 인증 쿠키를 사용한다", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ latestSensorValuesByCultivationId: {} }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await gatewayRequest("/api/v1/cultivations/sensor-values/latest");
+
+    expect(gatewayUrl("/api/v1/cultivations/sensor-values/latest")).toBe(
+      "http://localhost:8080/api/v1/cultivations/sensor-values/latest",
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8080/api/v1/cultivations/sensor-values/latest",
+      expect.objectContaining({ credentials: "include" }),
+    );
+  });
+
   it("비정상 HTTP 응답의 상태 코드와 상세 메시지를 Error에 보존한다", async () => {
     vi.stubGlobal(
       "fetch",

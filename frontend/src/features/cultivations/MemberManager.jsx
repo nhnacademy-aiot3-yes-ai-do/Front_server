@@ -1,10 +1,10 @@
-import {useQueryClient} from "@tanstack/react-query";
-import {Crown, Search, ShieldCheck, Trash2} from "lucide-react";
-import {useState} from "react";
-import {jsonRequest, request} from "../../api/http";
+import { useQueryClient } from "@tanstack/react-query";
+import { Crown, Search, ShieldCheck, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { jsonRequest, request } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import {formatRole} from "../../utils/formatters";
+import { formatRole } from "../../utils/formatters";
 
 export default function MemberManager({ cultivationId, members, myRole, onClose }) {
   const [keyword, setKeyword] = useState("");

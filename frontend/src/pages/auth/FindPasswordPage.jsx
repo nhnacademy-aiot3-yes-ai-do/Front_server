@@ -1,6 +1,6 @@
-import {useRef, useState} from "react";
-import {Link, useNavigate} from "react-router-dom";
-import {request} from "../../api/http";
+import { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { request } from "../../api/http";
 import Notice from "../../components/Notice";
 
 export default function FindPasswordPage() {

@@ -1,5 +1,5 @@
-import {useEffect, useRef} from "react";
-import {backendUrl} from "../api/http";
+import { useEffect, useRef } from "react";
+import { backendUrl } from "../api/http";
 
 const IDLE_LIMIT_MS = 60 * 60 * 1000;
 const CHECK_INTERVAL_MS = 10 * 1000;
