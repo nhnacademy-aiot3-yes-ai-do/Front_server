@@ -1,15 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ImageOff } from "lucide-react";
-import { Link } from "react-router-dom";
-import { cultivationKeys, getCultivationPreview } from "../../api/cultivations";
-import {
-  formatMode,
-  formatRelativeTime,
-  formatRole,
-  normalizeList,
-  normalizeSensorUnit,
-} from "../../utils/formatters";
-import { requiresSensorSetup } from "./cultivationSetup";
+import {useQuery} from "@tanstack/react-query";
+import {ChevronRight, ImageOff} from "lucide-react";
+import {Link} from "react-router-dom";
+import {cultivationKeys, getCultivationPreview} from "../../api/cultivations";
+import {formatMode, formatRelativeTime, formatRole, normalizeList, normalizeSensorUnit,} from "../../utils/formatters";
+import {requiresSensorSetup} from "./cultivationSetup";
 import SensorSparkline from "./SensorSparkline";
 
 function sensorPreviews(preview, suppliedLatestValues, suppliedTrend) {

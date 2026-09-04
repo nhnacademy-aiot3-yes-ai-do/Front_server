@@ -1,10 +1,10 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ListChecks, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { jsonRequest, request } from "../../api/http";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {ListChecks, Plus, Trash2} from "lucide-react";
+import {useEffect, useMemo, useState} from "react";
+import {jsonRequest, request} from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import { formatSensorType, normalizeList } from "../../utils/formatters";
+import {formatSensorType, normalizeList} from "../../utils/formatters";
 import CultivationSensorSetupStep from "./CultivationSensorSetupStep";
 
 export default function SensorManager({ cultivationId, sensors, canManage, onClose }) {

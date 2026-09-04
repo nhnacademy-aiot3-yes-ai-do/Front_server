@@ -1,4 +1,4 @@
-import { backendUrl, unwrapApiResponse } from "./http";
+import {backendUrl, unwrapApiResponse} from "./http";
 
 async function adminRequest(path, options = {}) {
   const response = await fetch(backendUrl(path), {

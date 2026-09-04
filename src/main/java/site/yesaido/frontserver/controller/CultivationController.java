@@ -21,6 +21,7 @@ import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateReq
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationModeChangeResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
@@ -170,10 +171,9 @@ public class CultivationController {
 
     // 사진
     @PostMapping("/{cultivation-id}/photos")
-    public String uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
-                              @RequestParam("file") MultipartFile file) {
-        cultivationClient.uploadPhoto(cultivationId, file);
-        return "redirect:/cultivations/" + cultivationId;
+    public ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
+                                                     @RequestParam("file") MultipartFile file) {
+        return UpstreamResponseUtils.isolate(cultivationClient.uploadPhoto(cultivationId, file));
     }
 
     @GetMapping("{cultivation-id}/photos")
