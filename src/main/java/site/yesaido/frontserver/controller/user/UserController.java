@@ -73,8 +73,15 @@ public class UserController {
             authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
             redirectAttributes.addFlashAttribute("justLoggedIn", true);
             return "ADMIN".equals(tokenResponse.role()) ? REDIRECT_PREFIX + "/admin" : REDIRECT_PREFIX + "/";
-        } catch (DormantUserException e) {
-            throw e;
+        } catch (feign.FeignException e) {
+            String content = e.contentUTF8();
+            if(content != null && content.contains("휴면")){
+                throw new DormantUserException(email, "휴면 처리된 계정입니다. 이메일 인증을 진행해 주세요.");
+            }
+            log.warn("로그인 실패(Feign): {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("loginError", "아이디 또는 비밀번호가 일치하지 않습니다.");
+            setAuthResult(session, AUTH_ERROR, "아이디 또는 비밀번호가 일치하지 않습니다.");
+            return REDIRECT_PREFIX + LOGIN_URL;
         } catch (Exception e) {
             log.warn("로그인 실패: {}", e.getMessage());
             redirectAttributes.addFlashAttribute("loginError", "아이디 또는 비밀번호가 일치하지 않습니다.");

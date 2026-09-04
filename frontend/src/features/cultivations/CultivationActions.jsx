@@ -1,6 +1,6 @@
 import {useState} from "react";
 import {useNavigate} from "react-router-dom";
-import {backendUrl, jsonRequest, request} from "../../api/http";
+import {jsonRequest, request} from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import {formatDate, normalizeList} from "../../utils/formatters";
@@ -183,11 +183,18 @@ export default function CultivationActions({ cultivation, growthDays, pastCultiv
           <p className="modal-help">
             환경 평균과 AI 종료 리포트는 공개 API가 없어 임의 값 없이 표시하지 않습니다.
           </p>
-          <form method="post" action={backendUrl(`/cultivations/${id}/finish`)}>
-            <button className="button button--primary button--wide" type="submit">
-              재배 종료
+          <div className="form-actions">
+            <button
+              className="button button--primary button--wide"
+              type="button"
+              onClick={() => {
+                onClose?.();
+                window.location.reload();
+              }}
+            >
+              확인
             </button>
-          </form>
+          </div>
         </section>
       )}
     </Modal>

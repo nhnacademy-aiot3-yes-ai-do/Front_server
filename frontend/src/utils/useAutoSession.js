@@ -1,7 +1,7 @@
 import {useEffect, useRef} from "react";
 import {backendUrl} from "../api/http";
 
-const IDLE_LIMIT_MS = 60 * 60 * 1000;
+const IDLE_LIMIT_MS = 20 * 60 * 1000;
 const CHECK_INTERVAL_MS = 10 * 1000;
 const REISSUE_THRESHOLD_MS = 5 * 60 * 1000;
 const ACTIVITY_STORAGE_KEY = "mush_last_active";
@@ -13,6 +13,30 @@ function getAccessTokenExpiresAt() {
   const expiresAt = Number(raw);
 
   return Number.isFinite(expiresAt) && expiresAt > 0 ? expiresAt : null;
+}
+
+function safeStorageGet(key) {
+  try {
+    return window.localStorage?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key, value) {
+  try {
+    window.localStorage?.setItem(key, value);
+  } catch {
+    // ignore
+  }
+}
+
+function safeStorageRemove(key) {
+  try {
+    window.localStorage?.removeItem(key);
+  } catch {
+    // ignore
+  }
 }
 
 function submitLogout() {
@@ -34,7 +58,7 @@ export function useAutoSession() {
       if (isLoggingOutRef.current) return;
 
       isLoggingOutRef.current = true;
-      localStorage.removeItem(ACTIVITY_STORAGE_KEY);
+      safeStorageRemove(ACTIVITY_STORAGE_KEY);
 
       if (message) {
         window.alert(message);
@@ -76,7 +100,7 @@ export function useAutoSession() {
       if (now - lastRecordedAtRef.current < ACTIVITY_RECORD_INTERVAL_MS) return;
 
       lastRecordedAtRef.current = now;
-      localStorage.setItem(ACTIVITY_STORAGE_KEY, String(now));
+      safeStorageSet(ACTIVITY_STORAGE_KEY, String(now));
     };
 
     const checkSession = () => {
@@ -84,7 +108,7 @@ export function useAutoSession() {
 
       // 로그인하지 않은 상태라면 이전 사용자의 활동 기록도 제거
       if (!expiresAt) {
-        localStorage.removeItem(ACTIVITY_STORAGE_KEY);
+        safeStorageRemove(ACTIVITY_STORAGE_KEY);
         return;
       }
 
@@ -96,7 +120,7 @@ export function useAutoSession() {
         return;
       }
 
-      const savedLastActive = Number(localStorage.getItem(ACTIVITY_STORAGE_KEY));
+      const savedLastActive = Number(safeStorageGet(ACTIVITY_STORAGE_KEY));
 
       // 로그인 직후처럼 활동 기록이 없으면 현재 시각부터 시작
       if (!Number.isFinite(savedLastActive) || savedLastActive <= 0) {
@@ -105,7 +129,7 @@ export function useAutoSession() {
       }
 
       if (now - savedLastActive >= IDLE_LIMIT_MS) {
-        logout("1시간 동안 활동이 없어 안전하게 자동 로그아웃되었습니다.");
+        logout("20분 동안 활동이 없어 안전하게 자동 로그아웃되었습니다.");
         return;
       }
 

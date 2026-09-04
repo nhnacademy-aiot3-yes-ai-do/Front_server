@@ -9,6 +9,7 @@ import {formatRole} from "../../utils/formatters";
 export default function MemberManager({ cultivationId, members, myRole, onClose }) {
   const [keyword, setKeyword] = useState("");
   const [results, setResults] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
   const queryClient = useQueryClient();
@@ -21,14 +22,16 @@ export default function MemberManager({ cultivationId, members, myRole, onClose 
     event.preventDefault();
     if (!keyword.trim()) return;
     setBusy(true);
+    setNotice(null);
     try {
-      setResults(
-        await request(
-          `/cultivations/${cultivationId}/members/search?keyword=${encodeURIComponent(keyword.trim())}`,
-        ),
+      const data = await request(
+        `/cultivations/${cultivationId}/members/search?keyword=${encodeURIComponent(keyword.trim())}`,
       );
+      setResults(data || []);
+      setHasSearched(true);
     } catch (error) {
       setNotice({ type: "error", message: error.message });
+      setHasSearched(false);
     } finally {
       setBusy(false);
     }
@@ -108,7 +111,10 @@ export default function MemberManager({ cultivationId, members, myRole, onClose 
           <input
             id="member-keyword"
             value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
+            onChange={(event) => {
+              setKeyword(event.target.value);
+              setHasSearched(false);
+            }}
             placeholder="이메일 또는 닉네임"
           />
           <button
@@ -120,6 +126,15 @@ export default function MemberManager({ cultivationId, members, myRole, onClose 
             <Search aria-hidden="true" />
           </button>
         </form>
+      )}
+      {hasSearched && results.length === 0 && (
+        <p className="pending-widget" style={{ margin: "10px 0", textAlign: "center" }}>
+          일치하는 회원을 찾을 수 없습니다.
+          <br />
+          <small style={{ color: "var(--brown-500, #7a6b63)", fontSize: "12px" }}>
+            (휴면 계정 또는 탈퇴한 회원은 검색되지 않습니다)
+          </small>
+        </p>
       )}
       {results.length > 0 && (
         <div className="search-results">
