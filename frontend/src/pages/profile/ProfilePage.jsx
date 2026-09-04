@@ -1,21 +1,21 @@
-import {useQuery, useQueryClient} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    CalendarClock,
-    CalendarPlus,
-    Camera,
-    CircleUserRound,
-    KeyRound,
-    Mail,
-    Pencil,
-    TriangleAlert,
-    User,
+  CalendarClock,
+  CalendarPlus,
+  Camera,
+  CircleUserRound,
+  KeyRound,
+  Mail,
+  Pencil,
+  TriangleAlert,
+  User,
 } from "lucide-react";
-import {useState} from "react";
-import {jsonRequest, request, unwrapApiResponse} from "../../api/http";
+import { useState } from "react";
+import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import {ErrorState, LoadingState} from "../../components/PageState";
-import {formatDate} from "../../utils/formatters";
+import { ErrorState, LoadingState } from "../../components/PageState";
+import { formatDate } from "../../utils/formatters";
 
 export default function ProfilePage() {
   const [notice, setNotice] = useState(null);

@@ -1,6 +1,6 @@
-import {CheckCircle2, MailCheck} from "lucide-react";
-import {useEffect, useState} from "react";
-import {request, unwrapApiResponse} from "../../api/http";
+import { CheckCircle2, MailCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { request, unwrapApiResponse } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 

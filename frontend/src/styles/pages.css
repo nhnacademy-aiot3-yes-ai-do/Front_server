@@ -1133,7 +1133,9 @@
 
 .sensor-refresh-button {
   cursor: pointer;
-  transition: background 160ms ease, transform 160ms ease;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
 }
 
 .sensor-refresh-button:hover:not(:disabled) {
@@ -1204,7 +1206,9 @@
 }
 
 @keyframes sensor-refresh-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,7 +5,8 @@ export function backendUrl(path) {
 }
 
 export function gatewayUrl(path) {
-  const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  const isLocal =
+    window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
   const gatewayOrigin = isLocal ? "http://localhost:8080" : "https://api.yes-nhn.site";
   return `${gatewayOrigin}${path}`;
 }

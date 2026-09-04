@@ -56,7 +56,9 @@ describe("CultivationListPage realtime latest polling", () => {
     );
 
     await waitFor(() => expect(screen.getByTestId("card-41")).toHaveTextContent('"value":22'));
-    await waitFor(() => expect(mocks.getLatestSensorValuesForCultivations).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(mocks.getLatestSensorValuesForCultivations).toHaveBeenCalledTimes(1),
+    );
 
     const latestQuery = queryClient.getQueryCache().find({
       queryKey: ["cultivations", "latest-batch"],

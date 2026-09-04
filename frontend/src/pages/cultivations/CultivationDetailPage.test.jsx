@@ -1,14 +1,14 @@
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {render, screen} from "@testing-library/react";
-import {MemoryRouter, Route, Routes} from "react-router-dom";
-import {beforeEach, describe, expect, it, vi} from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import CultivationDetailPage from "./CultivationDetailPage";
 import {
   aggregateChartPoints,
   chartBucketMinutes,
   preferNonEmptyLatestValues,
 } from "../../features/cultivations/sensorChartUtils";
-import {requiresSensorSetup} from "../../features/cultivations/cultivationSetup";
+import { requiresSensorSetup } from "../../features/cultivations/cultivationSetup";
 
 const mocks = vi.hoisted(() => ({
   getCultivationDetailPage: vi.fn(),

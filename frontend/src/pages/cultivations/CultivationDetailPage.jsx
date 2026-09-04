@@ -827,6 +827,7 @@ function getSensorState(option) {
 function sensorStateIcon(tone) {
   if (tone === "warning") return "⚠";
   if (tone === "waiting") return "…";
+  if (tone === "unconfigured") return "ⓘ";
   return "✓";
 }
 
@@ -844,11 +845,10 @@ function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
   const unit = normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit);
   const cutoff = Date.now() - rangeMinutes * 60 * 1000;
   const chartPoints = aggregateChartPoints(
-    normalizeList(initialHistory)
-      .filter((point) => {
-        const measuredAt = new Date(point.measuredAt).getTime();
-        return Number.isFinite(measuredAt) && measuredAt >= cutoff;
-      }),
+    normalizeList(initialHistory).filter((point) => {
+      const measuredAt = new Date(point.measuredAt).getTime();
+      return Number.isFinite(measuredAt) && measuredAt >= cutoff;
+    }),
     rangeMinutes,
   );
 

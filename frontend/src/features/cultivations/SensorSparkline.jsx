@@ -1,9 +1,5 @@
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
-import {
-  formatDateTime,
-  formatSensorType,
-  normalizeSensorUnit,
-} from "../../utils/formatters";
+import { formatDateTime, formatSensorType, normalizeSensorUnit } from "../../utils/formatters";
 
 export default function SensorSparkline({
   cultivationId,
@@ -43,7 +39,13 @@ export default function SensorSparkline({
           </strong>
         </div>
         <span className="sensor-spark__state">
-          {value == null ? "수집 중" : !hasThreshold ? "범위 미등록" : outside ? "확인 필요" : "안정"}
+          {value == null
+            ? "수집 중"
+            : !hasThreshold
+              ? "범위 미등록"
+              : outside
+                ? "확인 필요"
+                : "안정"}
         </span>
       </div>
       <div

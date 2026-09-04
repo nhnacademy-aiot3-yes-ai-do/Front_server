@@ -1,9 +1,9 @@
-import {useState} from "react";
-import {useNavigate} from "react-router-dom";
-import {backendUrl, jsonRequest, request} from "../../api/http";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { backendUrl, jsonRequest, request } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import {formatDate, normalizeList} from "../../utils/formatters";
+import { formatDate, normalizeList } from "../../utils/formatters";
 
 export default function CultivationActions({ cultivation, growthDays, pastCultivations, onClose }) {
   const [notice, setNotice] = useState(null);
