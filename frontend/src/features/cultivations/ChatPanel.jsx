@@ -1,9 +1,9 @@
-import {useQuery} from "@tanstack/react-query";
-import {Send} from "lucide-react";
-import {useRef, useState} from "react";
-import {jsonRequest, request, unwrapApiResponse} from "../../api/http";
+import { useQuery } from "@tanstack/react-query";
+import { Send } from "lucide-react";
+import { useRef, useState } from "react";
+import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
 import Notice from "../../components/Notice";
-import {normalizeList} from "../../utils/formatters";
+import { normalizeList } from "../../utils/formatters";
 
 const welcomeMessage = {
   id: "welcome",

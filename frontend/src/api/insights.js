@@ -1,4 +1,4 @@
-import {request} from "./http";
+import { request } from "./http";
 
 /**
  * 특정 경작지 기준 유사 환경 우수 수확 추천 사례 TOP 5 조회

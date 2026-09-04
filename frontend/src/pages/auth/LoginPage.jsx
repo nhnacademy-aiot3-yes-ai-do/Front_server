@@ -1,7 +1,7 @@
-import {useQuery} from "@tanstack/react-query";
-import {useEffect, useState} from "react";
-import {Link} from "react-router-dom";
-import {backendUrl, request} from "../../api/http";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { backendUrl, request } from "../../api/http";
 import Notice from "../../components/Notice";
 import DormantRecoveryModal from "../../features/auth/DormantRecoveryModal";
 

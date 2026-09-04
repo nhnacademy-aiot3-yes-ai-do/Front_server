@@ -1,10 +1,10 @@
-import {useQueryClient} from "@tanstack/react-query";
-import {Trash2} from "lucide-react";
-import {useState} from "react";
-import {request} from "../../api/http";
+import { useQueryClient } from "@tanstack/react-query";
+import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import { request } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import {formatDateTime} from "../../utils/formatters";
+import { formatDateTime } from "../../utils/formatters";
 
 export default function PhotoManager({ cultivationId, photos, canManage, onClose }) {
   const [notice, setNotice] = useState(null);

@@ -1,6 +1,6 @@
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {Pencil, Plus, RotateCcw, Trash2} from "lucide-react";
-import {useState} from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { useState } from "react";
 import {
   deleteNotificationChannel,
   deleteNotificationEvent,

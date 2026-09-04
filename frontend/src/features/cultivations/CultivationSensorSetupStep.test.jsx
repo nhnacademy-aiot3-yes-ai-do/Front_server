@@ -1,7 +1,7 @@
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {cleanup, fireEvent, render, screen, waitFor} from "@testing-library/react";
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
-import {jsonRequest, request} from "../../api/http";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { jsonRequest, request } from "../../api/http";
 import CultivationSensorSetupStep from "./CultivationSensorSetupStep";
 
 vi.mock("../../api/http", () => ({
