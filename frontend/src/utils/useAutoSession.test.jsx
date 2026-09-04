@@ -1,7 +1,7 @@
-import {act, fireEvent, render} from "@testing-library/react";
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
-import {backendUrl} from "../api/http";
-import {useAutoSession} from "./useAutoSession";
+import { act, fireEvent, render } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { backendUrl } from "../api/http";
+import { useAutoSession } from "./useAutoSession";
 
 const ACTIVITY_STORAGE_KEY = "mush_last_active";
 const ONE_HOUR_MS = 60 * 60 * 1000;

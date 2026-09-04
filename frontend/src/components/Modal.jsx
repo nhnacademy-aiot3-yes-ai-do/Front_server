@@ -1,5 +1,5 @@
-import {X} from "lucide-react";
-import {useEffect, useRef} from "react";
+import { X } from "lucide-react";
+import { useEffect, useRef } from "react";
 
 export default function Modal({ title, children, onClose, className = "" }) {
   const dialogRef = useRef(null);

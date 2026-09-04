@@ -1,7 +1,7 @@
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {cleanup, fireEvent, render, screen, waitFor} from "@testing-library/react";
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
-import {getDailyFeedback} from "../../api/cultivations";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { getDailyFeedback } from "../../api/cultivations";
 import DailyFeedbackPanel from "./DailyFeedbackPanel";
 
 vi.mock("../../api/cultivations", () => ({

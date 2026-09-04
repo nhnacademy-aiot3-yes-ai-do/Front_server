@@ -1,4 +1,4 @@
-import {formatSensorType, normalizeSensorUnit} from "../../utils/formatters";
+import { formatSensorType, normalizeSensorUnit } from "../../utils/formatters";
 
 export default function SensorSparkline({ sensor, sensorType, latest, setting }) {
   const unit = normalizeSensorUnit(latest?.unit || sensorType.valueUnit);

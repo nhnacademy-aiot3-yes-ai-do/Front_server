@@ -1,46 +1,61 @@
-import {useQuery} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
-    ArrowLeft,
-    Bell,
-    Bot,
-    CalendarDays,
-    Camera,
-    ChevronLeft,
-    ChevronRight,
-    Cpu,
-    History,
-    LayoutDashboard,
-    MoreHorizontal,
-    Sparkles,
-    Users,
+  ArrowLeft,
+  Bell,
+  Bot,
+  CalendarDays,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Cpu,
+  History,
+  LayoutDashboard,
+  MoreHorizontal,
+  Sparkles,
+  Users,
 } from "lucide-react";
-import {useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {createPortal} from "react-dom";
-import {Link, useNavigate, useParams} from "react-router-dom";
-import {CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis,} from "recharts";
-import {cultivationKeys, getCultivationDetailPage, getLatestSensorValues,} from "../../api/cultivations";
-import {request, unwrapApiResponse} from "../../api/http";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  cultivationKeys,
+  getCultivationDetailPage,
+  getLatestSensorValues,
+} from "../../api/cultivations";
+import { request, unwrapApiResponse } from "../../api/http";
 import AdminPagination from "../../components/admin/AdminPagination";
 import Modal from "../../components/Modal";
-import {ErrorState, LoadingState} from "../../components/PageState";
+import { ErrorState, LoadingState } from "../../components/PageState";
 import ChatPanel from "../../features/cultivations/ChatPanel";
 import CultivationActions from "../../features/cultivations/CultivationActions";
-import {requiresSensorSetup} from "../../features/cultivations/cultivationSetup";
+import { requiresSensorSetup } from "../../features/cultivations/cultivationSetup";
 import DailyFeedbackPanel from "../../features/cultivations/DailyFeedbackPanel";
-import {getPreviousDateInKorea, isDailyFeedbackDate,} from "../../features/cultivations/dailyFeedbackDates";
+import {
+  getPreviousDateInKorea,
+  isDailyFeedbackDate,
+} from "../../features/cultivations/dailyFeedbackDates";
 import MemberManager from "../../features/cultivations/MemberManager";
 import PhotoManager from "../../features/cultivations/PhotoManager";
 import SensorManager from "../../features/cultivations/SensorManager";
 import {
-    formatDate,
-    formatDateTime,
-    formatMode,
-    formatRole,
-    formatSensorType,
-    normalizeList,
-    normalizeSensorUnit,
+  formatDate,
+  formatDateTime,
+  formatMode,
+  formatRole,
+  formatSensorType,
+  normalizeList,
+  normalizeSensorUnit,
 } from "../../utils/formatters";
-import {getInsightCandidates, getInsightDetail} from "../../api/insights";
+import { getInsightCandidates, getInsightDetail } from "../../api/insights";
 
 function buildSensorOptions(data, latestValues) {
   return normalizeList(data?.sensors?.sensors).flatMap((sensor) =>

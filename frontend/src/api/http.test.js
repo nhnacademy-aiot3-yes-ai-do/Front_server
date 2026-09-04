@@ -1,5 +1,5 @@
-import {afterEach, describe, expect, it, vi} from "vitest";
-import {request} from "./http";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { request } from "./http";
 
 afterEach(() => {
   vi.unstubAllGlobals();
