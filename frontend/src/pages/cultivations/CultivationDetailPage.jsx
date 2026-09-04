@@ -11,6 +11,8 @@ import {
   History,
   LayoutDashboard,
   MoreHorizontal,
+  RefreshCw,
+  Ruler,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -835,6 +837,21 @@ function getSensorState(option) {
   return { label: "안정", tone: "stable" };
 }
 
+function sensorStateIcon(tone) {
+  if (tone === "warning") return "⚠";
+  if (tone === "waiting") return "…";
+  return "✓";
+}
+
+function thresholdLabel(setting, unit) {
+  if (!setting || (setting.thresholdMin == null && setting.thresholdMax == null)) {
+    return "설정 범위 미등록";
+  }
+  const min = setting.thresholdMin ?? "하한 없음";
+  const max = setting.thresholdMax ?? "상한 없음";
+  return `${min}–${max}${unit}`;
+}
+
 function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
   const state = getSensorState(option);
   const unit = normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit);
@@ -862,13 +879,21 @@ function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
             <small>{option.sensor.deviceName}</small>
           </span>
         </div>
-        <span className={`sensor-live-state sensor-live-state--${state.tone}`}>{state.label}</span>
+        <span className={`sensor-live-state sensor-live-state--${state.tone}`}>
+          <span aria-hidden="true">{sensorStateIcon(state.tone)}</span>
+          {state.label}
+        </span>
       </header>
 
       <div className="live-sensor-card__reading">
         <strong>{option.latest?.value ?? "-"}</strong>
         <span>{unit}</span>
         <small>{sensorRangeLabel(rangeMinutes)} · 측정값</small>
+      </div>
+      <div className="live-sensor-card__threshold">
+        <Ruler aria-hidden="true" />
+        <span>권장 범위</span>
+        <strong>{thresholdLabel(option.setting, unit)}</strong>
       </div>
 
       <div className="live-sensor-chart" aria-label={`${option.sensor.deviceName} 센서 추이`}>
@@ -953,7 +978,7 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
         <div>
           <h2>실시간 센서 정보</h2>
         </div>
-        <div>
+        <div className="sensor-panel-controls">
           <label htmlFor="sensor-history-range">그래프 기간</label>
           <select
             id="sensor-history-range"
@@ -967,7 +992,23 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
             <option value={360}>최근 6시간</option>
             <option value={720}>최근 12시간</option>
           </select>
-          <span>{latestQuery.isFetching ? "최신값 확인 중" : "3초마다 최신값 갱신"}</span>
+          <button
+            aria-label={latestQuery.isFetching ? "센서 최신값 갱신 중" : "센서 최신값 새로고침"}
+            className={`sensor-refresh-button ${latestQuery.isFetching ? "is-loading" : ""}`}
+            disabled={latestQuery.isFetching}
+            onClick={() => latestQuery.refetch()}
+            title={latestQuery.isFetching ? "최신값 갱신 중" : "최신값 새로고침"}
+            type="button"
+          >
+            <RefreshCw aria-hidden="true" />
+          </button>
+          <span
+            aria-label={latestQuery.isFetching ? "최신값 갱신 중" : "최신값 갱신 완료"}
+            className={`sensor-refresh-state ${latestQuery.isFetching ? "is-loading" : ""}`}
+            title={latestQuery.isFetching ? "최신값 갱신 중" : "최신값 갱신 완료"}
+          >
+            {latestQuery.isFetching ? "↻" : "✓"}
+          </span>
         </div>
       </header>
 

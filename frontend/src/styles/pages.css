@@ -1101,6 +1101,121 @@
   font-size: 12px;
 }
 
+.sensor-panel-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brown-500);
+  font-size: 12px;
+}
+
+.sensor-panel-controls select {
+  min-height: 34px;
+  border: 1px solid rgba(117, 91, 65, 0.22);
+  border-radius: 10px;
+  padding: 0 28px 0 10px;
+  background: rgba(255, 253, 244, 0.92);
+  color: var(--brown-700);
+  font: inherit;
+}
+
+.sensor-refresh-button,
+.sensor-refresh-state {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(112, 141, 102, 0.24);
+  border-radius: 10px;
+  background: var(--sage-200);
+  color: var(--sage-700);
+  place-items: center;
+}
+
+.sensor-refresh-button {
+  cursor: pointer;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.sensor-refresh-button:hover:not(:disabled) {
+  background: var(--sage-200);
+  transform: translateY(-1px);
+}
+
+.sensor-refresh-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.sensor-refresh-button svg {
+  width: 15px;
+  height: 15px;
+}
+
+.sensor-refresh-button.is-loading svg,
+.sensor-refresh-state.is-loading {
+  animation: sensor-refresh-spin 900ms linear infinite;
+}
+
+.sensor-refresh-state {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cream-200);
+  color: var(--brown-500);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.live-sensor-card__threshold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0 0 10px;
+  border: 1px solid rgba(112, 141, 102, 0.2);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgba(238, 243, 230, 0.72);
+  color: var(--brown-500);
+  font-size: 11px;
+}
+
+.live-sensor-card__threshold svg {
+  width: 13px;
+  height: 13px;
+  color: var(--sage-700);
+}
+
+.live-sensor-card__threshold strong {
+  color: var(--sage-700);
+  font-weight: 700;
+}
+
+.sensor-live-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sensor-live-state > span {
+  font-size: 12px;
+  line-height: 1;
+}
+
+@keyframes sensor-refresh-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sensor-refresh-button,
+  .sensor-refresh-button.is-loading svg,
+  .sensor-refresh-state.is-loading {
+    animation: none;
+    transition: none;
+  }
+}
+
 .realtime-sensor-panel {
   display: flex;
   flex-direction: column;
@@ -3743,6 +3858,22 @@
 
   .realtime-sensor-panel {
     padding: 16px;
+  }
+
+  .realtime-sensor-panel > .section-heading {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .sensor-panel-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .sensor-panel-controls select {
+    min-width: 0;
+    flex: 1;
   }
 
   .live-sensor-card__reading {
