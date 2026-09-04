@@ -8,6 +8,7 @@ import site.yesaido.frontserver.client.SensorClient;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.SensorTypeRequest;
 import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
 @Controller
 @LoginRequired(adminOnly = true)
@@ -20,7 +21,7 @@ public class AdminSensorTypeController {
 
     @GetMapping
     public ResponseEntity<SensorTypeInfoListResponse> getSensorTypes() {
-        return sensorClient.getSensorTypes();
+        return UpstreamResponseUtils.isolate(sensorClient.getSensorTypes());
     }
 
     @PostMapping

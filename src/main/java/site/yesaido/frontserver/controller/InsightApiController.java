@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 import site.yesaido.frontserver.client.AiClient;
 import site.yesaido.frontserver.common.ApiResponse;
 import site.yesaido.frontserver.dto.ai.insight.InsightCandidateResponse;
-import site.yesaido.frontserver.dto.ai.insight.InsightCandidatesResponse;
 import site.yesaido.frontserver.dto.ai.insight.InsightDetailResponse;
 import site.yesaido.frontserver.util.LoginRequired;
 
