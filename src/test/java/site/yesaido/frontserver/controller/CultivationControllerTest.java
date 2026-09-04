@@ -135,6 +135,18 @@ class CultivationControllerTest {
     }
 
     @Test
+    @DisplayName("일일 피드백 딥링크는 React 앱으로 포워드")
+    void dailyFeedbackDeepLinkReturnsReactView() throws Exception {
+        mockMvc.perform(get(
+                        "/cultivations/{cultivation-id}/daily-feedbacks/{feedback-date}",
+                        27L,
+                        "2026-09-02"
+                ).cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(view().name("forward:/react/index.html"));
+    }
+
+    @Test
     @DisplayName("재배 이력 조회 성공 - 일반 데이터 분기")
     void cultivationHistoryReturnsHistoryView() throws Exception {
         CultivationHistoryResponse contentItem = new CultivationHistoryResponse(1L, "재배명", 10L, "FINISHED", new BigDecimal("5.0"), "A", LocalDateTime.now());
