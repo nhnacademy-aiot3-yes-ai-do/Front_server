@@ -1,4 +1,4 @@
-import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import {
   formatDateTime,
   formatSensorType,
@@ -26,6 +26,7 @@ export default function SensorSparkline({
       value: point.value,
     }));
   const value = latest?.value;
+  const hasThreshold = setting?.thresholdMin != null || setting?.thresholdMax != null;
   const outside =
     value != null &&
     ((setting?.thresholdMin != null && Number(value) < Number(setting.thresholdMin)) ||
@@ -42,7 +43,7 @@ export default function SensorSparkline({
           </strong>
         </div>
         <span className="sensor-spark__state">
-          {value == null ? "수집 중" : outside ? "확인 필요" : "안정"}
+          {value == null ? "수집 중" : !hasThreshold ? "범위 미등록" : outside ? "확인 필요" : "안정"}
         </span>
       </div>
       <div
@@ -62,6 +63,7 @@ export default function SensorSparkline({
                   <stop offset="100%" stopColor={outside ? "#b77e3e" : "#708d66"} stopOpacity={0} />
                 </linearGradient>
               </defs>
+              <XAxis dataKey="measuredAt" hide />
               <Tooltip
                 formatter={(tooltipValue) => [`${tooltipValue}${unit || ""}`, "측정값"]}
                 labelFormatter={(label) => `측정 시각 ${label}`}

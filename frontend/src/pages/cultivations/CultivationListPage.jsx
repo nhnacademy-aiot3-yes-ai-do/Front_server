@@ -44,10 +44,8 @@ export default function CultivationListPage() {
       mushroom.mushroomNameKo,
     ]),
   );
-  const latestValuesByCultivationId =
-    latestQuery.data?.latestSensorValuesByCultivationId ??
-    listQuery.data?.latestSensorValuesByCultivationId ??
-    {};
+  const latestValuesByCultivationId = latestQuery.data?.latestSensorValuesByCultivationId;
+  const initialLatestValuesByCultivationId = listQuery.data?.latestSensorValuesByCultivationId ?? {};
   const pagedCultivations = cultivations.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
@@ -87,7 +85,9 @@ export default function CultivationListPage() {
                   cultivation={cultivation}
                   mushroomName={mushrooms.get(cultivation.mushroomId)}
                   latestSensorValues={
-                    latestValuesByCultivationId[cultivation.cultivationId] ?? []
+                    latestValuesByCultivationId?.[cultivation.cultivationId]?.length
+                      ? latestValuesByCultivationId[cultivation.cultivationId]
+                      : initialLatestValuesByCultivationId[cultivation.cultivationId] ?? []
                   }
                   sensorTrend1h={
                     listQuery.data?.sensorTrend1hByCultivationId?.[cultivation.cultivationId]

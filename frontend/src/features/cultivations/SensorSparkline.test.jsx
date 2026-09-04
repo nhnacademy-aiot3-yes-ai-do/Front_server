@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { formatDateTime } from "../../utils/formatters";
 import SensorSparkline from "./SensorSparkline";
 
 vi.mock("recharts", () => ({
@@ -10,6 +11,7 @@ vi.mock("recharts", () => ({
     </div>
   ),
   ResponsiveContainer: ({ children }) => <div>{children}</div>,
+  XAxis: () => null,
   Tooltip: ({ formatter, labelFormatter }) => (
     <div data-testid="chart-tooltip">
       {formatter(22)[0]} · {labelFormatter("2026-09-04 12:00")}
@@ -34,7 +36,7 @@ describe("SensorSparkline tooltip", () => {
 
     expect(screen.getByTestId("area-chart")).toHaveAttribute(
       "data-points",
-      expect.stringContaining('"measuredAt":"09. 04. AM 03:00"'),
+      expect.stringContaining(`"measuredAt":"${formatDateTime("2026-09-04T12:00:00+09:00")}"`),
     );
     expect(screen.getByTestId("chart-tooltip")).toHaveTextContent(
       "22°C · 측정 시각 2026-09-04 12:00",
