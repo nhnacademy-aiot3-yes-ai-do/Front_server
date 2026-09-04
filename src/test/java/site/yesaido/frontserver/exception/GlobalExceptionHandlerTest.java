@@ -114,6 +114,69 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    @DisplayName("일일 피드백 접근 거부 응답은 403과 upstream 안내 메시지를 유지")
+    void handleDailyFeedbackForbiddenKeepsStatusAndMessage() {
+        Request request = Request.create(
+                Request.HttpMethod.GET,
+                "/api/v1/ai/cultivations/27/daily-feedbacks/2026-09-02",
+                Collections.emptyMap(),
+                null,
+                StandardCharsets.UTF_8,
+                null
+        );
+        Response response = Response.builder()
+                .status(403).reason("Forbidden").request(request)
+                .headers(Collections.emptyMap())
+                .body("{\"detail\":\"해당 재배지의 일일 피드백을 조회할 권한이 없습니다.\"}", StandardCharsets.UTF_8)
+                .build();
+        FeignException exception = FeignException.errorStatus(
+                "AiClient#getDailyFeedback(Long,LocalDate)",
+                response
+        );
+
+        ErrorResponse result = (ErrorResponse) handler.handleFeignException(
+                exception,
+                new MockHttpServletRequest()
+        );
+
+        assertEquals(403, result.getStatusCode().value());
+        assertEquals(
+                "해당 재배지의 일일 피드백을 조회할 권한이 없습니다.",
+                result.getBody().getDetail()
+        );
+    }
+
+    @Test
+    @DisplayName("일일 피드백 404는 버섯 가이드가 아닌 upstream 피드백 안내 메시지를 반환")
+    void handleDailyFeedbackNotFoundUsesFeedbackMessage() {
+        Request request = Request.create(
+                Request.HttpMethod.GET,
+                "/api/v1/ai/cultivations/27/daily-feedbacks/2026-09-02",
+                Collections.emptyMap(),
+                null,
+                StandardCharsets.UTF_8,
+                null
+        );
+        Response response = Response.builder()
+                .status(404).reason("Not Found").request(request)
+                .headers(Collections.emptyMap())
+                .body("{\"detail\":\"해당 날짜의 일일 피드백이 존재하지 않습니다.\"}", StandardCharsets.UTF_8)
+                .build();
+        FeignException exception = FeignException.errorStatus(
+                "AiClient#getDailyFeedback(Long,LocalDate)",
+                response
+        );
+
+        ErrorResponse result = (ErrorResponse) handler.handleFeignException(
+                exception,
+                new MockHttpServletRequest()
+        );
+
+        assertEquals(404, result.getStatusCode().value());
+        assertEquals("해당 날짜의 일일 피드백이 존재하지 않습니다.", result.getBody().getDetail());
+    }
+
+    @Test
     @DisplayName("Feign 404 외 오류 발생 시 503과 알림 서비스 안내 메시지 반환")
     void handleFeignExceptionReturns503ForOtherStatuses() {
         Request request = Request.create(
