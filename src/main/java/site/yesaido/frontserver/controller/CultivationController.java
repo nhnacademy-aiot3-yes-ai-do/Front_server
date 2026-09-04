@@ -85,7 +85,10 @@ public class CultivationController {
     }
 
     @GetMapping("/{cultivation-id}/daily-feedbacks/{feedback-date}")
-    public String dailyFeedback() {
+    public String dailyFeedback(
+            @PathVariable("cultivation-id") Long cultivationId,
+            @PathVariable("feedback-date") String feedbackDate
+    ) {
         return REACT_APP;
     }
 
