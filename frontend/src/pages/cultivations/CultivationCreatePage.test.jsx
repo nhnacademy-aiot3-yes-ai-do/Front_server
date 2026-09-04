@@ -1,9 +1,9 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createCultivation, getMushroomGuide } from "../../api/cultivations";
-import { jsonRequest, request } from "../../api/http";
+import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
+import {act, cleanup, fireEvent, render, screen, waitFor} from "@testing-library/react";
+import {MemoryRouter} from "react-router-dom";
+import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import {createCultivation, getMushroomGuide} from "../../api/cultivations";
+import {jsonRequest, request} from "../../api/http";
 import CultivationCreatePage from "./CultivationCreatePage";
 
 vi.mock("../../api/cultivations", () => ({

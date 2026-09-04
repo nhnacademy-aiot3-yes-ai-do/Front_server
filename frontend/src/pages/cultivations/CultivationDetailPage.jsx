@@ -25,7 +25,7 @@ import Modal from "../../components/Modal";
 import {ErrorState, LoadingState} from "../../components/PageState";
 import ChatPanel from "../../features/cultivations/ChatPanel";
 import CultivationActions from "../../features/cultivations/CultivationActions";
-import { requiresSensorSetup } from "../../features/cultivations/cultivationSetup";
+import {requiresSensorSetup} from "../../features/cultivations/cultivationSetup";
 import DailyFeedbackPanel from "../../features/cultivations/DailyFeedbackPanel";
 import {getPreviousDateInKorea, isDailyFeedbackDate,} from "../../features/cultivations/dailyFeedbackDates";
 import MemberManager from "../../features/cultivations/MemberManager";

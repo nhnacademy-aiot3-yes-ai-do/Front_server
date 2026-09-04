@@ -1,12 +1,12 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, CheckCircle2 } from "lucide-react";
-import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { cultivationKeys, getCultivationSetupPage } from "../../api/cultivations";
-import { ErrorState, LoadingState } from "../../components/PageState";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {Check, CheckCircle2} from "lucide-react";
+import {useState} from "react";
+import {Link, useNavigate, useParams} from "react-router-dom";
+import {cultivationKeys, getCultivationSetupPage} from "../../api/cultivations";
+import {ErrorState, LoadingState} from "../../components/PageState";
 import CultivationCreationStepper from "../../features/cultivations/CultivationCreationStepper";
 import CultivationSensorSetupStep from "../../features/cultivations/CultivationSensorSetupStep";
-import { normalizeList } from "../../utils/formatters";
+import {normalizeList} from "../../utils/formatters";
 
 export default function CultivationSensorSetupPage() {
   const { cultivationId } = useParams();

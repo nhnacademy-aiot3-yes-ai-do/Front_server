@@ -18,11 +18,7 @@ import site.yesaido.frontserver.config.MethodOverrideConfig;
 import site.yesaido.frontserver.dto.cultivation.request.cultivation.EnvironmentSettingRequest;
 import site.yesaido.frontserver.dto.cultivation.request.sensor.CreateCultivationSensorRequest;
 import site.yesaido.frontserver.dto.cultivation.response.mushroom.MushroomReferenceInfoListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.CultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.ReusableCultivationSensorListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.ReusableCultivationSensorResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTrendPointListResponse;
-import site.yesaido.frontserver.dto.cultivation.response.sensor.SensorTypeInfoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.sensor.*;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import tools.jackson.databind.ObjectMapper;
 
