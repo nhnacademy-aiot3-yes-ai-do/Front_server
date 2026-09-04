@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ImageOff } from "lucide-react";
+import { Cable, ChevronRight, ImageOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cultivationKeys, getCultivationPreview } from "../../api/cultivations";
 import {
@@ -12,16 +12,27 @@ import {
 import { requiresSensorSetup } from "./cultivationSetup";
 import SensorSparkline from "./SensorSparkline";
 
-function sensorPreviews(preview, suppliedLatestValues) {
-  const latestValues = suppliedLatestValues?.length
-    ? suppliedLatestValues
-    : normalizeList(preview?.latestSensorValues?.latestSensorValueResponses);
+function sensorPreviews(preview, suppliedLatestValues, suppliedTrend) {
+  const latestValues =
+    suppliedLatestValues === undefined
+      ? normalizeList(preview?.latestSensorValues?.latestSensorValueResponses)
+      : normalizeList(suppliedLatestValues);
+  const trendValues = normalizeList(suppliedTrend);
   const settings = normalizeList(preview?.sensors?.environmentSettings);
   const sensors = normalizeList(preview?.sensors?.sensors);
+
+  const trendFor = (deviceEui, sensorType, valueUnit) =>
+    trendValues.filter(
+      (point) =>
+        point.deviceEui === deviceEui &&
+        point.sensorType === sensorType &&
+        normalizeSensorUnit(point.unit || valueUnit) === normalizeSensorUnit(valueUnit),
+    );
 
   if (!sensors.length) {
     return latestValues.map((latest) => ({
       latest,
+      trend: trendFor(latest.deviceEui, latest.sensorType, latest.unit),
       sensor: latest,
       sensorType: { type: latest.sensorType, valueUnit: latest.unit },
       setting: undefined,
@@ -40,6 +51,7 @@ function sensorPreviews(preview, suppliedLatestValues) {
       sensor,
       sensorType,
       setting: settings.find((setting) => setting.sensorTypeId === sensorType.sensorTypeId),
+      trend: trendFor(sensor.deviceEui, sensorType.type, sensorType.valueUnit),
     })),
   );
 }
@@ -59,14 +71,19 @@ function cardStatus(entries) {
   return warning ? { label: "환경 확인 필요", tone: "warning" } : { label: "안정", tone: "stable" };
 }
 
-export default function CultivationCard({ cultivation, mushroomName, latestSensorValues }) {
+export default function CultivationCard({
+  cultivation,
+  mushroomName,
+  latestSensorValues,
+  sensorTrend1h,
+}) {
   const previewQuery = useQuery({
     queryKey: cultivationKeys.preview(cultivation.cultivationId),
     queryFn: () => getCultivationPreview(cultivation.cultivationId),
     staleTime: 30_000,
   });
   const preview = previewQuery.data;
-  const entries = sensorPreviews(preview, latestSensorValues);
+  const entries = sensorPreviews(preview, latestSensorValues, sensorTrend1h);
   const setupRequired =
     previewQuery.isSuccess &&
     requiresSensorSetup({ ...cultivation, ...preview?.cultivation }, preview?.sensors?.sensors);
@@ -137,18 +154,7 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
               <dd>{cultivation.memberCount ?? 0}명</dd>
             </div>
           </dl>
-          {setupRequired ? (
-            <Link
-              className="cultivation-setup-resume"
-              aria-label={`${cultivation.name} 설정 마저 진행하기`}
-              to={targetPath}
-            >
-              <span>센서 연결이 완료되지 않았습니다.</span>
-              <strong>
-                마저 진행하기 <ChevronRight aria-hidden="true" />
-              </strong>
-            </Link>
-          ) : (
+          {!setupRequired && (
             <div className="pending-progress">
               <span>성장 단계 및 재배 진행률</span>
               <strong>데이터 준비 중</strong>
@@ -156,31 +162,64 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
           )}
         </div>
       </div>
-      <section className="cultivation-card__sensors" aria-label={`${cultivation.name} 센서 추이`}>
-        <header>
-          <strong>등록 센서 추이</strong>
-          <span>실시간</span>
-        </header>
-        {previewQuery.isLoading && <p className="sensor-column-state">센서 정보를 불러오는 중</p>}
-        {previewQuery.isError && (
-          <div className="sensor-column-state">
-            <span>센서 정보를 불러오지 못했습니다.</span>
-            <button className="text-button" type="button" onClick={() => previewQuery.refetch()}>
-              다시 시도
-            </button>
+      <section
+        className={`cultivation-card__sensors${setupRequired ? " cultivation-card__sensors--setup" : ""}`}
+        aria-label={`${cultivation.name} 센서 추이`}
+      >
+        {setupRequired ? (
+          <div className="cultivation-setup-action">
+            <span className="cultivation-setup-action__icon">
+              <Cable aria-hidden="true" />
+            </span>
+            <div>
+              <h3>센서 연결 대기</h3>
+              <p>센서를 연결하면 측정 현황을 확인할 수 있습니다.</p>
+            </div>
+            <Link
+              className="button button--secondary cultivation-setup-action__link"
+              aria-label={`${cultivation.name} 센서 설정 계속하기`}
+              to={targetPath}
+            >
+              설정 계속하기 <ChevronRight aria-hidden="true" />
+            </Link>
           </div>
+        ) : (
+          <>
+            <header>
+              <strong>등록 센서 추이</strong>
+              <span>최근 1시간</span>
+            </header>
+            {previewQuery.isLoading && (
+              <p className="sensor-column-state">센서 정보를 불러오는 중</p>
+            )}
+            {previewQuery.isError && (
+              <div className="sensor-column-state">
+                <span>센서 정보를 불러오지 못했습니다.</span>
+                <button
+                  className="text-button"
+                  type="button"
+                  onClick={() => previewQuery.refetch()}
+                >
+                  다시 시도
+                </button>
+              </div>
+            )}
+            {!previewQuery.isLoading && !previewQuery.isError && entries.length === 0 && (
+              <p className="sensor-column-state">등록된 센서가 없습니다.</p>
+            )}
+            {entries.map((entry) => (
+              <SensorSparkline
+                key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
+                cultivationId={cultivation.cultivationId}
+                latest={entry.latest}
+                sensor={entry.sensor}
+                sensorType={entry.sensorType}
+                setting={entry.setting}
+                trend={entry.trend}
+              />
+            ))}
+          </>
         )}
-        {!previewQuery.isLoading && !previewQuery.isError && entries.length === 0 && (
-          <p className="sensor-column-state">
-            {setupRequired ? "센서를 연결하면 측정 현황이 표시됩니다." : "등록된 센서가 없습니다."}
-          </p>
-        )}
-        {entries.map((entry) => (
-          <SensorSparkline
-            key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
-            {...entry}
-          />
-        ))}
       </section>
     </article>
   );

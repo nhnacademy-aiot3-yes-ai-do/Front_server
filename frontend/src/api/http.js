@@ -4,10 +4,16 @@ export function backendUrl(path) {
   return `${backendBase}${path}`;
 }
 
+export function gatewayUrl(path) {
+  const gatewayOrigin = import.meta.env.DEV ? "http://localhost:8080" : "https://api.yes-nhn.site";
+  return `${gatewayOrigin}${path}`;
+}
+
 export async function request(path, options = {}) {
-  const response = await fetch(backendUrl(path), {
+  const { directGateway = false, ...fetchOptions } = options;
+  const response = await fetch(directGateway ? gatewayUrl(path) : backendUrl(path), {
     credentials: "include",
-    ...options,
+    ...fetchOptions,
     headers: {
       Accept: "application/json",
       ...options.headers,
@@ -39,6 +45,10 @@ export async function request(path, options = {}) {
 
   const contentType = response.headers.get("content-type") || "";
   return contentType.includes("application/json") ? response.json() : response.text();
+}
+
+export function gatewayRequest(path, options = {}) {
+  return request(path, { ...options, directGateway: true });
 }
 
 export function jsonRequest(path, method, body) {

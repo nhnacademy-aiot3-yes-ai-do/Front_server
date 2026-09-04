@@ -180,14 +180,14 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("HTML form 재배 삭제 성공 시 목록으로 리다이렉트")
-    void deleteCultivationFormRedirectsToList() throws Exception {
-        mockMvc.perform(post("/cultivations/{cultivation-id}", 5L)
-                        .cookie(LOGGED_IN)
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("_method", "DELETE"))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cultivations"));
+    @DisplayName("재배 삭제 성공 시 204를 반환한다")
+    void deleteCultivationReturnsNoContent() throws Exception {
+        when(cultivationClient.deleteCultivation(5L))
+                .thenReturn(ResponseEntity.noContent().build());
+
+        mockMvc.perform(delete("/cultivations/{cultivation-id}", 5L)
+                        .cookie(LOGGED_IN))
+                .andExpect(status().isNoContent());
 
         verify(cultivationClient).deleteCultivation(5L);
     }
@@ -362,8 +362,8 @@ class CultivationControllerTest {
     }
 
     @Test
-    @DisplayName("HTML form 사진 업로드 성공 시 상세 페이지로 리다이렉트")
-    void uploadPhotoRedirectsToDetail() throws Exception {
+    @DisplayName("사진 업로드 성공 시 업로드된 사진 정보를 JSON으로 반환")
+    void uploadPhotoReturnsUploadedPhoto() throws Exception {
         Long cultivationId = 1L;
         MockMultipartFile file = new MockMultipartFile("file", "test.jpg", "image/jpeg", "test data".getBytes());
         PhotoResponse photo = new PhotoResponse(100L, "key", "uri", "S3", LocalDateTime.now());
@@ -373,8 +373,9 @@ class CultivationControllerTest {
         mockMvc.perform(multipart("/cultivations/{cultivation-id}/photos", cultivationId)
                         .file(file)
                         .cookie(LOGGED_IN))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/cultivations/" + cultivationId));
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.photoId").value(100L))
+                .andExpect(jsonPath("$.uri").value("uri"));
 
         verify(cultivationClient).uploadPhoto(eq(cultivationId), any());
     }
