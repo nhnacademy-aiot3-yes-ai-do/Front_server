@@ -1,10 +1,10 @@
-import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { Check, Hash, Send, Sparkles, Sprout, Thermometer } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { jsonRequest, request } from "../../api/http";
+import {useQueries, useQueryClient} from "@tanstack/react-query";
+import {Check, Hash, Send, Sparkles, Sprout, Thermometer} from "lucide-react";
+import {useEffect, useMemo, useRef, useState} from "react";
+import {jsonRequest, request} from "../../api/http";
 import Modal from "../../components/Modal";
-import { ErrorState, LoadingState } from "../../components/PageState";
-import { normalizeList } from "../../utils/formatters";
+import {ErrorState, LoadingState} from "../../components/PageState";
+import {normalizeList} from "../../utils/formatters";
 
 const EVENT_GROUPS = {
   sensor: [

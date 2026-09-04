@@ -1,17 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
-import { useState } from "react";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {Pencil, Plus, RotateCcw, Trash2} from "lucide-react";
+import {useState} from "react";
 import {
-  deleteNotificationChannel,
-  deleteNotificationEvent,
-  deleteNotificationTemplate,
-  getNotificationChannels,
-  getNotificationEvents,
-  getNotificationTemplates,
-  restoreNotificationChannel,
-  saveNotificationChannel,
-  saveNotificationEvent,
-  saveNotificationTemplate,
+    deleteNotificationChannel,
+    deleteNotificationEvent,
+    deleteNotificationTemplate,
+    getNotificationChannels,
+    getNotificationEvents,
+    getNotificationTemplates,
+    restoreNotificationChannel,
+    saveNotificationChannel,
+    saveNotificationEvent,
+    saveNotificationTemplate,
 } from "../../api/admin";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";

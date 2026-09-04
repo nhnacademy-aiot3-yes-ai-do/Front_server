@@ -1,19 +1,14 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ImagePlus, MessageSquareReply, Paperclip, Trash2, X } from "lucide-react";
-import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import {
-  answerAdminInquiry,
-  deleteAdminInquiryCultivation,
-  getAdminInquiries,
-  getAdminInquiry,
-} from "../../api/admin";
+import {keepPreviousData, useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {ImagePlus, MessageSquareReply, Paperclip, Trash2, X} from "lucide-react";
+import {useState} from "react";
+import {useSearchParams} from "react-router-dom";
+import {answerAdminInquiry, deleteAdminInquiryCultivation, getAdminInquiries, getAdminInquiry,} from "../../api/admin";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import AdminPagination from "../../components/admin/AdminPagination";
 import AdminTableState from "../../components/admin/AdminTableState";
-import { formatDate, formatDateTime } from "../../utils/formatters";
+import {formatDate, formatDateTime} from "../../utils/formatters";
 
 const PAGE_SIZE = 8;
 const MAX_PHOTOS = 5;

@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import {Check} from "lucide-react";
 
 const CREATION_STEPS = [
   { number: 1, label: "재배지 정보" },

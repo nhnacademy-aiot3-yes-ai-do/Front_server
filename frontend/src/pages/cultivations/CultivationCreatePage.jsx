@@ -1,25 +1,25 @@
-import { useQuery } from "@tanstack/react-query";
+import {useQuery} from "@tanstack/react-query";
 import {
-  Check,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  Cloud,
-  Droplets,
-  Sun,
-  Thermometer,
-  TriangleAlert,
+    Check,
+    CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
+    Cloud,
+    Droplets,
+    Sun,
+    Thermometer,
+    TriangleAlert,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createCultivation, cultivationKeys, getMushroomGuide } from "../../api/cultivations";
-import { request } from "../../api/http";
+import {useEffect, useMemo, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {createCultivation, cultivationKeys, getMushroomGuide} from "../../api/cultivations";
+import {request} from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import { ErrorState, LoadingState } from "../../components/PageState";
+import {ErrorState, LoadingState} from "../../components/PageState";
 import CultivationSensorSetupStep from "../../features/cultivations/CultivationSensorSetupStep";
 import CultivationCreationStepper from "../../features/cultivations/CultivationCreationStepper";
-import { formatSensorType, normalizeList } from "../../utils/formatters";
+import {formatSensorType, normalizeList} from "../../utils/formatters";
 
 const DEFAULT_ENVIRONMENT_TYPES = [
   { conditionKey: "temperature", type: "TEMPERATURE", unit: "°C" },
