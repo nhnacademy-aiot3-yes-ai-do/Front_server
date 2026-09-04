@@ -174,7 +174,7 @@ class AdminApiControllerTest {
     @Test
     @DisplayName("버섯 도감 목록 조회")
     void getMushroomReferencesSuccess() throws Exception {
-        when(sensorClient.getAllMushroomReferences())
+        when(sensorClient.getAllMushroomReferencesByAdmin())
                 .thenReturn(ResponseEntity.ok(new MushroomReferenceInfoListResponse(List.of())));
 
         mockMvc.perform(get("/admin/mushroom-references").cookie(ACCESS_COOKIE, ADMIN_COOKIE))
