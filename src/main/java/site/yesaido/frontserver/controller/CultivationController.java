@@ -77,6 +77,11 @@ public class CultivationController {
         return REACT_APP;
     }
 
+    @GetMapping("/{cultivation-id}/daily-feedbacks/{feedback-date}")
+    public String dailyFeedback() {
+        return REACT_APP;
+    }
+
     @PutMapping("/{cultivation-id}/harvest-mode")
     public ResponseEntity<CultivationModeChangeResponse> switchToHarvestMode(@PathVariable("cultivation-id") Long cultivationId) {
         ResponseEntity<CultivationModeChangeResponse> response = cultivationClient.switchToHarvestMode(cultivationId);
@@ -158,7 +163,7 @@ public class CultivationController {
     // 사진
     @PostMapping("/{cultivation-id}/photos")
     public String uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
-                                                     @RequestParam("file") MultipartFile file) {
+                              @RequestParam("file") MultipartFile file) {
         cultivationClient.uploadPhoto(cultivationId, file);
         return "redirect:/cultivations/" + cultivationId;
     }
@@ -173,5 +178,4 @@ public class CultivationController {
                                             @PathVariable("photo-id") Long photoId) {
         return cultivationClient.deletePhoto(cultivationId, photoId);
     }
-
 }
