@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { formatMode, formatRole, formatSensorType, normalizeList } from "./formatters";
+import {describe, expect, it} from "vitest";
+import {formatMode, formatRole, formatSensorType, normalizeList} from "./formatters";
 
 describe("formatters", () => {
   it("서버 enum을 사용자에게 보이는 한국어로 변환한다", () => {

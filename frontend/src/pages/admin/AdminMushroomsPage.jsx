@@ -1,18 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
-import {
-  deleteAdminMushroom,
-  getAdminMushrooms,
-  getAdminSensorTypes,
-  saveAdminMushroom,
-} from "../../api/admin";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {Pencil, Plus, Trash2} from "lucide-react";
+import {useState} from "react";
+import {deleteAdminMushroom, getAdminMushrooms, getAdminSensorTypes, saveAdminMushroom,} from "../../api/admin";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
 import AdminPagination from "../../components/admin/AdminPagination";
 import AdminTableState from "../../components/admin/AdminTableState";
-import { formatDate, formatSensorType } from "../../utils/formatters";
+import {formatDate, formatSensorType} from "../../utils/formatters";
 
 const PAGE_SIZE = 8;
 

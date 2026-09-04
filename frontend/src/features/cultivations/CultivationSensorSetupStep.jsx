@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Plus, TriangleAlert } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
+import {useQuery} from "@tanstack/react-query";
+import {CheckCircle2, Plus, TriangleAlert} from "lucide-react";
+import {useEffect, useRef, useState} from "react";
+import {jsonRequest, request, unwrapApiResponse} from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import { formatSensorType, normalizeList } from "../../utils/formatters";
+import {formatSensorType, normalizeList} from "../../utils/formatters";
 
 const EMPTY_SENSOR = {
   deviceEui: "",

@@ -1,4 +1,4 @@
-import { normalizeList } from "../../utils/formatters";
+import {normalizeList} from "../../utils/formatters";
 
 export function requiresSensorSetup(cultivation, sensors) {
   return (

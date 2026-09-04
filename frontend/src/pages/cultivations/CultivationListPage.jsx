@@ -1,12 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { cultivationKeys, getCultivationListPage } from "../../api/cultivations";
+import {useQuery} from "@tanstack/react-query";
+import {Plus} from "lucide-react";
+import {useEffect, useState} from "react";
+import {Link} from "react-router-dom";
+import {cultivationKeys, getCultivationListPage} from "../../api/cultivations";
 import AdminPagination from "../../components/admin/AdminPagination";
-import { EmptyState, ErrorState, LoadingState } from "../../components/PageState";
+import {EmptyState, ErrorState, LoadingState} from "../../components/PageState";
 import CultivationCard from "../../features/cultivations/CultivationCard";
-import { normalizeList } from "../../utils/formatters";
+import {normalizeList} from "../../utils/formatters";
 
 const PAGE_SIZE = 6;
 

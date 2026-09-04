@@ -1,7 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
-import { deleteAdminSensorType, getAdminSensorTypes, saveAdminSensorType } from "../../api/admin";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {Pencil, Plus, Trash2} from "lucide-react";
+import {useState} from "react";
+import {deleteAdminSensorType, getAdminSensorTypes, saveAdminSensorType} from "../../api/admin";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import AdminPageHeader from "../../components/admin/AdminPageHeader";
