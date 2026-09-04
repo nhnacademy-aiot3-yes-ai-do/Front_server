@@ -1,20 +1,11 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  MessageSquare,
-  Paperclip,
-  Plus,
-  Send,
-  X,
-} from "lucide-react";
-import { Fragment, useState } from "react";
-import { request, unwrapApiResponse } from "../../api/http";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {CalendarDays, ChevronLeft, ChevronRight, MessageSquare, Paperclip, Plus, Send, X,} from "lucide-react";
+import {Fragment, useState} from "react";
+import {request, unwrapApiResponse} from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import { ErrorState, LoadingState } from "../../components/PageState";
-import { formatDate, formatDateTime, normalizeList } from "../../utils/formatters";
+import {ErrorState, LoadingState} from "../../components/PageState";
+import {formatDate, formatDateTime, normalizeList} from "../../utils/formatters";
 
 const PAGE_SIZE = 6;
 const MAX_PHOTOS = 5;

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { getPreviousDateInKorea, isDailyFeedbackDate } from "./dailyFeedbackDates";
+import {describe, expect, it} from "vitest";
+import {getPreviousDateInKorea, isDailyFeedbackDate} from "./dailyFeedbackDates";
 
 describe("dailyFeedbackDates", () => {
   it("한국 시간 자정 직후에도 한국 날짜를 기준으로 전날을 계산한다", () => {

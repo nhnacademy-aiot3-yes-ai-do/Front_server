@@ -1,11 +1,11 @@
-import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createCultivation } from "../../api/cultivations";
-import { request } from "../../api/http";
+import {useQuery} from "@tanstack/react-query";
+import {useMemo, useState} from "react";
+import {useNavigate} from "react-router-dom";
+import {createCultivation} from "../../api/cultivations";
+import {request} from "../../api/http";
 import Notice from "../../components/Notice";
-import { ErrorState, LoadingState } from "../../components/PageState";
-import { formatSensorType, normalizeList } from "../../utils/formatters";
+import {ErrorState, LoadingState} from "../../components/PageState";
+import {formatSensorType, normalizeList} from "../../utils/formatters";
 
 export default function CultivationCreatePage() {
   const [mushroomId, setMushroomId] = useState("");

@@ -1,6 +1,6 @@
-import { lazy, Suspense } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
-import { useAutoSession } from "./utils/useAutoSession";
+import {lazy, Suspense} from "react";
+import {Navigate, Route, Routes} from "react-router-dom";
+import {useAutoSession} from "./utils/useAutoSession";
 
 const AppLayout = lazy(() => import("./layouts/AppLayout"));
 const AdminLayout = lazy(() => import("./layouts/AdminLayout"));

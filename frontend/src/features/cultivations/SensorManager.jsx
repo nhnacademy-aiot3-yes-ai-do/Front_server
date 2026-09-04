@@ -1,10 +1,10 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
-import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {Plus, Trash2} from "lucide-react";
+import {useRef, useState} from "react";
+import {jsonRequest, request, unwrapApiResponse} from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import { formatSensorType, normalizeList } from "../../utils/formatters";
+import {formatSensorType, normalizeList} from "../../utils/formatters";
 
 export default function SensorManager({ cultivationId, sensors, canManage, onClose }) {
   const [selectedTypeIds, setSelectedTypeIds] = useState([]);

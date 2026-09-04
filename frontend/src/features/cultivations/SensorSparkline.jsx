@@ -1,5 +1,5 @@
-import { Area, AreaChart, ResponsiveContainer } from "recharts";
-import { formatSensorType, normalizeSensorUnit } from "../../utils/formatters";
+import {Area, AreaChart, ResponsiveContainer} from "recharts";
+import {formatSensorType, normalizeSensorUnit} from "../../utils/formatters";
 
 export default function SensorSparkline({
   cultivationId,
