@@ -25,8 +25,9 @@
 .cultivation-card {
   position: relative;
   display: grid;
+  container-type: inline-size;
   height: 460px;
-  grid-template-columns: minmax(240px, 1fr) minmax(190px, 0.62fr);
+  grid-template-columns: 1.3fr 1fr;
   gap: 13px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -34,6 +35,28 @@
   padding: 14px;
   background: rgba(255, 253, 244, 0.94);
   box-shadow: 0 8px 22px rgba(78, 59, 36, 0.1);
+}
+
+@container (max-width: 380px) {
+  .cultivation-card {
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .cultivation-card__sensors {
+    overflow-y: visible;
+    border-top: 1px dashed var(--line);
+    padding-top: 14px;
+  }
+
+  .cultivation-photo {
+    min-height: 0;
+    aspect-ratio: 16 / 10;
+  }
+
+  .cultivation-card__copy {
+    padding: 4px 2px;
+  }
 }
 
 .cultivation-card::before {
@@ -222,7 +245,7 @@
   margin: 0;
   font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif;
   font-weight: 700;
-  font-size: clamp(22px, 1.7vw, 30px);
+  font-size: clamp(16px, 7cqw, 30px);
 }
 
 .cultivation-card__title-row p {
@@ -299,18 +322,33 @@
   display: flex;
   flex: 0 0 auto;
   justify-content: space-between;
+  gap: 6px;
   color: var(--brown-500);
-  font-size: 11px;
+  font-size: clamp(9px, 3.2cqw, 11px);
+}
+
+.cultivation-card__sensors > header strong,
+.cultivation-card__sensors > header span {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cultivation-card__sensors > header span {
+  flex-shrink: 0;
 }
 
 .cultivation-card__sensors > header strong {
   color: var(--brown-700);
-  font-size: 13px;
+  font-size: clamp(11px, 4cqw, 13px);
 }
 
 .sensor-spark {
+  display: flex;
   flex: 0 0 auto;
-  min-height: 145px;
+  flex-direction: column;
+  gap: 10px;
   border: 1px solid rgba(128, 97, 64, 0.12);
   border-radius: 14px;
   padding: 12px;
@@ -355,15 +393,6 @@
 
 .sensor-spark--warning .sensor-spark__state {
   color: #9b672f !important;
-}
-
-.sensor-spark__chart {
-  display: grid;
-  height: 62px;
-  margin: 5px 0;
-  color: var(--brown-500);
-  font-size: 10px;
-  place-items: center;
 }
 
 .sensor-column-state {
@@ -3539,7 +3568,6 @@
 
 @media (max-width: 1180px) {
   .cultivation-card {
-    grid-template-columns: minmax(220px, 1fr) minmax(170px, 0.68fr);
     gap: 11px;
   }
 
@@ -3560,10 +3588,6 @@
 @media (max-width: 940px) {
   .cultivation-list {
     grid-template-columns: 1fr;
-  }
-
-  .cultivation-card {
-    grid-template-columns: minmax(350px, 1fr) minmax(210px, 280px);
   }
 
   .guide-grid,
@@ -3592,28 +3616,8 @@
     grid-template-columns: 1fr;
   }
 
-  .cultivation-card {
-    height: auto;
-    grid-template-columns: 1fr;
-  }
-
-  .cultivation-card__sensors {
-    overflow-y: visible;
-    border-top: 1px dashed var(--line);
-    padding-top: 14px;
-  }
-
   .profile-card {
     padding: 30px 22px;
-  }
-
-  .cultivation-photo {
-    min-height: 0;
-    aspect-ratio: 16 / 10;
-  }
-
-  .cultivation-card__copy {
-    padding: 4px 2px;
   }
 
   .cultivation-card__facts,
