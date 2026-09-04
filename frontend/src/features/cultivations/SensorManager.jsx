@@ -281,6 +281,7 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
           <CultivationSensorSetupStep
             cultivationId={cultivationId}
             environmentSettings={environmentSettings}
+            registeredSensors={registeredSensors}
             onRegistered={handleSensorRegistered}
           />
         </div>

@@ -2206,6 +2206,11 @@
   opacity: 1;
 }
 
+.sensor-device-eui-error {
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .sensor-setup-workspace {
   display: flex;
   flex-direction: column;
@@ -2273,6 +2278,19 @@
   border-color: var(--sage-600);
   background: var(--sage-200);
   box-shadow: inset 0 0 0 1px var(--sage-600);
+}
+
+.reusable-sensor-options > button.is-unavailable:disabled {
+  border-color: #aaa092;
+  background: #ded9d0;
+  color: #61594f;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.reusable-sensor-options .reusable-sensor-unavailable-reason {
+  color: var(--danger);
+  font-weight: 700;
 }
 
 .reusable-sensor-options span {
@@ -2360,16 +2378,13 @@
 }
 
 .sensor-type-option {
-  display: flex !important;
+  display: grid !important;
   min-width: 0;
-  align-items: center;
-  flex-direction: row !important;
   gap: 10px;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 12px;
   background: var(--cream-100);
-  cursor: pointer;
 }
 
 .sensor-type-option.is-selected {
@@ -2377,14 +2392,22 @@
   background: var(--sage-200);
 }
 
-.sensor-type-option input {
+.sensor-type-option__selection {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.sensor-type-option__selection > input {
   width: 18px;
   height: 18px;
   flex: none;
   accent-color: var(--sage-600);
 }
 
-.sensor-type-option > span {
+.sensor-type-option__selection > span {
   display: flex;
   min-width: 0;
   flex: 1;
@@ -2399,11 +2422,53 @@
   white-space: nowrap;
 }
 
-.sensor-type-option > svg {
+.sensor-type-option__selection > svg {
   width: 18px;
   height: 18px;
   flex: none;
   color: var(--sage-700);
+}
+
+.sensor-unit-segments {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.sensor-unit-segments label {
+  position: relative;
+  cursor: pointer;
+}
+
+.sensor-unit-segments input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.sensor-unit-segments span {
+  display: grid;
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--cream-50);
+  color: var(--brown-600);
+  font-size: 13px;
+  font-weight: 800;
+  place-items: center;
+}
+
+.sensor-unit-segments label.is-selected span {
+  border-color: var(--sage-600);
+  background: var(--sage-600);
+  color: white;
+}
+
+.sensor-unit-segments input:focus-visible + span {
+  outline: 3px solid color-mix(in srgb, var(--sage-500) 35%, transparent);
+  outline-offset: 2px;
 }
 
 .modal-card--warning {

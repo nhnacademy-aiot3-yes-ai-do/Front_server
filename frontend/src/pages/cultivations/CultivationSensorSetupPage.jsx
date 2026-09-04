@@ -83,6 +83,7 @@ export default function CultivationSensorSetupPage() {
           <CultivationSensorSetupStep
             cultivationId={id}
             environmentSettings={environmentSettings}
+            registeredSensors={registeredSensors}
             onRegistered={(sensor) => setNewlyRegisteredSensors((current) => [...current, sensor])}
           />
 

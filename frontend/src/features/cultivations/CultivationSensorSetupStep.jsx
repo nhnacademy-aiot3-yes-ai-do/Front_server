@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
-import { formatSensorType, normalizeList } from "../../utils/formatters";
+import { formatSensorType, normalizeList, normalizeSensorUnit } from "../../utils/formatters";
 
 const EMPTY_SENSOR = {
   deviceEui: "",
@@ -14,18 +14,83 @@ const EMPTY_SENSOR = {
   locationDetail: "",
 };
 
-function initialSetting(type, environmentSettings) {
-  const recommended = environmentSettings.find((setting) => setting.sensorTypeId === type.id);
+function groupSensorTypes(sensorTypes) {
+  const groups = new Map();
+
+  sensorTypes.forEach((type) => {
+    const variants = groups.get(type.type) || [];
+    variants.push(type);
+    groups.set(type.type, variants);
+  });
+
+  return Array.from(groups, ([type, variants]) => ({ type, variants }));
+}
+
+function preferredType(variants, environmentSettings) {
+  const environmentTypeIds = new Set(environmentSettings.map((setting) => setting.sensorTypeId));
+
+  if (variants[0]?.type === "TEMPERATURE") {
+    return (
+      variants.find(
+        (type) =>
+          normalizeSensorUnit(type.valueUnit) === "°C" && environmentTypeIds.has(type.id),
+      ) ||
+      variants.find((type) => normalizeSensorUnit(type.valueUnit) === "°C") ||
+      variants.find((type) => environmentTypeIds.has(type.id)) ||
+      variants[0]
+    );
+  }
+
+  return variants.find((type) => environmentTypeIds.has(type.id)) || variants[0];
+}
+
+function convertTemperature(value, sourceUnit, targetUnit) {
+  const number = Number(value);
+  const source = normalizeSensorUnit(sourceUnit);
+  const target = normalizeSensorUnit(targetUnit);
+
+  if (!Number.isFinite(number) || source === target) return value;
+
+  const converted =
+    source === "°C" && target === "°F"
+      ? (number * 9) / 5 + 32
+      : source === "°F" && target === "°C"
+        ? ((number - 32) * 5) / 9
+        : number;
+
+  return Number(converted.toFixed(2));
+}
+
+function initialSetting(type, environmentSettings, sensorTypes) {
+  let recommended = environmentSettings.find((setting) => setting.sensorTypeId === type.id);
+  let sourceType = type;
+
+  if (!recommended && type.type === "TEMPERATURE") {
+    recommended = environmentSettings.find((setting) => {
+      const candidate = sensorTypes.find((sensorType) => sensorType.id === setting.sensorTypeId);
+      if (candidate?.type !== "TEMPERATURE") return false;
+      sourceType = candidate;
+      return true;
+    });
+  }
+
+  const converted = recommended && sourceType.id !== type.id;
 
   return {
-    thresholdMin: recommended?.thresholdMin ?? "",
-    thresholdMax: recommended?.thresholdMax ?? "",
+    thresholdMin: converted
+      ? convertTemperature(recommended.thresholdMin, sourceType.valueUnit, type.valueUnit)
+      : (recommended?.thresholdMin ?? ""),
+    thresholdMax: converted
+      ? convertTemperature(recommended.thresholdMax, sourceType.valueUnit, type.valueUnit)
+      : (recommended?.thresholdMax ?? ""),
     requiresValidation: !recommended,
     validation: recommended
       ? {
           valid: true,
           status: "approved",
-          message: "현재 재배지의 환경 임계값을 적용합니다.",
+          message: converted
+            ? "현재 재배지의 환경 임계값을 선택한 단위로 변환해 적용합니다."
+            : "현재 재배지의 환경 임계값을 적용합니다.",
         }
       : null,
   };
@@ -49,6 +114,7 @@ function hasValidThreshold(setting) {
 export default function CultivationSensorSetupStep({
   cultivationId,
   environmentSettings,
+  registeredSensors = [],
   onRegistered,
 }) {
   const [sourceMode, setSourceMode] = useState("new");
@@ -74,7 +140,16 @@ export default function CultivationSensorSetupStep({
   });
 
   const sensorTypes = normalizeList(sensorTypesQuery.data?.sensorTypeInfoResponses);
+  const sensorTypeGroups = groupSensorTypes(sensorTypes);
   const reusableSensors = normalizeList(reusableSensorsQuery.data?.sensors);
+  const registeredDeviceEuis = new Set(
+    normalizeList(registeredSensors)
+      .map((sensor) => String(sensor.deviceEui ?? "").trim().toUpperCase())
+      .filter(Boolean),
+  );
+  const normalizedDeviceEui = sensorForm.deviceEui.trim().toUpperCase();
+  const isDuplicateDeviceEui =
+    normalizedDeviceEui !== "" && registeredDeviceEuis.has(normalizedDeviceEui);
   const selectedTypes = selectedTypeIds
     .map((id) => sensorTypes.find((type) => type.id === id))
     .filter(Boolean);
@@ -92,7 +167,11 @@ export default function CultivationSensorSetupStep({
     });
   const hasSelectedExistingSensor = sourceMode !== "existing" || Boolean(selectedDeviceEui);
   const canSubmit =
-    requiredFieldsComplete && selectedSettingsReady && hasSelectedExistingSensor && !busy;
+    requiredFieldsComplete &&
+    selectedSettingsReady &&
+    hasSelectedExistingSensor &&
+    !isDuplicateDeviceEui &&
+    !busy;
   const showSensorForm = sourceMode === "new" || Boolean(selectedDeviceEui);
 
   useEffect(() => {
@@ -117,9 +196,14 @@ export default function CultivationSensorSetupStep({
   };
 
   const selectReusableSensor = (sensor) => {
-    const typeIds = normalizeList(sensor.sensorTypes)
+    const reusableTypes = normalizeList(sensor.sensorTypes)
       .map((type) => type.sensorTypeId)
-      .filter((id) => sensorTypes.some((type) => type.id === id));
+      .map((id) => sensorTypes.find((type) => type.id === id))
+      .filter(Boolean);
+    const selectedReusableTypes = groupSensorTypes(reusableTypes)
+      .map((group) => preferredType(group.variants, environmentSettings))
+      .filter(Boolean);
+    const typeIds = selectedReusableTypes.map((type) => type.id);
 
     setSourceMode("existing");
     setSelectedDeviceEui(sensor.deviceEui);
@@ -135,7 +219,7 @@ export default function CultivationSensorSetupStep({
       Object.fromEntries(
         typeIds.map((id) => {
           const type = sensorTypes.find((item) => item.id === id);
-          return [id, initialSetting(type, environmentSettings)];
+          return [id, initialSetting(type, environmentSettings, sensorTypes)];
         }),
       ),
     );
@@ -147,22 +231,60 @@ export default function CultivationSensorSetupStep({
     setSensorForm((current) => ({ ...current, [field]: value }));
   };
 
-  const toggleType = (type) => {
-    if (selectedTypeIds.includes(type.id)) {
-      setSelectedTypeIds((ids) => ids.filter((id) => id !== type.id));
+  const toggleTypeGroup = (group) => {
+    const groupTypeIds = new Set(group.variants.map((type) => type.id));
+    const selectedType = group.variants.find((type) => selectedTypeIds.includes(type.id));
+
+    if (selectedType) {
+      setSelectedTypeIds((ids) => ids.filter((id) => !groupTypeIds.has(id)));
       setSettings((current) => {
         const next = { ...current };
-        delete next[type.id];
+        groupTypeIds.forEach((id) => delete next[id]);
         return next;
       });
       return;
     }
 
-    setSelectedTypeIds((ids) => [...ids, type.id]);
+    const nextType = preferredType(group.variants, environmentSettings);
+    setSelectedTypeIds((ids) => [...ids.filter((id) => !groupTypeIds.has(id)), nextType.id]);
     setSettings((current) => ({
       ...current,
-      [type.id]: initialSetting(type, environmentSettings),
+      [nextType.id]: initialSetting(nextType, environmentSettings, sensorTypes),
     }));
+  };
+
+  const selectUnit = (group, nextType) => {
+    const groupTypeIds = new Set(group.variants.map((type) => type.id));
+    const currentType = group.variants.find((type) => selectedTypeIds.includes(type.id));
+    if (currentType?.id === nextType.id) return;
+
+    const currentSetting = currentType ? settings[currentType.id] : null;
+    let nextSetting = initialSetting(nextType, environmentSettings, sensorTypes);
+
+    if (currentType?.type === "TEMPERATURE" && currentSetting) {
+      nextSetting = {
+        ...currentSetting,
+        thresholdMin: convertTemperature(
+          currentSetting.thresholdMin,
+          currentType.valueUnit,
+          nextType.valueUnit,
+        ),
+        thresholdMax: convertTemperature(
+          currentSetting.thresholdMax,
+          currentType.valueUnit,
+          nextType.valueUnit,
+        ),
+        validation: currentSetting.requiresValidation ? null : nextSetting.validation,
+      };
+    }
+
+    setSelectedTypeIds((ids) => [...ids.filter((id) => !groupTypeIds.has(id)), nextType.id]);
+    setSettings((current) => {
+      const next = { ...current };
+      groupTypeIds.forEach((id) => delete next[id]);
+      next[nextType.id] = nextSetting;
+      return next;
+    });
   };
 
   const updateThreshold = (typeId, field, value) => {
@@ -279,6 +401,10 @@ export default function CultivationSensorSetupStep({
       setNotice({ type: "error", message: "센서의 필수 정보를 모두 입력해 주세요." });
       return;
     }
+    if (isDuplicateDeviceEui) {
+      setNotice({ type: "error", message: "이 재배지에 이미 등록된 센서 고유번호입니다." });
+      return;
+    }
 
     const hasInvalidSetting = selectedTypes.some((type) => {
       const setting = settings[type.id];
@@ -366,25 +492,37 @@ export default function CultivationSensorSetupStep({
               </div>
             )}
           <div className="reusable-sensor-options">
-            {reusableSensors.map((sensor) => (
-              <button
-                key={sensor.deviceEui}
-                type="button"
-                className={selectedDeviceEui === sensor.deviceEui ? "is-selected" : ""}
-                aria-pressed={selectedDeviceEui === sensor.deviceEui}
-                onClick={() => selectReusableSensor(sensor)}
-              >
-                <span>
-                  <strong>{sensor.deviceName}</strong>
-                  <small>{sensor.deviceEui}</small>
-                </span>
-                <small>
-                  {normalizeList(sensor.sensorTypes)
-                    .map((type) => `${formatSensorType(type.type)} ${type.valueUnit}`)
-                    .join(" · ") || "측정 타입을 다시 선택해 주세요"}
-                </small>
-              </button>
-            ))}
+            {reusableSensors.map((sensor) => {
+              const alreadyRegistered = registeredDeviceEuis.has(
+                String(sensor.deviceEui ?? "").trim().toUpperCase(),
+              );
+
+              return (
+                <button
+                  key={sensor.deviceEui}
+                  type="button"
+                  className={`${selectedDeviceEui === sensor.deviceEui ? "is-selected" : ""} ${alreadyRegistered ? "is-unavailable" : ""}`.trim()}
+                  aria-pressed={selectedDeviceEui === sensor.deviceEui}
+                  onClick={() => selectReusableSensor(sensor)}
+                  disabled={alreadyRegistered}
+                >
+                  <span>
+                    <strong>{sensor.deviceName}</strong>
+                    <small>{sensor.deviceEui}</small>
+                    {alreadyRegistered && (
+                      <small className="reusable-sensor-unavailable-reason">
+                        이미 이 재배지에서 사용 중
+                      </small>
+                    )}
+                  </span>
+                  <small>
+                    {normalizeList(sensor.sensorTypes)
+                      .map((type) => `${formatSensorType(type.type)} ${type.valueUnit}`)
+                      .join(" · ") || "측정 타입을 다시 선택해 주세요"}
+                  </small>
+                </button>
+              );
+            })}
           </div>
         </section>
       )}
@@ -442,6 +580,8 @@ export default function CultivationSensorSetupStep({
             센서 고유번호
             <input
               aria-label="센서 고유번호"
+              aria-describedby={isDuplicateDeviceEui ? "sensor-device-eui-error" : undefined}
+              aria-invalid={isDuplicateDeviceEui || undefined}
               className={sourceMode === "existing" ? "sensor-device-eui--locked" : undefined}
               name="deviceEui"
               value={sensorForm.deviceEui}
@@ -452,6 +592,11 @@ export default function CultivationSensorSetupStep({
               required
             />
             {sourceMode === "existing" && <small>기존 기기의 고유번호는 변경할 수 없습니다.</small>}
+            {isDuplicateDeviceEui && (
+              <small id="sensor-device-eui-error" className="sensor-device-eui-error" role="alert">
+                이 재배지에 이미 등록된 센서 고유번호입니다.
+              </small>
+            )}
           </label>
 
           <fieldset className="sensor-type-picker">
@@ -464,31 +609,67 @@ export default function CultivationSensorSetupStep({
               </button>
             )}
             <div className="sensor-type-options">
-              {sensorTypes.map((type) => {
-                const checked = selectedTypeIds.includes(type.id);
-                const recommended = environmentSettings.some(
-                  (setting) => setting.sensorTypeId === type.id,
+              {sensorTypeGroups.map((group) => {
+                const selectedType = group.variants.find((type) =>
+                  selectedTypeIds.includes(type.id),
                 );
+                const checked = Boolean(selectedType);
+                const typeName = formatSensorType(group.type);
+                const hasMultipleUnits = group.variants.length > 1;
+                const checkboxLabel = hasMultipleUnits
+                  ? typeName
+                  : `${typeName} (${group.variants[0].valueUnit})`;
+                const setting = selectedType ? settings[selectedType.id] : null;
 
                 return (
-                  <label
-                    key={type.id}
+                  <div
+                    key={group.type}
                     className={`sensor-type-option ${checked ? "is-selected" : ""}`}
                   >
-                    <input
-                      aria-label={`${formatSensorType(type.type)} (${type.valueUnit})`}
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => toggleType(type)}
-                    />
-                    <span>
-                      <strong>{formatSensorType(type.type)}</strong>
-                      <small>
-                        {type.valueUnit} {recommended ? "· 재배지 임계값 적용" : "· AI 검증 필요"}
-                      </small>
-                    </span>
-                    {checked && <CheckCircle2 aria-hidden="true" />}
-                  </label>
+                    <label className="sensor-type-option__selection">
+                      <input
+                        aria-label={checkboxLabel}
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleTypeGroup(group)}
+                      />
+                      <span>
+                        <strong>{typeName}</strong>
+                        <small>
+                          {selectedType
+                            ? `${selectedType.valueUnit} ${setting?.requiresValidation ? "· AI 검증 필요" : "· 재배지 임계값 적용"}`
+                            : hasMultipleUnits
+                              ? "측정 단위를 선택할 수 있습니다."
+                              : `${group.variants[0].valueUnit} · AI 검증 필요`}
+                        </small>
+                      </span>
+                      {checked && <CheckCircle2 aria-hidden="true" />}
+                    </label>
+
+                    {checked && hasMultipleUnits && (
+                      <div
+                        className="sensor-unit-segments"
+                        role="radiogroup"
+                        aria-label={`${typeName} 단위`}
+                      >
+                        {group.variants.map((type) => (
+                          <label
+                            key={type.id}
+                            className={selectedType?.id === type.id ? "is-selected" : ""}
+                          >
+                            <input
+                              aria-label={`${typeName} ${type.valueUnit}`}
+                              type="radio"
+                              name={`sensor-unit-${group.type}`}
+                              checked={selectedType?.id === type.id}
+                              onChange={() => selectUnit(group, type)}
+                            />
+                            <span>{type.valueUnit}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
