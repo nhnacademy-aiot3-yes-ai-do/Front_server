@@ -71,7 +71,7 @@ public class CultivationController {
     public ResponseEntity<CultivationCreateResponse> createCultivation(
             @Valid @RequestBody CultivationCreateRequest request
     ) {
-        return cultivationClient.createCultivation(request);
+        return UpstreamResponseUtils.isolate(cultivationClient.createCultivation(request));
     }
 
     @GetMapping("/{cultivation-id}")

@@ -209,14 +209,14 @@ export default function CultivationCard({
             )}
             {entries.map((entry) => (
               <SensorSparkline
-                    key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
-                    cultivationId={cultivation.cultivationId}
-                    latest={entry.latest}
-                    sensor={entry.sensor}
-                    sensorType={entry.sensorType}
-                    setting={entry.setting}
-                    trend={entry.trend}
-                />
+                key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
+                cultivationId={cultivation.cultivationId}
+                latest={entry.latest}
+                sensor={entry.sensor}
+                sensorType={entry.sensorType}
+                setting={entry.setting}
+                trend={entry.trend}
+              />
             ))}
           </>
         )}
