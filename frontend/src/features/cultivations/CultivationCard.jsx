@@ -13,9 +13,10 @@ import { requiresSensorSetup } from "./cultivationSetup";
 import SensorSparkline from "./SensorSparkline";
 
 function sensorPreviews(preview, suppliedLatestValues, suppliedTrend) {
-  const latestValues = suppliedLatestValues?.length
-    ? suppliedLatestValues
-    : normalizeList(preview?.latestSensorValues?.latestSensorValueResponses);
+  const latestValues =
+    suppliedLatestValues === undefined
+      ? normalizeList(preview?.latestSensorValues?.latestSensorValueResponses)
+      : normalizeList(suppliedLatestValues);
   const trendValues = normalizeList(suppliedTrend);
   const settings = normalizeList(preview?.sensors?.environmentSettings);
   const sensors = normalizeList(preview?.sensors?.sensors);
