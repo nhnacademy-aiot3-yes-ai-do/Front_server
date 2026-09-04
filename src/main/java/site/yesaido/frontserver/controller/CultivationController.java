@@ -2,6 +2,7 @@ package site.yesaido.frontserver.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -26,6 +27,7 @@ import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.Membe
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
 import site.yesaido.frontserver.dto.cultivation.response.harvest.HarvestCreateResponse;
 import site.yesaido.frontserver.util.LoginRequired;
+import site.yesaido.frontserver.util.UpstreamResponseUtils;
 
 import java.util.List;
 import java.util.Set;
@@ -82,10 +84,14 @@ public class CultivationController {
         return REACT_APP;
     }
 
+    @GetMapping("/{cultivation-id}/daily-feedbacks/{feedback-date}")
+    public String dailyFeedback() {
+        return REACT_APP;
+    }
+
     @PutMapping("/{cultivation-id}/harvest-mode")
     public ResponseEntity<CultivationModeChangeResponse> switchToHarvestMode(@PathVariable("cultivation-id") Long cultivationId) {
-        ResponseEntity<CultivationModeChangeResponse> response = cultivationClient.switchToHarvestMode(cultivationId);
-        return ResponseEntity.status(response.getStatusCode()).body(response.getBody());
+        return UpstreamResponseUtils.isolate(cultivationClient.switchToHarvestMode(cultivationId));
     }
 
     @PostMapping("/{cultivation-id}/finish")
@@ -157,13 +163,13 @@ public class CultivationController {
     @PostMapping("/{cultivation-id}/harvest")
     public ResponseEntity<HarvestCreateResponse> createHarvest(@PathVariable("cultivation-id") Long cultivationId,
                                                                @RequestBody HarvestCreateRequest request) {
-        return cultivationClient.createHarvest(cultivationId, request);
+        return UpstreamResponseUtils.isolate(cultivationClient.createHarvest(cultivationId, request));
     }
 
     // 사진
     @PostMapping("/{cultivation-id}/photos")
     public String uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
-                                                     @RequestParam("file") MultipartFile file) {
+                              @RequestParam("file") MultipartFile file) {
         cultivationClient.uploadPhoto(cultivationId, file);
         return "redirect:/cultivations/" + cultivationId;
     }
@@ -178,5 +184,4 @@ public class CultivationController {
                                             @PathVariable("photo-id") Long photoId) {
         return cultivationClient.deletePhoto(cultivationId, photoId);
     }
-
 }

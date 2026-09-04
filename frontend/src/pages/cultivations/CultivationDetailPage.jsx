@@ -298,6 +298,48 @@ function DetailTabs({ activeTab, onChange }) {
   );
 }
 
+function DailyFeedbackFallbackPage({
+  cultivationId,
+  feedbackDate,
+  maxDate,
+  metadataError,
+  onDateChange,
+  onTabChange,
+}) {
+  return (
+    <main className="detail-page">
+      <nav className="detail-toolbar" aria-label="재배 상세 메뉴">
+        <Link to="/cultivations">
+          <ArrowLeft aria-hidden="true" /> 나의 재배지
+        </Link>
+      </nav>
+      <section className="detail-workspace">
+        <header className="detail-heading">
+          <div>
+            <p className="eyebrow">재배지 #{cultivationId}</p>
+            <h1>AI 일일 피드백</h1>
+            <p>
+              {metadataError
+                ? "재배지 기본 정보 없이 일일 피드백을 조회합니다."
+                : "재배지 기본 정보를 불러오는 동안 일일 피드백을 먼저 조회합니다."}
+            </p>
+          </div>
+        </header>
+
+        <DetailTabs activeTab="report" onChange={onTabChange} />
+
+        <DailyFeedbackPanel
+          cultivationId={cultivationId}
+          cultivationName={`재배지 #${cultivationId}`}
+          feedbackDate={feedbackDate}
+          maxDate={maxDate}
+          onFeedbackDateChange={onDateChange}
+        />
+      </section>
+    </main>
+  );
+}
+
 function HarvestInsightModal({ cultivationId, mushroomName }) {
   const [candidates, setCandidates] = useState([]);
   const [selectedDetail, setSelectedDetail] = useState(null);
@@ -1034,6 +1076,39 @@ export default function CultivationDetailPage() {
     staleTime: 300_000,
   });
 
+  const handleTabChange = (nextTab) => {
+    setActiveTab(nextTab);
+    if (nextTab !== "report" && routeFeedbackDate) {
+      navigate(`/cultivations/${id}`, { replace: true });
+    }
+  };
+
+  const handleFeedbackDateChange = (nextDate) => {
+    if (!isDailyFeedbackDate(nextDate)) return;
+    setSelectedFeedbackDate(nextDate);
+    navigate(`/cultivations/${id}/daily-feedbacks/${nextDate}`, { replace: true });
+  };
+
+  const handleOpenFeedbackReport = (nextDate) => {
+    const targetDate = isDailyFeedbackDate(nextDate) ? nextDate : feedbackMaxDate;
+    setSelectedFeedbackDate(targetDate);
+    setActiveTab("report");
+    navigate(`/cultivations/${id}/daily-feedbacks/${targetDate}`);
+  };
+
+  if (routeFeedbackDate && (detailQuery.isLoading || detailQuery.isError || !data?.cultivation)) {
+    return (
+      <DailyFeedbackFallbackPage
+        cultivationId={id}
+        feedbackDate={selectedFeedbackDate}
+        maxDate={feedbackMaxDate}
+        metadataError={detailQuery.isError || (!detailQuery.isLoading && !data?.cultivation)}
+        onDateChange={handleFeedbackDateChange}
+        onTabChange={handleTabChange}
+      />
+    );
+  }
+
   if (detailQuery.isLoading) return <LoadingState message="재배 상세 정보를 불러오고 있어요." />;
   if (detailQuery.isError)
     return <ErrorState error={detailQuery.error} onRetry={detailQuery.refetch} />;
@@ -1095,26 +1170,6 @@ export default function CultivationDetailPage() {
   const feedbackMinDate = isDailyFeedbackDate(cultivationStartDate)
     ? cultivationStartDate
     : undefined;
-
-  const handleTabChange = (nextTab) => {
-    setActiveTab(nextTab);
-    if (nextTab !== "report" && routeFeedbackDate) {
-      navigate(`/cultivations/${id}`, { replace: true });
-    }
-  };
-
-  const handleFeedbackDateChange = (nextDate) => {
-    if (!isDailyFeedbackDate(nextDate)) return;
-    setSelectedFeedbackDate(nextDate);
-    navigate(`/cultivations/${id}/daily-feedbacks/${nextDate}`, { replace: true });
-  };
-
-  const handleOpenFeedbackReport = (nextDate) => {
-    const targetDate = isDailyFeedbackDate(nextDate) ? nextDate : feedbackMaxDate;
-    setSelectedFeedbackDate(targetDate);
-    setActiveTab("report");
-    navigate(`/cultivations/${id}/daily-feedbacks/${targetDate}`);
-  };
 
   return (
     <main className="detail-page">
