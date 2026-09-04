@@ -43,6 +43,7 @@ public class GlobalExceptionHandler {
     private static final ZoneId KOREA_ZONE = ZoneId.of("Asia/Seoul");
     private static final String ERROR = "error";
     private static final String MESSAGE = "message";
+    private static final String DETAIL = "detail";
 
     private static final Map<String, String> NOT_FOUND_MESSAGES = Map.of(
             "AiClient", "해당 버섯 가이드 정보를 찾을 수 없습니다.",
@@ -64,7 +65,6 @@ public class GlobalExceptionHandler {
             "InquiryClient", "문의 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요."
     );
     private static final String DEFAULT_UNAVAILABLE_MESSAGE = "외부 서비스 연결이 일시적으로 원활하지 않습니다. 잠시 후 다시 시도해 주세요.";
-    private static final String DEFAULT_CONFLICT_MESSAGE = "요청을 처리할 수 없는 상태예요. 새로고침 후 다시 시도해 주세요.";
     private static final String DEFAULT_FORBIDDEN_MESSAGE = "요청한 정보에 접근할 권한이 없습니다.";
     private static final String DAILY_FEEDBACK_NOT_FOUND_MESSAGE = "해당 날짜의 일일 피드백을 찾을 수 없습니다.";
     private static final String DEFAULT_CLIENT_ERROR_MESSAGE = "요청을 처리할 수 없습니다. 입력 값을 확인해 주세요.";
@@ -183,7 +183,7 @@ public class GlobalExceptionHandler {
             JsonNode response = objectMapper.readTree(exception.contentUTF8());
             String message = response.path(MESSAGE).asString();
             if (message.isBlank()) {
-                message = response.path("detail").asString();
+                message = response.path(DETAIL).asString();
             }
             return message.isBlank() ? fallback : message;
         } catch (Exception ignored) {
@@ -222,7 +222,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleMissingRefreshToken(MissingRefreshTokenException exception) {
         return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("detail", "로그인이 필요합니다."));
+                .body(Map.of(DETAIL, "로그인이 필요합니다."));
     }
 
     // css/js 정적 리소스는 파일 내용 해시가 URL에 붙는 캐시버스팅 방식(WebConfig의 VersionResourceResolver)을
@@ -244,7 +244,7 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(500)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("detail", message));
+                .body(Map.of(DETAIL, message));
     }
 
     @ExceptionHandler(Throwable.class)

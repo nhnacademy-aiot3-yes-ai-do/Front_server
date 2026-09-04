@@ -79,7 +79,9 @@ public class CultivationController {
     }
 
     @GetMapping("/{cultivation-id}/daily-feedbacks/{feedback-date}")
-    public String dailyFeedback() {
+    @SuppressWarnings("unused") // React Router가 클라이언트에서 실제로 파싱함. 서버는 SPA 셸만 내려주면 됨.
+    public String dailyFeedback(@PathVariable("cultivation-id") Long cultivationId,
+                                @PathVariable("feedback-date") String feedbackDate) {
         return REACT_APP;
     }
 
