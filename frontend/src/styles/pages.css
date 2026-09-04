@@ -187,6 +187,11 @@
   height: 16px;
 }
 
+.status-badge--low {
+  background: color-mix(in srgb, var(--danger) 15%, white);
+  color: var(--danger);
+}
+
 .cultivation-photo__updated {
   position: absolute;
   z-index: 2;
