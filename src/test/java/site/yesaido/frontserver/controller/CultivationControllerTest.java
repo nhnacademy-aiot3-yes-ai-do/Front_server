@@ -9,6 +9,7 @@ import org.springframework.boot.security.oauth2.client.autoconfigure.servlet.OAu
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
@@ -135,6 +136,14 @@ class CultivationControllerTest {
     }
 
     @Test
+    @DisplayName("미완료 재배지 센서 설정 페이지 반환")
+    void cultivationSensorSetupPageReturnsReactView() throws Exception {
+        mockMvc.perform(get("/cultivations/{cultivation-id}/setup", 41L).cookie(LOGGED_IN))
+                .andExpect(status().isOk())
+                .andExpect(view().name("forward:/react/index.html"));
+    }
+
+    @Test
     @DisplayName("일일 피드백 딥링크는 React 앱으로 포워드")
     void dailyFeedbackDeepLinkReturnsReactView() throws Exception {
         mockMvc.perform(get(
@@ -196,13 +205,19 @@ class CultivationControllerTest {
                 ))
         );
 
+        CultivationCreateResponse response =
+                new CultivationCreateResponse(101L, null, List.of());
+
+        when(cultivationClient.createCultivation(request))
+                .thenReturn(ResponseEntity.status(HttpStatus.CREATED).body(response));
+
         mockMvc.perform(post("/cultivations")
                         .cookie(LOGGED_IN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated());
-
-        verify(cultivationClient).createCultivation(request);
+                .andExpect(status().isCreated())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.cultivationId").value(101L));
     }
 
     @Test

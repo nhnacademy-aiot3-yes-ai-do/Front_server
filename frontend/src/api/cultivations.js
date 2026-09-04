@@ -5,6 +5,7 @@ export const cultivationKeys = {
   list: () => [...cultivationKeys.all, "list"],
   preview: (id) => [...cultivationKeys.all, "preview", Number(id)],
   detail: (id) => [...cultivationKeys.all, "detail", Number(id)],
+  setup: (id) => [...cultivationKeys.all, "setup", Number(id)],
   dailyFeedback: (id, feedbackDate) => [
     ...cultivationKeys.all,
     "daily-feedback",
@@ -20,6 +21,7 @@ export const cultivationKeys = {
     sensorType,
     unit,
   ],
+  guide: (mushroomId) => [...cultivationKeys.all, "mushroom-guide", Number(mushroomId)],
 };
 
 export function getCultivationListPage() {
@@ -32,6 +34,10 @@ export function getCultivationPreview(id) {
 
 export function getCultivationDetailPage(id) {
   return request(`/cultivations/${id}/page-data`);
+}
+
+export function getCultivationSetupPage(id) {
+  return request(`/cultivations/${id}/setup-data`);
 }
 
 export function getDailyFeedback(id, feedbackDate) {
@@ -53,4 +59,7 @@ export function getSensorTrend(id, deviceEui, sensorType, unit) {
 
 export function createCultivation(payload) {
   return jsonRequest("/cultivations", "POST", payload);
+}
+export function getMushroomGuide(mushroomId) {
+  return request(`/cultivations/mushrooms/${mushroomId}/guide`).then(unwrapApiResponse);
 }

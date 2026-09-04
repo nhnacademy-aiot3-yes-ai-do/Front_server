@@ -13,6 +13,9 @@ const CultivationCreatePage = lazy(() => import("./pages/cultivations/Cultivatio
 const CultivationDetailPage = lazy(() => import("./pages/cultivations/CultivationDetailPage"));
 const CultivationHistoryPage = lazy(() => import("./pages/cultivations/CultivationHistoryPage"));
 const CultivationListPage = lazy(() => import("./pages/cultivations/CultivationListPage"));
+const CultivationSensorSetupPage = lazy(
+  () => import("./pages/cultivations/CultivationSensorSetupPage"),
+);
 const NotificationSettingsPage = lazy(() => import("./pages/profile/NotificationSettingsPage"));
 const ProfilePage = lazy(() => import("./pages/profile/ProfilePage"));
 const SupportPage = lazy(() => import("./pages/support/SupportPage"));
@@ -52,6 +55,10 @@ export default function App() {
           <Route path="/cultivations" element={<CultivationListPage />} />
           <Route path="/cultivations/new" element={<CultivationCreatePage />} />
           <Route path="/cultivations/history" element={<CultivationHistoryPage />} />
+          <Route
+            path="/cultivations/:cultivationId/setup"
+            element={<CultivationSensorSetupPage />}
+          />
           <Route
             path="/cultivations/:cultivationId/daily-feedbacks/:feedbackDate"
             element={<CultivationDetailPage />}

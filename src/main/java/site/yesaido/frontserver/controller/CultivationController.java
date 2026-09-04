@@ -2,7 +2,6 @@ package site.yesaido.frontserver.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -19,6 +18,7 @@ import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.Member
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.MemberRoleUpdateRequest;
 import site.yesaido.frontserver.dto.cultivation.request.cultivationmember.OwnerTransferRequest;
 import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateRequest;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationModeChangeResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
@@ -64,13 +64,13 @@ public class CultivationController {
     }
 
     @PostMapping(
-            consumes = MediaType.APPLICATION_JSON_VALUE
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<Void> createCultivation(
+    public ResponseEntity<CultivationCreateResponse> createCultivation(
             @Valid @RequestBody CultivationCreateRequest request
     ) {
-        cultivationClient.createCultivation(request);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return cultivationClient.createCultivation(request);
     }
 
     @GetMapping("/{cultivation-id}")
@@ -78,10 +78,16 @@ public class CultivationController {
         return REACT_APP;
     }
 
+    @GetMapping("/{cultivation-id}/setup")
+    public String sensorSetup(@PathVariable("cultivation-id") Long cultivationId) {
+        return REACT_APP;
+    }
+
     @GetMapping("/{cultivation-id}/daily-feedbacks/{feedback-date}")
-    @SuppressWarnings("unused") // React Router가 클라이언트에서 실제로 파싱함. 서버는 SPA 셸만 내려주면 됨.
-    public String dailyFeedback(@PathVariable("cultivation-id") Long cultivationId,
-                                @PathVariable("feedback-date") String feedbackDate) {
+    public String dailyFeedback(
+            @PathVariable("cultivation-id") Long cultivationId,
+            @PathVariable("feedback-date") String feedbackDate
+    ) {
         return REACT_APP;
     }
 
@@ -105,7 +111,7 @@ public class CultivationController {
     // CultivationMember
     @GetMapping("/{cultivation-id}/members")
     public ResponseEntity<MemberListResponse> getMembers(@PathVariable("cultivation-id") Long cultivationId) {
-        return UpstreamResponseUtils.isolate(cultivationClient.getMembers(cultivationId));
+        return cultivationClient.getMembers(cultivationId);
     }
 
     @GetMapping("/{cultivation-id}/members/search")
@@ -172,12 +178,12 @@ public class CultivationController {
 
     @GetMapping("{cultivation-id}/photos")
     public ResponseEntity<PhotoListResponse> getPhoto(@PathVariable("cultivation-id") Long cultivationId) {
-        return UpstreamResponseUtils.isolate(cultivationClient.getPhoto(cultivationId));
+        return cultivationClient.getPhoto(cultivationId);
     }
 
     @DeleteMapping("/{cultivation-id}/photos/{photo-id}")
     public ResponseEntity<Void> deletePhoto(@PathVariable("cultivation-id") Long cultivationId,
                                             @PathVariable("photo-id") Long photoId) {
-        return UpstreamResponseUtils.isolate(cultivationClient.deletePhoto(cultivationId, photoId));
+        return cultivationClient.deletePhoto(cultivationId, photoId);
     }
 }
