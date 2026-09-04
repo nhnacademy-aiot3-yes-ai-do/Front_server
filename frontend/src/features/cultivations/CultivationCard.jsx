@@ -59,7 +59,12 @@ function cardStatus(entries) {
   return warning ? { label: "환경 확인 필요", tone: "warning" } : { label: "안정", tone: "stable" };
 }
 
-export default function CultivationCard({ cultivation, mushroomName, latestSensorValues }) {
+export default function CultivationCard({
+  cultivation,
+  mushroomName,
+  latestSensorValues,
+  sensorTrend1h,
+}) {
   const previewQuery = useQuery({
     queryKey: cultivationKeys.preview(cultivation.cultivationId),
     queryFn: () => getCultivationPreview(cultivation.cultivationId),
@@ -159,7 +164,7 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
       <section className="cultivation-card__sensors" aria-label={`${cultivation.name} 센서 추이`}>
         <header>
           <strong>등록 센서 추이</strong>
-          <span>실시간</span>
+          <span>최근 1시간</span>
         </header>
         {previewQuery.isLoading && <p className="sensor-column-state">센서 정보를 불러오는 중</p>}
         {previewQuery.isError && (
@@ -178,6 +183,14 @@ export default function CultivationCard({ cultivation, mushroomName, latestSenso
         {entries.map((entry) => (
           <SensorSparkline
             key={`${entry.sensor.deviceEui}-${entry.sensorType.type}-${normalizeSensorUnit(entry.sensorType.valueUnit)}`}
+            cultivationId={cultivation.cultivationId}
+            trend={normalizeList(sensorTrend1h).filter(
+              (point) =>
+                point.deviceEui === entry.sensor.deviceEui &&
+                point.sensorType === entry.sensorType.type &&
+                normalizeSensorUnit(point.unit || entry.sensorType.valueUnit) ===
+                  normalizeSensorUnit(entry.sensorType.valueUnit),
+            )}
             {...entry}
           />
         ))}
