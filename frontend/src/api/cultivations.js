@@ -1,4 +1,4 @@
-import { jsonRequest, request, unwrapApiResponse } from "./http";
+import { gatewayRequest, jsonRequest, request, unwrapApiResponse } from "./http";
 
 export const cultivationKeys = {
   all: ["cultivations"],
@@ -13,6 +13,7 @@ export const cultivationKeys = {
     feedbackDate,
   ],
   latest: (id) => [...cultivationKeys.all, "latest", Number(id)],
+  latestBatch: () => [...cultivationKeys.all, "latest-batch"],
   trend: (id, deviceEui, sensorType, unit) => [
     ...cultivationKeys.all,
     "trend",
@@ -44,8 +45,12 @@ export function getDailyFeedback(id, feedbackDate) {
   return request(`/api/cultivations/${id}/daily-feedbacks/${feedbackDate}`).then(unwrapApiResponse);
 }
 
+export function getLatestSensorValuesForCultivations() {
+  return gatewayRequest("/api/v1/cultivations/sensor-values/latest");
+}
+
 export function getLatestSensorValues(id) {
-  return request(`/cultivations/${id}/sensor-values`);
+  return gatewayRequest(`/api/v1/cultivations/${id}/sensor-values`);
 }
 
 export function getSensorTrend(id, deviceEui, sensorType, unit) {
@@ -60,6 +65,11 @@ export function getSensorTrend(id, deviceEui, sensorType, unit) {
 export function createCultivation(payload) {
   return jsonRequest("/cultivations", "POST", payload);
 }
+
+export function deleteCultivation(id) {
+  return request(`/cultivations/${id}`, { method: "DELETE" });
+}
+
 export function getMushroomGuide(mushroomId) {
   return request(`/cultivations/mushrooms/${mushroomId}/guide`).then(unwrapApiResponse);
 }

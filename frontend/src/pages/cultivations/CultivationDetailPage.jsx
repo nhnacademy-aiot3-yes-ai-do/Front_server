@@ -11,6 +11,8 @@ import {
   History,
   LayoutDashboard,
   MoreHorizontal,
+  RefreshCw,
+  Ruler,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -48,7 +50,6 @@ import PhotoManager from "../../features/cultivations/PhotoManager";
 import SensorManager from "../../features/cultivations/SensorManager";
 import {
   formatDate,
-  formatDateTime,
   formatMode,
   formatRole,
   formatSensorType,
@@ -56,6 +57,11 @@ import {
   normalizeSensorUnit,
 } from "../../utils/formatters";
 import { getInsightCandidates, getInsightDetail } from "../../api/insights";
+
+import {
+  aggregateChartPoints,
+  preferNonEmptyLatestValues,
+} from "../../features/cultivations/sensorChartUtils";
 
 function buildSensorOptions(data, latestValues) {
   return normalizeList(data?.sensors?.sensors).flatMap((sensor) =>
@@ -187,28 +193,8 @@ function mergeSensorHistory(history, latestValues, now = Date.now()) {
   return merged;
 }
 
-const MAX_CHART_POINTS = 240;
-
-function chartPointLimit(rangeMinutes) {
-  if (rangeMinutes <= 10) return 200;
-  if (rangeMinutes <= 30) return 180;
-  if (rangeMinutes <= 60) return 240;
-  if (rangeMinutes <= 360) return 300;
-  return 144;
-}
-
 function sensorRangeLabel(rangeMinutes) {
   return rangeMinutes < 60 ? `최근 ${rangeMinutes}분` : `최근 ${rangeMinutes / 60}시간`;
-}
-
-function downsampleChartPoints(points, maxPoints = MAX_CHART_POINTS) {
-  if (points.length <= maxPoints) return points;
-
-  const bucketSize = Math.ceil(points.length / maxPoints);
-  return Array.from({ length: Math.ceil(points.length / bucketSize) }, (_, bucketIndex) => {
-    const endIndex = Math.min((bucketIndex + 1) * bucketSize, points.length);
-    return points[endIndex - 1];
-  });
 }
 
 function complianceRows(compliance) {
@@ -831,25 +817,39 @@ function getSensorState(option) {
       (option.setting?.thresholdMax != null && value > Number(option.setting.thresholdMax)));
 
   if (option.latest?.value == null) return { label: "수집 중", tone: "waiting" };
+  if (option.setting?.thresholdMin == null && option.setting?.thresholdMax == null) {
+    return { label: "범위 미등록", tone: "unconfigured" };
+  }
   if (warning) return { label: "범위 이탈", tone: "warning" };
   return { label: "안정", tone: "stable" };
+}
+
+function sensorStateIcon(tone) {
+  if (tone === "warning") return "⚠";
+  if (tone === "waiting") return "…";
+  if (tone === "unconfigured") return "ⓘ";
+  return "✓";
+}
+
+function thresholdLabel(setting, unit) {
+  if (!setting || (setting.thresholdMin == null && setting.thresholdMax == null)) {
+    return "설정 범위 미등록";
+  }
+  const min = setting.thresholdMin ?? "하한 없음";
+  const max = setting.thresholdMax ?? "상한 없음";
+  return `${min}–${max}${unit}`;
 }
 
 function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
   const state = getSensorState(option);
   const unit = normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit);
   const cutoff = Date.now() - rangeMinutes * 60 * 1000;
-  const chartPoints = downsampleChartPoints(
-    normalizeList(initialHistory)
-      .filter((point) => {
-        const measuredAt = new Date(point.measuredAt).getTime();
-        return Number.isFinite(measuredAt) && measuredAt >= cutoff;
-      })
-      .map((point) => ({
-        measuredAt: formatDateTime(point.measuredAt),
-        value: point.value,
-      })),
-    chartPointLimit(rangeMinutes),
+  const chartPoints = aggregateChartPoints(
+    normalizeList(initialHistory).filter((point) => {
+      const measuredAt = new Date(point.measuredAt).getTime();
+      return Number.isFinite(measuredAt) && measuredAt >= cutoff;
+    }),
+    rangeMinutes,
   );
 
   return (
@@ -862,13 +862,21 @@ function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
             <small>{option.sensor.deviceName}</small>
           </span>
         </div>
-        <span className={`sensor-live-state sensor-live-state--${state.tone}`}>{state.label}</span>
+        <span className={`sensor-live-state sensor-live-state--${state.tone}`}>
+          <span aria-hidden="true">{sensorStateIcon(state.tone)}</span>
+          {state.label}
+        </span>
       </header>
 
       <div className="live-sensor-card__reading">
         <strong>{option.latest?.value ?? "-"}</strong>
         <span>{unit}</span>
         <small>{sensorRangeLabel(rangeMinutes)} · 측정값</small>
+      </div>
+      <div className="live-sensor-card__threshold">
+        <Ruler aria-hidden="true" />
+        <span>권장 범위</span>
+        <strong>{thresholdLabel(option.setting, unit)}</strong>
       </div>
 
       <div className="live-sensor-chart" aria-label={`${option.sensor.deviceName} 센서 추이`}>
@@ -953,7 +961,7 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
         <div>
           <h2>실시간 센서 정보</h2>
         </div>
-        <div>
+        <div className="sensor-panel-controls">
           <label htmlFor="sensor-history-range">그래프 기간</label>
           <select
             id="sensor-history-range"
@@ -967,7 +975,23 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
             <option value={360}>최근 6시간</option>
             <option value={720}>최근 12시간</option>
           </select>
-          <span>{latestQuery.isFetching ? "최신값 확인 중" : "3초마다 최신값 갱신"}</span>
+          <button
+            aria-label={latestQuery.isFetching ? "센서 최신값 갱신 중" : "센서 최신값 새로고침"}
+            className={`sensor-refresh-button ${latestQuery.isFetching ? "is-loading" : ""}`}
+            disabled={latestQuery.isFetching}
+            onClick={() => latestQuery.refetch()}
+            title={latestQuery.isFetching ? "최신값 갱신 중" : "최신값 새로고침"}
+            type="button"
+          >
+            <RefreshCw aria-hidden="true" />
+          </button>
+          <span
+            aria-label={latestQuery.isFetching ? "최신값 갱신 중" : "최신값 갱신 완료"}
+            className={`sensor-refresh-state ${latestQuery.isFetching ? "is-loading" : ""}`}
+            title={latestQuery.isFetching ? "최신값 갱신 중" : "최신값 갱신 완료"}
+          >
+            {latestQuery.isFetching ? "↻" : "✓"}
+          </span>
         </div>
       </header>
 
@@ -1060,9 +1084,9 @@ export default function CultivationDetailPage() {
   });
 
   const data = detailQuery.data;
-  const latestValues = normalizeList(
-    latestQuery.data?.latestSensorValueResponses ||
-      data?.latestSensorValues?.latestSensorValueResponses,
+  const latestValues = preferNonEmptyLatestValues(
+    latestQuery.data?.latestSensorValueResponses,
+    data?.latestSensorValues?.latestSensorValueResponses,
   );
   const sensorOptions = useMemo(() => buildSensorOptions(data, latestValues), [data, latestValues]);
 

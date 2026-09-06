@@ -21,6 +21,7 @@ import site.yesaido.frontserver.dto.cultivation.request.harvest.HarvestCreateReq
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationCreateResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.CultivationModeChangeResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoListResponse;
+import site.yesaido.frontserver.dto.cultivation.response.cultivation.PhotoResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberListResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.MemberResponse;
 import site.yesaido.frontserver.dto.cultivation.response.cultivationmember.UserSearchResponse;
@@ -70,7 +71,7 @@ public class CultivationController {
     public ResponseEntity<CultivationCreateResponse> createCultivation(
             @Valid @RequestBody CultivationCreateRequest request
     ) {
-        return cultivationClient.createCultivation(request);
+        return UpstreamResponseUtils.isolate(cultivationClient.createCultivation(request));
     }
 
     @GetMapping("/{cultivation-id}")
@@ -103,9 +104,8 @@ public class CultivationController {
     }
 
     @DeleteMapping("/{cultivation-id}")
-    public String deleteCultivationForm(@PathVariable("cultivation-id") Long cultivationId) {
-        cultivationClient.deleteCultivation(cultivationId);
-        return "redirect:/cultivations";
+    public ResponseEntity<Void> deleteCultivation(@PathVariable("cultivation-id") Long cultivationId) {
+        return UpstreamResponseUtils.isolate(cultivationClient.deleteCultivation(cultivationId));
     }
 
     // CultivationMember
@@ -170,10 +170,9 @@ public class CultivationController {
 
     // 사진
     @PostMapping("/{cultivation-id}/photos")
-    public String uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
-                              @RequestParam("file") MultipartFile file) {
-        cultivationClient.uploadPhoto(cultivationId, file);
-        return "redirect:/cultivations/" + cultivationId;
+    public ResponseEntity<PhotoResponse> uploadPhoto(@PathVariable("cultivation-id") Long cultivationId,
+                                                     @RequestParam("file") MultipartFile file) {
+        return UpstreamResponseUtils.isolate(cultivationClient.uploadPhoto(cultivationId, file));
     }
 
     @GetMapping("{cultivation-id}/photos")
