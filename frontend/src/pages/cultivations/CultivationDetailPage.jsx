@@ -33,6 +33,7 @@ import {
   getCultivationDetailPage,
   getLatestSensorValues,
 } from "../../api/cultivations";
+import { getInsightCandidates, getInsightDetail } from "../../api/insights";
 import { request, unwrapApiResponse } from "../../api/http";
 import AdminPagination from "../../components/admin/AdminPagination";
 import Modal from "../../components/Modal";
@@ -49,6 +50,10 @@ import MemberManager from "../../features/cultivations/MemberManager";
 import PhotoManager from "../../features/cultivations/PhotoManager";
 import SensorManager from "../../features/cultivations/SensorManager";
 import {
+  aggregateChartPoints,
+  preferNonEmptyLatestValues,
+} from "../../features/cultivations/sensorChartUtils";
+import {
   formatDate,
   formatMode,
   formatRole,
@@ -56,12 +61,6 @@ import {
   normalizeList,
   normalizeSensorUnit,
 } from "../../utils/formatters";
-import { getInsightCandidates, getInsightDetail } from "../../api/insights";
-
-import {
-  aggregateChartPoints,
-  preferNonEmptyLatestValues,
-} from "../../features/cultivations/sensorChartUtils";
 
 function buildSensorOptions(data, latestValues) {
   return normalizeList(data?.sensors?.sensors).flatMap((sensor) =>
@@ -326,8 +325,110 @@ function DailyFeedbackFallbackPage({
   );
 }
 
+function HarvestInsightDetailView({ selectedDetail, mushroomName, onBack }) {
+  const hasTimeline = selectedDetail.dailyTimelines && selectedDetail.dailyTimelines.length > 0;
+
+  return (
+    <section
+      className={hasTimeline ? "guide-grid" : ""}
+      style={{
+        width: "100%",
+        display: hasTimeline ? undefined : "flex",
+        flexDirection: "column",
+        gap: "16px",
+      }}
+    >
+      <article
+        className="panel-card guide-card"
+        style={{ width: "100%", boxSizing: "border-box" }}
+      >
+        <header className="panel-card__heading">
+          <div>
+            <button
+              type="button"
+              className="text-button"
+              style={{ marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}
+              onClick={onBack}
+            >
+              ← 추천 목록으로 돌아가기
+            </button>
+            <h2>{mushroomName || "버섯"} 우수 수확 AI 성공 요인 분석</h2>
+            <p
+              style={{
+                lineHeight: "1.6",
+                whiteSpace: "pre-wrap",
+                marginTop: "10px",
+                fontSize: "14px",
+              }}
+            >
+              {selectedDetail.summary}
+            </p>
+          </div>
+        </header>
+        <div className="guide-callouts" style={{ marginTop: "16px" }}>
+          <div>
+            <strong>최종 수확량</strong>
+            <p>
+              {selectedDetail.harvestWeightGrams != null
+                ? `${Number(selectedDetail.harvestWeightGrams).toLocaleString()} g`
+                : "-"}
+            </p>
+          </div>
+          <div>
+            <strong>환경 유지 점수</strong>
+            <p>{selectedDetail.growthScore != null ? `${selectedDetail.growthScore}점` : "-"}</p>
+          </div>
+        </div>
+      </article>
+
+      {hasTimeline && (
+        <article className="panel-card recipe-card" style={{ boxSizing: "border-box" }}>
+          <header className="panel-card__heading">
+            <h2>일자별 환경 유지율 이력</h2>
+            <span>{selectedDetail.dailyTimelines.length}일간 기록</span>
+          </header>
+          <div className="recipe-list" style={{ maxHeight: "350px", overflowY: "auto" }}>
+            {selectedDetail.dailyTimelines.map((dt) => (
+              <details key={dt.targetDate} style={{ marginBottom: "8px" }}>
+                <summary style={{ fontWeight: "bold" }}>📅 {dt.targetDate} 환경 유지율</summary>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    fontSize: "12px",
+                    color: "#555",
+                    marginTop: "6px",
+                  }}
+                >
+                  <span>
+                    온도:{" "}
+                    {dt.compliance?.temperatureRate != null
+                      ? `${dt.compliance.temperatureRate}%`
+                      : "-"}
+                  </span>
+                  <span>
+                    습도:{" "}
+                    {dt.compliance?.humidityRate != null ? `${dt.compliance.humidityRate}%` : "-"}
+                  </span>
+                  <span>
+                    CO₂: {dt.compliance?.co2Rate != null ? `${dt.compliance.co2Rate}%` : "-"}
+                  </span>
+                  <span>
+                    조도: {dt.compliance?.lightRate != null ? `${dt.compliance.lightRate}%` : "-"}
+                  </span>
+                </div>
+              </details>
+            ))}
+          </div>
+        </article>
+      )}
+    </section>
+  );
+}
+
 function HarvestInsightModal({ cultivationId, mushroomName }) {
-  const [candidates, setCandidates] = useState([]);
+  const [candidateList, setCandidateList] = useState([]);
   const [selectedDetail, setSelectedDetail] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -338,8 +439,9 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
     setError(null);
     getInsightCandidates(cultivationId)
       .then((res) => {
-        const list = Array.isArray(res?.data) ? res.data : res?.data?.candidates;
-        if (Array.isArray(list)) setCandidates(list);
+        const rawData = res?.data;
+        const list = Array.isArray(rawData) ? rawData : rawData?.candidates;
+        if (Array.isArray(list)) setCandidateList(list);
       })
       .catch((err) => {
         console.error("인사이트 조회 실패:", err);
@@ -355,7 +457,7 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
   if (error) {
     return (
       <div className="pending-widget">
-        인사이트 데이터를 불러오지 못했습니다.
+        <p>인사이트 데이터를 불러오지 못했습니다.</p>
         <button className="text-button" type="button" onClick={fetchCandidates}>
           다시 시도
         </button>
@@ -367,110 +469,17 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
     return <p className="pending-widget">과거 우수 수확 데이터를 분석하고 있습니다.</p>;
   }
 
-  // 상세 분석 보기 (카드 클릭 시)
   if (selectedDetail) {
-    const hasTimeline = selectedDetail.dailyTimelines && selectedDetail.dailyTimelines.length > 0;
-
     return (
-      <section
-        className={hasTimeline ? "guide-grid" : ""}
-        style={{
-          width: "100%",
-          display: hasTimeline ? undefined : "flex",
-          flexDirection: "column",
-          gap: "16px",
-        }}
-      >
-        <article
-          className="panel-card guide-card"
-          style={{ width: "100%", boxSizing: "border-box" }}
-        >
-          <header className="panel-card__heading">
-            <div>
-              <button
-                type="button"
-                className="text-button"
-                style={{ marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}
-                onClick={() => setSelectedDetail(null)}
-              >
-                ← 추천 목록으로 돌아가기
-              </button>
-              <h2>{mushroomName || "버섯"} 우수 수확 AI 성공 요인 분석</h2>
-              <p
-                style={{
-                  lineHeight: "1.6",
-                  whiteSpace: "pre-wrap",
-                  marginTop: "10px",
-                  fontSize: "14px",
-                }}
-              >
-                {selectedDetail.summary}
-              </p>
-            </div>
-          </header>
-          <div className="guide-callouts" style={{ marginTop: "16px" }}>
-            <div>
-              <strong>최종 수확량</strong>
-              <p>
-                {selectedDetail.harvestWeightGrams != null
-                  ? `${Number(selectedDetail.harvestWeightGrams).toLocaleString()} g`
-                  : "-"}
-              </p>
-            </div>
-            <div>
-              <strong>환경 유지 점수</strong>
-              <p>{selectedDetail.growthScore != null ? `${selectedDetail.growthScore}점` : "-"}</p>
-            </div>
-          </div>
-        </article>
-
-        {hasTimeline && (
-          <article className="panel-card recipe-card" style={{ boxSizing: "border-box" }}>
-            <header className="panel-card__heading">
-              <h2>일자별 환경 유지율 이력</h2>
-              <span>{selectedDetail.dailyTimelines.length}일간 기록</span>
-            </header>
-            <div className="recipe-list" style={{ maxHeight: "350px", overflowY: "auto" }}>
-              {selectedDetail.dailyTimelines.map((dt) => (
-                <details key={dt.targetDate} style={{ marginBottom: "8px" }}>
-                  <summary style={{ fontWeight: "bold" }}>📅 {dt.targetDate} 환경 유지율</summary>
-                  <div
-                    style={{
-                      display: "flex",
-                      flexWrap: "wrap",
-                      gap: "8px",
-                      fontSize: "12px",
-                      color: "#555",
-                      marginTop: "6px",
-                    }}
-                  >
-                    <span>
-                      온도:{" "}
-                      {dt.compliance?.temperatureRate != null
-                        ? `${dt.compliance.temperatureRate}%`
-                        : "-"}
-                    </span>
-                    <span>
-                      습도:{" "}
-                      {dt.compliance?.humidityRate != null ? `${dt.compliance.humidityRate}%` : "-"}
-                    </span>
-                    <span>
-                      CO₂: {dt.compliance?.co2Rate != null ? `${dt.compliance.co2Rate}%` : "-"}
-                    </span>
-                    <span>
-                      조도: {dt.compliance?.lightRate != null ? `${dt.compliance.lightRate}%` : "-"}
-                    </span>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </article>
-        )}
-      </section>
+      <HarvestInsightDetailView
+        selectedDetail={selectedDetail}
+        mushroomName={mushroomName}
+        onBack={() => setSelectedDetail(null)}
+      />
     );
   }
 
-  if (candidates.length === 0) {
+  if (candidateList.length === 0) {
     return (
       <p className="pending-widget">
         {mushroomName || "해당 버섯"}의 과거 우수 수확 데이터가 아직 충분하지 않습니다.
@@ -478,12 +487,11 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
     );
   }
 
-  // 추천 카드 목록 보기
   return (
     <article className="panel-card guide-card" style={{ width: "100%", boxSizing: "border-box" }}>
       <header className="panel-card__heading">
         <div>
-          <h2>유사 환경 우수 수확 추천 사례 (TOP {candidates.length})</h2>
+          <h2>유사 환경 우수 수확 추천 사례 (TOP {candidateList.length})</h2>
           <p>
             카드를 클릭하시면 해당 농가의 AI 성공 분석과 일자별 관리 이력을 확인하실 수 있습니다.
           </p>
@@ -497,11 +505,12 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
           marginTop: "12px",
         }}
       >
-        {candidates.map((c, idx) => {
+        {candidateList.map((c, idx) => {
           const cardId = c.insightId || c.id;
           return (
-            <div
+            <button
               key={cardId || idx}
+              type="button"
               onClick={() => getInsightDetail(cardId).then((res) => setSelectedDetail(res.data))}
               style={{
                 padding: "16px",
@@ -513,6 +522,9 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
                 display: "flex",
                 flexDirection: "column",
                 gap: "10px",
+                textAlign: "left",
+                font: "inherit",
+                color: "inherit",
                 transition: "transform 0.15s ease, box-shadow 0.15s ease",
               }}
             >
@@ -541,7 +553,6 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
                 <span style={{ fontSize: "14px", fontWeight: "normal" }}>g 수확</span>
               </div>
 
-              {/* 긴 요약은 2줄로 깔끔하게 말줄임 처리 (따옴표 "vertical" 적용) */}
               <p
                 style={{
                   margin: 0,
@@ -558,7 +569,6 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
                 {c.summary}
               </p>
 
-              {/* 온습도 정보 뱃지 */}
               <div
                 style={{
                   display: "flex",
@@ -601,7 +611,7 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
               >
                 상세 분석 보기 →
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -620,6 +630,100 @@ function pad2(value) {
 
 function mdpFormatDate(year, month, day) {
   return `${year}-${pad2(month + 1)}-${pad2(day)}`;
+}
+
+function getNextMonthView(prev, delta) {
+  let { year, month } = prev;
+  month += delta;
+  if (month < 0) {
+    return { year: year - 1, month: 11 };
+  }
+  if (month > 11) {
+    return { year: year + 1, month: 0 };
+  }
+  return { year, month };
+}
+
+function isDateDisabled(dateStr, minDate, maxDate) {
+  return Boolean((minDate && dateStr < minDate) || dateStr > maxDate);
+}
+
+function isMonthNavDisabled(view, minDate, maxDate) {
+  const [minYear, minMonth] = minDate ? minDate.split("-").map(Number) : [null, null];
+  const [maxYear, maxMonth] = maxDate.split("-").map(Number);
+  const prevDisabled =
+    minYear != null &&
+    (view.year < minYear || (view.year === minYear && view.month <= minMonth - 1));
+  const nextDisabled =
+    view.year > maxYear || (view.year === maxYear && view.month >= maxMonth - 1);
+  return { prevDisabled, nextDisabled };
+}
+
+function MiniDatePickerCalendar({
+  panelPos,
+  view,
+  onMonthChange,
+  prevDisabled,
+  nextDisabled,
+  cells,
+  minDate,
+  maxDate,
+  value,
+  onSelectDate,
+}) {
+  return createPortal(
+    <div
+      className="mdp-panel"
+      data-mdp-panel
+      style={{ position: "fixed", top: panelPos.top, left: panelPos.left, zIndex: 200 }}
+    >
+      <div className="mdp-panel-header">
+        <button type="button" onClick={() => onMonthChange(-1)} disabled={prevDisabled}>
+          <ChevronLeft aria-hidden="true" />
+        </button>
+        <span>
+          {view.year}년 {view.month + 1}월
+        </span>
+        <button type="button" onClick={() => onMonthChange(1)} disabled={nextDisabled}>
+          <ChevronRight aria-hidden="true" />
+        </button>
+      </div>
+      <div className="mdp-weekdays">
+        {["일", "월", "화", "수", "목", "금", "토"].map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </div>
+      <div className="mdp-days">
+        {cells.map((day, index) => {
+          if (day == null) {
+            return (
+              <button
+                key={`empty-${view.year}-${view.month}-${index}`}
+                type="button"
+                className="mdp-day mdp-day--other-month"
+                disabled
+              />
+            );
+          }
+          const dateStr = mdpFormatDate(view.year, view.month, day);
+          const disabled = isDateDisabled(dateStr, minDate, maxDate);
+          const selected = value === dateStr;
+          return (
+            <button
+              key={dateStr}
+              type="button"
+              className={`mdp-day${selected ? " mdp-day--selected" : ""}`}
+              disabled={disabled}
+              onClick={() => onSelectDate(dateStr)}
+            >
+              {day}
+            </button>
+          );
+        })}
+      </div>
+    </div>,
+    document.body,
+  );
 }
 
 function MiniDatePicker({ value, onChange, minDate, maxDate }) {
@@ -660,28 +764,7 @@ function MiniDatePicker({ value, onChange, minDate, maxDate }) {
     setOpen((prev) => !prev);
   };
 
-  const changeMonth = (delta) => {
-    setView((prev) => {
-      let { year, month } = prev;
-      month += delta;
-      if (month < 0) {
-        month = 11;
-        year -= 1;
-      } else if (month > 11) {
-        month = 0;
-        year += 1;
-      }
-      return { year, month };
-    });
-  };
-
-  const [minYear, minMonth] = minDate ? minDate.split("-").map(Number) : [null, null];
-  const [maxYear, maxMonth] = maxDate.split("-").map(Number);
-  const prevDisabled =
-    minYear != null &&
-    (view.year < minYear || (view.year === minYear && view.month <= minMonth - 1));
-  const nextDisabled = view.year > maxYear || (view.year === maxYear && view.month >= maxMonth - 1);
-
+  const { prevDisabled, nextDisabled } = isMonthNavDisabled(view, minDate, maxDate);
   const firstDayOfWeek = new Date(view.year, view.month, 1).getDay();
   const daysInMonth = new Date(view.year, view.month + 1, 0).getDate();
   const cells = [
@@ -695,64 +778,23 @@ function MiniDatePicker({ value, onChange, minDate, maxDate }) {
         <CalendarDays aria-hidden="true" />
         <span>{value ? formatMdpLabel(value) : "최신 사진"}</span>
       </button>
-      {open &&
-        panelPos &&
-        createPortal(
-          <div
-            className="mdp-panel"
-            data-mdp-panel
-            style={{ position: "fixed", top: panelPos.top, left: panelPos.left, zIndex: 200 }}
-          >
-            <div className="mdp-panel-header">
-              <button type="button" onClick={() => changeMonth(-1)} disabled={prevDisabled}>
-                <ChevronLeft aria-hidden="true" />
-              </button>
-              <span>
-                {view.year}년 {view.month + 1}월
-              </span>
-              <button type="button" onClick={() => changeMonth(1)} disabled={nextDisabled}>
-                <ChevronRight aria-hidden="true" />
-              </button>
-            </div>
-            <div className="mdp-weekdays">
-              {["일", "월", "화", "수", "목", "금", "토"].map((label) => (
-                <span key={label}>{label}</span>
-              ))}
-            </div>
-            <div className="mdp-days">
-              {cells.map((day, index) => {
-                if (day == null) {
-                  return (
-                    <button
-                      key={`empty-${index}`}
-                      type="button"
-                      className="mdp-day mdp-day--other-month"
-                      disabled
-                    />
-                  );
-                }
-                const dateStr = mdpFormatDate(view.year, view.month, day);
-                const disabled = (minDate && dateStr < minDate) || dateStr > maxDate;
-                const selected = value === dateStr;
-                return (
-                  <button
-                    key={dateStr}
-                    type="button"
-                    className={`mdp-day${selected ? " mdp-day--selected" : ""}`}
-                    disabled={disabled}
-                    onClick={() => {
-                      onChange(dateStr);
-                      setOpen(false);
-                    }}
-                  >
-                    {day}
-                  </button>
-                );
-              })}
-            </div>
-          </div>,
-          document.body,
-        )}
+      {open && panelPos && (
+        <MiniDatePickerCalendar
+          cells={cells}
+          maxDate={maxDate}
+          minDate={minDate}
+          nextDisabled={nextDisabled}
+          onMonthChange={(delta) => setView((prev) => getNextMonthView(prev, delta))}
+          onSelectDate={(dateStr) => {
+            onChange(dateStr);
+            setOpen(false);
+          }}
+          panelPos={panelPos}
+          prevDisabled={prevDisabled}
+          value={value}
+          view={view}
+        />
+      )}
     </div>
   );
 }
@@ -761,7 +803,7 @@ function MushroomGuide({ guide, error, onRetry }) {
   if (error) {
     return (
       <div className="pending-widget">
-        버섯 가이드를 불러오지 못했습니다.
+        <p>버섯 가이드를 불러오지 못했습니다.</p>
         <button className="text-button" type="button" onClick={onRetry}>
           다시 시도
         </button>
@@ -840,6 +882,33 @@ function thresholdLabel(setting, unit) {
   return `${min}–${max}${unit}`;
 }
 
+function renderSensorChart(chartPoints, color) {
+  if (chartPoints.length > 1) {
+    return (
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={chartPoints} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
+          <CartesianGrid stroke="rgba(117,91,65,.12)" vertical={false} />
+          <XAxis dataKey="measuredAt" minTickGap={34} tick={{ fontSize: 10 }} />
+          <YAxis width={42} tick={{ fontSize: 10 }} />
+          <Tooltip />
+          <Line
+            dataKey="value"
+            dot={false}
+            isAnimationActive={false}
+            stroke={color}
+            strokeWidth={2.5}
+            type="monotone"
+          />
+        </LineChart>
+      </ResponsiveContainer>
+    );
+  }
+  if (chartPoints.length === 1) {
+    return <p className="pending-widget">측정값 1건만 있어 그래프를 표시할 수 없습니다.</p>;
+  }
+  return <p className="pending-widget">선택한 기간의 센서 데이터가 없습니다.</p>;
+}
+
 function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
   const state = getSensorState(option);
   const unit = normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit);
@@ -880,28 +949,7 @@ function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
       </div>
 
       <div className="live-sensor-chart" aria-label={`${option.sensor.deviceName} 센서 추이`}>
-        {chartPoints.length > 1 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartPoints} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
-              <CartesianGrid stroke="rgba(117,91,65,.12)" vertical={false} />
-              <XAxis dataKey="measuredAt" minTickGap={34} tick={{ fontSize: 10 }} />
-              <YAxis width={42} tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Line
-                dataKey="value"
-                dot={false}
-                isAnimationActive={false}
-                stroke={color}
-                strokeWidth={2.5}
-                type="monotone"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : chartPoints.length === 1 ? (
-          <p className="pending-widget">측정값 1건만 있어 그래프를 표시할 수 없습니다.</p>
-        ) : (
-          <p className="pending-widget">선택한 기간의 센서 데이터가 없습니다.</p>
-        )}
+        {renderSensorChart(chartPoints, color)}
       </div>
 
       <dl className="live-sensor-card__meta">
@@ -1032,20 +1080,398 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
   );
 }
 
-export default function CultivationDetailPage() {
-  const { cultivationId, feedbackDate: routeFeedbackDate } = useParams();
+function GuideModal({ mushroomId, mushroomName, onClose }) {
+  const guideQuery = useQuery({
+    queryKey: ["mushroom-guide", mushroomId],
+    queryFn: () =>
+      request(`/cultivations/mushrooms/${mushroomId}/guide`).then(unwrapApiResponse),
+    enabled: Boolean(mushroomId),
+    staleTime: 300_000,
+  });
+
+  return (
+    <Modal
+      title={`AI ${mushroomName || "버섯"} 가이드`}
+      onClose={onClose}
+      className="modal-card--guide"
+    >
+      <MushroomGuide
+        guide={guideQuery.data}
+        error={guideQuery.error}
+        onRetry={guideQuery.refetch}
+      />
+    </Modal>
+  );
+}
+
+function DetailModals({
+  modal,
+  id,
+  cultivation,
+  data,
+  photos,
+  mushroomName,
+  canManage,
+  onClose,
+}) {
+  if (!modal) return null;
+
+  return (
+    <>
+      {modal === "members" && (
+        <MemberManager
+          cultivationId={id}
+          members={normalizeList(data.members)}
+          myRole={cultivation.myRole}
+          onClose={onClose}
+        />
+      )}
+      {modal === "photos" && (
+        <PhotoManager
+          cultivationId={id}
+          photos={photos}
+          canManage={canManage}
+          onClose={onClose}
+        />
+      )}
+      {modal === "sensors" && (
+        <SensorManager
+          cultivationId={id}
+          sensors={data.sensors}
+          canManage={canManage}
+          onClose={onClose}
+        />
+      )}
+      {modal === "guide" && (
+        <GuideModal
+          mushroomId={cultivation.mushroomId}
+          mushroomName={mushroomName}
+          onClose={onClose}
+        />
+      )}
+      {modal === "insight" && (
+        <Modal
+          title={`AI ${mushroomName || "버섯"} 인사이트`}
+          onClose={onClose}
+          className="modal-card--guide"
+        >
+          <HarvestInsightModal cultivationId={id} mushroomName={mushroomName} />
+        </Modal>
+      )}
+      {modal === "actions" && (
+        <CultivationActions
+          cultivation={cultivation}
+          growthDays={data.growthDays}
+          pastCultivations={data.pastCultivations}
+          onClose={onClose}
+        />
+      )}
+    </>
+  );
+}
+
+function CultivationSetupRequiredView({ cultivation, id, canManage }) {
+  return (
+    <main className="workspace-page cultivation-setup-required-page">
+      <section className="workspace-panel setup-required-state">
+        <div className="setup-required-state__icon">
+          <Cpu aria-hidden="true" />
+        </div>
+        <p className="eyebrow">{cultivation.name}</p>
+        <h1>센서 연결을 마쳐 주세요</h1>
+        <p>
+          재배지는 생성됐지만 사용할 센서가 아직 없습니다. 센서를 하나 이상 연결한 뒤 대시보드를
+          열 수 있습니다.
+        </p>
+        <div className="form-actions">
+          <Link className="button button--secondary" to="/cultivations">
+            나의 재배지
+          </Link>
+          {canManage && (
+            <Link className="button button--primary" to={`/cultivations/${id}/setup`}>
+              마저 진행하기 <ChevronRight aria-hidden="true" />
+            </Link>
+          )}
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function DashboardTabContent({
+  id,
+  cultivation,
+  data,
+  photos,
+  photoDateFilter,
+  setPhotoDateFilter,
+  photoMinDate,
+  photoMaxDate,
+  feedbackMaxDate,
+  feedbackMinDate,
+  handleOpenFeedbackReport,
+  latestQuery,
+  sensorOptions,
+}) {
+  const currentPhoto = photos[0];
+  const displayedPhoto = photoDateFilter
+    ? photos.find((photo) => String(photo.updatedAt).slice(0, 10) === photoDateFilter)
+    : currentPhoto;
+  const compliance = data.dailyCompliance;
+
+  return (
+    <section
+      aria-labelledby="detail-dashboard-tab"
+      className="detail-tab-panel"
+      id="detail-dashboard-panel"
+      role="tabpanel"
+    >
+      <section className="dashboard-top-grid">
+        <article className="detail-photo panel-card">
+          {displayedPhoto ? (
+            <img src={displayedPhoto.uri} alt={`${cultivation.name} 재배 사진`} />
+          ) : (
+            <div className="detail-photo__empty">
+              {photoDateFilter
+                ? "이 날짜엔 등록된 사진이 없어요."
+                : "등록된 재배 사진이 없습니다."}
+            </div>
+          )}
+          <div className="detail-photo__overlay">
+            <MiniDatePicker
+              value={photoDateFilter}
+              onChange={setPhotoDateFilter}
+              minDate={photoMinDate}
+              maxDate={photoMaxDate}
+            />
+            {photoDateFilter && (
+              <button
+                type="button"
+                className="detail-photo__reset"
+                title="최신 사진으로"
+                onClick={() => setPhotoDateFilter(null)}
+              >
+                <History aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </article>
+        <EnvironmentBriefing compliance={compliance} />
+        <CompliancePanel compliance={compliance} />
+      </section>
+
+      <DailyFeedbackPanel
+        cultivationId={id}
+        cultivationName={cultivation.name}
+        feedbackDate={feedbackMaxDate}
+        maxDate={feedbackMaxDate}
+        minDate={feedbackMinDate}
+        variant="preview"
+        onOpenReport={handleOpenFeedbackReport}
+      />
+
+      <RealTimeSensorPanel
+        latestQuery={latestQuery}
+        sensorOptions={sensorOptions}
+        sensorHistory12h={data.sensorHistory12h}
+      />
+    </section>
+  );
+}
+
+function CultivationDetailToolbar({
+  canOpenActions,
+  notifOpen,
+  onOpenModal,
+  onToggleNotif,
+  onCloseNotif,
+}) {
+  return (
+    <nav className="detail-toolbar" aria-label="재배 상세 메뉴">
+      <Link to="/cultivations">
+        <ArrowLeft aria-hidden="true" /> 나의 재배지
+      </Link>
+      <span className="toolbar-spacer" />
+      <button type="button" onClick={() => onOpenModal("members")}>
+        <Users aria-hidden="true" /> 담당자
+      </button>
+      <div className="notif-bell-wrap">
+        <button type="button" onClick={onToggleNotif}>
+          <Bell aria-hidden="true" /> 알림
+        </button>
+        {notifOpen && <NotificationBellPanel onClose={onCloseNotif} />}
+      </div>
+      <button type="button" onClick={() => onOpenModal("photos")}>
+        <Camera aria-hidden="true" /> 사진
+      </button>
+      <button type="button" onClick={() => onOpenModal("sensors")}>
+        <Cpu aria-hidden="true" /> 센서
+      </button>
+      <button type="button" onClick={() => onOpenModal("guide")}>
+        <Bot aria-hidden="true" /> AI 가이드
+      </button>
+      <button type="button" onClick={() => onOpenModal("insight")}>
+        <Sparkles aria-hidden="true" /> AI 인사이트
+      </button>
+      {canOpenActions && (
+        <button type="button" onClick={() => onOpenModal("actions")}>
+          <MoreHorizontal aria-hidden="true" /> 관리
+        </button>
+      )}
+    </nav>
+  );
+}
+
+function CultivationDetailHeader({
+  mushroomName,
+  myRole,
+  name,
+  startedAt,
+  mode,
+  growthDays,
+  memberCount,
+}) {
+  return (
+    <header className="detail-heading">
+      <div>
+        <p className="eyebrow">
+          {mushroomName || "버섯"} · {formatRole(myRole)}
+        </p>
+        <h1>{name}</h1>
+        <p>
+          {formatDate(startedAt)} 재배 시작 · {formatMode(mode)}
+        </p>
+      </div>
+      <div className="detail-heading__badges">
+        <span>{formatMode(mode)}</span>
+        <span>{growthDays ? `생육 ${growthDays}일차` : "재배일 정보 없음"}</span>
+        <span>담당자 {memberCount}명</span>
+      </div>
+    </header>
+  );
+}
+
+function CultivationDetailWorkspace({
+  id,
+  cultivation,
+  data,
+  mushroomName,
+  activeTab,
+  onTabChange,
+  tabPanelRef,
+  tabHeight,
+  tabMinHeight,
+  photos,
+  photoDateFilter,
+  setPhotoDateFilter,
+  photoMinDate,
+  photoMaxDate,
+  feedbackMaxDate,
+  feedbackMinDate,
+  selectedFeedbackDate,
+  handleOpenFeedbackReport,
+  handleFeedbackDateChange,
+  latestQuery,
+  sensorOptions,
+}) {
+  const { startedAt, mode, myRole, name } = cultivation;
+
+  return (
+    <section className="detail-workspace">
+      <CultivationDetailHeader
+        growthDays={data.growthDays}
+        memberCount={normalizeList(data.members).length}
+        mode={mode}
+        mushroomName={mushroomName}
+        myRole={myRole}
+        name={name}
+        startedAt={startedAt}
+      />
+
+      <DetailTabs activeTab={activeTab} onChange={onTabChange} />
+
+      <div
+        ref={tabPanelRef}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: tabHeight,
+          minHeight: tabMinHeight,
+        }}
+      >
+        {activeTab === "dashboard" && (
+          <DashboardTabContent
+            feedbackMaxDate={feedbackMaxDate}
+            feedbackMinDate={feedbackMinDate}
+            handleOpenFeedbackReport={handleOpenFeedbackReport}
+            id={id}
+            cultivation={cultivation}
+            data={data}
+            latestQuery={latestQuery}
+            photoDateFilter={photoDateFilter}
+            photoMaxDate={photoMaxDate}
+            photoMinDate={photoMinDate}
+            photos={photos}
+            sensorOptions={sensorOptions}
+            setPhotoDateFilter={setPhotoDateFilter}
+          />
+        )}
+
+        {activeTab === "report" && (
+          <DailyFeedbackPanel
+            photos={photos}
+            cultivationId={id}
+            cultivationName={name}
+            feedbackDate={selectedFeedbackDate}
+            maxDate={feedbackMaxDate}
+            minDate={feedbackMinDate}
+            onFeedbackDateChange={handleFeedbackDateChange}
+          />
+        )}
+
+        {activeTab === "chatbot" && (
+          <section
+            aria-labelledby="detail-chatbot-tab"
+            className="detail-tab-panel"
+            id="detail-chatbot-panel"
+            role="tabpanel"
+          >
+            <ChatPanel cultivationId={id} />
+          </section>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function useDetailTabPanelHeight(activeTab) {
+  const tabPanelRef = useRef(null);
+  const [tabPanelHeight, setTabPanelHeight] = useState(0);
+
+  useEffect(() => {
+    if (activeTab !== "dashboard") return undefined;
+    const node = tabPanelRef.current;
+    if (!node || typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[0]?.contentRect.height;
+      if (height) setTabPanelHeight(height);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [activeTab]);
+
+  const tabHeight = activeTab === "chatbot" && tabPanelHeight ? tabPanelHeight : undefined;
+  const tabMinHeight = activeTab === "report" && tabPanelHeight ? tabPanelHeight : undefined;
+
+  return { tabPanelRef, tabHeight, tabMinHeight };
+}
+
+function useDetailRouteState(id, routeFeedbackDate, feedbackMaxDate) {
   const navigate = useNavigate();
-  const id = Number(cultivationId);
-  const feedbackMaxDate = getPreviousDateInKorea();
   const [activeTab, setActiveTab] = useState(routeFeedbackDate ? "report" : "dashboard");
   const [selectedFeedbackDate, setSelectedFeedbackDate] = useState(() =>
     isDailyFeedbackDate(routeFeedbackDate) ? routeFeedbackDate : feedbackMaxDate,
   );
-  const [modal, setModal] = useState(null);
-  const [notifOpen, setNotifOpen] = useState(false);
-  const [photoDateFilter, setPhotoDateFilter] = useState(null);
-  const tabPanelRef = useRef(null);
-  const [tabPanelHeight, setTabPanelHeight] = useState(0);
 
   useEffect(() => {
     if (!routeFeedbackDate) return;
@@ -1054,51 +1480,6 @@ export default function CultivationDetailPage() {
       setSelectedFeedbackDate(routeFeedbackDate);
     }
   }, [routeFeedbackDate]);
-
-  useEffect(() => {
-    // 대시보드 탭 콘텐츠 높이만 기준으로 삼음 — 챗봇 메시지가 늘어나거나 다른 탭
-    // 콘텐츠가 변해도 박스 크기가 같이 늘어나지 않게, 다른 탭에서는 측정하지 않음.
-    if (activeTab !== "dashboard") return undefined;
-    const node = tabPanelRef.current;
-    if (!node || typeof ResizeObserver === "undefined") return undefined;
-    const observer = new ResizeObserver((entries) => {
-      const height = entries[0]?.contentRect.height;
-      if (!height) return;
-      setTabPanelHeight(height);
-    });
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [activeTab]);
-
-  const detailQuery = useQuery({
-    queryKey: cultivationKeys.detail(id),
-    queryFn: () => getCultivationDetailPage(id),
-    enabled: Number.isFinite(id),
-  });
-  const latestQuery = useQuery({
-    queryKey: cultivationKeys.latest(id),
-    queryFn: () => getLatestSensorValues(id),
-    enabled: Number.isFinite(id) && activeTab === "dashboard",
-    refetchInterval: 3_000,
-    retry: 1,
-  });
-
-  const data = detailQuery.data;
-  const latestValues = preferNonEmptyLatestValues(
-    latestQuery.data?.latestSensorValueResponses,
-    data?.latestSensorValues?.latestSensorValueResponses,
-  );
-  const sensorOptions = useMemo(() => buildSensorOptions(data, latestValues), [data, latestValues]);
-
-  const guideQuery = useQuery({
-    queryKey: ["mushroom-guide", data?.cultivation?.mushroomId],
-    queryFn: () =>
-      request(`/cultivations/mushrooms/${data.cultivation.mushroomId}/guide`).then(
-        unwrapApiResponse,
-      ),
-    enabled: Boolean(data?.cultivation?.mushroomId),
-    staleTime: 300_000,
-  });
 
   const handleTabChange = (nextTab) => {
     setActiveTab(nextTab);
@@ -1120,6 +1501,25 @@ export default function CultivationDetailPage() {
     navigate(`/cultivations/${id}/daily-feedbacks/${targetDate}`);
   };
 
+  return {
+    activeTab,
+    selectedFeedbackDate,
+    handleTabChange,
+    handleFeedbackDateChange,
+    handleOpenFeedbackReport,
+  };
+}
+
+function renderDetailGuard({
+  id,
+  routeFeedbackDate,
+  selectedFeedbackDate,
+  feedbackMaxDate,
+  detailQuery,
+  data,
+  handleFeedbackDateChange,
+  handleTabChange,
+}) {
   if (routeFeedbackDate && (detailQuery.isLoading || detailQuery.isError || !data?.cultivation)) {
     return (
       <DailyFeedbackFallbackPage
@@ -1132,7 +1532,6 @@ export default function CultivationDetailPage() {
       />
     );
   }
-
   if (detailQuery.isLoading) return <LoadingState message="재배 상세 정보를 불러오고 있어요." />;
   if (detailQuery.isError)
     return <ErrorState error={detailQuery.error} onRetry={detailQuery.refetch} />;
@@ -1143,258 +1542,126 @@ export default function CultivationDetailPage() {
         onRetry={detailQuery.refetch}
       />
     );
+  return null;
+}
+
+export default function CultivationDetailPage() {
+  const { cultivationId, feedbackDate: routeFeedbackDate } = useParams();
+  const id = Number(cultivationId);
+  const feedbackMaxDate = getPreviousDateInKorea();
+
+  const [modal, setModal] = useState(null);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [photoDateFilter, setPhotoDateFilter] = useState(null);
+
+  const {
+    activeTab,
+    selectedFeedbackDate,
+    handleTabChange,
+    handleFeedbackDateChange,
+    handleOpenFeedbackReport,
+  } = useDetailRouteState(id, routeFeedbackDate, feedbackMaxDate);
+
+  const { tabPanelRef, tabHeight, tabMinHeight } = useDetailTabPanelHeight(activeTab);
+
+  const detailQuery = useQuery({
+    queryKey: cultivationKeys.detail(id),
+    queryFn: () => getCultivationDetailPage(id),
+    enabled: Number.isFinite(id),
+  });
+  const latestQuery = useQuery({
+    queryKey: cultivationKeys.latest(id),
+    queryFn: () => getLatestSensorValues(id),
+    enabled: Number.isFinite(id) && activeTab === "dashboard",
+    refetchInterval: 3_000,
+    retry: 1,
+  });
+
+  const data = detailQuery.data;
+  const latestValues = preferNonEmptyLatestValues(
+    latestQuery.data?.latestSensorValueResponses,
+    data?.latestSensorValues?.latestSensorValueResponses,
+  );
+  const sensorOptions = useMemo(() => buildSensorOptions(data, latestValues), [data, latestValues]);
+
+  const guardView = renderDetailGuard({
+    data,
+    detailQuery,
+    feedbackMaxDate,
+    handleFeedbackDateChange,
+    handleTabChange,
+    id,
+    routeFeedbackDate,
+    selectedFeedbackDate,
+  });
+  if (guardView) return guardView;
 
   const cultivation = data.cultivation;
+  const { startedAt, mode, myRole, mushroomId } = cultivation;
   const photos = normalizeList(data.photos)
     .slice()
     .sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)));
-  const currentPhoto = photos[0];
-  const photoMinDate = cultivation.startedAt ? String(cultivation.startedAt).slice(0, 10) : null;
+  const photoMinDate = startedAt ? String(startedAt).slice(0, 10) : null;
   const photoMaxDate = new Date().toISOString().slice(0, 10);
-  const displayedPhoto = photoDateFilter
-    ? photos.find((photo) => String(photo.updatedAt).slice(0, 10) === photoDateFilter)
-    : currentPhoto;
-  const canManage = cultivation.myRole === "OWNER" || cultivation.myRole === "MANAGER";
-  const canOpenActions =
-    cultivation.myRole === "OWNER" ||
-    (cultivation.myRole === "MANAGER" && cultivation.mode !== "HARVEST");
+  const canManage = myRole === "OWNER" || myRole === "MANAGER";
+  const canOpenActions = myRole === "OWNER" || (myRole === "MANAGER" && mode !== "HARVEST");
   const setupRequired = requiresSensorSetup(cultivation, data?.sensors?.sensors);
 
   if (setupRequired) {
-    return (
-      <main className="workspace-page cultivation-setup-required-page">
-        <section className="workspace-panel setup-required-state">
-          <div className="setup-required-state__icon">
-            <Cpu aria-hidden="true" />
-          </div>
-          <p className="eyebrow">{cultivation.name}</p>
-          <h1>센서 연결을 마쳐 주세요</h1>
-          <p>
-            재배지는 생성됐지만 사용할 센서가 아직 없습니다. 센서를 하나 이상 연결한 뒤 대시보드를
-            열 수 있습니다.
-          </p>
-          <div className="form-actions">
-            <Link className="button button--secondary" to="/cultivations">
-              나의 재배지
-            </Link>
-            {canManage && (
-              <Link className="button button--primary" to={`/cultivations/${id}/setup`}>
-                마저 진행하기 <ChevronRight aria-hidden="true" />
-              </Link>
-            )}
-          </div>
-        </section>
-      </main>
-    );
+    return <CultivationSetupRequiredView cultivation={cultivation} id={id} canManage={canManage} />;
   }
   const mushroomName = normalizeList(data.mushrooms).find(
-    (mushroom) => mushroom.id === cultivation.mushroomId,
+    (m) => m.id === mushroomId,
   )?.mushroomNameKo;
-  const cultivationStartDate = String(cultivation.startedAt || "").slice(0, 10);
+  const cultivationStartDate = String(startedAt || "").slice(0, 10);
   const feedbackMinDate = isDailyFeedbackDate(cultivationStartDate)
     ? cultivationStartDate
     : undefined;
 
   return (
     <main className="detail-page">
-      <nav className="detail-toolbar" aria-label="재배 상세 메뉴">
-        <Link to="/cultivations">
-          <ArrowLeft aria-hidden="true" /> 나의 재배지
-        </Link>
-        <span className="toolbar-spacer" />
-        <button type="button" onClick={() => setModal("members")}>
-          <Users aria-hidden="true" /> 담당자
-        </button>
-        <div className="notif-bell-wrap">
-          <button type="button" onClick={() => setNotifOpen((open) => !open)}>
-            <Bell aria-hidden="true" /> 알림
-          </button>
-          {notifOpen && <NotificationBellPanel onClose={() => setNotifOpen(false)} />}
-        </div>
-        <button type="button" onClick={() => setModal("photos")}>
-          <Camera aria-hidden="true" /> 사진
-        </button>
-        <button type="button" onClick={() => setModal("sensors")}>
-          <Cpu aria-hidden="true" /> 센서
-        </button>
-        <button type="button" onClick={() => setModal("guide")}>
-          <Bot aria-hidden="true" /> AI 가이드
-        </button>
-        <button type="button" onClick={() => setModal("insight")}>
-          <Sparkles aria-hidden="true" /> AI 인사이트
-        </button>
-        {canOpenActions && (
-          <button type="button" onClick={() => setModal("actions")}>
-            <MoreHorizontal aria-hidden="true" /> 관리
-          </button>
-        )}
-      </nav>
-      <section className="detail-workspace">
-        <header className="detail-heading">
-          <div>
-            <p className="eyebrow">
-              {mushroomName || "버섯"} · {formatRole(cultivation.myRole)}
-            </p>
-            <h1>{cultivation.name}</h1>
-            <p>
-              {formatDate(cultivation.startedAt)} 재배 시작 · {formatMode(cultivation.mode)}
-            </p>
-          </div>
-          <div className="detail-heading__badges">
-            <span>{formatMode(cultivation.mode)}</span>
-            <span>{data.growthDays ? `생육 ${data.growthDays}일차` : "재배일 정보 없음"}</span>
-            <span>담당자 {normalizeList(data.members).length}명</span>
-          </div>
-        </header>
+      <CultivationDetailToolbar
+        canOpenActions={canOpenActions}
+        notifOpen={notifOpen}
+        onCloseNotif={() => setNotifOpen(false)}
+        onOpenModal={(modalName) => setModal(modalName)}
+        onToggleNotif={() => setNotifOpen((open) => !open)}
+      />
 
-        <DetailTabs activeTab={activeTab} onChange={handleTabChange} />
+      <CultivationDetailWorkspace
+        activeTab={activeTab}
+        cultivation={cultivation}
+        data={data}
+        feedbackMaxDate={feedbackMaxDate}
+        feedbackMinDate={feedbackMinDate}
+        handleFeedbackDateChange={handleFeedbackDateChange}
+        handleOpenFeedbackReport={handleOpenFeedbackReport}
+        id={id}
+        latestQuery={latestQuery}
+        mushroomName={mushroomName}
+        onTabChange={handleTabChange}
+        photoDateFilter={photoDateFilter}
+        photoMaxDate={photoMaxDate}
+        photoMinDate={photoMinDate}
+        photos={photos}
+        selectedFeedbackDate={selectedFeedbackDate}
+        sensorOptions={sensorOptions}
+        setPhotoDateFilter={setPhotoDateFilter}
+        tabHeight={tabHeight}
+        tabMinHeight={tabMinHeight}
+        tabPanelRef={tabPanelRef}
+      />
 
-        <div
-          ref={tabPanelRef}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            height: activeTab === "chatbot" ? tabPanelHeight || undefined : undefined,
-            minHeight: activeTab === "report" ? tabPanelHeight || undefined : undefined,
-          }}
-        >
-          {activeTab === "dashboard" && (
-            <section
-              aria-labelledby="detail-dashboard-tab"
-              className="detail-tab-panel"
-              id="detail-dashboard-panel"
-              role="tabpanel"
-            >
-              <section className="dashboard-top-grid">
-                <article className="detail-photo panel-card">
-                  {displayedPhoto ? (
-                    <img src={displayedPhoto.uri} alt={`${cultivation.name} 재배 사진`} />
-                  ) : (
-                    <div className="detail-photo__empty">
-                      {photoDateFilter
-                        ? "이 날짜엔 등록된 사진이 없어요."
-                        : "등록된 재배 사진이 없습니다."}
-                    </div>
-                  )}
-                  <div className="detail-photo__overlay">
-                    <MiniDatePicker
-                      value={photoDateFilter}
-                      onChange={setPhotoDateFilter}
-                      minDate={photoMinDate}
-                      maxDate={photoMaxDate}
-                    />
-                    {photoDateFilter && (
-                      <button
-                        type="button"
-                        className="detail-photo__reset"
-                        title="최신 사진으로"
-                        onClick={() => setPhotoDateFilter(null)}
-                      >
-                        <History aria-hidden="true" />
-                      </button>
-                    )}
-                  </div>
-                </article>
-                <EnvironmentBriefing compliance={data.dailyCompliance} />
-                <CompliancePanel compliance={data.dailyCompliance} />
-              </section>
-
-              <DailyFeedbackPanel
-                cultivationId={id}
-                cultivationName={cultivation.name}
-                feedbackDate={feedbackMaxDate}
-                maxDate={feedbackMaxDate}
-                minDate={feedbackMinDate}
-                variant="preview"
-                onOpenReport={handleOpenFeedbackReport}
-              />
-
-              <RealTimeSensorPanel
-                latestQuery={latestQuery}
-                sensorOptions={sensorOptions}
-                sensorHistory12h={data.sensorHistory12h}
-              />
-            </section>
-          )}
-
-          {activeTab === "report" && (
-            <DailyFeedbackPanel
-              cultivationId={id}
-              cultivationName={cultivation.name}
-              feedbackDate={selectedFeedbackDate}
-              maxDate={feedbackMaxDate}
-              minDate={feedbackMinDate}
-              onFeedbackDateChange={handleFeedbackDateChange}
-            />
-          )}
-
-          {activeTab === "chatbot" && (
-            <section
-              aria-labelledby="detail-chatbot-tab"
-              className="detail-tab-panel"
-              id="detail-chatbot-panel"
-              role="tabpanel"
-            >
-              <ChatPanel cultivationId={id} />
-            </section>
-          )}
-        </div>
-      </section>
-
-      {modal === "members" && (
-        <MemberManager
-          cultivationId={id}
-          members={normalizeList(data.members)}
-          myRole={cultivation.myRole}
-          onClose={() => setModal(null)}
-        />
-      )}
-      {modal === "photos" && (
-        <PhotoManager
-          cultivationId={id}
-          photos={photos}
-          canManage={canManage}
-          onClose={() => setModal(null)}
-        />
-      )}
-      {modal === "sensors" && (
-        <SensorManager
-          cultivationId={id}
-          sensors={data.sensors}
-          canManage={canManage}
-          onClose={() => setModal(null)}
-        />
-      )}
-      {modal === "guide" && (
-        <Modal
-          title={`AI ${mushroomName || "버섯"} 가이드`}
-          onClose={() => setModal(null)}
-          className="modal-card--guide"
-        >
-          <MushroomGuide
-            guide={guideQuery.data}
-            error={guideQuery.error}
-            onRetry={guideQuery.refetch}
-          />
-        </Modal>
-      )}
-      {modal === "insight" && (
-        <Modal
-          title={`AI ${mushroomName || "버섯"} 인사이트`}
-          onClose={() => setModal(null)}
-          className="modal-card--guide"
-        >
-          <HarvestInsightModal cultivationId={id} mushroomName={mushroomName} />
-        </Modal>
-      )}
-      {modal === "actions" && (
-        <CultivationActions
-          cultivation={cultivation}
-          growthDays={data.growthDays}
-          pastCultivations={data.pastCultivations}
-          onClose={() => setModal(null)}
-        />
-      )}
+      <DetailModals
+        modal={modal}
+        id={id}
+        cultivation={cultivation}
+        data={data}
+        photos={photos}
+        mushroomName={mushroomName}
+        canManage={canManage}
+        onClose={() => setModal(null)}
+      />
     </main>
   );
 }

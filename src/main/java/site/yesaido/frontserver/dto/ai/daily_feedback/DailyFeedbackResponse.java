@@ -11,6 +11,7 @@ public record DailyFeedbackResponse(
         Long cultivationId,
         LocalDate feedbackDate,
         boolean hasVisionAnalysis,
+        Long cultivationPhotoId,
         String content,
         LocalDateTime createdAt
 ) {
