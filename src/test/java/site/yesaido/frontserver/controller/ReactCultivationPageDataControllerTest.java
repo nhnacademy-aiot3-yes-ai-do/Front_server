@@ -129,9 +129,9 @@ class ReactCultivationPageDataControllerTest {
         );
         CultivationSensorListResponse sensors = new CultivationSensorListResponse(List.of(), List.of());
         CultivationHistoryResponse current = new CultivationHistoryResponse(cultivationId, "current", 1L,
-                "GROWING", null, null, null);
+                "GROWING", null, null, null, null);
         CultivationHistoryResponse previous = new CultivationHistoryResponse(21L, "previous", 1L,
-                "FINISHED", null, null, null);
+                "FINISHED", null, null, null, null);
         when(cultivationClient.getMetadata(cultivationId)).thenReturn(ResponseEntity.ok(null));
         when(cultivationClient.getDetailCultivation(cultivationId)).thenReturn(ResponseEntity.ok(cultivation));
         when(sensorClient.getSensors(cultivationId)).thenReturn(ResponseEntity.ok(sensors));

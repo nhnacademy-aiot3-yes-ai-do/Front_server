@@ -9,6 +9,7 @@ public record CultivationHistoryResponse(
     Long mushroomId,
     String status,
     BigDecimal harvestWeight,
+    BigDecimal productScore,
     String productGrade,
     LocalDateTime finishedAt
 ) {

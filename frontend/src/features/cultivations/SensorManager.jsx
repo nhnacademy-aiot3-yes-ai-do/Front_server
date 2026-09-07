@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ListChecks, Plus, Trash2 } from "lucide-react";
+import { ListChecks, Plus, Save, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { jsonRequest, request } from "../../api/http";
 import Modal from "../../components/Modal";
@@ -201,52 +201,73 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
               <div className="manager-section-heading">
                 <div>
                   <h3>재배 환경 임계값</h3>
-                  <p>임계값은 센서 한 대가 아니라 이 재배지의 측정 종류에 적용됩니다.</p>
+                  <p>경작지에서 관리할 고유한 센서 임계값 설정입니다.</p>
                 </div>
               </div>
-              <div className="environment-setting-manager__grid">
+              <div className="environment-setting-manager__list">
                 {editableSettings.map((setting) => {
                   const type = sensorTypes.find((item) => item.id === setting.sensorTypeId);
                   const typeName = formatSensorType(type?.type);
+                  const unit = type?.valueUnit || "-";
                   const draft = thresholdDrafts[setting.sensorTypeId] || {};
 
                   return (
-                    <fieldset key={setting.sensorTypeId}>
-                      <legend>
-                        {typeName} ({type?.valueUnit || "-"})
-                      </legend>
-                      <label>
-                        최소값
-                        <input
-                          aria-label={`${typeName} 최소값`}
-                          type="number"
-                          step="any"
-                          value={draft.thresholdMin ?? ""}
-                          onChange={(event) =>
-                            updateThresholdDraft(
-                              setting.sensorTypeId,
-                              "thresholdMin",
-                              event.target.value,
-                            )
-                          }
-                        />
-                      </label>
-                      <label>
-                        최대값
-                        <input
-                          aria-label={`${typeName} 최대값`}
-                          type="number"
-                          step="any"
-                          value={draft.thresholdMax ?? ""}
-                          onChange={(event) =>
-                            updateThresholdDraft(
-                              setting.sensorTypeId,
-                              "thresholdMax",
-                              event.target.value,
-                            )
-                          }
-                        />
-                      </label>
+                    <div
+                      className="environment-setting-manager__row"
+                      key={setting.sensorTypeId}
+                      role="group"
+                      aria-label={`${typeName} ${unit} 임계값`}
+                    >
+                      <div className="environment-setting-manager__identity">
+                        <span>
+                          <strong>{typeName}</strong>
+                          <small>{unit}</small>
+                        </span>
+                        <em>재배지 기준</em>
+                      </div>
+                      <div className="environment-setting-manager__range">
+                        <label>
+                          <span>최소값</span>
+                          <span className="environment-setting-manager__input">
+                            <input
+                              aria-label={`${typeName} 최소값`}
+                              type="number"
+                              step="any"
+                              value={draft.thresholdMin ?? ""}
+                              onChange={(event) =>
+                                updateThresholdDraft(
+                                  setting.sensorTypeId,
+                                  "thresholdMin",
+                                  event.target.value,
+                                )
+                              }
+                            />
+                            <small>{unit}</small>
+                          </span>
+                        </label>
+                        <span className="environment-setting-manager__separator" aria-hidden="true">
+                          ~
+                        </span>
+                        <label>
+                          <span>최대값</span>
+                          <span className="environment-setting-manager__input">
+                            <input
+                              aria-label={`${typeName} 최대값`}
+                              type="number"
+                              step="any"
+                              value={draft.thresholdMax ?? ""}
+                              onChange={(event) =>
+                                updateThresholdDraft(
+                                  setting.sensorTypeId,
+                                  "thresholdMax",
+                                  event.target.value,
+                                )
+                              }
+                            />
+                            <small>{unit}</small>
+                          </span>
+                        </label>
+                      </div>
                       <button
                         className="button button--secondary"
                         type="button"
@@ -254,9 +275,9 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
                         onClick={() => updateEnvironmentSetting(setting)}
                         disabled={busy}
                       >
-                        저장
+                        <Save aria-hidden="true" /> 저장
                       </button>
-                    </fieldset>
+                    </div>
                   );
                 })}
               </div>
@@ -281,6 +302,7 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
           <CultivationSensorSetupStep
             cultivationId={cultivationId}
             environmentSettings={environmentSettings}
+            registeredSensors={registeredSensors}
             onRegistered={handleSensorRegistered}
           />
         </div>
