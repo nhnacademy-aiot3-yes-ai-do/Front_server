@@ -1260,15 +1260,10 @@ p.daily-feedback-document__content {
 .live-sensor-card__threshold {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  width: fit-content;
-  margin: 0 0 10px;
-  border: 1px solid rgba(112, 141, 102, 0.2);
-  border-radius: 999px;
-  padding: 5px 9px;
-  background: rgba(238, 243, 230, 0.72);
+  gap: 5px;
   color: var(--brown-500);
   font-size: 11px;
+  white-space: nowrap;
 }
 
 .live-sensor-card__threshold svg {
@@ -1280,6 +1275,11 @@ p.daily-feedback-document__content {
 .live-sensor-card__threshold strong {
   color: var(--sage-700);
   font-weight: 700;
+}
+
+.live-sensor-card__summary-separator {
+  color: var(--brown-500);
+  font-size: 12px;
 }
 
 .sensor-live-state {
@@ -1362,9 +1362,11 @@ p.daily-feedback-document__content {
 }
 
 .live-sensor-card > header,
+.live-sensor-card__header-main,
 .live-sensor-card__title,
 .live-sensor-card__title > span,
-.live-sensor-card__reading {
+.live-sensor-card__reading,
+.live-sensor-card__summary {
   display: flex;
 }
 
@@ -1372,6 +1374,19 @@ p.daily-feedback-document__content {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+}
+
+.live-sensor-card__header-main {
+  min-width: 0;
+  align-items: center;
+  gap: 16px;
+}
+
+.live-sensor-card__summary {
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
 }
 
 .live-sensor-card__title {
@@ -1430,7 +1445,6 @@ p.daily-feedback-document__content {
 .live-sensor-card__reading {
   align-items: baseline;
   gap: 5px;
-  margin: 10px 0 6px;
 }
 
 .live-sensor-card__reading strong {
@@ -1443,8 +1457,11 @@ p.daily-feedback-document__content {
   font-size: 12px;
 }
 
-.live-sensor-card__reading small {
-  margin-left: auto;
+.live-sensor-card__reading-meta {
+  margin: 3px 0 7px;
+  color: var(--brown-500);
+  font-size: 11px;
+  text-align: right;
 }
 
 .live-sensor-chart {
@@ -1463,7 +1480,7 @@ p.daily-feedback-document__content {
 
 .live-sensor-card__meta {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 9px;
   margin: 12px 0 0;
 }
@@ -4172,13 +4189,25 @@ p.daily-feedback-document__content {
     flex: 1;
   }
 
-  .live-sensor-card__reading {
+  .live-sensor-card > header {
     flex-wrap: wrap;
   }
 
-  .live-sensor-card__reading small {
+  .live-sensor-card__header-main,
+  .live-sensor-card__summary {
     width: 100%;
-    margin-left: 0;
+  }
+
+  .live-sensor-card__header-main {
+    justify-content: space-between;
+  }
+
+  .live-sensor-card__summary {
+    justify-content: flex-end;
+  }
+
+  .live-sensor-card__reading-meta {
+    text-align: left;
   }
 
   .live-sensor-card__meta {
