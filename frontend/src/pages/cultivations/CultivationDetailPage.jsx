@@ -338,10 +338,7 @@ function HarvestInsightDetailView({ selectedDetail, mushroomName, onBack }) {
         gap: "16px",
       }}
     >
-      <article
-        className="panel-card guide-card"
-        style={{ width: "100%", boxSizing: "border-box" }}
-      >
+      <article className="panel-card guide-card" style={{ width: "100%", boxSizing: "border-box" }}>
         <header className="panel-card__heading">
           <div>
             <button
@@ -654,8 +651,7 @@ function isMonthNavDisabled(view, minDate, maxDate) {
   const prevDisabled =
     minYear != null &&
     (view.year < minYear || (view.year === minYear && view.month <= minMonth - 1));
-  const nextDisabled =
-    view.year > maxYear || (view.year === maxYear && view.month >= maxMonth - 1);
+  const nextDisabled = view.year > maxYear || (view.year === maxYear && view.month >= maxMonth - 1);
   return { prevDisabled, nextDisabled };
 }
 
@@ -1083,8 +1079,7 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
 function GuideModal({ mushroomId, mushroomName, onClose }) {
   const guideQuery = useQuery({
     queryKey: ["mushroom-guide", mushroomId],
-    queryFn: () =>
-      request(`/cultivations/mushrooms/${mushroomId}/guide`).then(unwrapApiResponse),
+    queryFn: () => request(`/cultivations/mushrooms/${mushroomId}/guide`).then(unwrapApiResponse),
     enabled: Boolean(mushroomId),
     staleTime: 300_000,
   });
@@ -1104,16 +1099,7 @@ function GuideModal({ mushroomId, mushroomName, onClose }) {
   );
 }
 
-function DetailModals({
-  modal,
-  id,
-  cultivation,
-  data,
-  photos,
-  mushroomName,
-  canManage,
-  onClose,
-}) {
+function DetailModals({ modal, id, cultivation, data, photos, mushroomName, canManage, onClose }) {
   if (!modal) return null;
 
   return (
@@ -1127,12 +1113,7 @@ function DetailModals({
         />
       )}
       {modal === "photos" && (
-        <PhotoManager
-          cultivationId={id}
-          photos={photos}
-          canManage={canManage}
-          onClose={onClose}
-        />
+        <PhotoManager cultivationId={id} photos={photos} canManage={canManage} onClose={onClose} />
       )}
       {modal === "sensors" && (
         <SensorManager
@@ -1180,8 +1161,8 @@ function CultivationSetupRequiredView({ cultivation, id, canManage }) {
         <p className="eyebrow">{cultivation.name}</p>
         <h1>센서 연결을 마쳐 주세요</h1>
         <p>
-          재배지는 생성됐지만 사용할 센서가 아직 없습니다. 센서를 하나 이상 연결한 뒤 대시보드를
-          열 수 있습니다.
+          재배지는 생성됐지만 사용할 센서가 아직 없습니다. 센서를 하나 이상 연결한 뒤 대시보드를 열
+          수 있습니다.
         </p>
         <div className="form-actions">
           <Link className="button button--secondary" to="/cultivations">
@@ -1232,9 +1213,7 @@ function DashboardTabContent({
             <img src={displayedPhoto.uri} alt={`${cultivation.name} 재배 사진`} />
           ) : (
             <div className="detail-photo__empty">
-              {photoDateFilter
-                ? "이 날짜엔 등록된 사진이 없어요."
-                : "등록된 재배 사진이 없습니다."}
+              {photoDateFilter ? "이 날짜엔 등록된 사진이 없어요." : "등록된 재배 사진이 없습니다."}
             </div>
           )}
           <div className="detail-photo__overlay">
