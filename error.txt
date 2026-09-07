@@ -1,0 +1,126 @@
+Run ./mvnw -B sonar:sonar \
+[INFO] Scanning for projects...
+[INFO]
+[INFO] ---------------------< site.yesaido:Front_server >----------------------
+[INFO] Building Front_server 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- sonar:5.5.0.6356:sonar (default-cli) @ Front_server ---
+[INFO] Java 21.0.12.1 Eclipse Adoptium (64-bit)
+[INFO] Linux 6.17.0-1022-azure (amd64)
+[INFO] Communicating with SonarQube Community Build 25.1.0.102122
+[INFO] JRE provisioning: os[linux], arch[x86_64]
+[INFO] Starting SonarScanner Engine...
+[INFO] Java 17.0.13 Eclipse Adoptium (64-bit)
+[INFO] Load global settings
+[INFO] Load global settings (done) | time=933ms
+[INFO] Server id: 147B411E-AZR-gmheUi6c8Dwwsnwe
+[INFO] Loading required plugins
+[INFO] Load plugins index
+[INFO] Load plugins index (done) | time=207ms
+[INFO] Load/download plugins
+[INFO] Load/download plugins (done) | time=4576ms
+[INFO] Process project properties
+[INFO] Process project properties (done) | time=9ms
+[INFO] Project key: yes-nhn_front-server
+[INFO] Base dir: /home/runner/work/Front_server/Front_server
+[INFO] Working dir: /home/runner/work/Front_server/Front_server/target/sonar
+[INFO] Load project settings for component key: 'yes-nhn_front-server'
+[INFO] Load project settings for component key: 'yes-nhn_front-server' (done) | time=209ms
+[INFO] Load quality profiles
+[INFO] Load quality profiles (done) | time=273ms
+[INFO] Auto-configuring with CI 'Github Actions'
+[INFO] Load active rules
+[INFO] Load active rules (done) | time=667ms
+[INFO] Load analysis cache
+[INFO] Load analysis cache | time=212ms
+[INFO] Preprocessing files...
+[INFO] 2 languages detected in 210 preprocessed files
+[INFO] 0 files ignored because of scm ignore settings
+[INFO] Loading plugins for detected languages
+[INFO] Load/download plugins
+[INFO] Load/download plugins (done) | time=2509ms
+[INFO] Load project repositories
+[INFO] Load project repositories (done) | time=277ms
+[INFO] Indexing files...
+[INFO] Project configuration:
+[INFO] 210 files indexed
+[INFO] Quality profile for java: Sonar way
+[INFO] Quality profile for xml: Sonar way
+[INFO] ------------- Run sensors on module Front-server
+[INFO] Load metrics repository
+[INFO] Load metrics repository (done) | time=211ms
+[INFO] Sensor JavaSensor [java]
+[INFO] Configured Java source version (sonar.java.source): 21, preview features enabled (sonar.java.enablePreview): false
+[INFO] Server-side caching is enabled. The Java analyzer will not try to leverage data from a previous analysis.
+[INFO] Using ECJ batch to parse 168 Main java source files with batch size 209 KB.
+[INFO] Starting batch processing.
+[INFO] The Java analyzer cannot skip unchanged files in this context. A full analysis is performed for all files.
+[INFO] 100% analyzed
+[INFO] Batch processing: Done.
+[INFO] Did not optimize analysis for any files, performed a full analysis for all 168 files.
+[WARNING] Unresolved imports/types have been detected during analysis. Enable DEBUG mode to see them.
+[WARNING] Use of preview features have been detected during analysis. Enable DEBUG mode to see them.
+[INFO] Using ECJ batch to parse 41 Test java source files with batch size 209 KB.
+[INFO] Starting batch processing.
+[INFO] 100% analyzed
+[INFO] Batch processing: Done.
+[INFO] Did not optimize analysis for any files, performed a full analysis for all 41 files.
+[INFO] No "Generated" source files to scan.
+[INFO] Sensor JavaSensor [java] (done) | time=6266ms
+[INFO] Sensor SurefireSensor [java]
+[INFO] parsing [/home/runner/work/Front_server/Front_server/target/surefire-reports]
+[INFO] Sensor SurefireSensor [java] (done) | time=140ms
+[INFO] Sensor XML Sensor [xml]
+[INFO] 1 source file to be analyzed
+[INFO] 1/1 source file has been analyzed
+[INFO] Sensor XML Sensor [xml] (done) | time=180ms
+[INFO] Sensor JaCoCo XML Report Importer [jacoco]
+[INFO] Importing 1 report(s). Turn your logs in debug mode in order to see the exhaustive list.
+[INFO] Sensor JaCoCo XML Report Importer [jacoco] (done) | time=168ms
+[INFO] Sensor Java Config Sensor [iac]
+[INFO] 0 source files to be analyzed
+[INFO] 0/0 source files have been analyzed
+[INFO] Sensor Java Config Sensor [iac] (done) | time=19ms
+[INFO] Sensor IaC Docker Sensor [iac]
+[INFO] 0 source files to be analyzed
+[INFO] 0/0 source files have been analyzed
+[INFO] Sensor IaC Docker Sensor [iac] (done) | time=73ms
+[INFO] Sensor TextAndSecretsSensor [text]
+[INFO] Available processors: 4
+[INFO] Using 4 threads for analysis.
+[INFO] Using git CLI to retrieve untracked files
+[INFO] Analyzing language associated files and files included via "sonar.text.inclusions" that are tracked by git
+[INFO] 210 source files to be analyzed
+[INFO] 210/210 source files have been analyzed
+[INFO] Sensor TextAndSecretsSensor [text] (done) | time=624ms
+[INFO] ------------- Run sensors on project
+[INFO] Sensor Zero Coverage Sensor
+[INFO] Sensor Zero Coverage Sensor (done) | time=2ms
+[INFO] Sensor Java CPD Block Indexer
+[INFO] Sensor Java CPD Block Indexer (done) | time=73ms
+[INFO] CPD Executor 130 files had no CPD blocks
+[INFO] CPD Executor Calculating CPD for 38 files
+[INFO] CPD Executor CPD calculation finished (done) | time=12ms
+[INFO] SCM revision ID '238632815f7ba3115a2c1621504b3dcfa5efe96e'
+[INFO] Analysis report generated in 117ms, dir size=1.0 MB
+[INFO] Analysis report compressed in 246ms, zip size=516.0 kB
+[INFO] Analysis report uploaded in 1164ms
+[INFO] ------------- Check Quality Gate status
+[INFO] Waiting for the analysis report to be processed (max 600s)
+[ERROR] QUALITY GATE STATUS: FAILED - View details on ***/dashboard?id=yes-nhn_front-server
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  41.564 s
+[INFO] Finished at: 2026-09-07T05:00:35Z
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.sonarsource.scanner.maven:sonar-maven-plugin:5.5.0.6356:sonar (default-cli) on project Front_server: The scanner analysis has failed! See the logs for more details. -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException
+Error: Process completed with exit code 1.
