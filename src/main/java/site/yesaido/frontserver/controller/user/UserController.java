@@ -34,6 +34,8 @@ public class UserController {
     private static final String AUTH_ERROR = "error";
     private static final String RESET_FAILURE_MESSAGE = "비밀번호 변경에 실패했습니다. 다시 시도해 주세요.";
     private static final String LOGIN_FAILURE_MESSAGE = "아이디 또는 비밀번호가 일치하지 않습니다.";
+    private static final String RESET_PASSWORD_URL = "/reset-password";
+    private static final String RESET_PASSWORD_ERROR = "resetPasswordError";
 
 
     private final UserClient userClient;
@@ -98,12 +100,7 @@ public class UserController {
         }
 
         if (!newPassword.equals(confirmPassword)) {
-            throw new FormFlowException(
-                    "비밀번호가 일치하지 않습니다.",
-                    "/reset-password",
-                    "resetPasswordError",
-                    null
-            );
+            throw resetPasswordFailure("비밀번호가 일치하지 않습니다.", null);
         }
 
         try {
@@ -120,14 +117,9 @@ public class UserController {
             return REDIRECT_PREFIX + LOGIN_URL;
         } catch (FeignException.BadRequest e) {
             String errorMessage = extractErrorMessage(e);
-            throw new FormFlowException(errorMessage, "/reset-password", "resetPasswordError", e);
+            throw resetPasswordFailure(errorMessage, e);
         } catch (FeignException e) {
-            throw new FormFlowException(
-                    RESET_FAILURE_MESSAGE,
-                    "/reset-password",
-                    "resetPasswordError",
-                    e
-            );
+            throw resetPasswordFailure(RESET_FAILURE_MESSAGE, e);
         }
     }
 
@@ -212,6 +204,15 @@ public class UserController {
                 "관리자 계정 정보가 일치하지 않습니다.",
                 "/admin/login",
                 null,
+                cause
+        );
+    }
+
+    private FormFlowException resetPasswordFailure(String message, Throwable cause) {
+        return new FormFlowException(
+                message,
+                RESET_PASSWORD_URL,
+                RESET_PASSWORD_ERROR,
                 cause
         );
     }
