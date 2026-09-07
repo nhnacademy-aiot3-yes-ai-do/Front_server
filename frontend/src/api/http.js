@@ -5,7 +5,11 @@ export function backendUrl(path) {
 }
 
 export function gatewayUrl(path) {
-  const gatewayOrigin = import.meta.env.DEV ? "http://localhost:8080" : "https://api.yes-nhn.site";
+  const isLocal =
+      typeof window !== "undefined" &&
+      (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+  const gatewayOrigin =
+      import.meta.env.DEV || isLocal ? "http://localhost:8080" : "https://api.yes-nhn.site";
   return `${gatewayOrigin}${path}`;
 }
 
