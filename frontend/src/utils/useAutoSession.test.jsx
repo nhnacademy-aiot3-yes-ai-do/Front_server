@@ -149,18 +149,19 @@ describe("useAutoSession", () => {
     expect(window.alert).not.toHaveBeenCalled();
   });
 
-  it("1시간 동안 활동이 없으면 안내 후 로그아웃한다", () => {
+  it("20분 동안 활동이 없으면 안내 후 로그아웃한다", () => {
     const now = Date.now();
+    const TWENTY_MINUTES_MS = 20 * 60 * 1000;
     setAccessTokenExpiresAt(now + ONE_HOUR_MS + 10_000);
     storage.set(ACTIVITY_STORAGE_KEY, String(now));
 
     render(<AutoSessionHarness />);
     act(() => {
-      vi.advanceTimersByTime(ONE_HOUR_MS);
+      vi.advanceTimersByTime(TWENTY_MINUTES_MS);
     });
 
     expect(window.alert).toHaveBeenCalledWith(
-      "1시간 동안 활동이 없어 안전하게 자동 로그아웃되었습니다.",
+      "20분 동안 활동이 없어 안전하게 자동 로그아웃되었습니다.",
     );
     expect(submitSpy).toHaveBeenCalledOnce();
     expect(storage.get(ACTIVITY_STORAGE_KEY)).toBeUndefined();
