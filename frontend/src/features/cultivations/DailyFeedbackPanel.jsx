@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CalendarDays, ChevronRight, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { cultivationKeys, getDailyFeedback } from "../../api/cultivations";
 import { formatDateTime } from "../../utils/formatters";
 import { isDailyFeedbackDate } from "./dailyFeedbackDates";
@@ -83,9 +85,15 @@ function PreviewPanel({
         {feedback ? (
           <>
             <FeedbackMeta feedback={feedback} feedbackDate={feedbackDate} />
-            <p className="daily-feedback-preview__content">
-              {feedback.content || `${cultivationName}에 생성된 피드백 내용이 없습니다.`}
-            </p>
+            {feedback.content ? (
+              <div className="daily-feedback-preview__content markdown-body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{feedback.content}</ReactMarkdown>
+              </div>
+            ) : (
+              <p className="daily-feedback-preview__content">
+                {`${cultivationName}에 생성된 피드백 내용이 없습니다.`}
+              </p>
+            )}
           </>
         ) : (
           <InlineQueryState
@@ -197,9 +205,13 @@ function ReportPanel({
             </div>
           )}
 
-          <p className="daily-feedback-document__content">
-            {feedback.content || "생성된 피드백 내용이 없습니다."}
-          </p>
+          {feedback.content ? (
+            <div className="daily-feedback-document__content markdown-body">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{feedback.content}</ReactMarkdown>
+            </div>
+          ) : (
+            <p className="daily-feedback-document__content">생성된 피드백 내용이 없습니다.</p>
+          )}
         </article>
       )}
     </section>
