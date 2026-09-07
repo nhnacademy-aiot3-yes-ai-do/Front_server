@@ -62,6 +62,11 @@ import {
   normalizeSensorUnit,
 } from "../../utils/formatters";
 
+import {
+  aggregateChartPoints,
+  preferNonEmptyLatestValues,
+} from "../../features/cultivations/sensorChartUtils";
+
 function buildSensorOptions(data, latestValues) {
   return normalizeList(data?.sensors?.sensors).flatMap((sensor) =>
     normalizeList(sensor.sensorTypes).map((sensorType) => ({
@@ -885,7 +890,7 @@ function renderSensorChart(chartPoints, color) {
         <LineChart data={chartPoints} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
           <CartesianGrid stroke="rgba(117,91,65,.12)" vertical={false} />
           <XAxis dataKey="measuredAt" minTickGap={34} tick={{ fontSize: 10 }} />
-          <YAxis width={42} tick={{ fontSize: 10 }} />
+          <YAxis width={42} tick={{ fontSize: 10 }} 
           <Tooltip />
           <Line
             dataKey="value"
