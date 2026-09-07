@@ -167,7 +167,7 @@ class UserControllerTest {
     @Test
     @DisplayName("로그인 요청 - 일반 실패 예외 발생 분기")
     void loginGeneralExceptionReturnsLoginError() throws Exception {
-        given(userClient.login(any(LoginRequest.class))).willThrow(new RuntimeException("로그인 실패"));
+        given(userClient.login(any(LoginRequest.class))).willThrow(badRequestException("로그인 실패"));
 
         mockMvc.perform(post("/login")
                         .param("email", "test@naver.com")
@@ -250,7 +250,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Auth 비밀번호 재설정 호출이 실패하면 재설정 화면으로 이동하고 오류를 표시")
     void resetPasswordFailureRedirectsToResetPage() throws Exception {
-        given(userClient.resetPassword(any())).willThrow(new RuntimeException("Auth server error"));
+        given(userClient.resetPassword(any())).willThrow(feignException(503, "Service Unavailable"));
 
         mockMvc.perform(post("/reset-password")
                         .sessionAttr("passwordResetVerifiedEmail", "test@naver.com")
@@ -320,7 +320,7 @@ class UserControllerTest {
     @Test
     @DisplayName("관리자 로그인 - 인증 실패 예외 분기")
     void adminLoginExceptionFails() throws Exception {
-        given(userClient.login(any(LoginRequest.class))).willThrow(new RuntimeException("로그인 실패"));
+        given(userClient.login(any(LoginRequest.class))).willThrow(badRequestException("로그인 실패"));
 
         mockMvc.perform(post("/admin/login")
                         .param("email", "admin@naver.com")
@@ -344,6 +344,24 @@ class UserControllerTest {
                 .request(request)
                 .headers(Collections.emptyMap())
                 .body("{\"message\":\"" + message + "\"}", StandardCharsets.UTF_8)
+                .build();
+        return FeignException.errorStatus("UserClient#resetPassword(PasswordResetRequest)", response);
+    }
+
+    private FeignException feignException(int status, String reason) {
+        Request request = Request.create(
+                Request.HttpMethod.POST,
+                "/api/v1/auth/password/reset",
+                Collections.emptyMap(),
+                null,
+                StandardCharsets.UTF_8,
+                null
+        );
+        Response response = Response.builder()
+                .status(status)
+                .reason(reason)
+                .request(request)
+                .headers(Collections.emptyMap())
                 .build();
         return FeignException.errorStatus("UserClient#resetPassword(PasswordResetRequest)", response);
     }

@@ -18,12 +18,10 @@ import site.yesaido.frontserver.dto.react.AuthResultResponse;
 import site.yesaido.frontserver.dto.user.request.*;
 import site.yesaido.frontserver.dto.user.response.TokenResponse;
 import site.yesaido.frontserver.exception.DormantUserException;
+import site.yesaido.frontserver.exception.FormFlowException;
 import site.yesaido.frontserver.util.AuthCookieProvider;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-
 
 @Slf4j
 @Controller
@@ -53,9 +51,12 @@ public class UserController {
             setAuthResult(session, "success", "회원가입이 완료되었습니다. 로그인해 주세요.");
             return REDIRECT_PREFIX + LOGIN_URL;
         } catch (Exception exception) {
-            log.warn("회원가입 실패: {}", exception.getMessage());
-            setAuthResult(session, AUTH_ERROR, "회원가입을 완료하지 못했습니다.\n입력 내용을 확인해 주세요.");
-            return REDIRECT_PREFIX + "/signup";
+            throw new FormFlowException(
+                    "회원가입을 완료하지 못했습니다.\n입력 내용을 확인해 주세요.",
+                    "/signup",
+                    null,
+                    exception
+            );
         }
     }
 
@@ -63,13 +64,12 @@ public class UserController {
     public String login(@RequestParam String email,
                         @RequestParam String password,
                         HttpServletResponse response,
-                        HttpSession session,
-                        RedirectAttributes redirectAttributes) throws IOException {
+                        RedirectAttributes redirectAttributes) {
         try {
             ApiResponse<TokenResponse> apiResponse = userClient.login(new LoginRequest(email, password));
             TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
             if (tokenResponse == null) {
-                throw new IllegalStateException("Token response is null");
+                throw loginFailure(null);
             }
             authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
             redirectAttributes.addFlashAttribute("justLoggedIn", true);
@@ -79,16 +79,7 @@ public class UserController {
             if(content != null && content.contains("휴면")){
                 throw new DormantUserException(email, "휴면 처리된 계정입니다. 이메일 인증을 진행해 주세요.");
             }
-            log.warn("로그인 실패(Feign): {}", e.getMessage());
-            redirectAttributes.addFlashAttribute("loginError", LOGIN_FAILURE_MESSAGE);
-            setAuthResult(session, AUTH_ERROR, LOGIN_FAILURE_MESSAGE);
-            return REDIRECT_PREFIX + LOGIN_URL;
-        } catch (Exception e) {
-            log.warn("로그인 실패: {}", e.getMessage());
-            redirectAttributes.addFlashAttribute("loginError", LOGIN_FAILURE_MESSAGE);
-            setAuthResult(session, AUTH_ERROR, LOGIN_FAILURE_MESSAGE);
-
-            return REDIRECT_PREFIX + LOGIN_URL;
+            throw loginFailure(e);
         }
     }
 
@@ -107,10 +98,11 @@ public class UserController {
         }
 
         if (!newPassword.equals(confirmPassword)) {
-            setAuthResult(session, AUTH_ERROR, "비밀번호가 일치하지 않습니다.");
-            return redirectToResetPage(
-                    redirectAttributes,
-                    "비밀번호가 일치하지 않습니다."
+            throw new FormFlowException(
+                    "비밀번호가 일치하지 않습니다.",
+                    "/reset-password",
+                    "resetPasswordError",
+                    null
             );
         }
 
@@ -127,16 +119,14 @@ public class UserController {
             setAuthResult(session, "success", "비밀번호가 변경되었습니다. 새 비밀번호로 로그인해 주세요.");
             return REDIRECT_PREFIX + LOGIN_URL;
         } catch (FeignException.BadRequest e) {
-            log.warn("비밀번호 재설정 요청 거부: {}", e.getMessage());
             String errorMessage = extractErrorMessage(e);
-            setAuthResult(session, AUTH_ERROR, errorMessage);
-            return redirectToResetPage(redirectAttributes, errorMessage);
-        } catch (Exception e) {
-            log.warn("비밀번호 재설정 실패: {}", e.getMessage());
-            setAuthResult(session, AUTH_ERROR, RESET_FAILURE_MESSAGE);
-            return redirectToResetPage(
-                    redirectAttributes,
-                    RESET_FAILURE_MESSAGE
+            throw new FormFlowException(errorMessage, "/reset-password", "resetPasswordError", e);
+        } catch (FeignException e) {
+            throw new FormFlowException(
+                    RESET_FAILURE_MESSAGE,
+                    "/reset-password",
+                    "resetPasswordError",
+                    e
             );
         }
     }
@@ -149,14 +139,6 @@ public class UserController {
         }
 
         return null;
-    }
-
-    private String redirectToResetPage(
-            RedirectAttributes redirectAttributes,
-            String errorMessage
-    ) {
-        redirectAttributes.addFlashAttribute("resetPasswordError", errorMessage);
-        return REDIRECT_PREFIX + "/reset-password";
     }
 
     private void setAuthResult(HttpSession session, String type, String message) {
@@ -179,39 +161,58 @@ public class UserController {
     // 관리자 전용 로그인: 일반 로그인과 같은 인증을 쓰되, 응답의 role이 ADMIN이 아니면
     // 로그인 자체를 실패 처리함 (일반 회원 계정으로는 이 창을 통해 로그인할 수 없음)
     @PostMapping("/admin/login")
-    public void adminLogin(@RequestParam String email,
-                           @RequestParam String password,
-                           HttpServletResponse response,
-                           HttpSession session) throws IOException {
+    public String adminLogin(@RequestParam String email,
+                             @RequestParam String password,
+                             HttpServletResponse response) {
+        ApiResponse<TokenResponse> apiResponse;
         try {
-            ApiResponse<TokenResponse> apiResponse = userClient.login(new LoginRequest(email, password));
-            TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
-            if (tokenResponse == null) {
-                throw new IllegalStateException("Token response is null");
-            }
-            if (!"ADMIN".equals(tokenResponse.role())) {
-                throw new IllegalStateException("관리자 계정이 아닙니다");
-            }
-            authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
-            response.sendRedirect("/admin");
-        } catch (Exception e) {
-            log.warn("관리자 로그인 실패: {}", e.getMessage());
-            setAuthResult(session, AUTH_ERROR, "관리자 계정 정보가 일치하지 않습니다.");
-            response.sendRedirect("/admin/login");
+            apiResponse = userClient.login(new LoginRequest(email, password));
+        } catch (FeignException e) {
+            throw adminLoginFailure(e);
         }
+
+        TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
+        if (tokenResponse == null || !"ADMIN".equals(tokenResponse.role())) {
+            throw adminLoginFailure(null);
+        }
+
+        authCookieProvider.setAuthCookies(response, tokenResponse.accessToken(), tokenResponse.refreshToken(), tokenResponse.role(), tokenResponse.accessTokenExpiresAt());
+        return REDIRECT_PREFIX + "/admin";
     }
 
     @PostMapping("/users/token/logout")
-    public String logout(@CookieValue(name = "refreshToken", required = false)String refreshToken, @CookieValue(name = "accessToken", required = false) String accessToken, HttpServletResponse response) {
+    public String logout(
+            @CookieValue(name = "refreshToken", required = false) String refreshToken,
+            @CookieValue(name = "accessToken", required = false) String accessToken,
+            HttpServletResponse response
+    ) {
         try {
-            if(refreshToken != null && !refreshToken.isBlank()){
+            if (refreshToken != null && !refreshToken.isBlank()) {
                 userClient.logout(new LogoutRequest(refreshToken, accessToken));
             }
-        } catch (Exception e) {
+        } catch (FeignException e) {
             log.warn("백엔드 레디스 토큰 삭제 중 예외 발생 : {}", e.getMessage());
         }
 
         authCookieProvider.clearAuthCookies(response);
         return REDIRECT_PREFIX + LOGIN_URL;
+    }
+
+    private FormFlowException loginFailure(Throwable cause) {
+        return new FormFlowException(
+                LOGIN_FAILURE_MESSAGE,
+                LOGIN_URL,
+                "loginError",
+                cause
+        );
+    }
+
+    private FormFlowException adminLoginFailure(Throwable cause) {
+        return new FormFlowException(
+                "관리자 계정 정보가 일치하지 않습니다.",
+                "/admin/login",
+                null,
+                cause
+        );
     }
 }

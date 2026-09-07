@@ -7,7 +7,6 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.ErrorResponse;
@@ -27,7 +26,6 @@ import site.yesaido.frontserver.util.AuthCookieProvider;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
@@ -44,6 +42,7 @@ public class GlobalExceptionHandler {
     private static final String ERROR = "error";
     private static final String MESSAGE = "message";
     private static final String DETAIL = "detail";
+    private static final String REDIRECT_PREFIX = "redirect:";
 
     private static final Map<String, String> NOT_FOUND_MESSAGES = Map.of(
             "AiClient", "해당 버섯 가이드 정보를 찾을 수 없습니다.",
@@ -101,26 +100,16 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(FeignException.Unauthorized.class)
-    public void handleUnauthorized(HttpServletResponse response) {
-        try {
-            authCookieProvider.clearAuthCookies(response);
-            if (!response.isCommitted()) {
-                response.sendRedirect("/login");
-            } else {
-                log.warn("응답이 이미 커밋되어 /login으로 리다이렉트하지 못했습니다.");
-            }
-        } catch (Exception e) {
-            log.error("handleUnauthorized 처리 중 예외 발생: {}", e.getClass().getName(), e);
-            try {
-                if (!response.isCommitted()) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.setContentType("application/json");
-                    response.getWriter().write("{\"detail\":\"로그인이 필요합니다.\"}");
-                }
-            } catch (IOException ignored) {
-                // 이 시점엔 응답에 더 이상 쓸 수 있는 게 없음
-            }
+    public Object handleUnauthorized(
+            FeignException.Unauthorized exception,
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        authCookieProvider.clearAuthCookies(response);
+        if (wantsHtml(request)) {
+            return new ModelAndView(REDIRECT_PREFIX + "/login");
         }
+        return ErrorResponse.create(exception, HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
     }
 
     @ExceptionHandler(FeignException.class)
@@ -218,11 +207,35 @@ public class GlobalExceptionHandler {
         return "redirect:/login";
     }
 
+    @ExceptionHandler(FormFlowException.class)
+    public String handleFormFlowException(
+            FormFlowException exception,
+            RedirectAttributes redirectAttributes,
+            HttpSession session
+    ) {
+        Throwable cause = exception.getCause();
+        if (cause == null) {
+            log.warn("폼 요청 거절: redirectPath={}", exception.getRedirectPath());
+        } else {
+            log.warn(
+                    "폼 요청 처리 실패: redirectPath={}, cause={}",
+                    exception.getRedirectPath(),
+                    cause.getClass().getSimpleName()
+            );
+        }
+        if (exception.getFlashAttributeName() != null) {
+            redirectAttributes.addFlashAttribute(exception.getFlashAttributeName(), exception.getMessage());
+        }
+        session.setAttribute(
+                AuthResultController.AUTH_RESULT_SESSION_KEY,
+                new AuthResultResponse(ERROR, exception.getMessage())
+        );
+        return REDIRECT_PREFIX + exception.getRedirectPath();
+    }
+
     @ExceptionHandler(MissingRefreshTokenException.class)
-    public ResponseEntity<Object> handleMissingRefreshToken(MissingRefreshTokenException exception) {
-        return ResponseEntity.status(HttpServletResponse.SC_UNAUTHORIZED)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of(DETAIL, "로그인이 필요합니다."));
+    public ErrorResponse handleMissingRefreshToken(MissingRefreshTokenException exception) {
+        return ErrorResponse.create(exception, HttpStatus.UNAUTHORIZED, "로그인이 필요합니다.");
     }
 
     // css/js 정적 리소스는 파일 내용 해시가 URL에 붙는 캐시버스팅 방식(WebConfig의 VersionResourceResolver)을
@@ -242,20 +255,7 @@ public class GlobalExceptionHandler {
         if (wantsHtml(request)) {
             return errorView(request, HttpStatus.INTERNAL_SERVER_ERROR, message);
         }
-        return ResponseEntity.status(500)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of(DETAIL, message));
-    }
-
-    @ExceptionHandler(Throwable.class)
-    public Object handleThrowable(Throwable e, HttpServletRequest request) {
-        log.error("처리되지 않은 Error 발생: {}", e.getClass().getName(), e);
-        String message = "일시적인 서버 오류가 발생했습니다.";
-        if (wantsHtml(request)) {
-            return errorView(request, HttpStatus.INTERNAL_SERVER_ERROR, message);
-        }
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(ERROR, "internal_server_error", MESSAGE, message));
+        return ErrorResponse.create(exception, HttpStatus.INTERNAL_SERVER_ERROR, message);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

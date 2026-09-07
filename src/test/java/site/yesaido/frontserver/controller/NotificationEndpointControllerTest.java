@@ -96,13 +96,13 @@ class NotificationEndpointControllerTest {
     }
 
     @Test
-    @DisplayName("Endpoint 목록 조회 중 인증 오류가 발생하면 로그인으로 이동")
-    void listEndpointsUnauthorizedRedirectsToLogin() throws Exception {
+    @DisplayName("Endpoint 목록 API에서 인증 오류가 발생하면 401을 반환")
+    void listEndpointsUnauthorizedReturns401() throws Exception {
         given(notificationClient.getEndpoints()).willThrow(feignException(401));
 
         mockMvc.perform(get("/notifications/endpoints").cookie(LOGGED_IN))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("로그인이 필요합니다."));
     }
 
     @Test
@@ -201,14 +201,14 @@ class NotificationEndpointControllerTest {
     }
 
     @Test
-    @DisplayName("Telegram 연동 세션 상태 조회 중 인증 오류가 발생하면 로그인으로 이동")
-    void getTelegramLinkSessionUnauthorizedRedirectsToLogin() throws Exception {
+    @DisplayName("Telegram 연동 세션 API에서 인증 오류가 발생하면 401을 반환")
+    void getTelegramLinkSessionUnauthorizedReturns401() throws Exception {
         java.util.UUID sessionId = java.util.UUID.fromString("11111111-1111-1111-1111-111111111111");
         given(notificationClient.getTelegramLinkSession(sessionId)).willThrow(feignException(401));
 
         mockMvc.perform(get("/notifications/endpoints/telegram-link-sessions/{session-id}", sessionId).cookie(LOGGED_IN))
-                .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("로그인이 필요합니다."));
     }
 
     @Test

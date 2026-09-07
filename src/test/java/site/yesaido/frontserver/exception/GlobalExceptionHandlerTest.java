@@ -45,13 +45,34 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("handleUnauthorized - 쿠키 클리어 및 /login 리다이렉트 처리")
-    void handleUnauthorizedTest() {
+    @DisplayName("페이지 요청의 401은 쿠키를 지우고 로그인 화면으로 이동한다")
+    void handleUnauthorizedHtmlRequestRedirectsToLogin() {
+        FeignException.Unauthorized exception = unauthorizedException();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("Accept", "text/html");
         MockHttpServletResponse response = new MockHttpServletResponse();
-        handler.handleUnauthorized(response);
+
+        Object result = handler.handleUnauthorized(exception, request, response);
 
         verify(authCookieProvider).clearAuthCookies(response);
-        assertEquals("/login", response.getRedirectedUrl());
+        assertTrue(result instanceof ModelAndView);
+        assertEquals("redirect:/login", ((ModelAndView) result).getViewName());
+    }
+
+    @Test
+    @DisplayName("API 요청의 401은 쿠키를 지우고 JSON 오류를 반환한다")
+    void handleUnauthorizedApiRequestReturns401() {
+        FeignException.Unauthorized exception = unauthorizedException();
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        Object result = handler.handleUnauthorized(exception, request, response);
+
+        verify(authCookieProvider).clearAuthCookies(response);
+        assertTrue(result instanceof ErrorResponse);
+        ErrorResponse errorResponse = (ErrorResponse) result;
+        assertEquals(401, errorResponse.getStatusCode().value());
+        assertEquals("로그인이 필요합니다.", errorResponse.getBody().getDetail());
     }
 
     @Test
@@ -71,6 +92,29 @@ class GlobalExceptionHandlerTest {
         );
         assertEquals("dormant", result.type());
         assertEquals("dormant@naver.com", result.email());
+    }
+
+    @Test
+    @DisplayName("폼 처리 예외는 안내를 세션과 플래시에 저장하고 지정된 화면으로 이동한다")
+    void handleFormFlowExceptionRedirectsWithMessage() {
+        FormFlowException exception = new FormFlowException(
+                "로그인에 실패했습니다.",
+                "/login",
+                "loginError",
+                new RuntimeException("upstream failure")
+        );
+        RedirectAttributesModelMap redirectAttributes = new RedirectAttributesModelMap();
+        MockHttpSession session = new MockHttpSession();
+
+        String view = handler.handleFormFlowException(exception, redirectAttributes, session);
+
+        assertEquals("redirect:/login", view);
+        assertEquals("로그인에 실패했습니다.", redirectAttributes.getFlashAttributes().get("loginError"));
+        AuthResultResponse result = (AuthResultResponse) session.getAttribute(
+                AuthResultController.AUTH_RESULT_SESSION_KEY
+        );
+        assertEquals("error", result.type());
+        assertEquals("로그인에 실패했습니다.", result.message());
     }
 
     @Test
@@ -292,5 +336,23 @@ class GlobalExceptionHandlerTest {
 
         assertEquals(413, result.getStatusCode().value());
         assertEquals("사진 파일 크기는 8MB를 초과할 수 없습니다.", result.getBody().getDetail());
+    }
+
+    private FeignException.Unauthorized unauthorizedException() {
+        Request request = Request.create(
+                Request.HttpMethod.GET,
+                "/api/v1/users/me",
+                Collections.emptyMap(),
+                null,
+                StandardCharsets.UTF_8,
+                null
+        );
+        Response response = Response.builder()
+                .status(401)
+                .reason("Unauthorized")
+                .request(request)
+                .headers(Collections.emptyMap())
+                .build();
+        return (FeignException.Unauthorized) FeignException.errorStatus("UserClient#getMyProfile()", response);
     }
 }
