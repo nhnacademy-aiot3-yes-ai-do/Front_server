@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { backendUrl, jsonRequest, request } from "../../api/http";
+import { jsonRequest, request } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import { formatDate, normalizeList } from "../../utils/formatters";
@@ -70,6 +70,11 @@ export default function CultivationActions({ cultivation, growthDays, pastCultiv
       setNotice({ type: "error", message: error.message });
       setBusy(false);
     }
+  };
+
+  const goToCultivationList = () => {
+    onClose?.();
+    navigate("/cultivations", { replace: true });
   };
 
   return (
@@ -187,12 +192,9 @@ export default function CultivationActions({ cultivation, growthDays, pastCultiv
             <button
               className="button button--primary button--wide"
               type="button"
-              onClick={() => {
-                onClose?.();
-                window.location.reload();
-              }}
+              onClick={goToCultivationList}
             >
-              확인
+              재배지 목록으로 이동
             </button>
           </div>
         </section>
