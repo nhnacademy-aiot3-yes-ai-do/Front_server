@@ -32,6 +32,7 @@ export default function SignupPage() {
         body,
       });
       setCodeSent(true);
+      setNotice({ type: "success", message: "인증번호가 발송되었습니다." });
     } catch (error) {
       setNotice({ type: "error", message: error.message });
     }
@@ -89,12 +90,12 @@ export default function SignupPage() {
     const nicknameInput = field("nickname");
     if (!nicknameInput?.reportValidity()) return;
     try {
-      const available = await request(
+      const isDuplicated = await request(
         `/users/check-nickname?nickname=${encodeURIComponent(nicknameInput.value.trim())}`,
       );
       setNotice({
-        type: available ? "success" : "error",
-        message: available ? "사용할 수 있는 닉네임입니다." : "이미 사용 중인 닉네임입니다.",
+        type: isDuplicated ? "error" : "success",
+        message: isDuplicated ? "이미 사용 중인 닉네임입니다." : "사용할 수 있는 닉네임입니다.",
       });
     } catch (error) {
       setNotice({ type: "error", message: error.message });
@@ -155,7 +156,6 @@ export default function SignupPage() {
               minLength="8"
               required
             />
-            <p className="help-text">※ 비밀번호는 영문, 숫자, 특수문자(@$!%*#?&.) 포함 8자 이상</p>
           </div>
           <div className="field">
             <label className="sr-only" htmlFor="signup-confirm-password">
@@ -170,6 +170,7 @@ export default function SignupPage() {
               minLength="8"
               required
             />
+            <p className="help-text">※ 비밀번호는 영문, 숫자, 특수문자(@$!%*#?&.) 포함 8자 이상</p>
           </div>
           <button
             className="button button--primary button--wide"

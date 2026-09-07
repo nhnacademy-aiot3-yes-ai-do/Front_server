@@ -18,6 +18,13 @@
   -webkit-backdrop-filter: blur(6px);
 }
 
+.auth-card fieldset {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
 .auth-logo {
   display: block;
   width: calc(100% + 36px);
