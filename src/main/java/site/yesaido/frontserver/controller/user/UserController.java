@@ -35,6 +35,7 @@ public class UserController {
     private static final String REDIRECT_PREFIX = "redirect:";
     private static final String AUTH_ERROR = "error";
     private static final String RESET_FAILURE_MESSAGE = "비밀번호 변경에 실패했습니다. 다시 시도해 주세요.";
+    private static final String LOGIN_FAILURE_MESSAGE = "아이디 또는 비밀번호가 일치하지 않습니다.";
 
 
     private final UserClient userClient;
@@ -79,13 +80,13 @@ public class UserController {
                 throw new DormantUserException(email, "휴면 처리된 계정입니다. 이메일 인증을 진행해 주세요.");
             }
             log.warn("로그인 실패(Feign): {}", e.getMessage());
-            redirectAttributes.addFlashAttribute("loginError", "아이디 또는 비밀번호가 일치하지 않습니다.");
-            setAuthResult(session, AUTH_ERROR, "아이디 또는 비밀번호가 일치하지 않습니다.");
+            redirectAttributes.addFlashAttribute("loginError", LOGIN_FAILURE_MESSAGE);
+            setAuthResult(session, AUTH_ERROR, LOGIN_FAILURE_MESSAGE);
             return REDIRECT_PREFIX + LOGIN_URL;
         } catch (Exception e) {
             log.warn("로그인 실패: {}", e.getMessage());
-            redirectAttributes.addFlashAttribute("loginError", "아이디 또는 비밀번호가 일치하지 않습니다.");
-            setAuthResult(session, AUTH_ERROR, "아이디 또는 비밀번호가 일치하지 않습니다.");
+            redirectAttributes.addFlashAttribute("loginError", LOGIN_FAILURE_MESSAGE);
+            setAuthResult(session, AUTH_ERROR, LOGIN_FAILURE_MESSAGE);
 
             return REDIRECT_PREFIX + LOGIN_URL;
         }
