@@ -154,9 +154,9 @@ class UserControllerTest {
     }
 
     @Test
-    @DisplayName("로그인 요청 - 휴면 유저 예외 전달 분기 (OCP)")
+    @DisplayName("로그인 요청 - Auth의 휴면 계정 오류를 휴면 예외로 변환한다")
     void loginDormantUserThrowsException() throws Exception {
-        given(userClient.login(any(LoginRequest.class))).willThrow(new DormantUserException("휴면계정입니다.", "test@naver.com"));
+        given(userClient.login(any(LoginRequest.class))).willThrow(badRequestException("휴면 처리된 계정입니다."));
 
         mockMvc.perform(post("/login")
                         .param("email", "test@naver.com")
