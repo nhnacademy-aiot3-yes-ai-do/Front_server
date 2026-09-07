@@ -59,6 +59,7 @@ class DailyFeedbackApiControllerTest {
                 cultivationId,
                 feedbackDate,
                 true,
+                100L,
                 "온도와 습도가 안정적입니다.",
                 LocalDateTime.of(2026, 9, 3, 0, 6)
         );

@@ -41,10 +41,10 @@ function InlineQueryState({ canQuery, hasAvailableRange, query }) {
   }
   if (query.isPending) {
     return (
-      <div className="daily-feedback-inline-state" role="status">
+      <output className="daily-feedback-inline-state">
         <span className="loading-spinner" aria-hidden="true" />
         <span>일일 피드백을 불러오고 있어요.</span>
-      </div>
+      </output>
     );
   }
   if (query.isError && query.error?.status === 404) {
@@ -108,6 +108,7 @@ function PreviewPanel({
 }
 
 function ReportPanel({
+  photos = [], // photos props 추가
   feedbackDate,
   minDate,
   maxDate,
@@ -117,6 +118,10 @@ function ReportPanel({
   onFeedbackDateChange,
 }) {
   const feedback = query.data;
+  // 분석에 사용된 사진 찾기
+  const analyzedPhoto = feedback?.cultivationPhotoId
+    ? photos.find((p) => p.photoId === feedback.cultivationPhotoId)
+    : null;
 
   return (
     <section
@@ -164,6 +169,34 @@ function ReportPanel({
             </div>
             <FeedbackMeta feedback={feedback} feedbackDate={feedbackDate} />
           </header>
+
+          {/* AI 비전 분석에 사용된 사진 표시 영역 추가 */}
+          {feedback.hasVisionAnalysis && analyzedPhoto && (
+            <div style={{ margin: "16px 0", textAlign: "center" }}>
+              <p
+                style={{
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  color: "#4f46e5",
+                  marginBottom: "8px",
+                }}
+              >
+                📸 AI 비전 분석에 사용된 사진
+              </p>
+              <img
+                src={analyzedPhoto.uri}
+                alt="AI 분석 대상 재배 사진"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "320px",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                  objectFit: "contain",
+                }}
+              />
+            </div>
+          )}
+
           <p className="daily-feedback-document__content">
             {feedback.content || "생성된 피드백 내용이 없습니다."}
           </p>
@@ -174,6 +207,7 @@ function ReportPanel({
 }
 
 export default function DailyFeedbackPanel({
+  photos = [],
   cultivationId,
   cultivationName,
   feedbackDate,
@@ -211,6 +245,7 @@ export default function DailyFeedbackPanel({
 
   return (
     <ReportPanel
+      photos={photos}
       canQuery={canQuery}
       feedbackDate={feedbackDate}
       hasAvailableRange={hasAvailableRange}
