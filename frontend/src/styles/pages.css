@@ -917,7 +917,10 @@
   height: 72px;
   border-radius: 50%;
   place-items: center;
-  background: conic-gradient(var(--ring-color, var(--sage-500)) var(--ring-percent, 0%), var(--sage-200) 0);
+  background: conic-gradient(
+    var(--ring-color, var(--sage-500)) var(--ring-percent, 0%),
+    var(--sage-200) 0
+  );
   transition: background 0.3s ease;
 }
 
