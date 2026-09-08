@@ -908,6 +908,10 @@ function renderSensorChart(chartPoints, color) {
 function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
   const state = getSensorState(option);
   const unit = normalizeSensorUnit(option.latest?.unit || option.sensorType.valueUnit);
+  const installationLocation = [option.sensor.location, option.sensor.locationDetail]
+    .map((value) => value?.trim())
+    .filter(Boolean)
+    .join(" / ");
   const cutoff = Date.now() - rangeMinutes * 60 * 1000;
   const chartPoints = aggregateChartPoints(
     normalizeList(initialHistory).filter((point) => {
@@ -956,24 +960,33 @@ function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
         {renderSensorChart(chartPoints, color)}
       </div>
 
-      <dl className="live-sensor-card__meta">
-        <div>
-          <dt>모델</dt>
-          <dd>{option.sensor.deviceModel || "-"}</dd>
-        </div>
-        <div>
-          <dt>연결 상태</dt>
-          <dd>{option.sensor.sensorStatus || "-"}</dd>
-        </div>
-        <div>
-          <dt>위치</dt>
-          <dd>{option.sensor.location || "-"}</dd>
-        </div>
-        <div>
-          <dt>상세 위치</dt>
-          <dd>{option.sensor.locationDetail || "-"}</dd>
-        </div>
-      </dl>
+      <div className="live-sensor-card__details">
+        <dl className="live-sensor-card__connection" role="group" aria-label="센서 연결 정보">
+          <div>
+            <dt>연결 상태</dt>
+            <dd>{option.connectionLabel}</dd>
+          </div>
+          <div>
+            <dt>마지막 측정</dt>
+            <dd>
+              {option.connection?.lastMeasuredAt
+                ? new Date(option.connection.lastMeasuredAt).toLocaleString("ko-KR")
+                : "-"}
+            </dd>
+          </div>
+        </dl>
+
+        <dl className="live-sensor-card__meta" role="group" aria-label="센서 설치 정보">
+          <div>
+            <dt>모델</dt>
+            <dd>{option.sensor.deviceModel || "-"}</dd>
+          </div>
+          <div>
+            <dt>설치 위치</dt>
+            <dd>{installationLocation || "-"}</dd>
+          </div>
+        </dl>
+      </div>
     </article>
   );
 }
@@ -1590,12 +1603,43 @@ export default function CultivationDetailPage() {
     retry: 1,
   });
 
+  const sensorStatusQuery = useQuery({
+    queryKey: ["cultivations", "sensor-status", id],
+    queryFn: () => request(`/cultivations/${id}/sensors`, { cache: "no-store" }),
+    enabled: Number.isFinite(id) && detailQuery.isSuccess,
+    refetchInterval: 5_000,
+    retry: false,
+  });
+
   const data = detailQuery.data;
   const latestValues = preferNonEmptyLatestValues(
     latestQuery.data?.latestSensorValueResponses,
     data?.latestSensorValues?.latestSensorValueResponses,
-  );
-  const sensorOptions = useMemo(() => buildSensorOptions(data, latestValues), [data, latestValues]);
+  )
+
+  const sensorOptions = useMemo(() => {
+    const byId = new Map(
+        normalizeList(sensorStatusQuery.data?.sensors).map(
+            sensor => [String(sensor.sensorId), sensor],
+        ),
+    );
+    const unavailable =
+        sensorStatusQuery.isError || sensorStatusQuery.fetchStatus === "paused";
+
+    return buildSensorOptions(data, latestValues).map(option => {
+      const connection = byId.get(String(option.sensor.sensorId));
+      let label = "상태 확인 불가";
+      if (!unavailable) {
+        if (sensorStatusQuery.isPending) label = "상태 확인 중";
+        else if (connection?.sensorStatus === "ONLINE") label = "온라인";
+        else if (connection?.sensorStatus === "OFFLINE") {
+          label = connection.lastMeasuredAt == null ? "수신 대기" : "오프라인";
+        } else if (connection?.sensorStatus === "ERROR") label = "센서 오류";
+      }
+      return { ...option, connection, connectionLabel: label };
+    });
+  }, [data, latestValues, sensorStatusQuery.data, sensorStatusQuery.isError,
+    sensorStatusQuery.isPending, sensorStatusQuery.fetchStatus]);
 
   const guardView = renderDetailGuard({
     data,
