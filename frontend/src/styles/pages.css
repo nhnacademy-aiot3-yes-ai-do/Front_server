@@ -3282,7 +3282,7 @@ p.daily-feedback-document__content {
   margin-bottom: 13px;
 }
 
-.support-field label {
+.support-field > label {
   display: block;
   margin-bottom: 6px;
   color: var(--brown-700);
@@ -3324,6 +3324,8 @@ p.daily-feedback-document__content {
   display: flex;
   width: 44px;
   height: 44px;
+  margin: 0;
+  padding: 0;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
@@ -3332,6 +3334,7 @@ p.daily-feedback-document__content {
   background: white;
   color: var(--brown-700);
   cursor: pointer;
+  line-height: 0;
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
@@ -3345,6 +3348,7 @@ p.daily-feedback-document__content {
 }
 
 .support-attach-icon-btn svg {
+  display: block;
   width: 18px;
   height: 18px;
 }
