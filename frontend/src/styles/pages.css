@@ -75,10 +75,10 @@
 .cultivation-card {
   position: relative;
   display: grid;
-  height: 460px;
+  min-height: 460px;
   grid-template-columns: 1.3fr 1fr;
   gap: 13px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--line);
   border-radius: 23px;
   padding: 14px;
@@ -88,12 +88,10 @@
 
 @container (max-width: 760px) {
   .cultivation-card {
-    height: auto;
     grid-template-columns: 1fr;
   }
 
   .cultivation-card__sensors {
-    overflow-y: visible;
     border-top: 1px dashed var(--line);
     padding-top: 14px;
   }
@@ -402,21 +400,8 @@
   gap: 9px;
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
+  overflow: visible;
   padding-right: 4px;
-}
-
-.cultivation-card__sensors::-webkit-scrollbar {
-  width: 6px;
-}
-
-.cultivation-card__sensors::-webkit-scrollbar-thumb {
-  background: var(--brown-300);
-  border-radius: 8px;
-}
-
-.cultivation-card__sensors::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 .cultivation-card__sensors > header {
@@ -516,6 +501,11 @@
   color: var(--brown-500);
   font-size: 10px;
   place-items: center;
+}
+
+.sensor-spark__chart .recharts-tooltip-wrapper {
+  z-index: 20 !important;
+  pointer-events: none;
 }
 
 .sensor-column-state {

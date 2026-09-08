@@ -12,8 +12,12 @@ vi.mock("recharts", () => ({
   ),
   ResponsiveContainer: ({ children }) => <div>{children}</div>,
   XAxis: () => null,
-  Tooltip: ({ formatter, labelFormatter }) => (
-    <div data-testid="chart-tooltip">
+  Tooltip: ({ formatter, labelFormatter, allowEscapeViewBox }) => (
+    <div
+      data-testid="chart-tooltip"
+      data-allow-escape-x={String(allowEscapeViewBox?.x)}
+      data-allow-escape-y={String(allowEscapeViewBox?.y)}
+    >
       {formatter(22)[0]} · {labelFormatter("2026-09-04 12:00")}
     </div>
   ),
@@ -38,6 +42,8 @@ describe("SensorSparkline tooltip", () => {
       "data-points",
       expect.stringContaining(`"measuredAt":"${formatDateTime("2026-09-04T12:00:00+09:00")}"`),
     );
+    expect(screen.getByTestId("chart-tooltip")).toHaveAttribute("data-allow-escape-x", "true");
+    expect(screen.getByTestId("chart-tooltip")).toHaveAttribute("data-allow-escape-y", "true");
     expect(screen.getByTestId("chart-tooltip")).toHaveTextContent(
       "22°C · 측정 시각 2026-09-04 12:00",
     );

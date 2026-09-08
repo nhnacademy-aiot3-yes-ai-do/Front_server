@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CultivationListPage from "./CultivationListPage";
@@ -19,8 +19,12 @@ vi.mock("../../api/cultivations", () => ({
 }));
 
 vi.mock("../../features/cultivations/CultivationCard", () => ({
-  default: ({ cultivation, mushroomName, latestSensorValues }) => (
-    <div data-testid={`card-${cultivation.cultivationId}`}>
+  default: ({ cultivation, mushroomName, latestSensorValues, sensorTrend1h }) => (
+    <div
+      data-testid={`card-${cultivation.cultivationId}`}
+      data-trend-points={sensorTrend1h?.length ?? 0}
+      data-trend-values={JSON.stringify(sensorTrend1h ?? [])}
+    >
       <span>{cultivation.name}</span>
       <span>{mushroomName}</span>
       {JSON.stringify(latestSensorValues)}
@@ -40,7 +44,17 @@ describe("CultivationListPage realtime latest polling", () => {
       mushrooms: [{ id: 1, mushroomNameKo: "느타리" }],
     });
     mocks.getLatestSensorValuesForCultivations.mockResolvedValue({
-      latestSensorValuesByCultivationId: { 41: [{ sensorType: "temperature", value: 22 }] },
+      latestSensorValuesByCultivationId: {
+        41: [
+          {
+            deviceEui: "sensor-1",
+            sensorType: "temperature",
+            unit: "°C",
+            value: 22,
+            measuredAt: "2026-09-08T00:00:00Z",
+          },
+        ],
+      },
     });
   });
 
@@ -66,6 +80,147 @@ describe("CultivationListPage realtime latest polling", () => {
       queryKey: ["cultivations", "latest-batch"],
     });
     expect(latestQuery.options.refetchInterval).toBe(3000);
+  });
+
+  it("3초 polling으로 들어온 최신 측정값을 목록 그래프 trend에 누적한다", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CultivationListPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const card = await screen.findByTestId("card-41");
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "1"));
+    expect(JSON.parse(card.dataset.trendValues)).toEqual([
+      expect.objectContaining({ measuredAt: "2026-09-08T00:00:00Z", value: 22 }),
+    ]);
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              deviceEui: "sensor-1",
+              sensorType: "temperature",
+              unit: "°C",
+              value: 23,
+              measuredAt: "2026-09-08T00:00:03Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
+    expect(JSON.parse(card.dataset.trendValues)).toEqual([
+      expect.objectContaining({ measuredAt: "2026-09-08T00:00:00Z", value: 22 }),
+      expect.objectContaining({ measuredAt: "2026-09-08T00:00:03Z", value: 23 }),
+    ]);
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              deviceEui: "sensor-1",
+              sensorType: "temperature",
+              unit: "°C",
+              value: 24,
+              measuredAt: "2026-09-08T00:00:03.000Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() =>
+      expect(JSON.parse(card.dataset.trendValues)).toEqual([
+        expect.objectContaining({ measuredAt: "2026-09-08T00:00:00Z", value: 22 }),
+        expect.objectContaining({ measuredAt: "2026-09-08T00:00:03.000Z", value: 24 }),
+      ]),
+    );
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              deviceEui: "sensor-1",
+              sensorType: "temperature",
+              unit: "°C",
+              value: 25,
+              measuredAt: "2026-09-08T00:00:06Z",
+            },
+            {
+              deviceEui: "sensor-2",
+              sensorType: "humidity",
+              unit: "%",
+              value: 60,
+              measuredAt: "2026-09-08T00:00:06Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "4"));
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              deviceEui: "sensor-1",
+              sensorType: "temperature",
+              unit: "°C",
+              value: 26,
+              measuredAt: "2026-09-08T01:00:07Z",
+            },
+            {
+              deviceEui: "sensor-2",
+              sensorType: "humidity",
+              unit: "%",
+              value: 61,
+              measuredAt: "2026-09-08T01:00:07Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {},
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: { 999: [] },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              sensorType: "temperature",
+              unit: "°C",
+              value: 99,
+              measuredAt: "2026-09-08T01:00:10Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
   });
 
   it("재배지 이름과 버섯 종류로 목록을 필터링하고 결과가 없으면 빈 상태를 표시한다", async () => {

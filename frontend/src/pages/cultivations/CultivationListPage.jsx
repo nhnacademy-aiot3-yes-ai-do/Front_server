@@ -10,9 +10,55 @@ import {
 import AdminPagination from "../../components/admin/AdminPagination";
 import { EmptyState, ErrorState, LoadingState } from "../../components/PageState";
 import CultivationCard from "../../features/cultivations/CultivationCard";
-import { normalizeList } from "../../utils/formatters";
+import { normalizeList, normalizeSensorUnit } from "../../utils/formatters";
 
 const PAGE_SIZE = 6;
+const SENSOR_TREND_WINDOW_MS = 60 * 60 * 1000;
+
+function sensorPointKey(point) {
+  const deviceIdentity = point.deviceEui || point.sensorId || point.sensorKey;
+  if (!deviceIdentity) return null;
+
+  return [deviceIdentity, point.sensorType || "", normalizeSensorUnit(point.unit)].join("|");
+}
+
+function mergeSensorTrendMap(previous, incoming) {
+  const next = { ...previous };
+
+  Object.entries(incoming || {}).forEach(([cultivationId, points]) => {
+    const mergedBySensor = new Map();
+    [...normalizeList(next[cultivationId]), ...normalizeList(points)].forEach((point) => {
+      if (!point?.measuredAt || point.value == null) return;
+
+      const measuredAt = new Date(point.measuredAt).getTime();
+      if (!Number.isFinite(measuredAt)) return;
+
+      const sensorKey = sensorPointKey(point);
+      if (!sensorKey) return;
+
+      const sensorPoints = mergedBySensor.get(sensorKey) || new Map();
+      sensorPoints.set(String(measuredAt), point);
+      mergedBySensor.set(sensorKey, sensorPoints);
+    });
+
+    next[cultivationId] = [...mergedBySensor.values()]
+      .flatMap((sensorPoints) => {
+        const pointsForSensor = [...sensorPoints.values()].sort(
+          (left, right) => new Date(left.measuredAt) - new Date(right.measuredAt),
+        );
+        const newestMeasuredAt = new Date(
+          pointsForSensor[pointsForSensor.length - 1]?.measuredAt,
+        ).getTime();
+        return pointsForSensor.filter(
+          (point) =>
+            newestMeasuredAt - new Date(point.measuredAt).getTime() <= SENSOR_TREND_WINDOW_MS,
+        );
+      })
+      .sort((left, right) => new Date(left.measuredAt) - new Date(right.measuredAt));
+  });
+
+  return next;
+}
 
 export default function CultivationListPage() {
   const listQuery = useQuery({
@@ -30,6 +76,22 @@ export default function CultivationListPage() {
     refetchInterval: 3000,
     refetchIntervalInBackground: false,
   });
+
+  const [trendByCultivationId, setTrendByCultivationId] = useState({});
+
+  useEffect(() => {
+    const initialTrend = listQuery.data?.sensorTrend1hByCultivationId;
+    if (initialTrend) {
+      setTrendByCultivationId((previous) => mergeSensorTrendMap(previous, initialTrend));
+    }
+  }, [listQuery.data?.sensorTrend1hByCultivationId]);
+
+  useEffect(() => {
+    const latestValues = latestQuery.data?.latestSensorValuesByCultivationId;
+    if (latestValues) {
+      setTrendByCultivationId((previous) => mergeSensorTrendMap(previous, latestValues));
+    }
+  }, [latestQuery.data?.latestSensorValuesByCultivationId]);
 
   const mushrooms = new Map(
     normalizeList(listQuery.data?.mushrooms).map((mushroom) => [
@@ -142,6 +204,7 @@ export default function CultivationListPage() {
                             : (initialLatestValuesByCultivationId[cultivation.cultivationId] ?? [])
                         }
                         sensorTrend1h={
+                          trendByCultivationId[cultivation.cultivationId] ??
                           listQuery.data?.sensorTrend1hByCultivationId?.[cultivation.cultivationId]
                         }
                       />
