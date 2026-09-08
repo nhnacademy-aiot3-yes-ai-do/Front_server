@@ -67,6 +67,7 @@ export default function SensorSparkline({
               </defs>
               <XAxis dataKey="measuredAt" hide />
               <Tooltip
+                allowEscapeViewBox={{ x: true, y: true }}
                 formatter={(tooltipValue) => [`${tooltipValue}${unit || ""}`, "측정값"]}
                 labelFormatter={(label) => `측정 시각 ${label}`}
               />

@@ -23,6 +23,7 @@ vi.mock("../../features/cultivations/CultivationCard", () => ({
     <div
       data-testid={`card-${cultivation.cultivationId}`}
       data-trend-points={sensorTrend1h?.length ?? 0}
+      data-trend-values={JSON.stringify(sensorTrend1h ?? [])}
     >
       <span>{cultivation.name}</span>
       <span>{mushroomName}</span>
@@ -96,6 +97,9 @@ describe("CultivationListPage realtime latest polling", () => {
 
     const card = await screen.findByTestId("card-41");
     await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "1"));
+    expect(JSON.parse(card.dataset.trendValues)).toEqual([
+      expect.objectContaining({ measuredAt: "2026-09-08T00:00:00Z", value: 22 }),
+    ]);
 
     act(() => {
       queryClient.setQueryData(["cultivations", "latest-batch"], {
@@ -107,6 +111,110 @@ describe("CultivationListPage realtime latest polling", () => {
               unit: "°C",
               value: 23,
               measuredAt: "2026-09-08T00:00:03Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
+    expect(JSON.parse(card.dataset.trendValues)).toEqual([
+      expect.objectContaining({ measuredAt: "2026-09-08T00:00:00Z", value: 22 }),
+      expect.objectContaining({ measuredAt: "2026-09-08T00:00:03Z", value: 23 }),
+    ]);
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              deviceEui: "sensor-1",
+              sensorType: "temperature",
+              unit: "°C",
+              value: 24,
+              measuredAt: "2026-09-08T00:00:03.000Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() =>
+      expect(JSON.parse(card.dataset.trendValues)).toEqual([
+        expect.objectContaining({ measuredAt: "2026-09-08T00:00:00Z", value: 22 }),
+        expect.objectContaining({ measuredAt: "2026-09-08T00:00:03.000Z", value: 24 }),
+      ]),
+    );
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              deviceEui: "sensor-1",
+              sensorType: "temperature",
+              unit: "°C",
+              value: 25,
+              measuredAt: "2026-09-08T00:00:06Z",
+            },
+            {
+              deviceEui: "sensor-2",
+              sensorType: "humidity",
+              unit: "%",
+              value: 60,
+              measuredAt: "2026-09-08T00:00:06Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "4"));
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              deviceEui: "sensor-1",
+              sensorType: "temperature",
+              unit: "°C",
+              value: 26,
+              measuredAt: "2026-09-08T01:00:07Z",
+            },
+            {
+              deviceEui: "sensor-2",
+              sensorType: "humidity",
+              unit: "%",
+              value: 61,
+              measuredAt: "2026-09-08T01:00:07Z",
+            },
+          ],
+        },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {},
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: { 999: [] },
+      });
+    });
+    await waitFor(() => expect(card).toHaveAttribute("data-trend-points", "2"));
+
+    act(() => {
+      queryClient.setQueryData(["cultivations", "latest-batch"], {
+        latestSensorValuesByCultivationId: {
+          41: [
+            {
+              sensorType: "temperature",
+              unit: "°C",
+              value: 99,
+              measuredAt: "2026-09-08T01:00:10Z",
             },
           ],
         },

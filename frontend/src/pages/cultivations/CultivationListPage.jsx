@@ -16,7 +16,10 @@ const PAGE_SIZE = 6;
 const SENSOR_TREND_WINDOW_MS = 60 * 60 * 1000;
 
 function sensorPointKey(point) {
-  return [point.deviceEui || "", point.sensorType || "", normalizeSensorUnit(point.unit)].join("|");
+  const deviceIdentity = point.deviceEui || point.sensorId || point.sensorKey;
+  if (!deviceIdentity) return null;
+
+  return [deviceIdentity, point.sensorType || "", normalizeSensorUnit(point.unit)].join("|");
 }
 
 function mergeSensorTrendMap(previous, incoming) {
@@ -31,8 +34,10 @@ function mergeSensorTrendMap(previous, incoming) {
       if (!Number.isFinite(measuredAt)) return;
 
       const sensorKey = sensorPointKey(point);
+      if (!sensorKey) return;
+
       const sensorPoints = mergedBySensor.get(sensorKey) || new Map();
-      sensorPoints.set(point.measuredAt, point);
+      sensorPoints.set(String(measuredAt), point);
       mergedBySensor.set(sensorKey, sensorPoints);
     });
 
