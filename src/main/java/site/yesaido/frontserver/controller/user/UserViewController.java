@@ -14,35 +14,20 @@ public class UserViewController {
 
     // ===== 인증 (Auth) 관련 뷰 =====
 
-    @GetMapping("/login")
-    public String loginPage(HttpSession session) {
+    @GetMapping({
+            "/login",
+            "/admin/login",
+            "/signup",
+            "/signup/nickname",
+            "/signup-nickname",
+            "/find-password"
+    }
+    )
+    public String authPage(HttpSession session) {
         clearPasswordResetSession(session);
         return REACT_APP;
     }
 
-    @GetMapping("/admin/login")
-    public String adminLoginPage(HttpSession session) {
-        clearPasswordResetSession(session);
-        return REACT_APP;
-    }
-
-    @GetMapping("/signup")
-    public String signupPage(HttpSession session) {
-        clearPasswordResetSession(session);
-        return REACT_APP;
-    }
-
-    @GetMapping({"/signup/nickname", "/signup-nickname"})
-    public String signupNicknamePage(HttpSession session) {
-        clearPasswordResetSession(session);
-        return REACT_APP;
-    }
-
-    @GetMapping("/find-password")
-    public String findPasswordPage(HttpSession session) {
-        clearPasswordResetSession(session);
-        return REACT_APP;
-    }
 
     @GetMapping("/verify-code")
     public String verifyCodePage() {
