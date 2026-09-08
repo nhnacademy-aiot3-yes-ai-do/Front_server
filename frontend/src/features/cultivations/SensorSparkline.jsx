@@ -31,7 +31,7 @@ export default function SensorSparkline({
   return (
     <article className={`sensor-spark ${outside ? "sensor-spark--warning" : ""}`}>
       <div className="sensor-spark__top">
-        <div>
+        <div className="sensor-spark__title">
           <span>{formatSensorType(sensorType.type)}</span>
           <strong>
             {value ?? "-"}
