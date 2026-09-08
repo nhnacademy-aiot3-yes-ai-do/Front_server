@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -20,9 +20,9 @@ export default function CultivationListPage() {
     queryFn: getCultivationListPage,
   });
   const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const cultivations = normalizeList(listQuery.data?.cultivations);
-  const totalPages = Math.max(1, Math.ceil(cultivations.length / PAGE_SIZE));
   const latestQuery = useQuery({
     queryKey: cultivationKeys.latestBatch(),
     queryFn: getLatestSensorValuesForCultivations,
@@ -31,6 +31,27 @@ export default function CultivationListPage() {
     refetchIntervalInBackground: false,
   });
 
+  const mushrooms = new Map(
+    normalizeList(listQuery.data?.mushrooms).map((mushroom) => [
+      mushroom.id,
+      mushroom.mushroomNameKo,
+    ]),
+  );
+  const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
+  const filteredCultivations = normalizedSearchTerm
+    ? cultivations.filter((cultivation) => {
+        const cultivationName = String(cultivation.name || "").toLocaleLowerCase();
+        const mushroomName = String(
+          mushrooms.get(cultivation.mushroomId) || "",
+        ).toLocaleLowerCase();
+        return (
+          cultivationName.includes(normalizedSearchTerm) ||
+          mushroomName.includes(normalizedSearchTerm)
+        );
+      })
+    : cultivations;
+  const totalPages = Math.max(1, Math.ceil(filteredCultivations.length / PAGE_SIZE));
+
   useEffect(() => {
     if (page > totalPages - 1) setPage(0);
   }, [totalPages, page]);
@@ -38,16 +59,14 @@ export default function CultivationListPage() {
   if (listQuery.isLoading) return <LoadingState message="나의 재배지를 불러오고 있어요." />;
   if (listQuery.isError) return <ErrorState error={listQuery.error} onRetry={listQuery.refetch} />;
 
-  const mushrooms = new Map(
-    normalizeList(listQuery.data?.mushrooms).map((mushroom) => [
-      mushroom.id,
-      mushroom.mushroomNameKo,
-    ]),
-  );
   const latestValuesByCultivationId = latestQuery.data?.latestSensorValuesByCultivationId;
   const initialLatestValuesByCultivationId =
     listQuery.data?.latestSensorValuesByCultivationId ?? {};
-  const pagedCultivations = cultivations.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const visiblePage = Math.min(page, totalPages - 1);
+  const pagedCultivations = filteredCultivations.slice(
+    visiblePage * PAGE_SIZE,
+    visiblePage * PAGE_SIZE + PAGE_SIZE,
+  );
 
   return (
     <main className="workspace-page cultivation-list-page">
@@ -79,24 +98,59 @@ export default function CultivationListPage() {
           />
         ) : (
           <>
-            <div className="cultivation-list">
-              {pagedCultivations.map((cultivation) => (
-                <CultivationCard
-                  key={cultivation.cultivationId}
-                  cultivation={cultivation}
-                  mushroomName={mushrooms.get(cultivation.mushroomId)}
-                  latestSensorValues={
-                    latestValuesByCultivationId?.[cultivation.cultivationId]?.length
-                      ? latestValuesByCultivationId[cultivation.cultivationId]
-                      : (initialLatestValuesByCultivationId[cultivation.cultivationId] ?? [])
-                  }
-                  sensorTrend1h={
-                    listQuery.data?.sensorTrend1hByCultivationId?.[cultivation.cultivationId]
-                  }
-                />
-              ))}
+            <div className="cultivation-search" role="search">
+              <Search aria-hidden="true" />
+              <label className="sr-only" htmlFor="cultivation-search-input">
+                재배지 검색
+              </label>
+              <input
+                id="cultivation-search-input"
+                type="search"
+                value={searchTerm}
+                onChange={(event) => {
+                  setSearchTerm(event.target.value);
+                  setPage(0);
+                }}
+                placeholder="재배지 이름 또는 버섯 종류 검색"
+              />
             </div>
-            <AdminPagination page={page} totalPages={totalPages} onChange={setPage} />
+            {filteredCultivations.length === 0 ? (
+              <EmptyState
+                title="검색 결과가 없습니다."
+                description="재배지 이름이나 버섯 종류를 다르게 입력해 보세요."
+                action={
+                  <button
+                    className="button button--secondary"
+                    type="button"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    검색어 지우기
+                  </button>
+                }
+              />
+            ) : (
+              <>
+                <div className="cultivation-list">
+                  {pagedCultivations.map((cultivation) => (
+                    <div className="cultivation-card-shell" key={cultivation.cultivationId}>
+                      <CultivationCard
+                        cultivation={cultivation}
+                        mushroomName={mushrooms.get(cultivation.mushroomId)}
+                        latestSensorValues={
+                          latestValuesByCultivationId?.[cultivation.cultivationId]?.length
+                            ? latestValuesByCultivationId[cultivation.cultivationId]
+                            : (initialLatestValuesByCultivationId[cultivation.cultivationId] ?? [])
+                        }
+                        sensorTrend1h={
+                          listQuery.data?.sensorTrend1hByCultivationId?.[cultivation.cultivationId]
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+                <AdminPagination page={visiblePage} totalPages={totalPages} onChange={setPage} />
+              </>
+            )}
           </>
         )}
       </section>

@@ -920,28 +920,36 @@ function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
   return (
     <article className={`live-sensor-card live-sensor-card--${state.tone}`}>
       <header>
-        <div className="live-sensor-card__title">
-          <i aria-hidden="true" style={{ backgroundColor: color }} />
-          <span>
-            <strong>{formatSensorType(option.sensorType.type)}</strong>
-            <small>{option.sensor.deviceName}</small>
+        <div className="live-sensor-card__header-main">
+          <div className="live-sensor-card__title">
+            <i aria-hidden="true" style={{ backgroundColor: color }} />
+            <span>
+              <strong>{formatSensorType(option.sensorType.type)}</strong>
+              <small>{option.sensor.deviceName}</small>
+            </span>
+          </div>
+          <div className="live-sensor-card__reading">
+            <strong>{option.latest?.value ?? "-"}</strong>
+            <span>{unit}</span>
+          </div>
+        </div>
+        <div className="live-sensor-card__summary">
+          <div className="live-sensor-card__threshold">
+            <Ruler aria-hidden="true" />
+            <span>권장 범위 {thresholdLabel(option.setting, unit)}</span>
+          </div>
+          <span className="live-sensor-card__summary-separator" aria-hidden="true">
+            |
+          </span>
+          <span className={`sensor-live-state sensor-live-state--${state.tone}`}>
+            <span aria-hidden="true">{sensorStateIcon(state.tone)}</span>
+            {state.label}
           </span>
         </div>
-        <span className={`sensor-live-state sensor-live-state--${state.tone}`}>
-          <span aria-hidden="true">{sensorStateIcon(state.tone)}</span>
-          {state.label}
-        </span>
       </header>
 
-      <div className="live-sensor-card__reading">
-        <strong>{option.latest?.value ?? "-"}</strong>
-        <span>{unit}</span>
-        <small>{sensorRangeLabel(rangeMinutes)} · 측정값</small>
-      </div>
-      <div className="live-sensor-card__threshold">
-        <Ruler aria-hidden="true" />
-        <span>권장 범위</span>
-        <strong>{thresholdLabel(option.setting, unit)}</strong>
+      <div className="live-sensor-card__reading-meta">
+        {sensorRangeLabel(rangeMinutes)} · 측정값
       </div>
 
       <div className="live-sensor-chart" aria-label={`${option.sensor.deviceName} 센서 추이`}>
@@ -959,7 +967,11 @@ function LiveSensorCard({ color, option, initialHistory, rangeMinutes }) {
         </div>
         <div>
           <dt>위치</dt>
-          <dd>{option.sensor.locationDetail || option.sensor.location || "-"}</dd>
+          <dd>{option.sensor.location || "-"}</dd>
+        </div>
+        <div>
+          <dt>상세 위치</dt>
+          <dd>{option.sensor.locationDetail || "-"}</dd>
         </div>
       </dl>
     </article>
@@ -970,6 +982,7 @@ const SENSOR_PAGE_SIZE = 2;
 
 function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
   const [page, setPage] = useState(0);
+  const [displayMode, setDisplayMode] = useState("paged");
   const [selectedRangeMinutes, setSelectedRangeMinutes] = useState(720);
   const [sensorHistory, setSensorHistory] = useState(() => normalizeList(sensorHistory12h));
   const totalPages = Math.max(1, Math.ceil(sensorOptions.length / SENSOR_PAGE_SIZE));
@@ -997,7 +1010,10 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
   }, [totalPages, page]);
 
   const start = page * SENSOR_PAGE_SIZE;
-  const pagedOptions = sensorOptions.slice(start, start + SENSOR_PAGE_SIZE);
+  const isAllVisible = displayMode === "all";
+  const visibleOptions = isAllVisible
+    ? sensorOptions
+    : sensorOptions.slice(start, start + SENSOR_PAGE_SIZE);
 
   return (
     <section className="panel-card realtime-sensor-panel">
@@ -1006,6 +1022,18 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
           <h2>실시간 센서 정보</h2>
         </div>
         <div className="sensor-panel-controls">
+          <label htmlFor="sensor-display-mode">표시 방법</label>
+          <select
+            id="sensor-display-mode"
+            value={displayMode}
+            onChange={(event) => {
+              setDisplayMode(event.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="paged">페이지로 보기</option>
+            <option value="all">전체 보기</option>
+          </select>
           <label htmlFor="sensor-history-range">그래프 기간</label>
           <select
             id="sensor-history-range"
@@ -1051,9 +1079,13 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
       {sensorOptions.length > 0 ? (
         <>
           <div className="realtime-sensor-grid">
-            {pagedOptions.map((option, index) => (
+            {visibleOptions.map((option, index) => (
               <LiveSensorCard
-                color={sensorChartColors[(start + index) % sensorChartColors.length]}
+                color={
+                  sensorChartColors[
+                    (isAllVisible ? index : start + index) % sensorChartColors.length
+                  ]
+                }
                 key={option.key}
                 option={option}
                 rangeMinutes={selectedRangeMinutes}
@@ -1067,7 +1099,9 @@ function RealTimeSensorPanel({ latestQuery, sensorOptions, sensorHistory12h }) {
               />
             ))}
           </div>
-          <AdminPagination page={page} totalPages={totalPages} onChange={setPage} />
+          {!isAllVisible && (
+            <AdminPagination page={page} totalPages={totalPages} onChange={setPage} />
+          )}
         </>
       ) : (
         <p className="pending-widget">등록된 센서가 없습니다.</p>

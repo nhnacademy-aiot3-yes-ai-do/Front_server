@@ -41,5 +41,7 @@ describe("SensorSparkline tooltip", () => {
     expect(screen.getByTestId("chart-tooltip")).toHaveTextContent(
       "22°C · 측정 시각 2026-09-04 12:00",
     );
+    expect(screen.getByText("온도").parentElement).toHaveClass("sensor-spark__title");
+    expect(screen.getByText("온도").parentElement).toHaveTextContent("22°C");
   });
 });

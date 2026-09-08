@@ -121,18 +121,19 @@ export default function CultivationCard({
         </Link>
         <div className="cultivation-card__copy">
           <div className="cultivation-card__title-row">
-            <div>
-              <h2>{cultivation.name}</h2>
-              <p>{mushroomName || "버섯 종류 정보 없음"}</p>
-            </div>
             <Link
               aria-label={
                 setupRequired
                   ? `${cultivation.name} 설정 화면 열기`
                   : `${cultivation.name} 상세 보기`
               }
+              className="cultivation-card__title-link"
               to={targetPath}
             >
+              <span>
+                <h2>{cultivation.name}</h2>
+                <p>{mushroomName || "버섯 종류 정보 없음"}</p>
+              </span>
               <ChevronRight aria-hidden="true" />
             </Link>
           </div>
@@ -154,12 +155,6 @@ export default function CultivationCard({
               <dd>{cultivation.memberCount ?? 0}명</dd>
             </div>
           </dl>
-          {!setupRequired && (
-            <div className="pending-progress">
-              <span>성장 단계 및 재배 진행률</span>
-              <strong>데이터 준비 중</strong>
-            </div>
-          )}
         </div>
       </div>
       <section
