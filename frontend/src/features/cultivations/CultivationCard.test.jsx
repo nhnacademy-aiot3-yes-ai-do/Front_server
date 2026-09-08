@@ -71,6 +71,22 @@ describe("CultivationCard", () => {
 
     expect(await screen.findByText("데이터 수집 중")).toBeInTheDocument();
     expect(screen.queryByText("22°C")).not.toBeInTheDocument();
+    expect(screen.queryByText("성장 단계 및 재배 진행률")).not.toBeInTheDocument();
+  });
+
+  it("재배지 이름과 버섯 종류를 포함한 제목 박스가 상세 이동 링크가 된다", async () => {
+    getCultivationPreview.mockResolvedValue({
+      cultivation: { mode: "GROWTH", myRole: "OWNER" },
+      sensors: { sensors: [], environmentSettings: [] },
+      latestSensorValues: { latestSensorValueResponses: [] },
+    });
+
+    renderCard();
+
+    const detailLink = await screen.findByRole("link", { name: "느타리 재배지 상세 보기" });
+    expect(detailLink).toHaveAttribute("href", "/cultivations/41");
+    expect(detailLink).toHaveTextContent("느타리 재배지");
+    expect(detailLink).toHaveTextContent("느타리버섯");
   });
 
   it("종료된 재배지는 센서가 없어도 설정 미완료로 표시하지 않는다", async () => {

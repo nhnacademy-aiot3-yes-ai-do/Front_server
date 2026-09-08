@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CultivationListPage from "./CultivationListPage";
 
 const mocks = vi.hoisted(() => ({
@@ -19,8 +19,10 @@ vi.mock("../../api/cultivations", () => ({
 }));
 
 vi.mock("../../features/cultivations/CultivationCard", () => ({
-  default: ({ cultivation, latestSensorValues }) => (
+  default: ({ cultivation, mushroomName, latestSensorValues }) => (
     <div data-testid={`card-${cultivation.cultivationId}`}>
+      <span>{cultivation.name}</span>
+      <span>{mushroomName}</span>
       {JSON.stringify(latestSensorValues)}
     </div>
   ),
@@ -65,4 +67,47 @@ describe("CultivationListPage realtime latest polling", () => {
     });
     expect(latestQuery.options.refetchInterval).toBe(3000);
   });
+
+  it("재배지 이름과 버섯 종류로 목록을 필터링하고 결과가 없으면 빈 상태를 표시한다", async () => {
+    mocks.getCultivationListPage.mockResolvedValue({
+      cultivations: [
+        { cultivationId: 41, name: "느타리 재배지", mushroomId: 1 },
+        { cultivationId: 42, name: "양송이 재배지", mushroomId: 2 },
+      ],
+      mushrooms: [
+        { id: 1, mushroomNameKo: "느타리버섯" },
+        { id: 2, mushroomNameKo: "새송이버섯" },
+      ],
+    });
+
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <CultivationListPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    const searchInput = await screen.findByRole("searchbox", { name: "재배지 검색" });
+    expect(screen.getByTestId("card-41")).toBeInTheDocument();
+    expect(screen.getByTestId("card-42")).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: "양송이" } });
+    expect(screen.queryByTestId("card-41")).not.toBeInTheDocument();
+    expect(screen.getByTestId("card-42")).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: "새송이" } });
+    expect(screen.queryByTestId("card-41")).not.toBeInTheDocument();
+    expect(screen.getByTestId("card-42")).toBeInTheDocument();
+
+    fireEvent.change(searchInput, { target: { value: "없는 재배지" } });
+    expect(screen.getByText("검색 결과가 없습니다.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "검색어 지우기" })).toBeInTheDocument();
+  });
 });
+
+afterEach(cleanup);
