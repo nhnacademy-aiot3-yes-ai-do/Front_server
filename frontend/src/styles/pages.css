@@ -911,13 +911,22 @@
   margin: 14px 0;
 }
 
-.briefing-score strong {
+.briefing-score__ring {
   display: grid;
   width: 72px;
   height: 72px;
-  border: 8px solid var(--sage-200);
-  border-top-color: var(--sage-500);
   border-radius: 50%;
+  place-items: center;
+  background: conic-gradient(var(--ring-color, var(--sage-500)) var(--ring-percent, 0%), var(--sage-200) 0);
+  transition: background 0.3s ease;
+}
+
+.briefing-score__ring strong {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--cream-100);
   font:
     700 23px "Gaegu",
     sans-serif;
