@@ -103,6 +103,31 @@ class UserViewControllerTest {
     }
 
     @Test
+    @DisplayName("인증 세션이 있더라도 /login 에 접근하면 세션이 정리되어 /reset-password 접근 시 리다이렉트된다")
+    void loginPageClearsPasswordResetSession() throws Exception {
+        org.springframework.mock.web.MockHttpSession session = new org.springframework.mock.web.MockHttpSession();
+        session.setAttribute("passwordResetVerifiedEmail", "test@naver.com");
+
+        mockMvc.perform(get("/login").session(session))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/reset-password").session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/find-password"));
+    }
+
+    @Test
+    @DisplayName("인증 세션이 있더라도 10분이 지나 만료되면 /reset-password 접근 시 리다이렉트된다")
+    void expiredSessionRedirectsToFindPassword() throws Exception {
+        long expiredTime = System.currentTimeMillis() - (11 * 60 * 1000L);
+        mockMvc.perform(get("/reset-password")
+                        .sessionAttr("passwordResetVerifiedEmail", "test@naver.com")
+                        .sessionAttr("passwordResetVerifiedAt", expiredTime))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/find-password"));
+    }
+
+    @Test
     @DisplayName("알림 설정 페이지 요청 시 user/notification-settings 뷰 반환")
     void notificationSettingsPageReturnsView() throws Exception {
         when(notificationClient.getEndpoints()).thenReturn(ResponseEntity.ok(List.of()));

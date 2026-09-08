@@ -29,6 +29,8 @@ import tools.jackson.databind.ObjectMapper;
 public class UserController {
 
     private static final String PASSWORD_RESET_VERIFIED_EMAIL = "passwordResetVerifiedEmail";
+    private static final String PASSWORD_RESET_VERIFIED_AT = "passwordResetVerifiedAt";
+    private static final long PASSWORD_RESET_TTL_MS = 10 * 60 * 1000L;
     private static final String LOGIN_URL = "/login";
     private static final String REDIRECT_PREFIX = "redirect:";
     private static final String AUTH_ERROR = "error";
@@ -42,6 +44,8 @@ public class UserController {
     private final AuthCookieProvider authCookieProvider;
     private final ObjectMapper objectMapper;
 
+    private static final String SIGNUP_FAILURE_MESSAGE = "회원가입을 완료하지 못했습니다.\n입력 내용을 확인해 주세요.";
+
     @PostMapping("/signup")
     public String signup(@ModelAttribute SignupFormRequest form,
                          @RequestPart(value = "profileImage", required = false)MultipartFile profileImage,
@@ -52,9 +56,12 @@ public class UserController {
             userClient.signUp(requestPart, profileImage);
             setAuthResult(session, "success", "회원가입이 완료되었습니다. 로그인해 주세요.");
             return REDIRECT_PREFIX + LOGIN_URL;
+        } catch (FeignException e) {
+            String errorMessage = extractFeignMessage(e, SIGNUP_FAILURE_MESSAGE);
+            throw new FormFlowException(errorMessage, "/signup", null, e);
         } catch (Exception exception) {
             throw new FormFlowException(
-                    "회원가입을 완료하지 못했습니다.\n입력 내용을 확인해 주세요.",
+                    SIGNUP_FAILURE_MESSAGE,
                     "/signup",
                     null,
                     exception
@@ -66,7 +73,9 @@ public class UserController {
     public String login(@RequestParam String email,
                         @RequestParam String password,
                         HttpServletResponse response,
-                        RedirectAttributes redirectAttributes) {
+                        RedirectAttributes redirectAttributes,
+                        HttpSession session) {
+        clearPasswordResetSession(session);
         try {
             ApiResponse<TokenResponse> apiResponse = userClient.login(new LoginRequest(email, password));
             TokenResponse tokenResponse = apiResponse != null ? apiResponse.data() : null;
@@ -106,7 +115,7 @@ public class UserController {
         try {
             userClient.resetPassword(new PasswordResetRequest(email, newPassword));
 
-            session.removeAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
+            clearPasswordResetSession(session);
             authCookieProvider.clearAuthCookies(response);
 
             redirectAttributes.addFlashAttribute(
@@ -124,13 +133,26 @@ public class UserController {
     }
 
     private String getVerifiedEmail(HttpSession session) {
+        if (session == null) return null;
         Object email = session.getAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
 
         if (email instanceof String verifiedEmail && !verifiedEmail.isBlank()) {
+            Object timeObj = session.getAttribute(PASSWORD_RESET_VERIFIED_AT);
+            if (timeObj instanceof Long verifiedAt && System.currentTimeMillis() - verifiedAt > PASSWORD_RESET_TTL_MS) {
+                clearPasswordResetSession(session);
+                return null;
+            }
             return verifiedEmail;
         }
 
         return null;
+    }
+
+    private void clearPasswordResetSession(HttpSession session) {
+        if (session != null) {
+            session.removeAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
+            session.removeAttribute(PASSWORD_RESET_VERIFIED_AT);
+        }
     }
 
     private void setAuthResult(HttpSession session, String type, String message) {
@@ -140,14 +162,21 @@ public class UserController {
         );
     }
 
-    private String extractErrorMessage(FeignException e) {
+    private String extractFeignMessage(FeignException e, String fallback) {
         try {
             JsonNode response = objectMapper.readTree(e.contentUTF8());
             String message = response.path("message").asString();
-            return message.isBlank() ? RESET_FAILURE_MESSAGE : message;
+            if (message.isBlank()) {
+                message = response.path("detail").asString();
+            }
+            return message.isBlank() ? fallback : message;
         } catch (Exception ignored) {
-            return "비밀번호 변경에 실패했습니다.";
+            return fallback;
         }
+    }
+
+    private String extractErrorMessage(FeignException e) {
+        return extractFeignMessage(e, RESET_FAILURE_MESSAGE);
     }
 
     // 관리자 전용 로그인: 일반 로그인과 같은 인증을 쓰되, 응답의 role이 ADMIN이 아니면
@@ -176,8 +205,10 @@ public class UserController {
     public String logout(
             @CookieValue(name = "refreshToken", required = false) String refreshToken,
             @CookieValue(name = "accessToken", required = false) String accessToken,
-            HttpServletResponse response
+            HttpServletResponse response,
+            HttpSession session
     ) {
+        clearPasswordResetSession(session);
         try {
             if (refreshToken != null && !refreshToken.isBlank()) {
                 userClient.logout(new LogoutRequest(refreshToken, accessToken));

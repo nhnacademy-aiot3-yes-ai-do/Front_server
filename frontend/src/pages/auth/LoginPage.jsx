@@ -15,6 +15,10 @@ export default function LoginPage() {
   });
 
   useEffect(() => {
+    request("/users/password-reset/verified-email", { method: "DELETE" }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (resultQuery.data?.type === "dormant" && resultQuery.data.email) {
       setDormantOpen(true);
     }
