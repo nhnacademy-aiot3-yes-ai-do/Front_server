@@ -94,7 +94,7 @@ class CultivationControllerTest {
                 1L, "테스트 재배", 10L, "GROWTH", "GROWTH", 3, "오너닉네임", LocalDateTime.now());
         SensorTypeInfoResponse sensorType = new SensorTypeInfoResponse(7L, "TEMPERATURE", "°C");
         CultivationSensorResponse sensor = new CultivationSensorResponse(
-                12L, "device-eui-12", "MODEL-A", "온도 센서", "재배실", "선반 A", "ACTIVE",
+                12L, "device-eui-12", "MODEL-A", "온도 센서", "재배실", "선반 A", "ACTIVE", null,
                 List.of(new CultivationSensorTypeResponse(7L, "TEMPERATURE", "°C"))
         );
         CultivationSensorListResponse sensors = new CultivationSensorListResponse(
