@@ -86,7 +86,7 @@
   box-shadow: 0 8px 22px rgba(78, 59, 36, 0.1);
 }
 
-@container (max-width: 620px) {
+@container (max-width: 520px) {
   .cultivation-card {
     height: auto;
     grid-template-columns: 1fr;
