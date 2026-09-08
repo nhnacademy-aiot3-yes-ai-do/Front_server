@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import CultivationDetailPage from "./CultivationDetailPage";
 import {
   aggregateChartPoints,
@@ -14,6 +14,12 @@ const mocks = vi.hoisted(() => ({
   getCultivationDetailPage: vi.fn(),
   getDailyFeedback: vi.fn(),
   getLatestSensorValues: vi.fn(),
+  request: vi.fn(),
+}));
+
+vi.mock("../../api/http", async (importOriginal) => ({
+  ...(await importOriginal()),
+  request: mocks.request,
 }));
 
 vi.mock("../../api/cultivations", () => ({
@@ -76,6 +82,7 @@ describe("CultivationDetailPage sensor setup", () => {
     mocks.getLatestSensorValues.mockResolvedValue({
       latestSensorValueResponses: [],
     });
+    mocks.request.mockResolvedValue({ sensors: [] });
   });
 
   it("종료된 재배지는 센서가 없어도 설정 재개 대상이 아니다", () => {
@@ -121,6 +128,88 @@ describe("CultivationDetailPage sensor setup", () => {
       "/cultivations/41/setup",
     );
   });
+});
+
+describe("CultivationDetailPage sensor metadata", () => {
+  let queryClient;
+
+  afterEach(() => {
+    cleanup();
+    queryClient?.clear();
+  });
+
+  async function renderSensor({ location, locationDetail, lastMeasuredAt = null }) {
+    const sensor = {
+      sensorId: 8,
+      deviceEui: "sensor-8",
+      deviceName: "온습도 센서",
+      deviceModel: "MODEL-01",
+      location,
+      locationDetail,
+      sensorStatus: "OFFLINE",
+      lastMeasuredAt,
+      sensorTypes: [{ sensorTypeId: 1, type: "TEMPERATURE", valueUnit: "°C" }],
+    };
+    mocks.getCultivationDetailPage.mockResolvedValue({
+      cultivation: { cultivationId: 41, name: "재배지", myRole: "OWNER" },
+      sensors: { sensors: [sensor], environmentSettings: [] },
+    });
+    mocks.getLatestSensorValues.mockResolvedValue({ latestSensorValueResponses: [] });
+    mocks.getDailyFeedback.mockResolvedValue(null);
+    mocks.request.mockResolvedValue({ sensors: [sensor] });
+    queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/cultivations/41"]}>
+          <Routes>
+            <Route path="/cultivations/:cultivationId" element={<CultivationDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    return (await screen.findByText("MODEL-01")).closest("article");
+  }
+
+  it("연결 정보는 별도 영역에 표시하고 위치와 상세 위치는 한 항목으로 합친다", async () => {
+    const lastMeasuredAt = "2026-09-08T01:00:00Z";
+    const card = await renderSensor({
+      location: "NHN",
+      locationDetail: "1층 선반",
+      lastMeasuredAt,
+    });
+    const connection = within(card).getByRole("group", { name: "센서 연결 정보" });
+    const device = within(card).getByRole("group", { name: "센서 설치 정보" });
+
+    expect(await within(connection).findByText("오프라인")).toBeInTheDocument();
+    expect(within(connection).getByText("마지막 측정")).toBeInTheDocument();
+    expect(
+      within(connection).getByText(new Date(lastMeasuredAt).toLocaleString("ko-KR")),
+    ).toBeInTheDocument();
+    expect(within(device).getByText("MODEL-01")).toBeInTheDocument();
+    expect(within(device).getByText("NHN / 1층 선반")).toBeInTheDocument();
+    expect(within(device).queryByText("연결 상태")).not.toBeInTheDocument();
+    expect(within(card).queryByText("상세 위치")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    ["NHN", "", "NHN"],
+    ["", "1층 선반", "1층 선반"],
+    [null, null, "-"],
+  ])(
+    "비어 있는 위치는 구분자 없이 표시한다 (%s, %s)",
+    async (location, locationDetail, expected) => {
+      const card = await renderSensor({ location, locationDetail });
+      const device = within(card).getByRole("group", { name: "센서 설치 정보" });
+      const locationItem = within(device).getByText("설치 위치").closest("div");
+      const connection = within(card).getByRole("group", { name: "센서 연결 정보" });
+
+      expect(within(locationItem).getByRole("definition")).toHaveTextContent(expected);
+      expect(await within(connection).findByText("수신 대기")).toBeInTheDocument();
+      expect(within(connection).getByText("-")).toBeInTheDocument();
+    },
+  );
 });
 
 function renderPage() {
