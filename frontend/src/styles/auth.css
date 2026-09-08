@@ -115,6 +115,11 @@
   transform: translateY(-50%) translate(1px, 1px);
 }
 
+.auth-card .password-field input[type="password"],
+.auth-card .password-field input[type="text"] {
+  padding-right: 44px;
+}
+
 .help-text {
   font-size: 12px;
   color: var(--brown-500);

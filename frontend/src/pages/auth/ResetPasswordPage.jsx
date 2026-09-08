@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { backendUrl, request, unwrapApiResponse } from "../../api/http";
 import Notice from "../../components/Notice";
+import PasswordInput from "../../components/PasswordInput";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -78,9 +79,8 @@ export default function ResetPasswordPage() {
       >
         <label>
           새 비밀번호
-          <input
+          <PasswordInput
             name="newPassword"
-            type="password"
             autoComplete="new-password"
             minLength="8"
             placeholder="새 비밀번호"
@@ -89,9 +89,8 @@ export default function ResetPasswordPage() {
         </label>
         <label>
           새 비밀번호 확인
-          <input
+          <PasswordInput
             name="confirmPassword"
-            type="password"
             autoComplete="new-password"
             minLength="8"
             placeholder="새 비밀번호 확인"

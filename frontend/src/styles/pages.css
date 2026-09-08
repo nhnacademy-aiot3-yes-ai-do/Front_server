@@ -168,7 +168,7 @@
 .cultivation-photo img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .cultivation-photo__empty {
@@ -353,9 +353,12 @@
 
 .cultivation-card__title-row h2 {
   margin: 0;
+  overflow: hidden;
   font-family: "Gowun Dodum", "Apple SD Gothic Neo", sans-serif;
   font-weight: 700;
   font-size: clamp(16px, 7cqw, 30px);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .cultivation-card__title-row p {
@@ -967,6 +970,7 @@
   height: 100%;
   border-radius: inherit;
   background: var(--sage-500);
+  transition: width 1.2s ease;
 }
 
 .report-overview-grid {
