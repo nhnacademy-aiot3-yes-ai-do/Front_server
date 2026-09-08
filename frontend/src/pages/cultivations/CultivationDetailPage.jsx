@@ -249,6 +249,20 @@ function EnvironmentBriefing({ compliance }) {
 }
 
 function CompliancePanel({ compliance }) {
+  const [filled, setFilled] = useState(false);
+
+  useEffect(() => {
+    // 초기 0% 상태가 먼저 페인트되도록 rAF를 두 번 중첩해 다음 프레임으로 미룬다.
+    let inner;
+    const outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => setFilled(true));
+    });
+    return () => {
+      cancelAnimationFrame(outer);
+      cancelAnimationFrame(inner);
+    };
+  }, []);
+
   return (
     <article className="panel-card compliance-panel">
       <header className="panel-card__heading">
@@ -256,15 +270,18 @@ function CompliancePanel({ compliance }) {
         <span>00:00–현재</span>
       </header>
       <div className="compliance-list">
-        {complianceRows(compliance).map(([label, value]) => (
-          <div key={label}>
-            <span>{label}</span>
-            <span className="compliance-bar">
-              <i style={{ width: `${Math.max(0, Math.min(100, Number(value) || 0))}%` }} />
-            </span>
-            <strong>{value == null ? "-" : `${Math.round(Number(value))}%`}</strong>
-          </div>
-        ))}
+        {complianceRows(compliance).map(([label, value]) => {
+          const percent = Math.max(0, Math.min(100, Number(value) || 0));
+          return (
+            <div key={label}>
+              <span>{label}</span>
+              <span className="compliance-bar">
+                <i style={{ width: `${filled ? percent : 0}%` }} />
+              </span>
+              <strong>{value == null ? "-" : `${Math.round(Number(value))}%`}</strong>
+            </div>
+          );
+        })}
       </div>
       <div className="pending-widget">일일 알림 집계 · 데이터 준비 중</div>
     </article>

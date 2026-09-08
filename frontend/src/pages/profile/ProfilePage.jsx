@@ -15,6 +15,7 @@ import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
 import Modal from "../../components/Modal";
 import Notice from "../../components/Notice";
 import { ErrorState, LoadingState } from "../../components/PageState";
+import PasswordInput from "../../components/PasswordInput";
 import { formatDate } from "../../utils/formatters";
 
 export default function ProfilePage() {
@@ -248,31 +249,24 @@ export default function ProfilePage() {
           <form className="form-stack" onSubmit={changePassword}>
             <label>
               현재 비밀번호
-              <input
-                autoComplete="current-password"
-                name="currentPassword"
-                required
-                type="password"
-              />
+              <PasswordInput autoComplete="current-password" name="currentPassword" required />
             </label>
             <label>
               새 비밀번호
-              <input
+              <PasswordInput
                 autoComplete="new-password"
                 minLength="8"
                 name="newPassword"
                 required
-                type="password"
               />
             </label>
             <label>
               새 비밀번호 확인
-              <input
+              <PasswordInput
                 autoComplete="new-password"
                 minLength="8"
                 name="confirmPassword"
                 required
-                type="password"
               />
             </label>
             <div className="modal-actions">
@@ -306,13 +300,7 @@ export default function ProfilePage() {
               </div>
               <label>
                 비밀번호 확인
-                <input
-                  autoComplete="current-password"
-                  autoFocus
-                  name="password"
-                  required
-                  type="password"
-                />
+                <PasswordInput autoComplete="current-password" autoFocus name="password" required />
               </label>
               <div className="modal-actions">
                 <button
