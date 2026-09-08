@@ -61,6 +61,7 @@ import {
   normalizeList,
   normalizeSensorUnit,
 } from "../../utils/formatters";
+import { interpolateComplianceColor } from "../../utils/color";
 
 function buildSensorOptions(data, latestValues) {
   return normalizeList(data?.sensors?.sensors).flatMap((sensor) =>
@@ -205,12 +206,27 @@ function complianceRows(compliance) {
   ];
 }
 
+// --danger(0) -> --gold-500(50) -> 채도를 높인 초록(100) 구간을 선형보간한다.
+// 100 지점은 --sage-500(112,141,102)이 저채도 그레이시 톤이라 눈에 잘 띄도록 채도/명도를 올린 값을 쓴다.
+const RING_COLOR_STOPS = [
+  { at: 0, rgb: [169, 93, 72] },
+  { at: 50, rgb: [183, 126, 62] },
+  { at: 100, rgb: [89, 166, 63] },
+];
+
+function complianceRingColor(percent) {
+  return interpolateComplianceColor(percent, RING_COLOR_STOPS);
+}
+
 function EnvironmentBriefing({ compliance }) {
   const rows = complianceRows(compliance);
   const available = rows.filter(([, value]) => value != null);
   const average = available.length
     ? Math.round(available.reduce((sum, [, value]) => sum + Number(value), 0) / available.length)
     : null;
+
+  const ringPercent = Math.max(0, Math.min(100, average ?? 0));
+  const ringColor = average == null ? "var(--sage-200)" : complianceRingColor(ringPercent);
 
   return (
     <article className="panel-card environment-briefing">
@@ -219,7 +235,12 @@ function EnvironmentBriefing({ compliance }) {
         <span>실제 유지율 기준</span>
       </header>
       <div className="briefing-score">
-        <strong>{average ?? "-"}</strong>
+        <div
+          className="briefing-score__ring"
+          style={{ "--ring-percent": `${ringPercent}%`, "--ring-color": ringColor }}
+        >
+          <strong>{average ?? "-"}</strong>
+        </div>
         <span>{average == null ? "환경 데이터를 수집 중입니다." : "오늘 환경 유지율 평균"}</span>
       </div>
       <p>AI 성장 분석과 행동 제안은 데이터 준비 중입니다.</p>
