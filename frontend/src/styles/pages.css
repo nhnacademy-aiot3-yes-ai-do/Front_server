@@ -62,6 +62,7 @@
 
 .cultivation-list {
   display: grid;
+  container-type: inline-size;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr));
   align-items: start;
   gap: 18px;
@@ -69,7 +70,6 @@
 
 .cultivation-card-shell {
   min-width: 0;
-  container-type: inline-size;
 }
 
 .cultivation-card {
@@ -86,7 +86,7 @@
   box-shadow: 0 8px 22px rgba(78, 59, 36, 0.1);
 }
 
-@container (max-width: 520px) {
+@container (max-width: 760px) {
   .cultivation-card {
     height: auto;
     grid-template-columns: 1fr;
