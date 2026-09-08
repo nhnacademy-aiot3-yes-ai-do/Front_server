@@ -205,9 +205,20 @@
 }
 
 .auth-card .button--secondary {
-  background: #fff;
+  background: var(--cream-200);
   border-color: var(--brown-300);
   color: var(--brown-700);
+}
+
+.auth-card .button--secondary:hover:not(:disabled) {
+  background: var(--cream-300);
+}
+
+.auth-card .button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 .auth-card .notice {

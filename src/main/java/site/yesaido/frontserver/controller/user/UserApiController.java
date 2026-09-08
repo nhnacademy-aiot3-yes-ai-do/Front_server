@@ -21,6 +21,8 @@ import site.yesaido.frontserver.util.AuthCookieProvider;
 public class UserApiController {
     private static final String REFRESH_TOKEN = "refreshToken";
     private static final String PASSWORD_RESET_VERIFIED_EMAIL = "passwordResetVerifiedEmail";
+    private static final String PASSWORD_RESET_VERIFIED_AT = "passwordResetVerifiedAt";
+    private static final long PASSWORD_RESET_TTL_MS = 10 * 60 * 1000L;
 
     private final UserClient userClient;
     private final AuthCookieProvider authCookieProvider;
@@ -51,6 +53,7 @@ public class UserApiController {
 
         if(verified){
             session.setAttribute(PASSWORD_RESET_VERIFIED_EMAIL, request.email().trim());
+            session.setAttribute(PASSWORD_RESET_VERIFIED_AT, System.currentTimeMillis());
         }
         return verified;
     }
@@ -155,7 +158,38 @@ public class UserApiController {
     }
 
     @PostMapping("/users/password-reset/email/send")
-    public ApiResponse<Void> sendPasswordResetEmail(@RequestBody EmailSendResponse response){
+    public ApiResponse<Void> sendPasswordResetEmail(@RequestBody EmailSendResponse response, HttpSession session){
+        if (session != null) {
+            session.removeAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
+            session.removeAttribute(PASSWORD_RESET_VERIFIED_AT);
+        }
         return userClient.sendPasswordResetEmail(response);
+    }
+
+    @GetMapping("/users/password-reset/verified-email")
+    public ApiResponse<String> getPasswordResetVerifiedEmail(HttpSession session) {
+        if (session == null) {
+            return new ApiResponse<>(true, null, null);
+        }
+        Object email = session.getAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
+        if (email instanceof String verifiedEmail && !verifiedEmail.isBlank()) {
+            Object timeObj = session.getAttribute(PASSWORD_RESET_VERIFIED_AT);
+            if (timeObj instanceof Long verifiedAt && System.currentTimeMillis() - verifiedAt > PASSWORD_RESET_TTL_MS) {
+                session.removeAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
+                session.removeAttribute(PASSWORD_RESET_VERIFIED_AT);
+                return new ApiResponse<>(true, null, null);
+            }
+            return new ApiResponse<>(true, null, verifiedEmail);
+        }
+        return new ApiResponse<>(true, null, null);
+    }
+
+    @DeleteMapping("/users/password-reset/verified-email")
+    public ApiResponse<Void> clearPasswordResetVerifiedEmail(HttpSession session) {
+        if (session != null) {
+            session.removeAttribute(PASSWORD_RESET_VERIFIED_EMAIL);
+            session.removeAttribute(PASSWORD_RESET_VERIFIED_AT);
+        }
+        return new ApiResponse<>(true, null, null);
     }
 }

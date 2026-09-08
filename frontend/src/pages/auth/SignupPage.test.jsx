@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as http from "../../api/http";
@@ -66,7 +66,7 @@ describe("SignupPage", () => {
       if (typeof url === "string" && url.includes("/users/check-nickname")) {
         return false; // 중복 아님 = 사용 가능
       }
-      return { verified: true };
+      return { verified: true, eligibility: "AVAILABLE" };
     });
 
     renderSignupPage();
@@ -79,7 +79,7 @@ describe("SignupPage", () => {
     const codeInput = await screen.findByPlaceholderText("인증번호 6자리");
     fireEvent.change(codeInput, { target: { value: "123456" } });
     fireEvent.click(screen.getByRole("button", { name: "인증확인" }));
-    await screen.findByText("이메일 인증이 완료되었습니다.");
+    await screen.findByText("이메일 인증이 완료되었습니다. 가입을 진행해 주세요.");
 
     // 비밀번호 입력 후 다음 단계로
     const password = screen.getByLabelText("비밀번호");
@@ -102,7 +102,7 @@ describe("SignupPage", () => {
       if (typeof url === "string" && url.includes("/users/check-nickname")) {
         return true; // 중복 = 사용 불가
       }
-      return { verified: true };
+      return { verified: true, eligibility: "AVAILABLE" };
     });
 
     renderSignupPage();
@@ -115,7 +115,7 @@ describe("SignupPage", () => {
     const codeInput = await screen.findByPlaceholderText("인증번호 6자리");
     fireEvent.change(codeInput, { target: { value: "123456" } });
     fireEvent.click(screen.getByRole("button", { name: "인증확인" }));
-    await screen.findByText("이메일 인증이 완료되었습니다.");
+    await screen.findByText("이메일 인증이 완료되었습니다. 가입을 진행해 주세요.");
 
     const password = screen.getByLabelText("비밀번호");
     const confirmation = screen.getByLabelText("비밀번호 확인");
@@ -130,5 +130,89 @@ describe("SignupPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "중복확인" }));
 
     expect(await screen.findByText("이미 사용 중인 닉네임입니다.")).toBeInTheDocument();
+  });
+
+  it("이메일 인증 시 이미 등록된 계정(ALREADY_REGISTERED)이면 에러 알림을 표시하고 다음 단계로 가지 않는다", async () => {
+    vi.mocked(http.request).mockImplementation(async (url) => {
+      if (typeof url === "string" && url.includes("/users/signup/verify-email")) {
+        return { verified: true, eligibility: "ALREADY_REGISTERED" };
+      }
+      return { success: true };
+    });
+
+    renderSignupPage();
+
+    const emailInput = screen.getByPlaceholderText("you@example.com");
+    fireEvent.change(emailInput, { target: { value: "existing@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "이메일 인증" }));
+
+    const codeInput = await screen.findByPlaceholderText("인증번호 6자리");
+    fireEvent.change(codeInput, { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "인증확인" }));
+
+    expect(await screen.findByText("이미 가입된 이메일입니다.")).toBeInTheDocument();
+
+    const password = screen.getByLabelText("비밀번호");
+    const confirmation = screen.getByLabelText("비밀번호 확인");
+    fireEvent.change(password, { target: { value: "Password123!" } });
+    fireEvent.change(confirmation, { target: { value: "Password123!" } });
+
+    // 다음 클릭 시도 -> 이메일 인증 완료 메시지 뜨며 넘어가지 않음
+    fireEvent.click(screen.getByRole("button", { name: "다음" }));
+    expect(await screen.findByText("이메일 인증을 완료해 주세요.")).toBeInTheDocument();
+  });
+
+  it("이메일 인증 시 탈퇴 후 30일 이내(REJOIN_RESTRICTED)이면 재가입 제한 안내를 표시한다", async () => {
+    vi.mocked(http.request).mockImplementation(async (url) => {
+      if (typeof url === "string" && url.includes("/users/signup/verify-email")) {
+        return {
+          verified: true,
+          eligibility: "REJOIN_RESTRICTED",
+          rejoinAvailableAt: "2026-10-01T00:00:00",
+        };
+      }
+      return { success: true };
+    });
+
+    renderSignupPage();
+
+    const emailInput = screen.getByPlaceholderText("you@example.com");
+    fireEvent.change(emailInput, { target: { value: "withdrawn@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "이메일 인증" }));
+
+    const codeInput = await screen.findByPlaceholderText("인증번호 6자리");
+    fireEvent.change(codeInput, { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "인증확인" }));
+
+    expect(
+      await screen.findByText(/탈퇴 처리 후 30일 동안은 재가입할 수 없습니다/),
+    ).toBeInTheDocument();
+  });
+
+  it("이메일 인증 시 휴면 계정(DORMANT)이면 휴면 알림을 띄우고 휴면 해제 모달을 띄운다", async () => {
+    vi.mocked(http.request).mockImplementation(async (url) => {
+      if (typeof url === "string" && url.includes("/users/signup/verify-email")) {
+        return { verified: true, eligibility: "DORMANT" };
+      }
+      return { success: true };
+    });
+
+    renderSignupPage();
+
+    const emailInput = screen.getByPlaceholderText("you@example.com");
+    fireEvent.change(emailInput, { target: { value: "dormant@example.com" } });
+    fireEvent.click(screen.getByRole("button", { name: "이메일 인증" }));
+
+    const codeInput = await screen.findByPlaceholderText("인증번호 6자리");
+    fireEvent.change(codeInput, { target: { value: "123456" } });
+    fireEvent.click(screen.getByRole("button", { name: "인증확인" }));
+
+    expect(
+      await screen.findByText("휴면 처리된 계정입니다. 휴면 해제를 진행해 주세요."),
+    ).toBeInTheDocument();
+
+    // 휴면 계정 모달이 열려 있는지 확인
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("휴면 계정 안내")).toBeInTheDocument();
   });
 });

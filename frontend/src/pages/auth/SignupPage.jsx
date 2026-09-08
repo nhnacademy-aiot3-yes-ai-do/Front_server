@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { backendUrl, request, unwrapApiResponse } from "../../api/http";
 import Notice from "../../components/Notice";
+import DormantRecoveryModal from "../../features/auth/DormantRecoveryModal";
 
 export default function SignupPage() {
   const [step, setStep] = useState(1);
@@ -10,6 +11,7 @@ export default function SignupPage() {
   const [verified, setVerified] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [dormantEmail, setDormantEmail] = useState(null);
   const formRef = useRef(null);
   const resultQuery = useQuery({
     queryKey: ["auth-result", "signup"],
@@ -59,9 +61,39 @@ export default function SignupPage() {
         body,
       });
       const data = unwrapApiResponse(result);
-      if (!data?.verified && data !== true) throw new Error("인증번호가 일치하지 않습니다.");
-      setVerified(true);
-      setNotice(null);
+      if (!data?.verified && data !== true) {
+        throw new Error("인증번호가 일치하지 않습니다.");
+      }
+
+      if (data.eligibility === "AVAILABLE" || data === true) {
+        setVerified(true);
+        setNotice({
+          type: "success",
+          message: "이메일 인증이 완료되었습니다. 가입을 진행해 주세요.",
+        });
+        return;
+      }
+
+      setVerified(false);
+      if (data.eligibility === "DORMANT") {
+        setDormantEmail(email);
+        setNotice({
+          type: "error",
+          message: "휴면 처리된 계정입니다. 휴면 해제를 진행해 주세요.",
+        });
+      } else if (data.eligibility === "ALREADY_REGISTERED") {
+        setNotice({ type: "error", message: "이미 가입된 이메일입니다." });
+      } else if (data.eligibility === "REJOIN_RESTRICTED") {
+        const availableDate = data.rejoinAvailableAt
+          ? data.rejoinAvailableAt.slice(0, 10)
+          : "30일 후";
+        setNotice({
+          type: "error",
+          message: `탈퇴 처리 후 30일 동안은 재가입할 수 없습니다. ${availableDate}부터 가능합니다.`,
+        });
+      } else {
+        setNotice({ type: "error", message: "가입할 수 없는 이메일입니다." });
+      }
     } catch (error) {
       setVerified(false);
       setNotice({ type: "error", message: error.message });
@@ -120,6 +152,10 @@ export default function SignupPage() {
                 placeholder="you@example.com"
                 autoComplete="username"
                 required
+                onChange={() => {
+                  setVerified(false);
+                  setCodeSent(false);
+                }}
               />
               <button type="button" className="btn-inline" onClick={sendCode}>
                 이메일 인증
@@ -222,6 +258,9 @@ export default function SignupPage() {
           </button>
         </fieldset>
       </form>
+      {dormantEmail && (
+        <DormantRecoveryModal email={dormantEmail} onClose={() => setDormantEmail(null)} />
+      )}
     </div>
   );
 }
