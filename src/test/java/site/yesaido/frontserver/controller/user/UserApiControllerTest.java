@@ -167,6 +167,32 @@ class UserApiControllerTest {
     }
 
     @Test
+    @DisplayName("비밀번호 재설정 인증 이메일 조회 - 세션에 이메일이 있는 경우")
+    void getPasswordResetVerifiedEmail_Exists() throws Exception {
+        mockMvc.perform(get("/users/password-reset/verified-email")
+                        .sessionAttr("passwordResetVerifiedEmail", "test@naver.com"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").value("test@naver.com"));
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 인증 이메일 조회 - 세션에 이메일이 없는 경우 null 반환")
+    void getPasswordResetVerifiedEmail_Null() throws Exception {
+        mockMvc.perform(get("/users/password-reset/verified-email"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("비밀번호 재설정 인증 이메일 삭제 - DELETE 호출 시 세션에서 제거")
+    void clearPasswordResetVerifiedEmail_ClearsSession() throws Exception {
+        mockMvc.perform(delete("/users/password-reset/verified-email")
+                        .sessionAttr("passwordResetVerifiedEmail", "test@naver.com"))
+                .andExpect(status().isOk())
+                .andExpect(request().sessionAttributeDoesNotExist("passwordResetVerifiedEmail"));
+    }
+
+    @Test
     @DisplayName("토큰 시간 연장 (reissue) - 정상 쿠키 분기")
     void reissueSuccess() throws Exception {
         TokenResponse tokenResponse = TokenResponse.builder()
