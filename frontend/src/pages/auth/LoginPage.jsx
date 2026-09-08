@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { backendUrl, request } from "../../api/http";
 import Notice from "../../components/Notice";
+import PasswordInput from "../../components/PasswordInput";
 import DormantRecoveryModal from "../../features/auth/DormantRecoveryModal";
 
 export default function LoginPage() {
@@ -32,10 +33,9 @@ export default function LoginPage() {
         <label className="sr-only" htmlFor="login-password">
           비밀번호
         </label>
-        <input
+        <PasswordInput
           id="login-password"
           name="password"
-          type="password"
           placeholder="비밀번호"
           autoComplete="current-password"
           required

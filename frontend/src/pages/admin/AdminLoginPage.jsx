@@ -3,6 +3,7 @@ import { ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { backendUrl, request } from "../../api/http";
 import Notice from "../../components/Notice";
+import PasswordInput from "../../components/PasswordInput";
 
 export default function AdminLoginPage() {
   const resultQuery = useQuery({
@@ -26,7 +27,7 @@ export default function AdminLoginPage() {
         </label>
         <label>
           비밀번호
-          <input name="password" type="password" autoComplete="current-password" required />
+          <PasswordInput name="password" autoComplete="current-password" required />
         </label>
         <button className="button button--primary button--wide" type="submit">
           관리자 로그인

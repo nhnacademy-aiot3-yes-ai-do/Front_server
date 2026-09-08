@@ -506,6 +506,41 @@ p {
   resize: vertical;
 }
 
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.form-stack .password-field input {
+  padding-right: 44px;
+}
+
+.password-field__toggle {
+  display: grid;
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--brown-500);
+  cursor: pointer;
+  place-items: center;
+  transform: translateY(-50%);
+}
+
+.password-field__toggle:hover {
+  background: var(--cream-200);
+  color: var(--brown-700);
+}
+
+.password-field__toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .form-stack--roomy {
   max-width: 900px;
   margin: auto;
