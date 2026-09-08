@@ -1615,18 +1615,18 @@ export default function CultivationDetailPage() {
   const latestValues = preferNonEmptyLatestValues(
     latestQuery.data?.latestSensorValueResponses,
     data?.latestSensorValues?.latestSensorValueResponses,
-  )
+  );
 
   const sensorOptions = useMemo(() => {
     const byId = new Map(
-        normalizeList(sensorStatusQuery.data?.sensors).map(
-            sensor => [String(sensor.sensorId), sensor],
-        ),
+      normalizeList(sensorStatusQuery.data?.sensors).map((sensor) => [
+        String(sensor.sensorId),
+        sensor,
+      ]),
     );
-    const unavailable =
-        sensorStatusQuery.isError || sensorStatusQuery.fetchStatus === "paused";
+    const unavailable = sensorStatusQuery.isError || sensorStatusQuery.fetchStatus === "paused";
 
-    return buildSensorOptions(data, latestValues).map(option => {
+    return buildSensorOptions(data, latestValues).map((option) => {
       const connection = byId.get(String(option.sensor.sensorId));
       let label = "상태 확인 불가";
       if (!unavailable) {
@@ -1638,8 +1638,14 @@ export default function CultivationDetailPage() {
       }
       return { ...option, connection, connectionLabel: label };
     });
-  }, [data, latestValues, sensorStatusQuery.data, sensorStatusQuery.isError,
-    sensorStatusQuery.isPending, sensorStatusQuery.fetchStatus]);
+  }, [
+    data,
+    latestValues,
+    sensorStatusQuery.data,
+    sensorStatusQuery.isError,
+    sensorStatusQuery.isPending,
+    sensorStatusQuery.fetchStatus,
+  ]);
 
   const guardView = renderDetailGuard({
     data,

@@ -174,14 +174,19 @@ describe("CultivationDetailPage sensor metadata", () => {
 
   it("연결 정보는 별도 영역에 표시하고 위치와 상세 위치는 한 항목으로 합친다", async () => {
     const lastMeasuredAt = "2026-09-08T01:00:00Z";
-    const card = await renderSensor({ location: "NHN", locationDetail: "1층 선반", lastMeasuredAt });
+    const card = await renderSensor({
+      location: "NHN",
+      locationDetail: "1층 선반",
+      lastMeasuredAt,
+    });
     const connection = within(card).getByRole("group", { name: "센서 연결 정보" });
     const device = within(card).getByRole("group", { name: "센서 설치 정보" });
 
     expect(await within(connection).findByText("오프라인")).toBeInTheDocument();
     expect(within(connection).getByText("마지막 측정")).toBeInTheDocument();
-    expect(within(connection).getByText(new Date(lastMeasuredAt).toLocaleString("ko-KR")))
-      .toBeInTheDocument();
+    expect(
+      within(connection).getByText(new Date(lastMeasuredAt).toLocaleString("ko-KR")),
+    ).toBeInTheDocument();
     expect(within(device).getByText("MODEL-01")).toBeInTheDocument();
     expect(within(device).getByText("NHN / 1층 선반")).toBeInTheDocument();
     expect(within(device).queryByText("연결 상태")).not.toBeInTheDocument();
@@ -192,16 +197,19 @@ describe("CultivationDetailPage sensor metadata", () => {
     ["NHN", "", "NHN"],
     ["", "1층 선반", "1층 선반"],
     [null, null, "-"],
-  ])("비어 있는 위치는 구분자 없이 표시한다 (%s, %s)", async (location, locationDetail, expected) => {
-    const card = await renderSensor({ location, locationDetail });
-    const device = within(card).getByRole("group", { name: "센서 설치 정보" });
-    const locationItem = within(device).getByText("설치 위치").closest("div");
-    const connection = within(card).getByRole("group", { name: "센서 연결 정보" });
+  ])(
+    "비어 있는 위치는 구분자 없이 표시한다 (%s, %s)",
+    async (location, locationDetail, expected) => {
+      const card = await renderSensor({ location, locationDetail });
+      const device = within(card).getByRole("group", { name: "센서 설치 정보" });
+      const locationItem = within(device).getByText("설치 위치").closest("div");
+      const connection = within(card).getByRole("group", { name: "센서 연결 정보" });
 
-    expect(within(locationItem).getByRole("definition")).toHaveTextContent(expected);
-    expect(await within(connection).findByText("수신 대기")).toBeInTheDocument();
-    expect(within(connection).getByText("-")).toBeInTheDocument();
-  });
+      expect(within(locationItem).getByRole("definition")).toHaveTextContent(expected);
+      expect(await within(connection).findByText("수신 대기")).toBeInTheDocument();
+      expect(within(connection).getByText("-")).toBeInTheDocument();
+    },
+  );
 });
 
 function renderPage() {
