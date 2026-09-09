@@ -2677,6 +2677,7 @@ p.daily-feedback-document__content {
 
 .sensor-source-segments button {
   display: inline-flex;
+  word-break: keep-all;
   min-height: 46px;
   align-items: center;
   justify-content: center;
@@ -2703,6 +2704,13 @@ p.daily-feedback-document__content {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.reusable-sensor-policy {
+  margin: 0;
+  color: var(--brown-500);
+  font-size: 13px;
+  line-height: 1.6;
 }
 
 .reusable-sensor-options {
@@ -2745,11 +2753,40 @@ p.daily-feedback-document__content {
   font-weight: 700;
 }
 
-.reusable-sensor-options span {
+.reusable-sensor-info {
   display: flex;
+  width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: 3px;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+
+.reusable-sensor-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.reusable-sensor-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  border-radius: 4px;
+  padding: 3px 6px;
+  background: var(--sage-200);
+  color: var(--sage-700);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.reusable-sensor-badge svg {
+  width: 14px;
+  height: 14px;
 }
 
 .reusable-sensor-options small,
