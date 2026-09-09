@@ -72,6 +72,21 @@ describe("CultivationDetailPage chart aggregation", () => {
     expect(points.map((point) => point.value)).toEqual([15, 30]);
   });
 
+  it("10분과 30분 그래프는 1분 미만 bucket의 초 단위 시각을 표시한다", () => {
+    const points = [
+      { measuredAt: "2026-09-04T00:00:10Z", value: 10 },
+      { measuredAt: "2026-09-04T00:00:40Z", value: 20 },
+    ];
+
+    const tenMinutePoints = aggregateChartPoints(points, 10);
+    const thirtyMinutePoints = aggregateChartPoints(points, 30);
+
+    expect(tenMinutePoints).toHaveLength(2);
+    expect(thirtyMinutePoints).toHaveLength(2);
+    expect(tenMinutePoints[0].measuredAt).not.toBe(tenMinutePoints[1].measuredAt);
+    expect(thirtyMinutePoints[0].measuredAt).not.toBe(thirtyMinutePoints[1].measuredAt);
+  });
+
   it("빈 최신값 응답은 초기 최신값을 유지한다", () => {
     const fallback = [{ deviceEui: "sensor-1", value: 22 }];
     expect(preferNonEmptyLatestValues([], fallback)).toBe(fallback);
