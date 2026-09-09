@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
@@ -12,23 +12,33 @@ const welcomeMessage = {
 };
 
 export default function ChatPanel({ cultivationId }) {
+  const queryClient = useQueryClient(); // 👈 1. queryClient 추가
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [notice, setNotice] = useState(null);
   const [sending, setSending] = useState(false);
   const inputRef = useRef(null);
+  const requestGenerationRef = useRef(0);
 
-  // cultivationId 변경 시 세션 초기화
+  // cultivationId 변경 또는 화면 이탈 시 세션 초기화 및 이전 비동기 요청 무효화
   useEffect(() => {
+    requestGenerationRef.current += 1;
     setConversationId(null);
     setMessages([]);
     setNotice(null);
+    setSending(false);
+
+    // 화면을 나갈 때 진행 중이던 요청 무효화
+    return () => {
+      requestGenerationRef.current += 1;
+    };
   }, [cultivationId]);
 
   const historyQuery = useQuery({
     queryKey: ["chat-history", cultivationId],
     queryFn: () =>
-      request(`/api/chat/history?cultivationId=${cultivationId}`).then(unwrapApiResponse),
+        request(`/api/chat/history?cultivationId=${cultivationId}`).then(unwrapApiResponse),
+    enabled: Boolean(cultivationId), // id가 있을 때만 호출하도록 가드 추가
     retry: 1,
   });
 
@@ -47,6 +57,9 @@ export default function ChatPanel({ cultivationId }) {
     input.value = "";
     setSending(true);
     setNotice(null);
+
+    const currentGeneration = requestGenerationRef.current;
+
     try {
       const response = await jsonRequest("/api/chat", "POST", {
         conversationId,
@@ -54,6 +67,11 @@ export default function ChatPanel({ cultivationId }) {
         message,
         channelId: 1,
       }).then(unwrapApiResponse);
+
+      if (currentGeneration !== requestGenerationRef.current) {
+        return;
+      }
+
       setConversationId(response.conversationId);
       setMessages((current) => [
         ...current,
@@ -63,11 +81,19 @@ export default function ChatPanel({ cultivationId }) {
           content: response.reply,
         },
       ]);
+      // 새 대화가 DB에 저장되었으므로 캐시 갱신
+      await queryClient.invalidateQueries({ queryKey: ["chat-history", cultivationId] }); // 👈 await 추가!
     } catch (error) {
+      if (currentGeneration !== requestGenerationRef.current) {
+        return;
+      }
       setNotice({ type: "error", message: error.message });
     } finally {
-      setSending(false);
-      input?.focus();
+      // 이전 요청이거나 언마운트된 경우 실행되지 않도록 조건문 감싸기
+      if (currentGeneration === requestGenerationRef.current) {
+        setSending(false);
+        input?.focus();
+      }
     }
   };
 
