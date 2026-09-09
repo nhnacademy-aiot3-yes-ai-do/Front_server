@@ -52,13 +52,18 @@ vi.mock("../../api/insights", () => ({
 }));
 
 describe("CultivationDetailPage chart aggregation", () => {
-  it("12시간 그래프는 15분 버킷별 평균값만 점으로 만든다", () => {
-    expect(chartBucketMinutes(720)).toBe(15);
+  it("범위별 그래프 bucket 정책을 적용하고 12시간 그래프는 20분 버킷 평균을 만든다", () => {
+    expect(chartBucketMinutes(10)).toBeCloseTo(10 / 60);
+    expect(chartBucketMinutes(30)).toBe(0.5);
+    expect(chartBucketMinutes(60)).toBe(1);
+    expect(chartBucketMinutes(180)).toBe(5);
+    expect(chartBucketMinutes(360)).toBe(10);
+    expect(chartBucketMinutes(720)).toBe(20);
     const points = aggregateChartPoints(
       [
         { measuredAt: "2026-09-04T00:01:00Z", value: 10 },
         { measuredAt: "2026-09-04T00:10:00Z", value: 20 },
-        { measuredAt: "2026-09-04T00:16:00Z", value: 30 },
+        { measuredAt: "2026-09-04T00:21:00Z", value: 30 },
       ],
       720,
     );

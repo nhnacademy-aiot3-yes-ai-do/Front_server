@@ -1,16 +1,16 @@
 import { formatDateTime, normalizeList } from "../../utils/formatters";
 
 const CHART_BUCKET_MINUTES = [
-  { maxRange: 10, bucket: 1 },
-  { maxRange: 30, bucket: 5 },
-  { maxRange: 60, bucket: 5 },
-  { maxRange: 180, bucket: 15 },
-  { maxRange: 360, bucket: 15 },
-  { maxRange: 720, bucket: 15 },
+  { maxRange: 10, bucket: 10 / 60 },
+  { maxRange: 30, bucket: 0.5 },
+  { maxRange: 60, bucket: 1 },
+  { maxRange: 180, bucket: 5 },
+  { maxRange: 360, bucket: 10 },
+  { maxRange: 720, bucket: 20 },
 ];
 
 export function chartBucketMinutes(rangeMinutes) {
-  return CHART_BUCKET_MINUTES.find(({ maxRange }) => rangeMinutes <= maxRange)?.bucket ?? 15;
+  return CHART_BUCKET_MINUTES.find(({ maxRange }) => rangeMinutes <= maxRange)?.bucket ?? 20;
 }
 
 export function aggregateChartPoints(points, rangeMinutes) {
