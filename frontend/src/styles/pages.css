@@ -613,7 +613,7 @@
 }
 
 .dropdown-panel-title {
-  font-family: "Gaegu", cursive, sans-serif;
+  font-family: inherit;
   font-weight: 700;
   font-size: 16px;
   color: var(--brown-900);
@@ -1885,7 +1885,7 @@ p.daily-feedback-document__content {
   padding: 6px 12px;
   background: var(--cream-100);
   color: var(--brown-700);
-  font-family: "Gaegu", cursive, sans-serif;
+  font-family: inherit;
   font-weight: 700;
   cursor: pointer;
 }
@@ -3145,7 +3145,7 @@ p.daily-feedback-document__content {
   align-items: center;
   justify-self: center;
   gap: 9px;
-  font-family: "Gaegu", cursive, sans-serif;
+  font-family: inherit;
   font-weight: 700;
   font-size: 22px;
   color: var(--brown-900);
@@ -3548,7 +3548,7 @@ p.daily-feedback-document__content {
 
 .support-detail-title {
   margin: 8px 0 4px;
-  font-family: "Gaegu", cursive, sans-serif;
+  font-family: inherit;
   font-weight: 700;
   font-size: 18px;
 }
@@ -3776,7 +3776,7 @@ p.daily-feedback-document__content {
 
 .profile-name {
   margin: 0 0 20px;
-  font-family: "Gaegu", cursive, sans-serif;
+  font-family: inherit;
   font-weight: 700;
   font-size: 26px;
   color: var(--brown-900);
@@ -3855,7 +3855,7 @@ p.daily-feedback-document__content {
 }
 
 .modal-title {
-  font-family: "Gaegu", cursive, sans-serif;
+  font-family: inherit;
   font-size: 18px;
   font-weight: 700;
   color: var(--brown-900);
@@ -3916,7 +3916,7 @@ p.daily-feedback-document__content {
 }
 
 .settings-title {
-  font-family: "Gaegu", cursive, sans-serif;
+  font-family: inherit;
   font-size: 24px;
   font-weight: 700;
   color: var(--brown-900);
@@ -3947,7 +3947,7 @@ p.daily-feedback-document__content {
 }
 
 .settings-section-title {
-  font-family: "Gaegu", cursive, sans-serif;
+  font-family: inherit;
   font-size: 18px;
   font-weight: 700;
   color: var(--brown-900);
