@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Bell, Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -7,6 +7,7 @@ import {
   getCultivationListPage,
   getLatestSensorValuesForCultivations,
 } from "../../api/cultivations";
+import { NotificationBellPanel } from "./CultivationDetailPage";
 import AdminPagination from "../../components/admin/AdminPagination";
 import { EmptyState, ErrorState, LoadingState } from "../../components/PageState";
 import CultivationCard from "../../features/cultivations/CultivationCard";
@@ -47,7 +48,7 @@ function mergeSensorTrendMap(previous, incoming) {
           (left, right) => new Date(left.measuredAt) - new Date(right.measuredAt),
         );
         const newestMeasuredAt = new Date(
-          pointsForSensor[pointsForSensor.length - 1]?.measuredAt,
+          pointsForSensor.at(-1)?.measuredAt,
         ).getTime();
         return pointsForSensor.filter(
           (point) =>
@@ -67,6 +68,7 @@ export default function CultivationListPage() {
   });
   const [page, setPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const cultivations = normalizeList(listQuery.data?.cultivations);
   const latestQuery = useQuery({
@@ -79,12 +81,12 @@ export default function CultivationListPage() {
 
   const [trendByCultivationId, setTrendByCultivationId] = useState({});
 
+  const initialTrend = listQuery.data?.["sensorTrend1hByCultivationId"];
   useEffect(() => {
-    const initialTrend = listQuery.data?.sensorTrend1hByCultivationId;
     if (initialTrend) {
       setTrendByCultivationId((previous) => mergeSensorTrendMap(previous, initialTrend));
     }
-  }, [listQuery.data?.sensorTrend1hByCultivationId]);
+  }, [initialTrend]);
 
   useEffect(() => {
     const latestValues = latestQuery.data?.latestSensorValuesByCultivationId;
@@ -139,6 +141,17 @@ export default function CultivationListPage() {
             <span className="summary-chip">
               전체 <strong>{cultivations.length}</strong>
             </span>
+            <div className="notif-bell-wrap">
+              <button
+                type="button"
+                className="button button--secondary"
+                onClick={() => setNotifOpen((open) => !open)}
+                aria-label="알림"
+              >
+                <Bell aria-hidden="true" /> 알림
+              </button>
+              {notifOpen && <NotificationBellPanel onClose={() => setNotifOpen(false)} />}
+            </div>
             <Link className="button button--primary" to="/cultivations/new">
               <Plus aria-hidden="true" /> 새 재배 시작
             </Link>
@@ -205,7 +218,7 @@ export default function CultivationListPage() {
                         }
                         sensorTrend1h={
                           trendByCultivationId[cultivation.cultivationId] ??
-                          listQuery.data?.sensorTrend1hByCultivationId?.[cultivation.cultivationId]
+                          listQuery.data?.["sensorTrend1hByCultivationId"]?.[cultivation.cultivationId]
                         }
                       />
                     </div>

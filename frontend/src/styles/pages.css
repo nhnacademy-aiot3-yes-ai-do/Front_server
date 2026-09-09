@@ -11,6 +11,7 @@
   align-items: center;
 }
 
+
 .cultivation-list-page .page-heading h1 {
   font-size: clamp(22px, 1.8vw, 28px);
 }
@@ -53,7 +54,7 @@
 }
 
 .cultivation-search input::placeholder {
-  color: var(--brown-400);
+  color: var(--brown-500);
 }
 
 .cultivation-search input::-webkit-search-cancel-button {
@@ -612,7 +613,7 @@
 }
 
 .dropdown-panel-title {
-  font-family: "Gaegu", inherit;
+  font-family: "Gaegu", cursive, sans-serif;
   font-weight: 700;
   font-size: 16px;
   color: var(--brown-900);
@@ -915,13 +916,15 @@
 }
 
 .briefing-score__ring {
+  --ring-percent: 0%;
+  --ring-color: var(--sage-500);
   display: grid;
   width: 72px;
   height: 72px;
   border-radius: 50%;
   place-items: center;
   background: conic-gradient(
-    var(--ring-color, var(--sage-500)) var(--ring-percent, 0%),
+    var(--ring-color) var(--ring-percent),
     var(--sage-200) 0
   );
   transition: background 0.3s ease;
@@ -939,8 +942,60 @@
   place-items: center;
 }
 
+
 .environment-briefing > p {
   color: var(--brown-500);
+}
+
+.environment-briefing__text {
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--brown-700);
+}
+
+.briefing-sensor-summary {
+  margin: 0;
+  word-break: keep-all;
+  font-weight: 500;
+}
+
+.briefing-notice {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--brown-700);
+  word-break: keep-all;
+}
+
+.compliance-notif-summary {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(117, 91, 65, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.compliance-notif-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 500;
+}
+
+.compliance-notif-status.error {
+  color: #b94a48;
+}
+
+.compliance-notif-status.warning {
+  color: #c87a1e;
+}
+
+.compliance-notif-status.success {
+  color: var(--sage-700);
 }
 
 .compliance-list {
@@ -1084,10 +1139,32 @@
 
 .daily-feedback-preview__content {
   overflow: hidden;
-  max-height: 4.9em;
   margin: 12px 0 0;
   color: var(--brown-700);
-  line-height: 1.72;
+}
+
+.daily-feedback-preview__content.markdown-body h1,
+.daily-feedback-preview__content.markdown-body h2,
+.daily-feedback-preview__content.markdown-body h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brown-900);
+  line-height: 1.4;
+}
+
+.daily-feedback-preview__content.markdown-body p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.daily-feedback-preview__content.markdown-body > p ~ * {
+  display: none;
 }
 
 p.daily-feedback-preview__content {
@@ -1218,7 +1295,6 @@ p.daily-feedback-preview__content {
   color: var(--brown-700);
   line-height: 1.85;
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 
 p.daily-feedback-document__content {
@@ -1400,12 +1476,6 @@ p.daily-feedback-document__content {
   font-size: 12px;
 }
 
-.sensor-live-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
 .sensor-live-state > span {
   font-size: 12px;
   line-height: 1;
@@ -1541,6 +1611,9 @@ p.daily-feedback-document__content {
 }
 
 .sensor-live-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   flex: 0 0 auto;
   border-radius: 13px;
   padding: 5px 8px;
@@ -1777,7 +1850,7 @@ p.daily-feedback-document__content {
   align-items: end;
   gap: 14px;
   margin-bottom: 20px;
-  border: 1.5px dashed var(--brown-300);
+  border: 2px dashed var(--brown-300);
   border-radius: 16px;
   padding: 16px 18px;
   background: var(--cream-200);
@@ -1812,7 +1885,7 @@ p.daily-feedback-document__content {
   padding: 6px 12px;
   background: var(--cream-100);
   color: var(--brown-700);
-  font-family: "Gaegu", inherit;
+  font-family: "Gaegu", cursive, sans-serif;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1857,7 +1930,7 @@ p.daily-feedback-document__content {
   border-top: 1px solid var(--line);
   padding: 9px 11px;
   color: var(--brown-500);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 .action-list {
@@ -1953,7 +2026,7 @@ p.daily-feedback-document__content {
 
 .registered-sensor-list small {
   color: var(--sage-700);
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 .sensor-register-form {
@@ -2373,7 +2446,7 @@ p.daily-feedback-document__content {
   align-items: center;
   justify-content: flex-start;
   gap: 9px;
-  color: var(--brown-400);
+  color: var(--brown-500);
   font-size: 13px;
   font-weight: 700;
 }
@@ -2949,8 +3022,8 @@ p.daily-feedback-document__content {
   min-height: 34px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: var(--cream-50);
-  color: var(--brown-600);
+  background: var(--cream-100);
+  color: var(--brown-700);
   font-size: 13px;
   font-weight: 800;
   place-items: center;
@@ -3072,7 +3145,7 @@ p.daily-feedback-document__content {
   align-items: center;
   justify-self: center;
   gap: 9px;
-  font-family: "Gaegu", inherit;
+  font-family: "Gaegu", cursive, sans-serif;
   font-weight: 700;
   font-size: 22px;
   color: var(--brown-900);
@@ -3475,7 +3548,7 @@ p.daily-feedback-document__content {
 
 .support-detail-title {
   margin: 8px 0 4px;
-  font-family: "Gaegu", inherit;
+  font-family: "Gaegu", cursive, sans-serif;
   font-weight: 700;
   font-size: 18px;
 }
@@ -3557,7 +3630,7 @@ p.daily-feedback-document__content {
   text-align: left;
   line-height: 1.55;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .support-chat-msg--user .support-chat-bubble {
@@ -3703,7 +3776,7 @@ p.daily-feedback-document__content {
 
 .profile-name {
   margin: 0 0 20px;
-  font-family: "Gaegu", inherit;
+  font-family: "Gaegu", cursive, sans-serif;
   font-weight: 700;
   font-size: 26px;
   color: var(--brown-900);
@@ -3782,7 +3855,7 @@ p.daily-feedback-document__content {
 }
 
 .modal-title {
-  font-family: "Gaegu", inherit;
+  font-family: "Gaegu", cursive, sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: var(--brown-900);
@@ -3843,7 +3916,7 @@ p.daily-feedback-document__content {
 }
 
 .settings-title {
-  font-family: "Gaegu", inherit;
+  font-family: "Gaegu", cursive, sans-serif;
   font-size: 24px;
   font-weight: 700;
   color: var(--brown-900);
@@ -3874,7 +3947,7 @@ p.daily-feedback-document__content {
 }
 
 .settings-section-title {
-  font-family: "Gaegu", inherit;
+  font-family: "Gaegu", cursive, sans-serif;
   font-size: 18px;
   font-weight: 700;
   color: var(--brown-900);
