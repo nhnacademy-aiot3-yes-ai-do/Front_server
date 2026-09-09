@@ -292,9 +292,7 @@ function EnvironmentBriefing({ compliance }) {
 
   let sensorSummary = "환경 측정 데이터를 실시간 수집 및 집계하고 있습니다.";
   if (available.length > 0) {
-    const sensorList = available
-      .map(([label, val]) => `${label} ${Math.round(val)}%`)
-      .join(" · ");
+    const sensorList = available.map(([label, val]) => `${label} ${Math.round(val)}%`).join(" · ");
     const condition =
       average >= 80
         ? "적정 기준 내에서 안정적으로 유지되고 있습니다."
@@ -342,7 +340,8 @@ function renderNotificationSummary(query, breachCount, recoverCount) {
   if (breachCount > recoverCount) {
     return (
       <span className="compliance-notif-status warning">
-        오늘 환경 이상 {breachCount}건 수신{recoverCount > 0 ? ` (복구 ${recoverCount}건)` : " (복구 진행 중)"}
+        오늘 환경 이상 {breachCount}건 수신
+        {recoverCount > 0 ? ` (복구 ${recoverCount}건)` : " (복구 진행 중)"}
       </span>
     );
   }
@@ -366,9 +365,7 @@ function renderNotificationSummary(query, breachCount, recoverCount) {
   }
 
   return (
-    <span className="compliance-notif-status success">
-      오늘 수신된 환경 이상 알림이 없습니다.
-    </span>
+    <span className="compliance-notif-status success">오늘 수신된 환경 이상 알림이 없습니다.</span>
   );
 }
 
@@ -516,7 +513,6 @@ function DailyFeedbackFallbackPage({
           onFeedbackDateChange={onDateChange}
         />
       </section>
-
     </main>
   );
 }

@@ -47,9 +47,7 @@ function mergeSensorTrendMap(previous, incoming) {
         const pointsForSensor = [...sensorPoints.values()].sort(
           (left, right) => new Date(left.measuredAt) - new Date(right.measuredAt),
         );
-        const newestMeasuredAt = new Date(
-          pointsForSensor.at(-1)?.measuredAt,
-        ).getTime();
+        const newestMeasuredAt = new Date(pointsForSensor.at(-1)?.measuredAt).getTime();
         return pointsForSensor.filter(
           (point) =>
             newestMeasuredAt - new Date(point.measuredAt).getTime() <= SENSOR_TREND_WINDOW_MS,
@@ -218,7 +216,9 @@ export default function CultivationListPage() {
                         }
                         sensorTrend1h={
                           trendByCultivationId[cultivation.cultivationId] ??
-                          listQuery.data?.["sensorTrend1hByCultivationId"]?.[cultivation.cultivationId]
+                          listQuery.data?.["sensorTrend1hByCultivationId"]?.[
+                            cultivation.cultivationId
+                          ]
                         }
                       />
                     </div>

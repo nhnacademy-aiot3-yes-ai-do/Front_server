@@ -11,7 +11,6 @@
   align-items: center;
 }
 
-
 .cultivation-list-page .page-heading h1 {
   font-size: clamp(22px, 1.8vw, 28px);
 }
@@ -923,10 +922,7 @@
   height: 72px;
   border-radius: 50%;
   place-items: center;
-  background: conic-gradient(
-    var(--ring-color) var(--ring-percent),
-    var(--sage-200) 0
-  );
+  background: conic-gradient(var(--ring-color) var(--ring-percent), var(--sage-200) 0);
   transition: background 0.3s ease;
 }
 
@@ -941,7 +937,6 @@
     sans-serif;
   place-items: center;
 }
-
 
 .environment-briefing > p {
   color: var(--brown-500);

@@ -358,7 +358,9 @@ describe("NotificationBellPanel", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("광주 알림")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "다음 페이지" })).not.toBeInTheDocument();
-    expect(screen.queryByText("[환경 이상] NHN의 LIGHT 값이 정상 범위를 벗어났습니다.")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("[환경 이상] NHN의 LIGHT 값이 정상 범위를 벗어났습니다."),
+    ).not.toBeInTheDocument();
   });
 
   it("재배지 센서 위치(sensorLocations)와 일치하는 알림도 포함하여 표시한다", async () => {
