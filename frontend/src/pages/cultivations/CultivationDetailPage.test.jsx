@@ -83,8 +83,10 @@ describe("CultivationDetailPage chart aggregation", () => {
 
     expect(tenMinutePoints).toHaveLength(2);
     expect(thirtyMinutePoints).toHaveLength(2);
-    expect(tenMinutePoints[0].measuredAt).not.toBe(tenMinutePoints[1].measuredAt);
-    expect(thirtyMinutePoints[0].measuredAt).not.toBe(thirtyMinutePoints[1].measuredAt);
+    expect(tenMinutePoints[0].measuredAt).toMatch(/:10/);
+    expect(tenMinutePoints[1].measuredAt).toMatch(/:40/);
+    expect(thirtyMinutePoints[0].measuredAt).toMatch(/:00:00/);
+    expect(thirtyMinutePoints[1].measuredAt).toMatch(/:00:30/);
   });
 
   it("빈 최신값 응답은 초기 최신값을 유지한다", () => {

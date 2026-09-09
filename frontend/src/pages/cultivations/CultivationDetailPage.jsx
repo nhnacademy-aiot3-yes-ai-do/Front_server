@@ -922,9 +922,14 @@ function renderSensorChart(chartPoints, color) {
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={chartPoints} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
           <CartesianGrid stroke="rgba(117,91,65,.12)" vertical={false} />
-          <XAxis dataKey="measuredAt" minTickGap={34} tick={{ fontSize: 10 }} />
+          <XAxis
+            dataKey="measuredAt"
+            minTickGap={34}
+            tick={{ fontSize: 10 }}
+            tickFormatter={(value) => value}
+          />
           <YAxis width={42} tick={{ fontSize: 10 }} />
-          <Tooltip />
+          <Tooltip labelFormatter={(value) => value} />
           <Line
             dataKey="value"
             dot={false}
