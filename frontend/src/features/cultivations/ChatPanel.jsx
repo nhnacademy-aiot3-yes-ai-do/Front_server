@@ -37,8 +37,8 @@ export default function ChatPanel({ cultivationId }) {
   const historyQuery = useQuery({
     queryKey: ["chat-history", cultivationId],
     queryFn: () =>
-        request(`/api/chat/history?cultivationId=${cultivationId}`).then(unwrapApiResponse),
-    enabled: Boolean(cultivationId), // id가 있을 때만 호출하도록 가드 추가
+      request(`/api/chat/history?cultivationId=${cultivationId}`).then(unwrapApiResponse),
+    enabled: Boolean(cultivationId),
     retry: 1,
   });
 
@@ -82,7 +82,9 @@ export default function ChatPanel({ cultivationId }) {
         },
       ]);
       // 새 대화가 DB에 저장되었으므로 캐시 갱신
-      await queryClient.invalidateQueries({ queryKey: ["chat-history", cultivationId] }); // 👈 await 추가!
+      void queryClient
+        .invalidateQueries({ queryKey: ["chat-history", cultivationId] })
+        .catch(() => {});
     } catch (error) {
       if (currentGeneration !== requestGenerationRef.current) {
         return;
