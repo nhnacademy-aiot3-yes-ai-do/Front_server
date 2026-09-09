@@ -106,13 +106,18 @@
   color: var(--brown-700);
   cursor: pointer;
   white-space: nowrap;
-  font-family: "Gaegu", inherit;
+  font-family: inherit;
   font-size: 12px;
   font-weight: 700;
 }
 
 .field-inline .btn-inline:active {
   transform: translateY(-50%) translate(1px, 1px);
+}
+
+.auth-card .password-field input[type="password"],
+.auth-card .password-field input[type="text"] {
+  padding-right: 44px;
 }
 
 .help-text {
@@ -174,7 +179,7 @@
 .auth-card .button {
   border: 2px solid var(--brown-900);
   border-radius: 12px;
-  font-family: "Gaegu", inherit;
+  font-family: inherit;
   font-size: 16px;
   font-weight: 700;
   box-shadow: 4px 4px 0 #d8c6a5;

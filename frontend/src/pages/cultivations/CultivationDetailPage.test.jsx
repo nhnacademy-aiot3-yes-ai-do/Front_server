@@ -1,8 +1,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import CultivationDetailPage from "./CultivationDetailPage";
+import CultivationDetailPage, { NotificationBellPanel } from "./CultivationDetailPage";
 import {
   aggregateChartPoints,
   chartBucketMinutes,
@@ -52,19 +52,41 @@ vi.mock("../../api/insights", () => ({
 }));
 
 describe("CultivationDetailPage chart aggregation", () => {
-  it("12시간 그래프는 15분 버킷별 평균값만 점으로 만든다", () => {
-    expect(chartBucketMinutes(720)).toBe(15);
+  it("범위별 그래프 bucket 정책을 적용하고 12시간 그래프는 20분 버킷 평균을 만든다", () => {
+    expect(chartBucketMinutes(10)).toBeCloseTo(10 / 60);
+    expect(chartBucketMinutes(30)).toBe(0.5);
+    expect(chartBucketMinutes(60)).toBe(1);
+    expect(chartBucketMinutes(180)).toBe(5);
+    expect(chartBucketMinutes(360)).toBe(10);
+    expect(chartBucketMinutes(720)).toBe(20);
     const points = aggregateChartPoints(
       [
         { measuredAt: "2026-09-04T00:01:00Z", value: 10 },
         { measuredAt: "2026-09-04T00:10:00Z", value: 20 },
-        { measuredAt: "2026-09-04T00:16:00Z", value: 30 },
+        { measuredAt: "2026-09-04T00:21:00Z", value: 30 },
       ],
       720,
     );
 
     expect(points).toHaveLength(2);
     expect(points.map((point) => point.value)).toEqual([15, 30]);
+  });
+
+  it("10분과 30분 그래프는 1분 미만 bucket의 초 단위 시각을 표시한다", () => {
+    const points = [
+      { measuredAt: "2026-09-04T00:00:10Z", value: 10 },
+      { measuredAt: "2026-09-04T00:00:40Z", value: 20 },
+    ];
+
+    const tenMinutePoints = aggregateChartPoints(points, 10);
+    const thirtyMinutePoints = aggregateChartPoints(points, 30);
+
+    expect(tenMinutePoints).toHaveLength(2);
+    expect(thirtyMinutePoints).toHaveLength(2);
+    expect(tenMinutePoints[0].measuredAt).toMatch(/:10/);
+    expect(tenMinutePoints[1].measuredAt).toMatch(/:40/);
+    expect(thirtyMinutePoints[0].measuredAt).toMatch(/:00:00/);
+    expect(thirtyMinutePoints[1].measuredAt).toMatch(/:00:30/);
   });
 
   it("빈 최신값 응답은 초기 최신값을 유지한다", () => {
@@ -138,6 +160,9 @@ describe("CultivationDetailPage sensor metadata", () => {
     queryClient?.clear();
   });
 
+  /**
+   * @param {{ location?: string | null, locationDetail?: string | null, lastMeasuredAt?: string | null }} options
+   */
   async function renderSensor({ location, locationDetail, lastMeasuredAt = null }) {
     const sensor = {
       sensorId: 8,
@@ -257,5 +282,95 @@ describe("CultivationDetailPage daily feedback deep link", () => {
     expect(await screen.findByText("환기 상태가 안정적입니다.")).toBeInTheDocument();
     expect(mocks.getCultivationDetailPage).toHaveBeenCalledWith(46);
     expect(mocks.getDailyFeedback).toHaveBeenCalledWith(46, "2026-09-02");
+  });
+});
+
+describe("NotificationBellPanel", () => {
+  let queryClient;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    queryClient?.clear();
+  });
+
+  function renderPanel(props = {}) {
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <NotificationBellPanel onClose={vi.fn()} {...props} />
+      </QueryClientProvider>,
+    );
+  }
+
+  const sampleNotifications = [
+    { id: 1, message: "[환경 이상] NHN의 LIGHT 값이 정상 범위를 벗어났습니다." },
+    { id: 2, message: "[환경 복구] NHN의 LIGHT 값이 정상 범위로 돌아왔습니다." },
+    { id: 3, message: "[환경 이상] 광주의 CO2 값이 정상 범위를 벗어났습니다." },
+    { id: 4, message: "[환경 복구] 광주의 CO2 값이 정상 범위로 돌아왔습니다." },
+    { id: 5, message: "[환경 이상] 위치4317566의 HUMIDITY 값이 정상 범위를 벗어났습니다." },
+    { id: 6, message: "[환경 이상] NHN의 TEMPERATURE 값이 정상 범위를 벗어났습니다." },
+    { id: 7, message: "[환경 복구] NHN의 TEMPERATURE 값이 정상 범위로 돌아왔습니다." },
+    { id: 8, message: "[환경 이상] 광주의 LIGHT 값이 정상 범위를 벗어났습니다." },
+    { id: 9, message: "[환경 복구] 광주의 LIGHT 값이 정상 범위로 돌아왔습니다." },
+    { id: 10, message: "[환경 이상] NHN의 HUMIDITY 값이 정상 범위를 벗어났습니다." },
+  ];
+
+  it("재배지 이름에 해당하는 알림이 없으면 알림 없음을 표시하고 페이지네이션을 숨긴다", async () => {
+    mocks.request.mockResolvedValue({ content: sampleNotifications, totalPages: 1 });
+
+    renderPanel({ cultivationName: "양송이텟" });
+
+    expect(await screen.findByText("양송이텟의 알림이 없습니다.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "이전 페이지" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "다음 페이지" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/1 \/ \d+/)).not.toBeInTheDocument();
+  });
+
+  it("재배지 이름이 전달되지 않으면 전체 알림을 8개씩 페이지네이션하여 표시한다", async () => {
+    mocks.request.mockResolvedValue({ content: sampleNotifications, totalPages: 1 });
+
+    renderPanel();
+
+    expect(await screen.findByText("1 / 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다음 페이지" })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: "이전 페이지" })).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("button", { name: "다음 페이지" }));
+
+    expect(await screen.findByText("2 / 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다음 페이지" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "이전 페이지" })).not.toBeDisabled();
+  });
+
+  it("특정 재배지 알림만 필터링하고 필터링된 건수 기준으로 페이지네이션을 계산한다", async () => {
+    mocks.request.mockResolvedValue({ content: sampleNotifications, totalPages: 1 });
+
+    renderPanel({ cultivationName: "광주" });
+
+    expect(
+      await screen.findByText("[환경 이상] 광주의 CO2 값이 정상 범위를 벗어났습니다."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("광주 알림")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "다음 페이지" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("[환경 이상] NHN의 LIGHT 값이 정상 범위를 벗어났습니다."),
+    ).not.toBeInTheDocument();
+  });
+
+  it("재배지 센서 위치(sensorLocations)와 일치하는 알림도 포함하여 표시한다", async () => {
+    mocks.request.mockResolvedValue({ content: sampleNotifications, totalPages: 1 });
+
+    renderPanel({ cultivationName: "양송이텟", sensorLocations: ["위치4317566"] });
+
+    expect(
+      await screen.findByText("[환경 이상] 위치4317566의 HUMIDITY 값이 정상 범위를 벗어났습니다."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("양송이텟 알림")).toBeInTheDocument();
   });
 });

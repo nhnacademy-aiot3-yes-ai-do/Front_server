@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { backendUrl, request, unwrapApiResponse } from "../../api/http";
 import Notice from "../../components/Notice";
+import PasswordInput from "../../components/PasswordInput";
 import DormantRecoveryModal from "../../features/auth/DormantRecoveryModal";
 
 export default function SignupPage() {
@@ -183,10 +184,9 @@ export default function SignupPage() {
             <label className="sr-only" htmlFor="signup-password">
               비밀번호
             </label>
-            <input
+            <PasswordInput
               id="signup-password"
               name="password"
-              type="password"
               placeholder="비밀번호"
               autoComplete="new-password"
               minLength="8"
@@ -197,10 +197,9 @@ export default function SignupPage() {
             <label className="sr-only" htmlFor="signup-confirm-password">
               비밀번호 확인
             </label>
-            <input
+            <PasswordInput
               id="signup-confirm-password"
               name="confirmPassword"
-              type="password"
               placeholder="비밀번호 확인"
               autoComplete="new-password"
               minLength="8"

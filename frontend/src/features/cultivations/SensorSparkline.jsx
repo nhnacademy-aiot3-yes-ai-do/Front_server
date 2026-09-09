@@ -1,5 +1,21 @@
+import { useRef } from "react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { formatDateTime, formatSensorType, normalizeSensorUnit } from "../../utils/formatters";
+
+function SensorTooltipContent({ active, coordinate, label, payload, chartRef, unit }) {
+  if (!active || !payload?.length || !coordinate || !chartRef.current) return null;
+
+  const chartRect = chartRef.current.getBoundingClientRect();
+  const left = Math.min(Math.max(chartRect.left + coordinate.x + 10, 8), window.innerWidth - 188);
+  const top = Math.max(chartRect.top + coordinate.y - 8, 8);
+
+  return (
+    <div className="sensor-spark__tooltip-content" style={{ left, top }}>
+      <div>{`측정 시각 ${label}`}</div>
+      <strong>{`${payload[0].value}${unit || ""}`}</strong>
+    </div>
+  );
+}
 
 export default function SensorSparkline({
   cultivationId,
@@ -27,6 +43,7 @@ export default function SensorSparkline({
     value != null &&
     ((setting?.thresholdMin != null && Number(value) < Number(setting.thresholdMin)) ||
       (setting?.thresholdMax != null && Number(value) > Number(setting.thresholdMax)));
+  const chartRef = useRef(null);
 
   return (
     <article className={`sensor-spark ${outside ? "sensor-spark--warning" : ""}`}>
@@ -50,6 +67,7 @@ export default function SensorSparkline({
       </div>
       <div
         className="sensor-spark__chart"
+        ref={chartRef}
         aria-label={`${formatSensorType(sensorType.type)} 센서 추이`}
       >
         {points.length > 1 ? (
@@ -68,8 +86,20 @@ export default function SensorSparkline({
               <XAxis dataKey="measuredAt" hide />
               <Tooltip
                 allowEscapeViewBox={{ x: true, y: true }}
-                formatter={(tooltipValue) => [`${tooltipValue}${unit || ""}`, "측정값"]}
-                labelFormatter={(label) => `측정 시각 ${label}`}
+                content={(tooltipProps) => (
+                  <SensorTooltipContent {...tooltipProps} chartRef={chartRef} unit={unit} />
+                )}
+                portal={typeof document !== "undefined" ? document.body : undefined}
+                wrapperStyle={{
+                  height: 0,
+                  left: 0,
+                  overflow: "visible",
+                  pointerEvents: "none",
+                  position: "fixed",
+                  top: 0,
+                  width: 0,
+                  zIndex: 1000,
+                }}
               />
               <Area
                 dataKey="value"

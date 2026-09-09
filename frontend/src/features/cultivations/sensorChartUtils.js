@@ -1,20 +1,33 @@
 import { formatDateTime, normalizeList } from "../../utils/formatters";
 
 const CHART_BUCKET_MINUTES = [
-  { maxRange: 10, bucket: 1 },
-  { maxRange: 30, bucket: 5 },
-  { maxRange: 60, bucket: 5 },
-  { maxRange: 180, bucket: 15 },
-  { maxRange: 360, bucket: 15 },
-  { maxRange: 720, bucket: 15 },
+  { maxRange: 10, bucket: 10 / 60 },
+  { maxRange: 30, bucket: 0.5 },
+  { maxRange: 60, bucket: 1 },
+  { maxRange: 180, bucket: 5 },
+  { maxRange: 360, bucket: 10 },
+  { maxRange: 720, bucket: 20 },
 ];
 
 export function chartBucketMinutes(rangeMinutes) {
-  return CHART_BUCKET_MINUTES.find(({ maxRange }) => rangeMinutes <= maxRange)?.bucket ?? 15;
+  return CHART_BUCKET_MINUTES.find(({ maxRange }) => rangeMinutes <= maxRange)?.bucket ?? 20;
+}
+
+function formatChartTimestamp(timestamp, bucketMinutes) {
+  if (bucketMinutes >= 1) return formatDateTime(new Date(timestamp).toISOString());
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(new Date(timestamp));
 }
 
 export function aggregateChartPoints(points, rangeMinutes) {
-  const bucketMs = chartBucketMinutes(rangeMinutes) * 60 * 1000;
+  const bucketMinutes = chartBucketMinutes(rangeMinutes);
+  const bucketMs = bucketMinutes * 60 * 1000;
   const buckets = new Map();
 
   points.forEach((point) => {
@@ -31,7 +44,7 @@ export function aggregateChartPoints(points, rangeMinutes) {
   return [...buckets.values()]
     .sort((left, right) => left.measuredAt - right.measuredAt)
     .map(({ measuredAt, values }) => ({
-      measuredAt: formatDateTime(new Date(measuredAt).toISOString()),
+      measuredAt: formatChartTimestamp(measuredAt, bucketMinutes),
       value: values.reduce((sum, value) => sum + value, 0) / values.length,
     }));
 }

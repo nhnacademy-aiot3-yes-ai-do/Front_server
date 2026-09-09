@@ -27,9 +27,12 @@
   font-synthesis: none;
   --brown-900: #503c31;
   --brown-700: #715c4c;
+  --brown-600: #715c4c;
   --brown-500: #947f6d;
+  --brown-400: #947f6d;
   --brown-300: #d4c2aa;
   --cream-100: #fffdf4;
+  --cream-50: #fffdf4;
   --cream-200: #f7f0df;
   --cream-300: #eee2c8;
   --sage-700: #506d4d;
@@ -504,6 +507,41 @@ p {
 
 .form-stack textarea {
   resize: vertical;
+}
+
+.password-field {
+  position: relative;
+  width: 100%;
+}
+
+.form-stack .password-field input {
+  padding-right: 44px;
+}
+
+.password-field__toggle {
+  display: grid;
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--brown-500);
+  cursor: pointer;
+  place-items: center;
+  transform: translateY(-50%);
+}
+
+.password-field__toggle:hover {
+  background: var(--cream-200);
+  color: var(--brown-700);
+}
+
+.password-field__toggle svg {
+  width: 18px;
+  height: 18px;
 }
 
 .form-stack--roomy {

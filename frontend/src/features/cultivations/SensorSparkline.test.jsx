@@ -12,14 +12,15 @@ vi.mock("recharts", () => ({
   ),
   ResponsiveContainer: ({ children }) => <div>{children}</div>,
   XAxis: () => null,
-  Tooltip: ({ formatter, labelFormatter, allowEscapeViewBox }) => (
+  Tooltip: ({ allowEscapeViewBox, portal, content, wrapperStyle }) => (
     <div
       data-testid="chart-tooltip"
       data-allow-escape-x={String(allowEscapeViewBox?.x)}
       data-allow-escape-y={String(allowEscapeViewBox?.y)}
-    >
-      {formatter(22)[0]} · {labelFormatter("2026-09-04 12:00")}
-    </div>
+      data-content={content ? "custom" : "default"}
+      data-portal-target={portal === document.body ? "body" : "none"}
+      data-wrapper-position={wrapperStyle?.position}
+    />
   ),
 }));
 
@@ -44,9 +45,9 @@ describe("SensorSparkline tooltip", () => {
     );
     expect(screen.getByTestId("chart-tooltip")).toHaveAttribute("data-allow-escape-x", "true");
     expect(screen.getByTestId("chart-tooltip")).toHaveAttribute("data-allow-escape-y", "true");
-    expect(screen.getByTestId("chart-tooltip")).toHaveTextContent(
-      "22°C · 측정 시각 2026-09-04 12:00",
-    );
+    expect(screen.getByTestId("chart-tooltip")).toHaveAttribute("data-portal-target", "body");
+    expect(screen.getByTestId("chart-tooltip")).toHaveAttribute("data-content", "custom");
+    expect(screen.getByTestId("chart-tooltip")).toHaveAttribute("data-wrapper-position", "fixed");
     expect(screen.getByText("온도").parentElement).toHaveClass("sensor-spark__title");
     expect(screen.getByText("온도").parentElement).toHaveTextContent("22°C");
   });
