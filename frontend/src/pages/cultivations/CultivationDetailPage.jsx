@@ -31,6 +31,7 @@ import {
 import {
   cultivationKeys,
   getCultivationDetailPage,
+  getDailyFeedback,
   getLatestSensorValues,
 } from "../../api/cultivations";
 import { getInsightCandidates, getInsightDetail } from "../../api/insights";
@@ -85,7 +86,50 @@ function buildSensorOptions(data, latestValues) {
 
 const NOTIF_PAGE_SIZE = 8;
 
-function NotificationBellPanel({ onClose }) {
+function extractNotificationList(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.content)) return data.content;
+  return [];
+}
+
+async function fetchNotificationsForPanel() {
+  const firstPage = await request("/notifications?page=0&size=100");
+  const firstContent = extractNotificationList(firstPage);
+  const totalPages = Number(firstPage?.totalPages) || 1;
+  if (totalPages <= 1) {
+    return firstContent;
+  }
+
+  const maxPagesToFetch = Math.min(totalPages, 3);
+  const remainingPages = await Promise.all(
+    Array.from({ length: maxPagesToFetch - 1 }, (_, index) =>
+      request(`/notifications?page=${index + 1}&size=100`)
+        .then((res) => extractNotificationList(res))
+        .catch(() => []),
+    ),
+  );
+  return [firstContent, ...remainingPages].flat();
+}
+
+function matchesNotificationCultivation(item, cultivationName, sensorLocations) {
+  if (!cultivationName && (!sensorLocations || sensorLocations.length === 0)) {
+    return true;
+  }
+  const msg = (item?.message || "").toLowerCase();
+  if (cultivationName && msg.includes(cultivationName.trim().toLowerCase())) {
+    return true;
+  }
+  if (Array.isArray(sensorLocations)) {
+    for (const loc of sensorLocations) {
+      if (loc && typeof loc === "string" && msg.includes(loc.trim().toLowerCase())) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+export function NotificationBellPanel({ onClose, cultivationName, sensorLocations }) {
   const [page, setPage] = useState(0);
   const panelRef = useRef(null);
 
@@ -97,28 +141,46 @@ function NotificationBellPanel({ onClose }) {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [onClose]);
 
+  useEffect(() => {
+    setPage(0);
+  }, [cultivationName]);
+
   const notifQuery = useQuery({
-    queryKey: ["cultivation-notif-panel", page],
-    queryFn: () => request(`/notifications?page=${page}&size=${NOTIF_PAGE_SIZE}`),
+    queryKey: ["all-user-notifications"],
+    queryFn: fetchNotificationsForPanel,
+    staleTime: 30_000,
   });
 
-  const items = normalizeList(notifQuery.data?.content);
-  const totalPages = Math.max(1, notifQuery.data?.totalPages || 1);
+  /** @type {Array<{ id?: number|string, message?: string }>} */
+  const allItems = extractNotificationList(notifQuery.data);
+  const filteredItems = allItems.filter((item) =>
+    matchesNotificationCultivation(item, cultivationName, sensorLocations),
+  );
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / NOTIF_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages - 1);
+  const items = filteredItems.slice(
+    currentPage * NOTIF_PAGE_SIZE,
+    (currentPage + 1) * NOTIF_PAGE_SIZE,
+  );
 
   return (
     <div className="dropdown-panel is-open" ref={panelRef}>
-      <div className="dropdown-panel-title">알림</div>
+      <div className="dropdown-panel-title">
+        {cultivationName ? `${cultivationName} 알림` : "알림"}
+      </div>
       <div className="notif-list">
         {notifQuery.isLoading && <div className="notif-row">불러오는 중...</div>}
         {notifQuery.isError && <div className="notif-row">알림을 불러오지 못했습니다.</div>}
-        {!notifQuery.isLoading && !notifQuery.isError && items.length === 0 && (
-          <div className="notif-row">알림이 없습니다.</div>
+        {!notifQuery.isLoading && !notifQuery.isError && filteredItems.length === 0 && (
+          <div className="notif-row">
+            {cultivationName ? `${cultivationName}의 알림이 없습니다.` : "알림이 없습니다."}
+          </div>
         )}
         {!notifQuery.isLoading &&
           !notifQuery.isError &&
-          items.map((item) => (
-            <div className="notif-row" key={item.id}>
-              {item.message || "(메시지 없음)"}
+          items.map((item, index) => (
+            <div className="notif-row" key={item?.id ?? index}>
+              {item?.message || "(메시지 없음)"}
             </div>
           ))}
       </div>
@@ -126,19 +188,19 @@ function NotificationBellPanel({ onClose }) {
         <div className="panel-pagination">
           <button
             type="button"
-            disabled={page === 0}
-            onClick={() => setPage((current) => current - 1)}
+            disabled={currentPage === 0}
+            onClick={() => setPage((current) => Math.max(0, current - 1))}
             aria-label="이전 페이지"
           >
             <ChevronLeft aria-hidden="true" />
           </button>
           <span>
-            {page + 1} / {totalPages}
+            {currentPage + 1} / {totalPages}
           </span>
           <button
             type="button"
-            disabled={page >= totalPages - 1}
-            onClick={() => setPage((current) => current + 1)}
+            disabled={currentPage >= totalPages - 1}
+            onClick={() => setPage((current) => Math.min(totalPages - 1, current + 1))}
             aria-label="다음 페이지"
           >
             <ChevronRight aria-hidden="true" />
@@ -228,6 +290,16 @@ function EnvironmentBriefing({ compliance }) {
   const ringPercent = Math.max(0, Math.min(100, average ?? 0));
   const ringColor = average == null ? "var(--sage-200)" : complianceRingColor(ringPercent);
 
+  let sensorSummary = "환경 측정 데이터를 실시간 수집 및 집계하고 있습니다.";
+  if (available.length > 0) {
+    const sensorList = available.map(([label, val]) => `${label} ${Math.round(val)}%`).join(" · ");
+    const condition =
+      average >= 80
+        ? "적정 기준 내에서 안정적으로 유지되고 있습니다."
+        : "기준 범위를 벗어나 관리가 필요합니다.";
+    sensorSummary = `현재 등록된 센서(${sensorList}) 환경이 ${condition}`;
+  }
+
   return (
     <article className="panel-card environment-briefing">
       <header className="panel-card__heading">
@@ -237,18 +309,67 @@ function EnvironmentBriefing({ compliance }) {
       <div className="briefing-score">
         <div
           className="briefing-score__ring"
-          style={{ "--ring-percent": `${ringPercent}%`, "--ring-color": ringColor }}
+          style={{
+            background: `conic-gradient(${ringColor} ${ringPercent}%, var(--sage-200) 0)`,
+          }}
         >
           <strong>{average ?? "-"}</strong>
         </div>
         <span>{average == null ? "환경 데이터를 수집 중입니다." : "오늘 환경 유지율 평균"}</span>
       </div>
-      <p>AI 성장 분석과 행동 제안은 데이터 준비 중입니다.</p>
+      <div className="environment-briefing__text">
+        <p className="briefing-sensor-summary">{sensorSummary}</p>
+        <p className="briefing-notice">
+          ※ 오늘 수집된 전체 데이터는 내일 00:05에 AI 종합 일일 리포트로 최종 발행됩니다.
+        </p>
+      </div>
     </article>
   );
 }
 
-function CompliancePanel({ compliance }) {
+function renderNotificationSummary(query, breachCount, recoverCount) {
+  if (query.isLoading) {
+    return <span className="compliance-notif-status">오늘 알림 집계 중...</span>;
+  }
+
+  if (query.isError) {
+    return <span className="compliance-notif-status error">알림 정보를 확인할 수 없습니다.</span>;
+  }
+
+  // 복구 중인 이상이 하나라도 있는 경우 (노랑색 / 주의)
+  if (breachCount > recoverCount) {
+    return (
+      <span className="compliance-notif-status warning">
+        오늘 환경 이상 {breachCount}건 수신
+        {recoverCount > 0 ? ` (복구 ${recoverCount}건)` : " (복구 진행 중)"}
+      </span>
+    );
+  }
+
+  // 오늘 이상이 발생했으나 모두 정상 복구 완료된 경우 (초록색 / 정상)
+  if (breachCount > 0 && recoverCount >= breachCount) {
+    return (
+      <span className="compliance-notif-status success">
+        오늘 환경 정상 복구 완료 ({recoverCount}건)
+      </span>
+    );
+  }
+
+  // 복구 알림만 있거나 이상이 없는 경우 (초록색 / 정상)
+  if (recoverCount > 0) {
+    return (
+      <span className="compliance-notif-status success">
+        오늘 환경 정상 복구 ({recoverCount}건)
+      </span>
+    );
+  }
+
+  return (
+    <span className="compliance-notif-status success">오늘 수신된 환경 이상 알림이 없습니다.</span>
+  );
+}
+
+function CompliancePanel({ compliance, cultivationName, sensorLocations }) {
   const [filled, setFilled] = useState(false);
 
   useEffect(() => {
@@ -262,6 +383,37 @@ function CompliancePanel({ compliance }) {
       cancelAnimationFrame(inner);
     };
   }, []);
+
+  const notifQuery = useQuery({
+    queryKey: ["all-user-notifications"],
+    queryFn: fetchNotificationsForPanel,
+    retry: false,
+    staleTime: 30_000,
+  });
+
+  /** @type {Array<{ createdAt?: string, sentAt?: string, message?: string }>} */
+  const items = extractNotificationList(notifQuery.data);
+  const todayStr = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+
+  const todayItems = items.filter((item) => {
+    const rawDate = item?.createdAt || item?.["sentAt"];
+    const itemDate = rawDate ? String(rawDate).slice(0, 10) : "";
+    const matchesDate = itemDate === todayStr;
+    const matchesCultivation = matchesNotificationCultivation(
+      item,
+      cultivationName,
+      sensorLocations,
+    );
+    return matchesDate && matchesCultivation;
+  });
+
+  const breachCount = todayItems.filter((item) => item.message?.includes("환경 이상")).length;
+  const recoverCount = todayItems.filter((item) => item.message?.includes("환경 복구")).length;
 
   return (
     <article className="panel-card compliance-panel">
@@ -283,7 +435,9 @@ function CompliancePanel({ compliance }) {
           );
         })}
       </div>
-      <div className="pending-widget">일일 알림 집계 · 데이터 준비 중</div>
+      <div className="compliance-notif-summary">
+        {renderNotificationSummary(notifQuery, breachCount, recoverCount)}
+      </div>
     </article>
   );
 }
@@ -1289,6 +1443,18 @@ function DashboardTabContent({
     ? photos.find((photo) => String(photo.updatedAt).slice(0, 10) === photoDateFilter)
     : currentPhoto;
   const compliance = data.dailyCompliance;
+  const canQueryFeedback =
+    Number.isFinite(id) &&
+    id > 0 &&
+    Boolean(feedbackMaxDate) &&
+    (!feedbackMinDate || feedbackMinDate <= feedbackMaxDate);
+  const feedbackQuery = useQuery({
+    queryKey: cultivationKeys.dailyFeedback(id, feedbackMaxDate),
+    queryFn: () => getDailyFeedback(id, feedbackMaxDate),
+    enabled: canQueryFeedback,
+    retry: (failureCount, error) => error?.status !== 404 && failureCount < 1,
+    staleTime: 300_000,
+  });
 
   return (
     <section
@@ -1325,8 +1491,14 @@ function DashboardTabContent({
             )}
           </div>
         </article>
-        <EnvironmentBriefing compliance={compliance} />
-        <CompliancePanel compliance={compliance} />
+        <EnvironmentBriefing compliance={compliance} dailyFeedback={feedbackQuery.data} />
+        <CompliancePanel
+          compliance={compliance}
+          cultivationName={cultivation?.name}
+          sensorLocations={normalizeList(data?.sensors?.sensors)
+            .flatMap((s) => [s.location, s.locationDetail])
+            .filter(Boolean)}
+        />
       </section>
 
       <DailyFeedbackPanel
@@ -1354,6 +1526,8 @@ function CultivationDetailToolbar({
   onOpenModal,
   onToggleNotif,
   onCloseNotif,
+  cultivationName,
+  sensorLocations,
 }) {
   return (
     <nav className="detail-toolbar" aria-label="재배 상세 메뉴">
@@ -1368,7 +1542,13 @@ function CultivationDetailToolbar({
         <button type="button" onClick={onToggleNotif}>
           <Bell aria-hidden="true" /> 알림
         </button>
-        {notifOpen && <NotificationBellPanel onClose={onCloseNotif} />}
+        {notifOpen && (
+          <NotificationBellPanel
+            onClose={onCloseNotif}
+            cultivationName={cultivationName}
+            sensorLocations={sensorLocations}
+          />
+        )}
       </div>
       <button type="button" onClick={() => onOpenModal("photos")}>
         <Camera aria-hidden="true" /> 사진
@@ -1723,11 +1903,16 @@ export default function CultivationDetailPage() {
   const feedbackMinDate = isDailyFeedbackDate(cultivationStartDate)
     ? cultivationStartDate
     : undefined;
+  const sensorLocations = normalizeList(data?.sensors?.sensors)
+    .flatMap((s) => [s.location, s.locationDetail])
+    .filter(Boolean);
 
   return (
     <main className="detail-page">
       <CultivationDetailToolbar
         canOpenActions={canOpenActions}
+        cultivationName={cultivation?.name}
+        sensorLocations={sensorLocations}
         notifOpen={notifOpen}
         onCloseNotif={() => setNotifOpen(false)}
         onOpenModal={(modalName) => setModal(modalName)}
