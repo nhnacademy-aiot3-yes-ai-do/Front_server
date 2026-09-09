@@ -58,7 +58,7 @@ export default function CultivationSensorSetupPage() {
       queryClient.invalidateQueries({ queryKey: cultivationKeys.detail(id) }),
       queryClient.invalidateQueries({ queryKey: cultivationKeys.preview(id) }),
       queryClient.invalidateQueries({ queryKey: cultivationKeys.list() }),
-      queryClient.invalidateQueries({ queryKey: ["reusable-sensors", id] }),
+      queryClient.invalidateQueries({ queryKey: ["reusable-sensors"] }),
     ]);
   };
 
@@ -81,6 +81,7 @@ export default function CultivationSensorSetupPage() {
     try {
       await deleteCultivation(id);
       queryClient.removeQueries({ queryKey: cultivationKeys.all });
+      await queryClient.invalidateQueries({ queryKey: ["reusable-sensors"] });
       navigate("/cultivations", { replace: true });
     } catch (error) {
       setNotice({ type: "error", message: error.message });

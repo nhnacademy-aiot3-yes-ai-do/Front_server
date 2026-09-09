@@ -55,7 +55,7 @@ export default function SensorManager({ cultivationId, sensors, canManage, onClo
       queryClient.invalidateQueries({ queryKey: ["cultivations", "detail", cultivationId] }),
       queryClient.invalidateQueries({ queryKey: ["cultivations", "preview", cultivationId] }),
       queryClient.invalidateQueries({ queryKey: ["cultivations", "list"] }),
-      queryClient.invalidateQueries({ queryKey: ["reusable-sensors", Number(cultivationId)] }),
+      queryClient.invalidateQueries({ queryKey: ["reusable-sensors"] }),
     ]);
   };
 

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { jsonRequest, request } from "../../api/http";
 import CultivationSensorSetupStep from "./CultivationSensorSetupStep";
@@ -43,6 +43,7 @@ function renderStep({
       />
     </QueryClientProvider>,
   );
+  return client;
 }
 
 async function completeNewSensorForm() {
@@ -83,7 +84,10 @@ describe("CultivationSensorSetupStep", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "기존 기기에서 가져오기" }));
 
-    expect(await screen.findByText("가져올 기존 센서가 없습니다.")).toBeInTheDocument();
+    expect(await screen.findByText("현재 재사용할 수 있는 기기가 없습니다.")).toBeInTheDocument();
+    expect(
+      screen.getByText("사용 중인 기기는 등록을 해제한 뒤 다시 연결할 수 있습니다."),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "센서 이름" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "센서 등록" })).not.toBeInTheDocument();
   });
@@ -170,7 +174,10 @@ describe("CultivationSensorSetupStep", () => {
       ],
     });
 
-    fireEvent.click(await screen.findByRole("button", { name: /기존 토양 센서/ }));
+    const device = await screen.findByRole("button", { name: /기존 토양 센서/ });
+    expect(within(device).getByText("재사용 가능")).toBeInTheDocument();
+    expect(within(device).queryByText("온라인")).not.toBeInTheDocument();
+    fireEvent.click(device);
 
     expect(screen.getByRole("textbox", { name: "센서 고유번호" })).toBeDisabled();
     expect(screen.getByRole("textbox", { name: "센서 고유번호" })).toHaveClass(
@@ -199,6 +206,7 @@ describe("CultivationSensorSetupStep", () => {
     expect(registeredDevice).toBeDisabled();
     expect(registeredDevice).toHaveClass("is-unavailable");
     expect(screen.getByText("이미 이 재배지에서 사용 중")).toBeInTheDocument();
+    expect(within(registeredDevice).queryByText("재사용 가능")).not.toBeInTheDocument();
 
     fireEvent.click(registeredDevice);
     expect(screen.queryByRole("textbox", { name: "센서 이름" })).not.toBeInTheDocument();
@@ -224,6 +232,135 @@ describe("CultivationSensorSetupStep", () => {
     await waitFor(() =>
       expect(scrollIntoView).toHaveBeenCalledWith({ behavior: "smooth", block: "start" }),
     );
+  });
+
+  it("기존 기기 등록이 충돌하면 목록 전체를 갱신하고 사용할 수 없어진 선택을 해제한다", async () => {
+    const availableSensors = [
+      {
+        deviceEui: "EUI-OLD",
+        deviceModel: "TEMP-100",
+        deviceName: "기존 온도 센서",
+        location: "광주",
+        locationDetail: "1번 선반",
+        sensorTypes: [{ sensorTypeId: 1, type: "TEMPERATURE", valueUnit: "°C" }],
+      },
+    ];
+    const client = renderStep({
+      reusableSensors: availableSensors,
+      sensorTypes: temperatureTypes,
+      environmentSettings: [{ sensorTypeId: 1, thresholdMin: 18, thresholdMax: 24 }],
+    });
+    client.setQueryData(["reusable-sensors", 99], { sensors: availableSensors });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    fireEvent.click(await screen.findByRole("button", { name: /기존 온도 센서/ }));
+    request.mockResolvedValue({ sensors: [] });
+    jsonRequest.mockRejectedValueOnce(
+      Object.assign(new Error("이미 등록되어 사용 중인 센서 고유번호입니다."), { status: 409 }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "센서 등록" }));
+
+    expect(
+      await screen.findByText("이미 등록되어 사용 중인 센서 고유번호입니다."),
+    ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["reusable-sensors"] }),
+    );
+    expect(client.getQueryState(["reusable-sensors", 99]).isInvalidated).toBe(true);
+    await waitFor(() =>
+      expect(screen.queryByRole("textbox", { name: "센서 이름" })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("현재 재사용할 수 있는 기기가 없습니다.")).toBeInTheDocument();
+    expect(screen.queryByText(/기기 등록이 완료되었습니다/)).not.toBeInTheDocument();
+  });
+
+  it("새 기기의 EUI가 충돌해도 입력값을 보존하고 재사용 목록을 갱신한다", async () => {
+    const client = renderStep();
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    await completeNewSensorForm();
+    jsonRequest.mockResolvedValueOnce({ isValid: true, message: "검증 완료" });
+    fireEvent.click(screen.getByRole("button", { name: "AI 범위 검증" }));
+    await screen.findByText("검증 완료");
+    jsonRequest.mockRejectedValueOnce(
+      Object.assign(new Error("이미 등록되어 사용 중인 센서 고유번호입니다."), { status: 409 }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "센서 등록" }));
+
+    expect(
+      await screen.findByText("이미 등록되어 사용 중인 센서 고유번호입니다."),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "센서 고유번호" })).toHaveValue("EUI-SOIL-001");
+    await waitFor(() =>
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["reusable-sensors"] }),
+    );
+  });
+
+  it("목록 재조회에서 선택한 기기가 사라지면 입력 폼을 닫고 안내한다", async () => {
+    const client = renderStep({
+      reusableSensors: [{ deviceEui: "EUI-OLD", deviceName: "기존 센서", sensorTypes: [] }],
+    });
+    fireEvent.click(await screen.findByRole("button", { name: /기존 센서/ }));
+    expect(screen.getByRole("textbox", { name: "센서 이름" })).toBeInTheDocument();
+    request.mockResolvedValue({ sensors: [] });
+
+    await client.invalidateQueries({ queryKey: ["reusable-sensors"] });
+
+    await waitFor(() =>
+      expect(screen.queryByRole("textbox", { name: "센서 이름" })).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText("선택한 기기를 더 이상 사용할 수 없습니다. 다른 기기를 선택해 주세요."),
+    ).toBeInTheDocument();
+  });
+
+  it("재사용 목록 재조회가 실패하면 오래된 기기로 등록할 수 없고 재시도 후 복구한다", async () => {
+    const sensor = {
+      deviceEui: "EUI-OLD",
+      deviceName: "기존 센서",
+      deviceModel: "TEMP-100",
+      location: "광주",
+      locationDetail: "1번 선반",
+      sensorTypes: [{ sensorTypeId: 1, type: "TEMPERATURE", valueUnit: "°C" }],
+    };
+    const client = renderStep({
+      reusableSensors: [sensor],
+      sensorTypes: temperatureTypes,
+      environmentSettings: [{ sensorTypeId: 1, thresholdMin: 18, thresholdMax: 24 }],
+    });
+    fireEvent.click(await screen.findByRole("button", { name: /기존 센서/ }));
+    expect(screen.getByRole("button", { name: "센서 등록" })).toBeEnabled();
+    request.mockRejectedValue(new Error("목록 조회 실패"));
+
+    await client.invalidateQueries({ queryKey: ["reusable-sensors"] });
+
+    expect(await screen.findByText("기존 센서를 불러오지 못했습니다.")).toBeInTheDocument();
+    expect(screen.queryByText("재사용 가능")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "센서 등록" })).not.toBeInTheDocument();
+    expect(jsonRequest).not.toHaveBeenCalled();
+
+    request.mockResolvedValue({ sensors: [sensor] });
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(await screen.findByRole("button", { name: "센서 등록" })).toBeEnabled();
+  });
+
+  it("일반 서버 오류는 중복 오류로 안내하거나 선택을 해제하지 않는다", async () => {
+    const client = renderStep();
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries");
+    await completeNewSensorForm();
+    jsonRequest.mockResolvedValueOnce({ isValid: true, message: "검증 완료" });
+    fireEvent.click(screen.getByRole("button", { name: "AI 범위 검증" }));
+    await screen.findByText("검증 완료");
+    jsonRequest.mockRejectedValueOnce(
+      Object.assign(new Error("일시적인 서버 오류입니다."), { status: 500 }),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "센서 등록" }));
+
+    expect(await screen.findByText("일시적인 서버 오류입니다.")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "센서 고유번호" })).toHaveValue("EUI-SOIL-001");
+    expect(screen.queryByText(/이미 등록되어 사용 중인/)).not.toBeInTheDocument();
+    expect(invalidateQueries).not.toHaveBeenCalled();
   });
 
   it("AI가 권장 범위 밖으로 판단하면 경고 확인 후 센서를 등록한다", async () => {
