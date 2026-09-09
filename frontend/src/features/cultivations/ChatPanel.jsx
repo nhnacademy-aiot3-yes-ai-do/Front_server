@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Send } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
 import Notice from "../../components/Notice";
 import { normalizeList } from "../../utils/formatters";
@@ -17,6 +17,14 @@ export default function ChatPanel({ cultivationId }) {
   const [notice, setNotice] = useState(null);
   const [sending, setSending] = useState(false);
   const inputRef = useRef(null);
+
+  // cultivationId 변경 시 세션 초기화
+  useEffect(() => {
+    setConversationId(null);
+    setMessages([]);
+    setNotice(null);
+  }, [cultivationId]);
+
   const historyQuery = useQuery({
     queryKey: ["chat-history", cultivationId],
     queryFn: () =>
