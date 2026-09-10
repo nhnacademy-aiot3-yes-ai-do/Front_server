@@ -95,4 +95,65 @@ describe("DailyFeedbackPanel", () => {
     expect(await screen.findByText(/현재 환기 주기를 유지해 주세요/)).toBeInTheDocument();
     expect(getDailyFeedback).toHaveBeenCalledTimes(3);
   });
+
+  it("사진 분석이 포함된 경우 분석 사진 보기 버튼을 클릭하면 모달에 이미지가 표시된다", async () => {
+    const feedbackWithPhoto = {
+      ...feedback,
+      cultivationPhotoId: 101,
+    };
+    getDailyFeedback.mockResolvedValue(feedbackWithPhoto);
+
+    renderPanel({
+      photos: [
+        {
+          photoId: 101,
+          uri: "https://yes-nhn.site/storage-proxy/test.jpg",
+          originalName: "test.jpg",
+        },
+      ],
+    });
+
+    const photoButton = await screen.findByRole("button", {
+      name: "분석에 사용된 사진 보기",
+    });
+    expect(photoButton).toBeInTheDocument();
+
+    // 모달이 처음에는 열려있지 않음
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    // 버튼 클릭 시 모달 열림
+    fireEvent.click(photoButton);
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByText("AI 비전 분석 대상 사진")).toBeInTheDocument();
+    const modalImg = screen.getByAltText("AI 분석 대상 재배 사진");
+    expect(modalImg).toHaveAttribute("src", "https://yes-nhn.site/storage-proxy/test.jpg");
+
+    // 닫기 버튼 클릭 시 모달 닫힘
+    fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("사진 분석 미포함(hasVisionAnalysis: false)인 경우 분석 사진 보기 버튼이 노출되지 않는다", async () => {
+    const feedbackWithoutPhoto = {
+      ...feedback,
+      hasVisionAnalysis: false,
+      cultivationPhotoId: null,
+    };
+    getDailyFeedback.mockResolvedValue(feedbackWithoutPhoto);
+
+    renderPanel({
+      photos: [
+        {
+          photoId: 101,
+          uri: "https://yes-nhn.site/storage-proxy/test.jpg",
+          originalName: "test.jpg",
+        },
+      ],
+    });
+
+    expect(await screen.findByText("사진 분석 미포함")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "분석에 사용된 사진 보기" }),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { CalendarDays, ChevronRight, Sparkles } from "lucide-react";
+import { CalendarDays, Camera, ChevronRight, Sparkles } from "lucide-react";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cultivationKeys, getDailyFeedback } from "../../api/cultivations";
+import Modal from "../../components/Modal";
 import { formatDateTime } from "../../utils/formatters";
 import { isDailyFeedbackDate } from "./dailyFeedbackDates";
 
@@ -125,6 +127,7 @@ function ReportPanel({
   query,
   onFeedbackDateChange,
 }) {
+  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const feedback = query.data;
   // 분석에 사용된 사진 찾기
   const analyzedPhoto = feedback?.cultivationPhotoId
@@ -178,30 +181,24 @@ function ReportPanel({
             <FeedbackMeta feedback={feedback} feedbackDate={feedbackDate} />
           </header>
 
-          {/* AI 비전 분석에 사용된 사진 표시 영역 추가 */}
           {feedback.hasVisionAnalysis && analyzedPhoto && (
-            <div style={{ margin: "16px 0", textAlign: "center" }}>
-              <p
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  color: "#4f46e5",
-                  marginBottom: "8px",
-                }}
+            <div className="daily-feedback-photo-action">
+              <button
+                type="button"
+                className="daily-feedback-photo-chip"
+                onClick={() => setIsPhotoModalOpen(true)}
               >
-                📸 AI 비전 분석에 사용된 사진
-              </p>
-              <img
-                src={analyzedPhoto.uri}
-                alt="AI 분석 대상 재배 사진"
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "320px",
-                  borderRadius: "12px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                  objectFit: "contain",
-                }}
-              />
+                <Camera size={14} aria-hidden="true" />
+                <span>분석에 사용된 사진 보기</span>
+              </button>
+
+              {isPhotoModalOpen && (
+                <Modal title="AI 비전 분석 대상 사진" onClose={() => setIsPhotoModalOpen(false)}>
+                  <div className="daily-feedback-modal-photo">
+                    <img src={analyzedPhoto.uri} alt="AI 분석 대상 재배 사진" />
+                  </div>
+                </Modal>
+              )}
             </div>
           )}
 
