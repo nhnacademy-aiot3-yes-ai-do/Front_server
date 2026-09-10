@@ -4,6 +4,7 @@ var NOTIFICATION_EVENTS = [];
 var notificationEventPage = 1;
 var NOTIFICATION_EVENT_PAGE_SIZE = 8;
 var currentNotificationEventId = null;
+var NOTIFICATION_TEMPLATES = [];
 var EVENT_API = '/admin/notification-events/api';
 
 function escapeHtml(value) {
@@ -140,11 +141,31 @@ function deleteNotificationEvent() {
         })
         .catch(function (error) { alert(error.message); });
 }
+function renderNotificationTemplates(items) {
+    document.getElementById('notification-template-total-count').textContent = items.length;
+    var tbody = document.getElementById('notification-template-tbody');
+    if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5">조건에 맞는 템플릿이 없습니다.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = items.map(function (item) { return '<tr><td>' + escapeHtml(item.eventTypeCode) + '</td><td>' + escapeHtml(item.channelCode) + '</td><td>' + item.version + '</td><td class="ne-desc-cell">' + escapeHtml(item.bodyTemplate) + '</td><td><button type="button" onclick="editNotificationTemplate(' + item.id + ',' + item.eventTypeId + ',' + item.channelTypeId + ',' + item.version + ')">수정</button> <button type="button" onclick="deleteNotificationTemplate(' + item.id + ')">삭제</button></td></tr>'; }).join('');
+}
+function filterNotificationTemplates(channelCode) {
+    var filtered = channelCode ? NOTIFICATION_TEMPLATES.filter(function (item) { return item.channelCode === channelCode; }) : NOTIFICATION_TEMPLATES;
+    renderNotificationTemplates(filtered);
+}
+function updateNotificationTemplateChannelFilter(items) {
+    var select = document.getElementById('notification-template-channel-filter');
+    var selected = select.value;
+    var channels = items.map(function (item) { return item.channelCode; }).filter(function (channel, index, all) { return channel && all.indexOf(channel) === index; }).sort();
+    select.innerHTML = '<option value="">전체 채널</option>' + channels.map(function (channel) { return '<option value="' + escapeHtml(channel) + '">' + escapeHtml(channel) + '</option>'; }).join('');
+    select.value = channels.indexOf(selected) >= 0 ? selected : '';
+}
 function loadNotificationTemplates() {
     requestJson('/admin/notification-events/api/templates').then(function (payload) {
-        var items = payload && Array.isArray(payload.notificationTemplateResponses) ? payload.notificationTemplateResponses : [];
-        document.getElementById('notification-template-total-count').textContent = items.length;
-        document.getElementById('notification-template-tbody').innerHTML = items.map(function (item) { return '<tr><td>' + escapeHtml(item.eventTypeCode) + '</td><td>' + escapeHtml(item.channelCode) + '</td><td>' + item.version + '</td><td class="ne-desc-cell">' + escapeHtml(item.bodyTemplate) + '</td><td><button type="button" onclick="editNotificationTemplate(' + item.id + ',' + item.eventTypeId + ',' + item.channelTypeId + ',' + item.version + ')">수정</button> <button type="button" onclick="deleteNotificationTemplate(' + item.id + ')">삭제</button></td></tr>'; }).join('');
+        NOTIFICATION_TEMPLATES = payload && Array.isArray(payload.notificationTemplateResponses) ? payload.notificationTemplateResponses : [];
+        updateNotificationTemplateChannelFilter(NOTIFICATION_TEMPLATES);
+        filterNotificationTemplates(document.getElementById('notification-template-channel-filter').value);
     }).catch(function (e) { alert(e.message); });
 }
 function createNotificationTemplate(){var e=prompt('이벤트 ID');var c=prompt('채널 ID');var v=prompt('버전','1');var b=prompt('Template 본문');if(!e||!c||!b)return;requestJson('/admin/notification-events/api/templates',{method:'POST',body:JSON.stringify({eventTypeId:Number(e),channelTypeId:Number(c),version:Number(v||1),bodyTemplate:b.trim()})}).then(loadNotificationTemplates).catch(function(x){alert(x.message);});}

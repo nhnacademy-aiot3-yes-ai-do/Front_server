@@ -142,7 +142,7 @@ describe("CultivationSensorSetupPage", () => {
       queryKey: ["cultivations", "preview", 41],
     });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["cultivations", "list"] });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["reusable-sensors", 41] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["reusable-sensors"] });
   });
 
   it("소유자는 설정 중인 재배지를 확인 후 삭제하고 목록으로 이동한다", async () => {
@@ -156,6 +156,7 @@ describe("CultivationSensorSetupPage", () => {
     });
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries").mockResolvedValue();
 
     render(
       <QueryClientProvider client={client}>
@@ -177,6 +178,9 @@ describe("CultivationSensorSetupPage", () => {
       "재배지와 연결된 정보를 삭제할까요? 이 작업은 되돌릴 수 없습니다.",
     );
     await waitFor(() => expect(deleteCultivation).toHaveBeenCalledWith(41));
+    await waitFor(() =>
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["reusable-sensors"] }),
+    );
     expect(await screen.findByText("재배지 목록 화면")).toBeInTheDocument();
   });
 });

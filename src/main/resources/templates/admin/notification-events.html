@@ -55,7 +55,16 @@
             </section>
 
             <section class="member-card notification-tab-panel" data-notification-panel="templates" hidden>
-                <div class="member-toolbar"><div class="member-count">전체 템플릿 <strong id="notification-template-total-count">0</strong>개</div><div class="toolbar-actions"><button class="add-button" type="button" onclick="createNotificationTemplate()"><i data-lucide="plus"></i>새 템플릿 등록</button></div></div>
+                <div class="member-toolbar">
+                    <div class="member-count">표시 템플릿 <strong id="notification-template-total-count">0</strong>개</div>
+                    <div class="toolbar-actions">
+                        <label class="sr-only" for="notification-template-channel-filter">템플릿 채널 필터</label>
+                        <select id="notification-template-channel-filter" onchange="filterNotificationTemplates(this.value)">
+                            <option value="">전체 채널</option>
+                        </select>
+                        <button class="add-button" type="button" onclick="createNotificationTemplate()"><i data-lucide="plus"></i>새 템플릿 등록</button>
+                    </div>
+                </div>
                 <div class="table-wrap"><table class="member-table"><thead><tr><th>이벤트</th><th>채널</th><th>버전</th><th>본문</th><th>관리</th></tr></thead><tbody id="notification-template-tbody"></tbody></table></div>
             </section>
 

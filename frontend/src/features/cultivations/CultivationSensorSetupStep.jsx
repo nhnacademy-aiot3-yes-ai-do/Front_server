@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Plus, TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { jsonRequest, request, unwrapApiResponse } from "../../api/http";
@@ -116,6 +116,7 @@ export default function CultivationSensorSetupStep({
   registeredSensors = [],
   onRegistered,
 }) {
+  const queryClient = useQueryClient();
   const [sourceMode, setSourceMode] = useState("new");
   const [catalogModeInitialized, setCatalogModeInitialized] = useState(false);
   const [selectedDeviceEui, setSelectedDeviceEui] = useState(null);
@@ -125,7 +126,7 @@ export default function CultivationSensorSetupStep({
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
   const [registrationWarning, setRegistrationWarning] = useState(null);
-  const successNoticeRef = useRef(null);
+  const noticeRef = useRef(null);
   const sensorTypesQuery = useQuery({
     queryKey: ["sensor-types"],
     queryFn: () => request("/cultivations/sensor-types"),
@@ -136,6 +137,8 @@ export default function CultivationSensorSetupStep({
     queryFn: () =>
       request(`/cultivations/reusable-sensors?exclude-cultivation-id=${cultivationId}`),
     enabled: Number.isFinite(Number(cultivationId)),
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 
   const sensorTypes = normalizeList(sensorTypesQuery.data?.sensorTypeInfoResponses);
@@ -168,14 +171,21 @@ export default function CultivationSensorSetupStep({
 
       return ["approved", "warning", "unavailable"].includes(setting.validation?.status);
     });
-  const hasSelectedExistingSensor = sourceMode !== "existing" || Boolean(selectedDeviceEui);
+  const selectedDeviceAvailable =
+    Boolean(selectedDeviceEui) &&
+    reusableSensors.some((sensor) => sensor.deviceEui === selectedDeviceEui) &&
+    !isDuplicateDeviceEui;
+  const hasSelectedExistingSensor =
+    sourceMode !== "existing" ||
+    (selectedDeviceAvailable && reusableSensorsQuery.isSuccess && !reusableSensorsQuery.isFetching);
   const canSubmit =
     requiredFieldsComplete &&
     selectedSettingsReady &&
     hasSelectedExistingSensor &&
     !isDuplicateDeviceEui &&
     !busy;
-  const showSensorForm = sourceMode === "new" || Boolean(selectedDeviceEui);
+  const showSensorForm =
+    sourceMode === "new" || (selectedDeviceAvailable && !reusableSensorsQuery.isError);
 
   useEffect(() => {
     if (catalogModeInitialized || reusableSensorsQuery.isLoading) return;
@@ -184,9 +194,37 @@ export default function CultivationSensorSetupStep({
   }, [catalogModeInitialized, reusableSensors, reusableSensorsQuery.isLoading]);
 
   useEffect(() => {
-    if (notice?.type !== "success") return;
-    successNoticeRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+    if (!notice) return;
+    noticeRef.current?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }, [notice]);
+
+  useEffect(() => {
+    if (
+      !selectedDeviceEui ||
+      selectedDeviceAvailable ||
+      !reusableSensorsQuery.isSuccess ||
+      reusableSensorsQuery.isFetching
+    )
+      return;
+
+    setSelectedDeviceEui(null);
+    setSensorForm(EMPTY_SENSOR);
+    setSelectedTypeIds([]);
+    setSettings({});
+    setRegistrationWarning(null);
+    setNotice(
+      (current) =>
+        current || {
+          type: "error",
+          message: "선택한 기기를 더 이상 사용할 수 없습니다. 다른 기기를 선택해 주세요.",
+        },
+    );
+  }, [
+    selectedDeviceEui,
+    selectedDeviceAvailable,
+    reusableSensorsQuery.isSuccess,
+    reusableSensorsQuery.isFetching,
+  ]);
 
   const clearSelection = (mode) => {
     setSourceMode(mode);
@@ -373,6 +411,10 @@ export default function CultivationSensorSetupStep({
 
   const persistSensor = async (sensor) => {
     setRegistrationWarning(null);
+    if (!hasSelectedExistingSensor) {
+      setNotice({ type: "error", message: "기존 기기의 사용 가능 여부를 다시 확인해 주세요." });
+      return;
+    }
     setBusy(true);
     try {
       await jsonRequest(`/cultivations/${cultivationId}/sensors`, "POST", sensor);
@@ -384,6 +426,9 @@ export default function CultivationSensorSetupStep({
       await onRegistered?.(sensor);
     } catch (error) {
       setNotice({ type: "error", message: error.message });
+      if (error.status === 409) {
+        await queryClient.invalidateQueries({ queryKey: ["reusable-sensors"] });
+      }
     } finally {
       setBusy(false);
     }
@@ -392,7 +437,7 @@ export default function CultivationSensorSetupStep({
   const registerSensor = async (event) => {
     event.preventDefault();
 
-    if (sourceMode === "existing" && !selectedDeviceEui) {
+    if (!hasSelectedExistingSensor) {
       setNotice({ type: "error", message: "가져올 기존 센서를 선택해 주세요." });
       return;
     }
@@ -450,8 +495,8 @@ export default function CultivationSensorSetupStep({
 
   return (
     <div className="sensor-setup-workspace">
-      {notice?.type === "success" && (
-        <div ref={successNoticeRef}>
+      {notice && (
+        <div ref={noticeRef}>
           <Notice notice={notice} onDismiss={() => setNotice(null)} />
         </div>
       )}
@@ -461,6 +506,7 @@ export default function CultivationSensorSetupStep({
           type="button"
           className={sourceMode === "existing" ? "is-active" : ""}
           aria-pressed={sourceMode === "existing"}
+          disabled={busy}
           onClick={() => clearSelection("existing")}
         >
           기존 기기에서 가져오기
@@ -469,6 +515,7 @@ export default function CultivationSensorSetupStep({
           type="button"
           className={sourceMode === "new" ? "is-active" : ""}
           aria-pressed={sourceMode === "new"}
+          disabled={busy}
           onClick={() => clearSelection("new")}
         >
           <Plus aria-hidden="true" /> 새 기기 등록
@@ -477,6 +524,9 @@ export default function CultivationSensorSetupStep({
 
       {sourceMode === "existing" && (
         <section className="reusable-sensor-catalog" aria-label="기존 센서 목록">
+          <p className="reusable-sensor-policy">
+            이전에 등록한 기기 중 현재 사용이 해제된 기기만 표시됩니다.
+          </p>
           {reusableSensorsQuery.isLoading && <p>기존 센서를 불러오는 중...</p>}
           {reusableSensorsQuery.isError && (
             <div className="sensor-column-state">
@@ -490,54 +540,60 @@ export default function CultivationSensorSetupStep({
             !reusableSensorsQuery.isError &&
             reusableSensors.length === 0 && (
               <div className="sensor-catalog-empty">
-                <strong>가져올 기존 센서가 없습니다.</strong>
-                <span>새 기기 등록을 선택해 첫 센서를 연결하세요.</span>
+                <strong>현재 재사용할 수 있는 기기가 없습니다.</strong>
+                <span>사용 중인 기기는 등록을 해제한 뒤 다시 연결할 수 있습니다.</span>
+                <span>새 기기가 있다면 새 기기 등록을 선택해 주세요.</span>
               </div>
             )}
           <div className="reusable-sensor-options">
-            {reusableSensors.map((sensor) => {
-              const alreadyRegistered = registeredDeviceEuis.has(
-                String(sensor.deviceEui ?? "")
-                  .trim()
-                  .toUpperCase(),
-              );
+            {!reusableSensorsQuery.isError &&
+              reusableSensors.map((sensor) => {
+                const alreadyRegistered = registeredDeviceEuis.has(
+                  String(sensor.deviceEui ?? "")
+                    .trim()
+                    .toUpperCase(),
+                );
 
-              return (
-                <button
-                  key={sensor.deviceEui}
-                  type="button"
-                  className={`${selectedDeviceEui === sensor.deviceEui ? "is-selected" : ""} ${alreadyRegistered ? "is-unavailable" : ""}`.trim()}
-                  aria-pressed={selectedDeviceEui === sensor.deviceEui}
-                  onClick={() => selectReusableSensor(sensor)}
-                  disabled={alreadyRegistered}
-                >
-                  <span>
-                    <strong>{sensor.deviceName}</strong>
-                    <small>{sensor.deviceEui}</small>
-                    {alreadyRegistered && (
-                      <small className="reusable-sensor-unavailable-reason">
-                        이미 이 재배지에서 사용 중
+                return (
+                  <button
+                    key={sensor.deviceEui}
+                    type="button"
+                    className={`${selectedDeviceEui === sensor.deviceEui ? "is-selected" : ""} ${alreadyRegistered ? "is-unavailable" : ""}`.trim()}
+                    aria-pressed={selectedDeviceEui === sensor.deviceEui}
+                    onClick={() => selectReusableSensor(sensor)}
+                    disabled={alreadyRegistered || busy || reusableSensorsQuery.isFetching}
+                  >
+                    <span className="reusable-sensor-info">
+                      <span className="reusable-sensor-heading">
+                        <strong>{sensor.deviceName}</strong>
+                        {!alreadyRegistered && (
+                          <span className="reusable-sensor-badge">
+                            <CheckCircle2 aria-hidden="true" />
+                            {reusableSensorsQuery.isFetching ? "확인 중" : "재사용 가능"}
+                          </span>
+                        )}
+                      </span>
+                      <small>{sensor.deviceEui}</small>
+                      {alreadyRegistered && (
+                        <small className="reusable-sensor-unavailable-reason">
+                          이미 이 재배지에서 사용 중
+                        </small>
+                      )}
+                      <small>
+                        {normalizeList(sensor.sensorTypes)
+                          .map((type) => `${formatSensorType(type.type)} ${type.valueUnit}`)
+                          .join(" · ") || "측정 타입을 다시 선택해 주세요"}
                       </small>
-                    )}
-                  </span>
-                  <small>
-                    {normalizeList(sensor.sensorTypes)
-                      .map((type) => `${formatSensorType(type.type)} ${type.valueUnit}`)
-                      .join(" · ") || "측정 타입을 다시 선택해 주세요"}
-                  </small>
-                </button>
-              );
-            })}
+                    </span>
+                  </button>
+                );
+              })}
           </div>
         </section>
       )}
 
       {showSensorForm && (
         <form className="form-stack sensor-setup-form" onSubmit={registerSensor}>
-          {notice?.type !== "success" && (
-            <Notice notice={notice} onDismiss={() => setNotice(null)} />
-          )}
-
           <div className="form-field-grid">
             <label>
               센서 이름

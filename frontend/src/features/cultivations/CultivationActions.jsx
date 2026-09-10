@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jsonRequest, request } from "../../api/http";
@@ -6,6 +7,7 @@ import Notice from "../../components/Notice";
 import { formatDate, normalizeList } from "../../utils/formatters";
 
 export default function CultivationActions({ cultivation, growthDays, pastCultivations, onClose }) {
+  const queryClient = useQueryClient();
   const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
   const [view, setView] = useState("actions");
@@ -47,6 +49,10 @@ export default function CultivationActions({ cultivation, growthDays, pastCultiv
         harvestWeight: weight,
         memo: String(values.get("memo")).trim(),
       });
+      await Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["reusable-sensors"] }),
+        queryClient.invalidateQueries({ queryKey: ["cultivations", "list"] }),
+      ]);
       setHarvestWeight(Number(response?.harvestWeight ?? weight));
       setComparisonId(histories[0] ? String(histories[0].cultivationId) : "");
       setNotice({ type: "success", message: "최종 수확량을 기록했습니다." });
@@ -65,6 +71,10 @@ export default function CultivationActions({ cultivation, growthDays, pastCultiv
     setBusy(true);
     try {
       await request(`/cultivations/${id}`, { method: "DELETE" });
+      await Promise.allSettled([
+        queryClient.invalidateQueries({ queryKey: ["reusable-sensors"] }),
+        queryClient.invalidateQueries({ queryKey: ["cultivations", "list"] }),
+      ]);
       navigate("/cultivations", { replace: true });
     } catch (error) {
       setNotice({ type: "error", message: error.message });

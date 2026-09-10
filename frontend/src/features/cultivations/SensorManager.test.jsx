@@ -93,7 +93,7 @@ describe("SensorManager", () => {
       queryKey: ["cultivations", "preview", 41],
     });
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["cultivations", "list"] });
-    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["reusable-sensors", 41] });
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["reusable-sensors"] });
     expect(screen.getByRole("tab", { name: "등록된 센서" })).toHaveAttribute(
       "aria-selected",
       "true",
@@ -125,6 +125,20 @@ describe("SensorManager", () => {
         thresholdMax: 24,
       }),
     );
+  });
+
+  it("센서를 삭제하면 다른 재배지의 재사용 목록도 갱신한다", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    const client = renderManager();
+    const invalidateQueries = vi.spyOn(client, "invalidateQueries").mockResolvedValue();
+    fireEvent.click(await screen.findByRole("button", { name: /센서 삭제/ }));
+    await waitFor(() =>
+      expect(request).toHaveBeenCalledWith("/cultivations/41/sensors/10", { method: "DELETE" }),
+    );
+    await waitFor(() =>
+      expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ["reusable-sensors"] }),
+    );
+    confirm.mockRestore();
   });
 });
 
