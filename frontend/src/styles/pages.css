@@ -1285,6 +1285,49 @@ p.daily-feedback-preview__content {
   margin-top: 0;
 }
 
+.daily-feedback-photo-action {
+  margin: 14px 0 4px;
+}
+
+.daily-feedback-photo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: var(--cream-100);
+  color: var(--brown-900);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.daily-feedback-photo-chip:hover {
+  background: var(--sage-200);
+  border-color: var(--sage-500);
+  color: var(--brown-900);
+  transform: translateY(-1px);
+}
+
+.daily-feedback-modal-photo {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.daily-feedback-modal-photo img {
+  width: 100%;
+  max-height: 65vh;
+  border-radius: 12px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
 .daily-feedback-document__content {
   margin: 20px 0 0;
   color: var(--brown-700);
