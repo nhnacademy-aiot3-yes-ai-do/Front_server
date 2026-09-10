@@ -338,8 +338,7 @@ function EventsPanel({ query, onEdit, onDelete }) {
   );
 }
 
-function TemplatesPanel({ query, onEdit, onDelete }) {
-  const items = query.data || [];
+function TemplatesPanel({ query, items, onEdit, onDelete }) {
   return (
     <div className="admin-table-wrap">
       <table className="admin-table">
@@ -358,7 +357,9 @@ function TemplatesPanel({ query, onEdit, onDelete }) {
               colSpan={5}
               loading={query.isLoading}
               error={query.error}
-              empty="등록된 템플릿이 없습니다."
+              empty={
+                query.data?.length ? "조건에 맞는 템플릿이 없습니다." : "등록된 템플릿이 없습니다."
+              }
               onRetry={query.refetch}
             />
           )}
@@ -451,6 +452,7 @@ function ChannelsPanel({ query, onEdit, onDelete, onRestore }) {
 export default function AdminNotificationsPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState("events");
+  const [templateChannelFilter, setTemplateChannelFilter] = useState("");
   const [editing, setEditing] = useState(undefined);
   const [deleting, setDeleting] = useState(null);
   const [actionNotice, setActionNotice] = useState(null);
@@ -467,6 +469,13 @@ export default function AdminNotificationsPage() {
     queryKey: ["admin", "notification-channels"],
     queryFn: getNotificationChannels,
   });
+  const templateItems = templatesQuery.data || [];
+  const templateChannels = [
+    ...new Set(templateItems.map((item) => item.channelCode).filter(Boolean)),
+  ].sort();
+  const filteredTemplateItems = templateChannelFilter
+    ? templateItems.filter((item) => item.channelCode === templateChannelFilter)
+    : templateItems;
   const restoreMutation = useMutation({
     mutationFn: (item) => restoreNotificationChannel(item.id),
     onSuccess: () => {
@@ -479,7 +488,7 @@ export default function AdminNotificationsPage() {
     tab === "events"
       ? eventsQuery.data
       : tab === "templates"
-        ? templatesQuery.data
+        ? filteredTemplateItems
         : channelsQuery.data;
 
   return (
@@ -533,13 +542,40 @@ export default function AdminNotificationsPage() {
           <p>
             전체 <strong>{currentItems?.length ?? "-"}</strong>개
           </p>
+          {tab === "templates" && (
+            <label
+              className="admin-select-label"
+              htmlFor="admin-notification-template-channel-filter"
+            >
+              템플릿 채널
+              <select
+                id="admin-notification-template-channel-filter"
+                value={
+                  templateChannels.includes(templateChannelFilter) ? templateChannelFilter : ""
+                }
+                onChange={(event) => setTemplateChannelFilter(event.target.value)}
+              >
+                <option value="">전체 채널</option>
+                {templateChannels.map((channel) => (
+                  <option key={channel} value={channel}>
+                    {channel}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
         </div>
         <Notice notice={actionNotice} onDismiss={() => setActionNotice(null)} />
         {tab === "events" && (
           <EventsPanel query={eventsQuery} onEdit={setEditing} onDelete={setDeleting} />
         )}
         {tab === "templates" && (
-          <TemplatesPanel query={templatesQuery} onEdit={setEditing} onDelete={setDeleting} />
+          <TemplatesPanel
+            query={templatesQuery}
+            items={filteredTemplateItems}
+            onEdit={setEditing}
+            onDelete={setDeleting}
+          />
         )}
         {tab === "channels" && (
           <ChannelsPanel
