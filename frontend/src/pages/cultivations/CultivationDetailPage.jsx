@@ -759,83 +759,92 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
               </p>
 
               <div style={{ marginTop: "auto", paddingTop: "8px" }}>
-                <div style={{ fontSize: "11px", color: "#888", marginBottom: "5px", fontWeight: "600" }}>
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "#888",
+                    marginBottom: "5px",
+                    fontWeight: "600",
+                  }}
+                >
                   📊 재배 기간 실측 평균
                 </div>
                 <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(2, 1fr)",
-                      gap: "6px",
-                    }}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(2, 1fr)",
+                    gap: "6px",
+                  }}
                 >
                   <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        backgroundColor: "#fff7ed",
-                        border: "1px solid #fed7aa",
-                        color: "#c2410c",
-                        padding: "4px 8px",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                      }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      backgroundColor: "#fff7ed",
+                      border: "1px solid #fed7aa",
+                      color: "#c2410c",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: "600",
+                    }}
                   >
                     <span>🌡️</span>
-                    <span>{c.avgTemperature != null ? Number(c.avgTemperature).toFixed(1) : "-"}℃</span>
+                    <span>
+                      {c.avgTemperature != null ? Number(c.avgTemperature).toFixed(1) : "-"}℃
+                    </span>
                   </div>
 
                   <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        backgroundColor: "#eff6ff",
-                        border: "1px solid #bfdbfe",
-                        color: "#1d4ed8",
-                        padding: "4px 8px",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                      }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      backgroundColor: "#eff6ff",
+                      border: "1px solid #bfdbfe",
+                      color: "#1d4ed8",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: "600",
+                    }}
                   >
                     <span>💧</span>
                     <span>{c.avgHumidity != null ? Number(c.avgHumidity).toFixed(1) : "-"}%</span>
                   </div>
 
                   <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        backgroundColor: "#f5f3ff",
-                        border: "1px solid #ddd6fe",
-                        color: "#6d28d9",
-                        padding: "4px 8px",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                      }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      backgroundColor: "#f5f3ff",
+                      border: "1px solid #ddd6fe",
+                      color: "#6d28d9",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: "600",
+                    }}
                   >
                     <span>☁️</span>
                     <span>{c.avgCo2 != null ? Number(c.avgCo2).toFixed(0) : "-"}ppm</span>
                   </div>
 
                   <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        backgroundColor: "#fefce8",
-                        border: "1px solid #fef08a",
-                        color: "#a16207",
-                        padding: "4px 8px",
-                        borderRadius: "6px",
-                        fontSize: "11px",
-                        fontWeight: "600",
-                      }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      backgroundColor: "#fefce8",
+                      border: "1px solid #fef08a",
+                      color: "#a16207",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "11px",
+                      fontWeight: "600",
+                    }}
                   >
                     <span>☀️</span>
                     <span>{c.avgLight != null ? Number(c.avgLight).toFixed(0) : "-"}lx</span>
@@ -844,13 +853,13 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
               </div>
 
               <div
-                  style={{
-                    fontSize: "11px",
-                    color: "#708d66",
-                    fontWeight: "bold",
-                    textAlign: "right",
-                    marginTop: "6px",
-                  }}
+                style={{
+                  fontSize: "11px",
+                  color: "#708d66",
+                  fontWeight: "bold",
+                  textAlign: "right",
+                  marginTop: "6px",
+                }}
               >
                 상세 분석 보기 →
               </div>

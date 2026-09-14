@@ -36,7 +36,8 @@ export default function ChatPanel({ cultivationId }) {
 
   const historyQuery = useQuery({
     queryKey: ["chat-history", cultivationId],
-    queryFn: () => request(`/api/chat/history?cultivationId=${cultivationId}`).then(unwrapApiResponse),
+    queryFn: () =>
+      request(`/api/chat/history?cultivationId=${cultivationId}`).then(unwrapApiResponse),
     enabled: Boolean(cultivationId),
     retry: 1,
   });
@@ -86,8 +87,8 @@ export default function ChatPanel({ cultivationId }) {
         },
       ]);
       void queryClient
-          .invalidateQueries({ queryKey: ["chat-history", cultivationId] })
-          .catch(() => {});
+        .invalidateQueries({ queryKey: ["chat-history", cultivationId] })
+        .catch(() => {});
     } catch (error) {
       if (currentGeneration !== requestGenerationRef.current) {
         return;
@@ -102,50 +103,50 @@ export default function ChatPanel({ cultivationId }) {
   };
 
   return (
-      <section className="panel-card chat-panel">
-        <header className="panel-card__heading">
-          <div>
-            <h2>MushMush AI 챗봇</h2>
-            <p>현재 재배지 정보를 바탕으로 질문할 수 있습니다.</p>
-          </div>
-        </header>
-        <Notice notice={notice} onDismiss={() => setNotice(null)} />
-
-        {/* 깔끔한 className 유지 */}
-        <div className="chat-messages" aria-live="polite">
-          {[welcomeMessage, ...visibleMessages].map((message) => (
-              <div
-                  className={`chat-message ${message.role === "USER" ? "chat-message--user" : ""}`}
-                  key={message.id || `${message.sequenceNumber}-${message.createdAt}`}
-              >
-                {message.role !== "USER" && (
-                    <img src="/images/chatbot.png" alt="봇" className="chat-avatar" />
-                )}
-                <p>{message.content}</p>
-              </div>
-          ))}
-          {historyQuery.isLoading && <p className="chat-status">이전 대화를 불러오는 중…</p>}
-          {sending && <p className="chat-status">답변을 생각하고 있어요…</p>}
-
-          {/* 최신 메시지 위치 추적용 빈 div */}
-          <div ref={messagesEndRef} />
+    <section className="panel-card chat-panel">
+      <header className="panel-card__heading">
+        <div>
+          <h2>MushMush AI 챗봇</h2>
+          <p>현재 재배지 정보를 바탕으로 질문할 수 있습니다.</p>
         </div>
+      </header>
+      <Notice notice={notice} onDismiss={() => setNotice(null)} />
 
-        <form className="chat-input" onSubmit={sendMessage}>
-          <label className="sr-only" htmlFor="cultivation-chat-input">
-            챗봇 메시지
-          </label>
-          <input
-              ref={inputRef}
-              id="cultivation-chat-input"
-              autoComplete="off"
-              maxLength="1000"
-              placeholder="재배 관련 질문을 입력하세요"
-          />
-          <button className="button button--primary" type="submit" disabled={sending}>
-            <Send aria-hidden="true" /> 전송
-          </button>
-        </form>
-      </section>
+      {/* 깔끔한 className 유지 */}
+      <div className="chat-messages" aria-live="polite">
+        {[welcomeMessage, ...visibleMessages].map((message) => (
+          <div
+            className={`chat-message ${message.role === "USER" ? "chat-message--user" : ""}`}
+            key={message.id || `${message.sequenceNumber}-${message.createdAt}`}
+          >
+            {message.role !== "USER" && (
+              <img src="/images/chatbot.png" alt="봇" className="chat-avatar" />
+            )}
+            <p>{message.content}</p>
+          </div>
+        ))}
+        {historyQuery.isLoading && <p className="chat-status">이전 대화를 불러오는 중…</p>}
+        {sending && <p className="chat-status">답변을 생각하고 있어요…</p>}
+
+        {/* 최신 메시지 위치 추적용 빈 div */}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form className="chat-input" onSubmit={sendMessage}>
+        <label className="sr-only" htmlFor="cultivation-chat-input">
+          챗봇 메시지
+        </label>
+        <input
+          ref={inputRef}
+          id="cultivation-chat-input"
+          autoComplete="off"
+          maxLength="1000"
+          placeholder="재배 관련 질문을 입력하세요"
+        />
+        <button className="button button--primary" type="submit" disabled={sending}>
+          <Send aria-hidden="true" /> 전송
+        </button>
+      </form>
+    </section>
   );
 }
