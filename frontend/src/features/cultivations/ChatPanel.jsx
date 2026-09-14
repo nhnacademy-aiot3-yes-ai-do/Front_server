@@ -12,15 +12,16 @@ const welcomeMessage = {
 };
 
 export default function ChatPanel({ cultivationId }) {
-  const queryClient = useQueryClient(); // 👈 1. queryClient 추가
+  const queryClient = useQueryClient();
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [notice, setNotice] = useState(null);
   const [sending, setSending] = useState(false);
   const inputRef = useRef(null);
   const requestGenerationRef = useRef(0);
+  const messagesEndRef = useRef(null); // 👈 자동 스크롤 기준점
 
-  // cultivationId 변경 또는 화면 이탈 시 세션 초기화 및 이전 비동기 요청 무효화
+  // cultivationId 변경 또는 화면 이탈 시 세션 초기화
   useEffect(() => {
     requestGenerationRef.current += 1;
     setConversationId(null);
@@ -28,7 +29,6 @@ export default function ChatPanel({ cultivationId }) {
     setNotice(null);
     setSending(false);
 
-    // 화면을 나갈 때 진행 중이던 요청 무효화
     return () => {
       requestGenerationRef.current += 1;
     };
@@ -44,6 +44,11 @@ export default function ChatPanel({ cultivationId }) {
 
   const history = normalizeList(historyQuery.data);
   const visibleMessages = messages.length > 0 ? messages : history;
+
+  // 새 대화가 추가되거나 AI 답변 대기 시 자동으로 맨 아래로 스크롤 이동
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [visibleMessages, sending]);
 
   const sendMessage = async (event) => {
     event.preventDefault();
@@ -81,7 +86,6 @@ export default function ChatPanel({ cultivationId }) {
           content: response.reply,
         },
       ]);
-      // 새 대화가 DB에 저장되었으므로 캐시 갱신
       void queryClient
         .invalidateQueries({ queryKey: ["chat-history", cultivationId] })
         .catch(() => {});
@@ -91,7 +95,6 @@ export default function ChatPanel({ cultivationId }) {
       }
       setNotice({ type: "error", message: error.message });
     } finally {
-      // 이전 요청이거나 언마운트된 경우 실행되지 않도록 조건문 감싸기
       if (currentGeneration === requestGenerationRef.current) {
         setSending(false);
         input?.focus();
@@ -108,6 +111,8 @@ export default function ChatPanel({ cultivationId }) {
         </div>
       </header>
       <Notice notice={notice} onDismiss={() => setNotice(null)} />
+
+      {/* 깔끔한 className 유지 */}
       <div className="chat-messages" aria-live="polite">
         {[welcomeMessage, ...visibleMessages].map((message) => (
           <div
@@ -122,7 +127,11 @@ export default function ChatPanel({ cultivationId }) {
         ))}
         {historyQuery.isLoading && <p className="chat-status">이전 대화를 불러오는 중…</p>}
         {sending && <p className="chat-status">답변을 생각하고 있어요…</p>}
+
+        {/* 최신 메시지 위치 추적용 빈 div */}
+        <div ref={messagesEndRef} />
       </div>
+
       <form className="chat-input" onSubmit={sendMessage}>
         <label className="sr-only" htmlFor="cultivation-chat-input">
           챗봇 메시지

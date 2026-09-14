@@ -2396,6 +2396,21 @@ p.daily-feedback-document__content {
   padding: 20px;
   overflow-y: auto;
   background: rgba(255, 253, 246, 0.76);
+  max-height: 480px;
+  scroll-behavior: smooth;
+}
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(160, 150, 140, 0.35);
+  border-radius: 9999px;
+}
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(160, 150, 140, 0.6);
 }
 
 .chat-message {
