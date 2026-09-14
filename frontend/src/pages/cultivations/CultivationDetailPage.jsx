@@ -792,10 +792,11 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
                   >
                     <span>🌡️</span>
                     <span>
-                      {c.avgTemperature != null ? Number(c.avgTemperature).toFixed(1) : "-"}℃
+                      온도 {c.avgTemperature != null ? Number(c.avgTemperature).toFixed(1) : "-"}℃
                     </span>
                   </div>
 
+                  {/* 2. 습도 뱃지 */}
                   <div
                     style={{
                       display: "flex",
@@ -811,9 +812,12 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
                     }}
                   >
                     <span>💧</span>
-                    <span>{c.avgHumidity != null ? Number(c.avgHumidity).toFixed(1) : "-"}%</span>
+                    <span>
+                      습도 {c.avgHumidity != null ? Number(c.avgHumidity).toFixed(1) : "-"}%
+                    </span>
                   </div>
 
+                  {/* 3. CO2 뱃지 */}
                   <div
                     style={{
                       display: "flex",
@@ -829,9 +833,10 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
                     }}
                   >
                     <span>☁️</span>
-                    <span>{c.avgCo2 != null ? Number(c.avgCo2).toFixed(0) : "-"}ppm</span>
+                    <span>CO₂ {c.avgCo2 != null ? Number(c.avgCo2).toFixed(0) : "-"}ppm</span>
                   </div>
 
+                  {/* 4. 조도 뱃지 */}
                   <div
                     style={{
                       display: "flex",
@@ -839,7 +844,7 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
                       gap: "4px",
                       backgroundColor: "#fefce8",
                       border: "1px solid #fef08a",
-                      color: "#a16207",
+                      color: "#854d0e",
                       padding: "4px 8px",
                       borderRadius: "6px",
                       fontSize: "11px",
@@ -847,7 +852,7 @@ function HarvestInsightModal({ cultivationId, mushroomName }) {
                     }}
                   >
                     <span>☀️</span>
-                    <span>{c.avgLight != null ? Number(c.avgLight).toFixed(0) : "-"}lx</span>
+                    <span>조도 {c.avgLight != null ? Number(c.avgLight).toFixed(0) : "-"}lx</span>
                   </div>
                 </div>
               </div>
